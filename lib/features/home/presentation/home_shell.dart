@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/app_bottom_nav.dart';
-import '../../../shared/widgets/branded_app_bar.dart';
-import '../../../shared/widgets/empty_state.dart';
 import '../../auth/application/auth_providers.dart';
+import '../../chat/presentation/chat_screen.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../map/presentation/map_screen.dart';
@@ -47,11 +46,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             children: [
               MapScreen(family: widget.family),
               PlacesScreen(family: widget.family),
-              const _SoonTab(
-                title: 'Chat',
-                icon: Icons.chat_bubble_outline,
-                message: 'Binnenkort kun je hier met je gezin chatten.',
-              ),
+              ChatScreen(family: widget.family),
               NotificationsScreen(family: widget.family),
             ],
           ),
@@ -93,21 +88,5 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       if (member.userId == userId) return member.displayName;
     }
     return 'Een gezinslid';
-  }
-}
-
-class _SoonTab extends StatelessWidget {
-  const _SoonTab({required this.title, required this.icon, required this.message});
-
-  final String title;
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: BrandedAppBar(title: title),
-      body: EmptyState(icon: icon, title: 'Binnenkort', message: message),
-    );
   }
 }
