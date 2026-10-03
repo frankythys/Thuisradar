@@ -1,0 +1,25 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../domain/track_point.dart';
+
+class LocationHistoryRepository {
+  LocationHistoryRepository(this._client);
+
+  final SupabaseClient _client;
+
+  /// Alle geschiedenispunten van [userId] op de kalenderdag van [day].
+  Future<List<TrackPoint>> fetchDay(String userId, DateTime day) async {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+
+    final rows = await _client
+        .from('location_history')
+        .select('lat, lng, speed_mps, battery, recorded_at')
+        .eq('user_id', userId)
+        .gte('recorded_at', start.toUtc().toIso8601String())
+        .lt('recorded_at', end.toUtc().toIso8601String())
+        .order('recorded_at');
+
+    return [for (final row in rows) TrackPoint.fromJson(row)];
+  }
+}

@@ -5,10 +5,12 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../core/utils/clock.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/sos_button.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../location/application/location_providers.dart';
+import '../../member/presentation/member_detail_screen.dart';
 import '../application/map_providers.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_header.dart';
@@ -78,10 +80,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  void _focus(MemberOnMap entry) {
-    final location = entry.location;
-    if (location == null) return;
-    _mapController.move(LatLng(location.latitude, location.longitude), _memberZoom);
+  void _openDetail(MemberOnMap entry) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MemberDetailScreen(member: entry.member, location: entry.location),
+      ),
+    );
+  }
+
+  void _comingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature komt binnenkort')));
   }
 
   @override
@@ -113,7 +121,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FamilyHeader(family: widget.family, onSignOut: _signOut),
+                  Row(
+                    children: [
+                      FamilyHeader(family: widget.family, onSignOut: _signOut),
+                      const Spacer(),
+                      SosButton(compact: true, onPressed: () => _comingSoon('SOS')),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   TrackingBanner(
                     status: trackingStatus,
@@ -137,7 +151,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               members: members,
               currentUserId: ref.watch(currentUserIdProvider),
               now: now,
-              onSelect: _focus,
+              onSelect: _openDetail,
             ),
         ],
       ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/error_view.dart';
-import '../../map/presentation/map_screen.dart';
+import '../../home/presentation/home_shell.dart';
 import '../application/family_providers.dart';
 import 'family_setup_screen.dart';
 
@@ -15,7 +15,7 @@ class FamilyGate extends ConsumerWidget {
     return ref
         .watch(myFamilyProvider)
         .when(
-          data: (family) => family == null ? const FamilySetupScreen() : MapScreen(family: family),
+          data: (family) => family == null ? const FamilySetupScreen() : HomeShell(family: family),
           loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, _) => Scaffold(
             body: ErrorView(

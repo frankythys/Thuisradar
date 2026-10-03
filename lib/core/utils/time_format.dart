@@ -16,3 +16,25 @@ int? speedKmh(double? metersPerSecond) {
   if (metersPerSecond == null || metersPerSecond < 1.5) return null;
   return (metersPerSecond * 3.6).round();
 }
+
+/// Kloktijd als "HH:mm".
+String formatClock(DateTime moment) {
+  final hour = moment.hour.toString().padLeft(2, '0');
+  final minute = moment.minute.toString().padLeft(2, '0');
+  return '$hour:$minute';
+}
+
+/// Duur in het Nederlands: "25 min", "1 u", "2 u 15 min".
+String formatDuration(Duration duration) {
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  if (hours == 0) return '$minutes min';
+  if (minutes == 0) return '$hours u';
+  return '$hours u $minutes min';
+}
+
+/// Afstand: "850 m" of "2,4 km" (komma als decimaalteken).
+String formatDistance(double meters) {
+  if (meters < 1000) return '${meters.round()} m';
+  return '${(meters / 1000).toStringAsFixed(1).replaceAll('.', ',')} km';
+}

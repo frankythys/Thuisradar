@@ -20,6 +20,7 @@ final myFamilyProvider = FutureProvider<Family?>((ref) async {
   return ref.read(familyRepositoryProvider).fetchMyFamily(userId);
 });
 
-final familyMembersProvider = FutureProvider.family<List<FamilyMember>, String>(
-  (ref, familyId) => ref.watch(familyRepositoryProvider).fetchMembers(familyId),
+/// Realtime ledenlijst: nieuwe gezinsleden verschijnen meteen.
+final familyMembersProvider = StreamProvider.family<List<FamilyMember>, String>(
+  (ref, familyId) => ref.watch(familyRepositoryProvider).watchMembers(familyId),
 );

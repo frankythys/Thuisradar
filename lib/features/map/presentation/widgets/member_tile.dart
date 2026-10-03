@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/time_format.dart';
-import '../../../../shared/widgets/battery_indicator.dart';
+import '../../../../shared/widgets/battery_badge.dart';
 import '../../../../shared/widgets/member_avatar.dart';
 import '../../domain/member_on_map.dart';
 
@@ -16,29 +17,45 @@ class MemberTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final tokens = context.tokens;
     final location = entry.location;
 
-    return ListTile(
-      onTap: location == null ? null : onTap,
-      minTileHeight: 64,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      leading: MemberAvatar(member: entry.member),
-      title: Text.rich(
-        TextSpan(
-          text: entry.member.displayName,
-          children: [
-            if (isMe)
-              const TextSpan(
-                text: ' (jij)',
-                style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.muted),
-              ),
-          ],
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: tokens.spaceXs),
+      child: Material(
+        color: AppColors.ground,
+        borderRadius: BorderRadius.circular(tokens.radiusCard),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(tokens.radiusCard),
+          child: Padding(
+            padding: EdgeInsets.all(tokens.spaceMd),
+            child: Row(
+              children: [
+                MemberAvatar(member: entry.member, statusColor: location == null ? null : AppColors.primary),
+                SizedBox(width: tokens.spaceMd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isMe ? '${entry.member.displayName} (jij)' : entry.member.displayName,
+                        style: text.titleMedium,
+                      ),
+                      SizedBox(height: tokens.spaceXs),
+                      Text(_status(), style: text.bodySmall?.copyWith(color: AppColors.muted)),
+                    ],
+                  ),
+                ),
+                SizedBox(width: tokens.spaceSm),
+                BatteryBadge(level: location?.battery, isCharging: location?.isCharging),
+                const Icon(Icons.chevron_right, color: AppColors.muted),
+              ],
+            ),
+          ),
         ),
-        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
       ),
-      subtitle: Text(_status(), style: const TextStyle(color: AppColors.muted, fontSize: 13)),
-      trailing: BatteryIndicator(level: location?.battery, isCharging: location?.isCharging),
     );
   }
 

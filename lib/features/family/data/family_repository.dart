@@ -41,4 +41,15 @@ class FamilyRepository {
 
     return [for (final (index, row) in rows.indexed) FamilyMember.fromJson(row, colorIndex: index)];
   }
+
+  /// Realtime ledenlijst: herlaadt de (met profielen gejoinde) leden telkens de
+  /// lidmaatschappen wijzigen. Vereist family_members in de realtime-publicatie
+  /// (zie supabase/migrations/002_realtime_members.sql).
+  Stream<List<FamilyMember>> watchMembers(String familyId) {
+    return _client
+        .from('family_members')
+        .stream(primaryKey: ['family_id', 'user_id'])
+        .eq('family_id', familyId)
+        .asyncMap((_) => fetchMembers(familyId));
+  }
 }
