@@ -5,6 +5,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/battery_badge.dart';
 import '../../../../shared/widgets/member_avatar.dart';
+import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
 
 class MemberTile extends StatelessWidget {
@@ -14,6 +15,7 @@ class MemberTile extends StatelessWidget {
     required this.isMe,
     required this.now,
     this.selected = false,
+    this.placeStatus,
     this.onTap,
     this.onDetails,
   });
@@ -24,6 +26,9 @@ class MemberTile extends StatelessWidget {
 
   /// Gemarkeerd omdat dit lid op de kaart geselecteerd is.
   final bool selected;
+
+  /// Waar dit lid nu is (plaats), indien binnen een zone.
+  final PlaceStatus? placeStatus;
 
   /// Tik op de tegel: beweeg de kaart naar dit lid.
   final VoidCallback? onTap;
@@ -88,6 +93,11 @@ class MemberTile extends StatelessWidget {
   String _status() {
     final location = entry.location;
     if (location == null) return 'Nog geen locatie gedeeld';
+
+    final place = placeStatus;
+    if (place != null) {
+      return place.since == null ? place.name : '${place.name} · sinds ${formatClock(place.since!)}';
+    }
 
     final updated = formatRelative(location.updatedAt, now: now);
     final speed = speedKmh(location.speedMps);

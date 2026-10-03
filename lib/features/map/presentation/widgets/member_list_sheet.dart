@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
 import 'member_tile.dart';
 
@@ -14,12 +15,14 @@ class MemberListSheet extends StatelessWidget {
     required this.onSelect,
     required this.onDetails,
     this.selectedUserId,
+    this.placeByUser = const {},
     this.controller,
   });
 
   final List<MemberOnMap> members;
   final String? currentUserId;
   final String? selectedUserId;
+  final Map<String, PlaceStatus> placeByUser;
   final DateTime now;
 
   /// Laat de ouder het paneel programmatisch in-/uitschuiven.
@@ -63,6 +66,7 @@ class MemberListSheet extends StatelessWidget {
                 isMe: entry.member.userId == currentUserId,
                 now: now,
                 selected: entry.member.userId == selectedUserId,
+                placeStatus: placeByUser[entry.member.userId],
                 onTap: () => onSelect(entry),
                 onDetails: () => onDetails(entry),
               ),

@@ -11,6 +11,8 @@ import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../location/application/location_providers.dart';
 import '../../member/presentation/member_detail_screen.dart';
+import '../../places/application/places_providers.dart';
+import '../../places/domain/place.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/widgets/sos_hold_button.dart';
@@ -122,7 +124,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _openDetail(MemberOnMap entry) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => MemberDetailScreen(member: entry.member, location: entry.location),
+        builder: (_) =>
+            MemberDetailScreen(member: entry.member, familyId: widget.family.id, location: entry.location),
       ),
     );
   }
@@ -192,6 +195,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fit(members));
     }
 
+    final places = ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
+    final placeByUser = ref.watch(currentPlaceByUserProvider(familyId));
+
     // Houd het gekozen lid vers (locatie/batterij uit de realtime-stroom).
     MemberOnMap? selected;
     if (_selected case final chosen?) {
@@ -210,6 +216,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           FamilyMap(
             controller: _mapController,
             members: members,
+            places: places,
             now: now,
             selectedUserId: selected?.member.userId,
             myUserId: myId,
@@ -275,6 +282,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               onSelect: _select,
               onDetails: _openDetail,
               selectedUserId: selected?.member.userId,
+              placeByUser: placeByUser,
               controller: _sheetController,
             ),
           if (selected case final entry?)
@@ -285,6 +293,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: MemberInfoCard(
                 entry: entry,
                 now: now,
+                placeStatus: placeByUser[entry.member.userId],
                 onHistory: () => _openDetail(entry),
                 onClose: () => setState(() => _selected = null),
               ),

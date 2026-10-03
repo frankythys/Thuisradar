@@ -8,6 +8,7 @@ import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../map/presentation/map_screen.dart';
+import '../../places/presentation/places_screen.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/sos_received_overlay.dart';
@@ -42,11 +43,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             index: _tab.index,
             children: [
               MapScreen(family: widget.family),
-              const _SoonTab(
-                title: 'Plaatsen',
-                icon: Icons.place_outlined,
-                message: 'Binnenkort stel je hier veilige zones in met aankomst- en vertrekmeldingen.',
-              ),
+              PlacesScreen(family: widget.family),
               const _SoonTab(
                 title: 'Chat',
                 icon: Icons.chat_bubble_outline,

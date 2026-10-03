@@ -14,12 +14,15 @@ import '../../family/domain/family_member.dart';
 import '../../location/application/location_history_providers.dart';
 import '../../location/domain/member_location.dart';
 import '../../location/domain/timeline.dart';
+import '../../places/application/places_providers.dart';
+import '../../places/domain/place_timeline.dart';
 
 /// Scherm 12: detail van één gezinslid met stats en de dagtijdlijn.
 class MemberDetailScreen extends ConsumerStatefulWidget {
-  const MemberDetailScreen({super.key, required this.member, this.location});
+  const MemberDetailScreen({super.key, required this.member, required this.familyId, this.location});
 
   final FamilyMember member;
+  final String familyId;
   final MemberLocation? location;
 
   @override
@@ -60,7 +63,12 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
             Text('Locatiegeschiedenis', style: Theme.of(context).textTheme.titleLarge),
             SizedBox(height: tokens.spaceSm),
             timeline.when(
-              data: (entries) => _Timeline(entries: entries),
+              data: (entries) => _Timeline(
+                entries: attachPlaceNames(
+                  entries,
+                  ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
+                ),
+              ),
               loading: () => const Padding(
                 padding: EdgeInsets.all(32),
                 child: Center(child: CircularProgressIndicator()),
@@ -261,7 +269,7 @@ class _TimelineRow extends StatelessWidget {
     final isStop = entry.kind == TimelineKind.stop;
 
     final title = isStop
-        ? (entry.placeName ?? 'Stilgestaan')
+        ? (entry.placeName == null ? 'Stilgestaan' : 'Aangekomen op ${entry.placeName}')
         : 'Onderweg · ${formatDistance(entry.distanceMeters ?? 0)}';
     final subtitle = isStop
         ? '${formatClock(entry.start)}–${formatClock(entry.end)} · ${formatDuration(entry.duration)}'

@@ -5,6 +5,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/battery_badge.dart';
 import '../../../../shared/widgets/member_avatar.dart';
+import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
 
 /// Compact kaartje dat verschijnt wanneer je een lid kiest (lijst of marker):
@@ -16,12 +17,14 @@ class MemberInfoCard extends StatelessWidget {
     required this.now,
     required this.onHistory,
     required this.onClose,
+    this.placeStatus,
   });
 
   final MemberOnMap entry;
   final DateTime now;
   final VoidCallback onHistory;
   final VoidCallback onClose;
+  final PlaceStatus? placeStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +89,11 @@ class MemberInfoCard extends StatelessWidget {
   String _status() {
     final location = entry.location;
     if (location == null) return 'Nog geen locatie gedeeld';
+
+    final place = placeStatus;
+    if (place != null) {
+      return place.since == null ? place.name : '${place.name} · sinds ${formatClock(place.since!)}';
+    }
 
     final updated = formatRelative(location.updatedAt, now: now);
     final speed = speedKmh(location.speedMps);
