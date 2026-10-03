@@ -3,14 +3,17 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/clock.dart';
 import '../../../shared/widgets/error_view.dart';
-import '../../../shared/widgets/sos_button.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../location/application/location_providers.dart';
 import '../../member/presentation/member_detail_screen.dart';
+import '../../sos/application/sos_providers.dart';
+import '../../sos/domain/sos_alert.dart';
+import '../../sos/presentation/widgets/sos_hold_button.dart';
 import '../application/map_providers.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_header.dart';
@@ -88,8 +91,44 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  void _comingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature komt binnenkort')));
+  void _snack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _raiseSos() async {
+    final familyId = widget.family.id;
+    final myId = ref.read(currentUserIdProvider);
+    if (myId == null) {
+      _snack('Je locatie is nog niet beschikbaar. Probeer het zo opnieuw.');
+      return;
+    }
+
+    // Verse GPS-positie (max 5 s), anders de laatst gedeelde locatie.
+    final fresh = await ref.read(deviceLocationSourceProvider).currentPosition();
+    var lat = fresh?.latitude;
+    var lng = fresh?.longitude;
+    if (lat == null || lng == null) {
+      final members = ref.read(membersOnMapProvider(familyId)).value ?? const <MemberOnMap>[];
+      for (final m in members) {
+        if (m.member.userId == myId && m.location != null) {
+          lat = m.location!.latitude;
+          lng = m.location!.longitude;
+        }
+      }
+    }
+    if (lat == null || lng == null) {
+      _snack('Je locatie is nog niet beschikbaar. Probeer het zo opnieuw.');
+      return;
+    }
+
+    try {
+      await ref
+          .read(sosRepositoryProvider)
+          .raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng);
+      _snack('SOS verzonden naar je gezin.');
+    } on Exception {
+      _snack('SOS versturen mislukt. Probeer opnieuw.');
+    }
   }
 
   @override
@@ -99,6 +138,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final members = membersAsync.value ?? const <MemberOnMap>[];
     final trackingStatus = ref.watch(locationTrackerProvider);
     final now = ref.watch(clockProvider).value ?? DateTime.now();
+
+    final myId = ref.watch(currentUserIdProvider);
+    final activeSos = ref.watch(activeSosProvider(familyId)).value ?? const <SosAlert>[];
+    SosAlert? myAlert;
+    for (final alert in activeSos) {
+      if (alert.userId == myId) myAlert = alert;
+    }
+
+    // Tijdens een eigen actieve SOS vaker uploaden, daarna terug normaal.
+    ref.listen(activeSosProvider(familyId), (_, next) {
+      final mine = (next.value ?? const <SosAlert>[]).any((a) => a.userId == myId);
+      ref.read(locationTrackerProvider.notifier).setFastUpdates(mine);
+    });
 
     if (members.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitAllOnce(members));
@@ -125,7 +177,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     children: [
                       FamilyHeader(family: widget.family, onSignOut: _signOut),
                       const Spacer(),
-                      SosButton(compact: true, onPressed: () => _comingSoon('SOS')),
+                      SosHoldButton(onActivate: _raiseSos),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -134,6 +186,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     onRetry: _startTracking,
                     onOpenSettings: () => ref.read(locationTrackerProvider.notifier).openSettings(),
                   ),
+                  if (myAlert case final alert?) ...[
+                    const SizedBox(height: 12),
+                    _OwnSosBanner(
+                      onResolve: () async {
+                        await ref.read(sosRepositoryProvider).resolve(alert.id);
+                        if (context.mounted) _snack('SOS opgelost.');
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -154,6 +215,42 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               onSelect: _openDetail,
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Banner voor de verzender zelf: zijn SOS is actief, met een knop om op te lossen.
+class _OwnSosBanner extends StatelessWidget {
+  const _OwnSosBanner({required this.onResolve});
+
+  final Future<void> Function() onResolve;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+
+    return Material(
+      color: AppColors.alert,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(
+          children: [
+            const Icon(Icons.shield, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'SOS actief · je gezin is gewaarschuwd',
+                style: text.bodyMedium?.copyWith(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: onResolve,
+              child: const Text('Oplossen', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
       ),
     );
   }

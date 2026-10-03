@@ -11,11 +11,15 @@ import '../domain/member_location.dart';
 import 'location_providers.dart';
 import 'tracking_status.dart';
 
+/// Tijdens een actieve SOS vaker uploaden.
+const _sosInterval = Duration(seconds: 10);
+
 /// Deelt de locatie van dit toestel met de familie zolang hij gestart is.
 class LocationTracker extends Notifier<TrackingStatus> {
   StreamSubscription<DevicePosition>? _subscription;
   String? _userId;
   String? _familyId;
+  bool _fast = false;
 
   DeviceLocationSource get _device => ref.read(deviceLocationSourceProvider);
   BatterySource get _battery => ref.read(batterySourceProvider);
@@ -39,16 +43,30 @@ class LocationTracker extends Notifier<TrackingStatus> {
     state = TrackingStatus.fromAccess(access);
     if (access != LocationAccess.granted) return;
 
-    _subscription = _device.positions().listen(
-      _onPosition,
-      onError: (Object error) {
-        debugPrint('Locatiestroom fout: $error');
-        if (ref.mounted) state = TrackingStatus.error;
-      },
-    );
+    _attach();
   }
 
   Future<void> openSettings() => _device.openSettings();
+
+  /// Schakelt tussen snel (tijdens een actieve SOS) en normaal uploaden.
+  void setFastUpdates(bool fast) {
+    if (_fast == fast) return;
+    _fast = fast;
+    if (_subscription != null) _attach();
+  }
+
+  void _attach() {
+    _subscription?.cancel();
+    _subscription = _device
+        .positions(interval: _fast ? _sosInterval : DeviceLocationSource.defaultInterval)
+        .listen(
+          _onPosition,
+          onError: (Object error) {
+            debugPrint('Locatiestroom fout: $error');
+            if (ref.mounted) state = TrackingStatus.error;
+          },
+        );
+  }
 
   void stop() {
     _cancel();

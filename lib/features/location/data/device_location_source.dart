@@ -8,7 +8,7 @@ import '../domain/device_reading.dart';
 /// blijft werken.
 class DeviceLocationSource {
   static const _distanceFilterMeters = 25;
-  static const _interval = Duration(seconds: 30);
+  static const defaultInterval = Duration(seconds: 30);
 
   Future<LocationAccess> ensureAccess() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
@@ -29,8 +29,26 @@ class DeviceLocationSource {
 
   Future<void> openSettings() => Geolocator.openAppSettings();
 
-  Stream<DevicePosition> positions() {
-    return Geolocator.getPositionStream(locationSettings: _settings()).map(
+  /// Eén verse GPS-meting, of null als dat niet lukt binnen [timeout].
+  Future<DevicePosition?> currentPosition({Duration timeout = const Duration(seconds: 5)}) async {
+    try {
+      final p = await Geolocator.getCurrentPosition(
+        locationSettings: LocationSettings(accuracy: LocationAccuracy.high, timeLimit: timeout),
+      );
+      return DevicePosition(
+        latitude: p.latitude,
+        longitude: p.longitude,
+        timestamp: p.timestamp,
+        accuracyMeters: p.accuracy,
+        speedMps: p.speed < 0 ? null : p.speed,
+      );
+    } on Exception {
+      return null;
+    }
+  }
+
+  Stream<DevicePosition> positions({Duration interval = defaultInterval}) {
+    return Geolocator.getPositionStream(locationSettings: _settings(interval)).map(
       (p) => DevicePosition(
         latitude: p.latitude,
         longitude: p.longitude,
@@ -41,12 +59,12 @@ class DeviceLocationSource {
     );
   }
 
-  LocationSettings _settings() {
+  LocationSettings _settings(Duration interval) {
     if (defaultTargetPlatform == TargetPlatform.android) {
       return AndroidSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: _distanceFilterMeters,
-        intervalDuration: _interval,
+        intervalDuration: interval,
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationTitle: 'Thuisradar',
           notificationText: 'Je locatie wordt gedeeld met je familie',
