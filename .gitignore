@@ -49,3 +49,8 @@ app.*.map.json
 
 # Eigen Supabase-sleutels (nooit committen)
 env.json
+
+# Firebase / FCM geheimen (nooit committen)
+/android/app/google-services.json
+*service-account*.json
+*service_account*.json
