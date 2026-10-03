@@ -98,7 +98,7 @@ class _SlideView extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(height: tokens.spaceLg),
-          OnboardingHero(icon: slide.icon),
+          OnboardingHero(base: slide.illustrationBase, icon: slide.icon),
           SizedBox(height: tokens.spaceXl),
           Text(slide.title, style: text.headlineLarge, textAlign: TextAlign.center),
           SizedBox(height: tokens.spaceMd),
