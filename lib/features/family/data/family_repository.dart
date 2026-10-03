@@ -32,6 +32,11 @@ class FamilyRepository {
     return Family.fromJson(row as Map<String, dynamic>);
   }
 
+  /// De ingelogde gebruiker verlaat de familie.
+  Future<void> leaveFamily(String userId, String familyId) {
+    return _client.from('family_members').delete().eq('user_id', userId).eq('family_id', familyId);
+  }
+
   Future<List<FamilyMember>> fetchMembers(String familyId) async {
     final rows = await _client
         .from('family_members')

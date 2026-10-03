@@ -29,6 +29,13 @@ class AuthRepository {
 
   Future<void> signOut() => _client.auth.signOut();
 
+  /// Werkt de weergavenaam van de ingelogde gebruiker bij.
+  Future<void> updateDisplayName(String name) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+    await _client.from('profiles').update({'display_name': name}).eq('id', user.id);
+  }
+
   /// Zorgt dat er een profielrij bestaat voor de ingelogde gebruiker.
   /// De naam komt uit de metadata die bij het registreren is opgeslagen.
   Future<void> ensureProfile() async {

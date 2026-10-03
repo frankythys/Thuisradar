@@ -13,6 +13,7 @@ import '../../location/application/location_providers.dart';
 import '../../member/presentation/member_detail_screen.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
+import '../../profile/presentation/profile_screen.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/widgets/sos_hold_button.dart';
@@ -119,6 +120,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   void _deselect() {
     if (_selected != null) setState(() => _selected = null);
+  }
+
+  void _openProfile() {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)));
   }
 
   void _openDetail(MemberOnMap entry) {
@@ -242,7 +247,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 children: [
                   Row(
                     children: [
-                      FamilyHeader(family: widget.family, onSignOut: _signOut),
+                      FamilyHeader(family: widget.family, onSignOut: _signOut, onProfile: _openProfile),
                       const Spacer(),
                       SosHoldButton(onActivate: _raiseSos),
                     ],

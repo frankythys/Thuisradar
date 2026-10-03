@@ -3,14 +3,15 @@ import 'package:flutter/services.dart';
 
 import '../../../family/domain/family.dart';
 
-enum _HeaderAction { copyInvite, signOut }
+enum _HeaderAction { copyInvite, profile, signOut }
 
-/// Knop linksboven met de familienaam en een menu (uitnodigen, uitloggen).
+/// Knop linksboven met de familienaam en een menu (uitnodigen, profiel, uitloggen).
 class FamilyHeader extends StatelessWidget {
-  const FamilyHeader({super.key, required this.family, required this.onSignOut});
+  const FamilyHeader({super.key, required this.family, required this.onSignOut, required this.onProfile});
 
   final Family family;
   final VoidCallback onSignOut;
+  final VoidCallback onProfile;
 
   Future<void> _copyInvite(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: family.inviteCode));
@@ -27,6 +28,7 @@ class FamilyHeader extends StatelessWidget {
       position: PopupMenuPosition.under,
       onSelected: (action) => switch (action) {
         _HeaderAction.copyInvite => _copyInvite(context),
+        _HeaderAction.profile => onProfile(),
         _HeaderAction.signOut => onSignOut(),
       },
       itemBuilder: (_) => [
@@ -37,6 +39,10 @@ class FamilyHeader extends StatelessWidget {
             title: const Text('Gezinslid uitnodigen'),
             subtitle: Text('Code: ${family.inviteCode}'),
           ),
+        ),
+        const PopupMenuItem(
+          value: _HeaderAction.profile,
+          child: ListTile(leading: Icon(Icons.person_outline), title: Text('Profiel')),
         ),
         const PopupMenuItem(
           value: _HeaderAction.signOut,
