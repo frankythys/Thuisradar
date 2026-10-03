@@ -98,6 +98,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       body: Column(
         children: [
           Expanded(
+            flex: 3,
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -161,14 +162,22 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               ],
             ),
           ),
-          _Panel(
-            name: _name,
-            radius: _radius,
-            icon: _icon,
-            busy: _busy,
-            onRadius: (v) => setState(() => _radius = v),
-            onIcon: (v) => setState(() => _icon = v),
-            onSave: _save,
+          Expanded(
+            flex: 2,
+            child: Material(
+              color: Colors.white,
+              child: SingleChildScrollView(
+                child: _Panel(
+                  name: _name,
+                  radius: _radius,
+                  icon: _icon,
+                  busy: _busy,
+                  onRadius: (v) => setState(() => _radius = v),
+                  onIcon: (v) => setState(() => _icon = v),
+                  onSave: _save,
+                ),
+              ),
+            ),
           ),
         ],
       ),
