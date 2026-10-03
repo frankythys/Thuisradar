@@ -35,7 +35,8 @@ roadmap (D2–D5 + afwerking). Volgens `../CLAUDE.md`.
 ## Push-aanroep (SQL i.p.v. dashboard)
 
 - Beide Edge Functions (`send-sos-push`, `send-place-push`) worden aangeroepen via **pg_net-triggers** in `supabase/migrations/007_push_triggers.sql` — geen Database Webhook in het dashboard nodig. (Supabase Database Webhooks zijn onder de motorkap net zulke pg_net-triggers.)
-- URL + webhook-geheim staan in `private.push_config` (RLS dicht), via één INSERT die de eigenaar zelf typt → **geen secret in git**.
+- Het webhook-geheim komt uit **Supabase Vault** (`name = 'webhook_secret'`, gelijk aan de function-secret `SOS_WEBHOOK_SECRET`) → **geen secret in git**. De functie-URL staat hardgecodeerd (project-ref is niet geheim) en is te overschrijven via Vault-secret `functions_base_url`.
+- `send-place-push` negeert `sos`-events; SOS loopt via de `sos_alerts`-trigger.
 - Een bestaande dashboard-webhook op `sos_alerts` moet verwijderd worden om dubbele SOS-pushes te vermijden.
 
 ## Migraties

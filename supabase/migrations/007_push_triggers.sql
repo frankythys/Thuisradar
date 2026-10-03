@@ -1,47 +1,45 @@
 -- Fase D2.5/D3: push volledig via SQL (pg_net), zonder dashboard-webhooks.
 -- Roept de Edge Functions send-sos-push en send-place-push rechtstreeks aan.
+-- Het webhook-geheim komt uit de Vault (name = 'webhook_secret'); geen secret in git.
 -- Uitvoeren in Supabase > SQL Editor > New query > Run. Mag opnieuw draaien.
---
--- LET OP: zet eenmalig de configuratie (zie onderaan, NIET in git), en
--- verwijder een eventuele bestaande Database Webhook op sos_alerts om dubbele
--- SOS-pushes te vermijden.
 
 create extension if not exists pg_net;
 
--- ─── Config (URL + webhook-geheim) in een privétabel, niet in git ───────────
+-- Oude config-tabel uit een eerdere opzet opruimen (indien aanwezig).
+drop table if exists private.push_config;
 
 create schema if not exists private;
 
-create table if not exists private.push_config (
-  id                 integer primary key default 1 check (id = 1),
-  functions_base_url text not null,
-  webhook_secret     text not null
-);
-
-alter table private.push_config enable row level security;
-revoke all on private.push_config from anon, authenticated;
-
 -- ─── Hulpfunctie: een Edge Function aanroepen ───────────────────────────────
+-- URL standaard hardgecodeerd (project-ref is niet geheim); eventueel te
+-- overschrijven via Vault-secret 'functions_base_url'. Het header-geheim komt
+-- altijd uit Vault-secret 'webhook_secret'.
 
 create or replace function private.call_push(fn text, payload jsonb)
 returns void
 language plpgsql
 security definer
-set search_path = private, net, public
+set search_path = net, vault, public
 as $$
 declare
-  cfg private.push_config%rowtype;
+  secret   text;
+  base_url text;
 begin
-  select * into cfg from private.push_config where id = 1;
-  if cfg.functions_base_url is null then
-    return; -- nog niet geconfigureerd
+  select decrypted_secret into secret
+    from vault.decrypted_secrets where name = 'webhook_secret';
+  if secret is null then
+    return; -- geen geheim ingesteld
   end if;
 
+  select decrypted_secret into base_url
+    from vault.decrypted_secrets where name = 'functions_base_url';
+  base_url := coalesce(base_url, 'https://ragkwonerrhntpboenni.supabase.co/functions/v1');
+
   perform net.http_post(
-    url := cfg.functions_base_url || '/' || fn,
+    url := base_url || '/' || fn,
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'x-webhook-secret', cfg.webhook_secret
+      'x-webhook-secret', secret
     ),
     body := payload
   );
@@ -69,7 +67,7 @@ create trigger sos_alerts_push
   after insert on public.sos_alerts
   for each row execute function public.notify_sos_push();
 
--- ─── Trigger: Plaatsen-push bij aankomst/vertrek ────────────────────────────
+-- ─── Trigger: Plaatsen-push bij aankomst/vertrek (SOS wordt genegeerd) ───────
 
 create or replace function public.notify_place_push()
 returns trigger
@@ -92,12 +90,3 @@ create trigger family_events_push
 
 revoke execute on function public.notify_sos_push() from public, anon, authenticated;
 revoke execute on function public.notify_place_push() from public, anon, authenticated;
-
--- ─── Eenmalig zelf instellen (NIET committen) ───────────────────────────────
--- Vervang <REF> door je project-ref en <GEHEIM> door je SOS_WEBHOOK_SECRET:
---
---   insert into private.push_config (id, functions_base_url, webhook_secret)
---   values (1, 'https://<REF>.supabase.co/functions/v1', '<GEHEIM>')
---   on conflict (id) do update
---     set functions_base_url = excluded.functions_base_url,
---         webhook_secret     = excluded.webhook_secret;
