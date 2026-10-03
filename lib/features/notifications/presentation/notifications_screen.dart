@@ -15,17 +15,52 @@ import '../application/events_providers.dart';
 import '../domain/family_event.dart';
 
 /// Scherm 15: feed van aankomst, vertrek en SOS.
-class NotificationsScreen extends ConsumerWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key, required this.family});
 
   final Family family;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  DateTime? _clearedAt;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final cleared = await ref.read(notificationsStoreProvider).clearedAt(widget.family.id);
+      if (mounted) setState(() => _clearedAt = cleared);
+    });
+  }
+
+  Future<void> _clear() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Meldingen wissen?'),
+        content: const Text('Je wist je meldingen op dit toestel. Nieuwe meldingen verschijnen gewoon weer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Wissen')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    final now = DateTime.now();
+    await ref.read(notificationsStoreProvider).clear(widget.family.id, now);
+    if (mounted) setState(() => _clearedAt = now);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final events = ref.watch(familyEventsProvider(family.id));
-    final members = ref.watch(familyMembersProvider(family.id)).value ?? const [];
-    final places = ref.watch(familyPlacesProvider(family.id)).value ?? const [];
+    final events = ref.watch(familyEventsProvider(widget.family.id));
+    final members = ref.watch(familyMembersProvider(widget.family.id)).value ?? const [];
+    final places = ref.watch(familyPlacesProvider(widget.family.id)).value ?? const [];
     final now = ref.watch(clockProvider).value ?? DateTime.now();
 
     String nameOf(String userId) {
@@ -43,21 +78,29 @@ class NotificationsScreen extends ConsumerWidget {
       return null;
     }
 
+    final visible = [
+      for (final e in events.value ?? const <FamilyEvent>[])
+        if (_clearedAt == null || e.createdAt.isAfter(_clearedAt!)) e,
+    ];
+
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Meldingen'),
+      appBar: BrandedAppBar(
+        title: 'Meldingen',
+        actions: [if (visible.isNotEmpty) TextButton(onPressed: _clear, child: const Text('Wissen'))],
+      ),
       body: events.when(
-        data: (list) => list.isEmpty
+        data: (_) => visible.isEmpty
             ? const EmptyState(
                 icon: Icons.notifications_outlined,
-                title: 'Nog geen meldingen',
+                title: 'Geen meldingen',
                 message: 'Aankomst, vertrek en SOS van je gezin verschijnen hier.',
               )
             : ListView.separated(
                 padding: EdgeInsets.all(tokens.spaceLg),
-                itemCount: list.length,
+                itemCount: visible.length,
                 separatorBuilder: (_, _) => SizedBox(height: tokens.spaceSm),
                 itemBuilder: (context, i) {
-                  final event = list[i];
+                  final event = visible[i];
                   return _EventTile(
                     event: event,
                     text: _describe(event, nameOf(event.actorUserId), placeOf(event.placeId)),
@@ -68,7 +111,7 @@ class NotificationsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorView(
           message: 'Meldingen laden mislukt.\n$e',
-          onRetry: () => ref.invalidate(familyEventsProvider(family.id)),
+          onRetry: () => ref.invalidate(familyEventsProvider(widget.family.id)),
         ),
       ),
     );

@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../../auth/application/auth_providers.dart';
 import '../data/events_repository.dart';
+import '../data/notifications_store.dart';
 import '../domain/family_event.dart';
 
 final eventsRepositoryProvider = Provider<EventsRepository>(
   (ref) => EventsRepository(ref.watch(supabaseClientProvider)),
 );
+
+final notificationsStoreProvider = Provider<NotificationsStore>((ref) => NotificationsStore());
 
 final familyEventsProvider = StreamProvider.family<List<FamilyEvent>, String>(
   (ref, familyId) => ref.watch(eventsRepositoryProvider).watchEvents(familyId),
