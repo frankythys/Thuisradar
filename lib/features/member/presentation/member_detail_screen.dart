@@ -31,7 +31,12 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
 
   static const _dayLabels = ['Vandaag', 'Gisteren', 'Eergisteren'];
 
-  DateTime get _selectedDay => DateTime.now().subtract(Duration(days: _dayOffset));
+  /// Lokale middernacht van de gekozen dag. Zonder tijdscomponent, zodat de
+  /// provider-sleutel stabiel blijft tussen rebuilds (anders: oneindig laden).
+  DateTime get _selectedDay {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day).subtract(Duration(days: _dayOffset));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +65,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 padding: EdgeInsets.all(32),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) => ErrorView(message: 'Geschiedenis laden mislukt.\n$e'),
+              error: (e, _) => ErrorView(
+                message: 'Geschiedenis laden mislukt.\n$e',
+                onRetry: () => ref.invalidate(timelineProvider(query)),
+              ),
             ),
           ],
         ),
