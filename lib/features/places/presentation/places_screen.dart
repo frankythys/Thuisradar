@@ -43,6 +43,10 @@ class PlacesScreen extends ConsumerWidget {
 
     try {
       await ref.read(placesRepositoryProvider).delete(place.id);
+      // Niet op realtime wachten: meteen opnieuw ophalen zodat de plaats
+      // verdwijnt, ook als REPLICA IDENTITY (migratie 008) nog niet gedraaid is.
+      ref.invalidate(familyPlacesProvider(family.id));
+      ref.invalidate(familyPresenceProvider(family.id));
     } on Object catch (error) {
       debugPrint('Plaats verwijderen mislukt: $error');
       if (context.mounted) {

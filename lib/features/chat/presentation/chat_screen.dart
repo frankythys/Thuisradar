@@ -26,11 +26,40 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _input = TextEditingController();
   bool _sending = false;
+  DateTime? _clearedAt;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final cleared = await ref.read(chatStoreProvider).clearedAt(widget.family.id);
+      if (mounted) setState(() => _clearedAt = cleared);
+    });
+  }
 
   @override
   void dispose() {
     _input.dispose();
     super.dispose();
+  }
+
+  Future<void> _clear() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Chat wissen?'),
+        content: const Text('Je wist de berichten op dit toestel. Voor de anderen blijft de chat bestaan.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Wissen')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    final now = DateTime.now();
+    await ref.read(chatStoreProvider).clear(widget.family.id, now);
+    if (mounted) setState(() => _clearedAt = now);
   }
 
   Future<void> _send() async {
@@ -66,13 +95,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       return 'Gezinslid';
     }
 
+    final all = messages.value ?? const <Message>[];
+    final visible = [
+      for (final m in all)
+        if (_clearedAt == null || m.createdAt.isAfter(_clearedAt!)) m,
+    ];
+
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Chat'),
+      appBar: BrandedAppBar(
+        title: 'Chat',
+        actions: [if (visible.isNotEmpty) TextButton(onPressed: _clear, child: const Text('Wissen'))],
+      ),
       body: Column(
         children: [
           Expanded(
             child: messages.when(
-              data: (list) => list.isEmpty
+              data: (_) => visible.isEmpty
                   ? const EmptyState(
                       icon: Icons.chat_bubble_outline,
                       title: 'Nog geen berichten',
@@ -81,9 +119,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   : ListView.builder(
                       reverse: true,
                       padding: EdgeInsets.all(tokens.spaceLg),
-                      itemCount: list.length,
+                      itemCount: visible.length,
                       itemBuilder: (context, i) {
-                        final message = list[list.length - 1 - i];
+                        final message = visible[visible.length - 1 - i];
                         final mine = message.userId == myId;
                         return _Bubble(
                           message: message,
