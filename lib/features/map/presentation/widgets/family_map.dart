@@ -13,6 +13,7 @@ class FamilyMap extends StatelessWidget {
     required this.members,
     this.onMapReady,
     this.onUserGesture,
+    this.onMarkerTap,
   });
 
   static const fallbackCenter = LatLng(50.85, 4.35); // België
@@ -24,6 +25,9 @@ class FamilyMap extends StatelessWidget {
 
   /// Vuurt wanneer de gebruiker zelf de kaart zoomt of verschuift.
   final VoidCallback? onUserGesture;
+
+  /// Tik op de marker van een gezinslid.
+  final ValueChanged<MemberOnMap>? onMarkerTap;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +56,10 @@ class FamilyMap extends StatelessWidget {
                   width: MemberMarker.width,
                   height: MemberMarker.height,
                   alignment: Alignment.topCenter,
-                  child: MemberMarker(entry: entry),
+                  child: GestureDetector(
+                    onTap: () => onMarkerTap?.call(entry),
+                    child: MemberMarker(entry: entry),
+                  ),
                 ),
           ],
         ),

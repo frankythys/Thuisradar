@@ -19,6 +19,7 @@ import '../domain/auto_fit.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_header.dart';
 import 'widgets/family_map.dart';
+import 'widgets/member_info_card.dart';
 import 'widgets/member_list_sheet.dart';
 import 'widgets/tracking_banner.dart';
 
@@ -34,9 +35,13 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   static const _memberZoom = 15.0;
 
+  static const _focusZoom = 16.0;
+
   final _mapController = MapController();
   final _autoFit = AutoFitController();
+  final _sheetController = DraggableScrollableController();
   bool _mapReady = false;
+  MemberOnMap? _selected;
 
   @override
   void initState() {
@@ -47,6 +52,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   void dispose() {
     _mapController.dispose();
+    _sheetController.dispose();
     super.dispose();
   }
 
@@ -87,11 +93,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  /// Beweegt bewust naar één gezinslid (vanuit de lijst). Mag altijd.
-  void _focus(MemberOnMap entry) {
+  /// Bewuste keuze van een lid (lijst of marker): zoom ernaartoe, schuif de
+  /// lijst in en toon het info-kaartje. Telt als bewuste beweging en vergrendelt
+  /// auto-fit, zodat de kaart daarna niet meer vanzelf terugspringt.
+  void _select(MemberOnMap entry) {
     final location = entry.location;
     if (location == null) return;
-    _mapController.move(LatLng(location.latitude, location.longitude), _memberZoom);
+
+    _autoFit.lock();
+    _mapController.move(LatLng(location.latitude, location.longitude), _focusZoom);
+    if (_sheetController.isAttached) {
+      _sheetController.animateTo(0.14, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    }
+    setState(() => _selected = entry);
   }
 
   void _openDetail(MemberOnMap entry) {
@@ -167,7 +181,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fit(members));
     }
 
-    final sheetTop = MediaQuery.sizeOf(context).height * 0.34;
+    // Houd het gekozen lid vers (locatie/batterij uit de realtime-stroom).
+    MemberOnMap? selected;
+    if (_selected case final chosen?) {
+      for (final m in members) {
+        if (m.member.userId == chosen.member.userId) selected = m;
+      }
+      selected ??= chosen;
+    }
+
+    final size = MediaQuery.sizeOf(context);
+    final sheetTop = size.height * 0.34;
 
     return Scaffold(
       body: Stack(
@@ -176,6 +200,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             controller: _mapController,
             members: members,
             onUserGesture: _autoFit.lock,
+            onMarkerTap: _select,
             onMapReady: () {
               _mapReady = true;
               _fit(members);
@@ -231,8 +256,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               members: members,
               currentUserId: ref.watch(currentUserIdProvider),
               now: now,
-              onSelect: _focus,
+              onSelect: _select,
               onDetails: _openDetail,
+              controller: _sheetController,
+            ),
+          if (selected case final entry?)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: size.height * 0.14 + 16,
+              child: MemberInfoCard(
+                entry: entry,
+                now: now,
+                onHistory: () => _openDetail(entry),
+                onClose: () => setState(() => _selected = null),
+              ),
             ),
         ],
       ),

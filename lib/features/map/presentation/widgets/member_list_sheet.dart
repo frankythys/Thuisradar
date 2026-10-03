@@ -13,11 +13,15 @@ class MemberListSheet extends StatelessWidget {
     required this.now,
     required this.onSelect,
     required this.onDetails,
+    this.controller,
   });
 
   final List<MemberOnMap> members;
   final String? currentUserId;
   final DateTime now;
+
+  /// Laat de ouder het paneel programmatisch in-/uitschuiven.
+  final DraggableScrollableController? controller;
 
   /// Tik op een lid: beweeg de kaart ernaartoe.
   final ValueChanged<MemberOnMap> onSelect;
@@ -28,6 +32,7 @@ class MemberListSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
+      controller: controller,
       initialChildSize: 0.34,
       minChildSize: 0.14,
       maxChildSize: 0.8,
