@@ -17,7 +17,7 @@ flutter build apk --release --dart-define-from-file=env.json     # build Android
 
 Supabase URL + key come in via `--dart-define-from-file=env.json` (copy `env.example.json` → `env.json`; `env.json` is gitignored). `Env.assertConfigured()` in `main.dart` throws if either is missing, so the define flag is required for every run/build.
 
-The Supabase backend is defined entirely in `supabase/schema.sql` (idempotent). Apply it by pasting into the Supabase SQL Editor — there is no migration tooling.
+**Database changes.** `supabase/schema.sql` is the v1 baseline (idempotent) and **must not be edited**. Every later change is a **numbered migration** in `supabase/migrations/NNN_name.sql` (001, 002, …). The owner runs each one **manually in the Supabase SQL Editor** — do **not** use `supabase db push` (the migrations have no timestamp names and earlier ones are already applied). When you add a migration, tell the user exactly when to run it.
 
 ## Architecture
 
@@ -32,7 +32,9 @@ The Supabase backend is defined entirely in `supabase/schema.sql` (idempotent). 
 
 **State management is Riverpod.** The dependency chain is consistent across features: `supabaseClientProvider` → `<X>RepositoryProvider` → feature providers. To see a feature end-to-end, read its `application/*_providers.dart` first — it names every piece.
 
-**Navigation is gate-based, not router-based.** `app.dart` → `AuthGate` (watches `sessionProvider`) → `FamilyGate` (watches `myFamilyProvider`) → either `FamilySetupScreen` or `MapScreen`. Each gate `.when(...)`s an `AsyncValue` and swaps the whole screen; there is no named-route table.
+**Navigation is gate-based, not router-based.** `app.dart` → `PushGate` (registers FCM token) → `OnboardingGate` (first-run slides) → `AuthGate` (watches `sessionProvider`) → `FamilyGate` (watches `myFamilyProvider`) → either `FamilySetupScreen` or `HomeShell`. `HomeShell` holds the bottom navigation (Kaart / Plaatsen / Chat / Meldingen) in an `IndexedStack` and overlays the realtime SOS alert. Sub-screens (member detail, invite, welcome, permissions) are pushed with `MaterialPageRoute`; they use `BrandedAppBar`, which shows an automatic back arrow when the route can pop. Each gate `.when(...)`s an `AsyncValue` and swaps the whole screen; there is no named-route table.
+
+**Map camera & markers are flutter_map-independent at the core.** Decision logic lives in pure domain classes so a later map swap stays cheap: `map/domain/auto_fit.dart` (`AutoFitController` — fit once, lock on user gesture, deliberate recenter) and `map/domain/marker_cluster.dart` (`clusterByScreenDistance` — group members by on-screen distance). The widgets only project coordinates and render. Current map is **flutter_map + OpenStreetMap** (free); Google Maps / satellite is a "Later" item, see `docs/ROADMAP.md`.
 
 **Realtime location flow (the core feature):**
 1. `LocationTracker` (a `Notifier<TrackingStatus>` in `location/application/`) subscribes to the device GPS stream, reads battery, and **upserts** one row per user into `member_locations` (`onConflict: 'user_id'`).
@@ -48,4 +50,28 @@ The Supabase backend is defined entirely in `supabase/schema.sql` (idempotent). 
 
 - Lint rules enforced (see `analysis_options.yaml`): single quotes, trailing commas, declared return types, no `print` (use `debugPrint`), `unawaited_futures`, super parameters.
 - Errors surfaced to the UI via the shared `ErrorView` widget; background/stream errors are logged with `debugPrint` and reflected in `TrackingStatus`.
-- Tests use `flutter_test` + `mocktail`, and target the `domain/` and `application/` layers (pure logic + notifiers), not widgets.
+- Tests use `flutter_test` + `mocktail`, and target the `domain/` and `application/` layers (pure logic + notifiers), plus focused widget tests.
+
+## Working rules (read before committing)
+
+- **Feature-first, no god code.** Organise by feature/domain, not by type. Keep files small — **~200 lines typical, split beyond that**. Each file does one thing.
+- **`domain/` is pure Dart** — no Flutter, no Supabase imports. Put testable decision logic there (see the map domain classes).
+- **No hardcoded colours/sizes in widgets.** Use the `ColorScheme` + `AppTokens` `ThemeExtension` (`context.tokens`). Light theme only for now, but built so dark mode is a second scheme.
+- **All UI text in Dutch (Vlaams).**
+- **Before every commit:** `dart format -l 110 lib test`, `flutter analyze` must be **0 issues**, and `flutter test` must be **green**. Write tests for new `domain/` and `application/` logic.
+- **Cross-platform first.** Don't write Android-only code when a cross-platform alternative exists (iPhone comes later — see below).
+- **Commit per logical step** with a clear Dutch message; attribution is disabled (no co-author trailer). **Never push without asking.**
+
+## Test devices
+
+- **Samsung A52 "Papa"** — real phone over wireless adb (the id looks like `adb-XXXX._adb-tls-connect._tcp`; it changes and drops when wifi/debugging resets — re-check with `flutter devices`).
+- **Emulator "Liam"** — `emulator-5554`, an Android image **with Google Play** (needed for FCM push).
+- **Android only now.** iPhone (for Liam and mama) comes later via **Codemagic / TestFlight**; no Mac required locally.
+
+## Secrets — never commit, never log
+
+`env.json` (Supabase keys), `android/app/google-services.json` (Firebase), `android/local.properties`, and any service-account JSON are gitignored and must stay out of git and out of logs. Only the Supabase **publishable/anon** key ships in the app; the `service_role` key lives only in Supabase (Edge Function secrets). The FCM service account is set by the owner as the `FCM_SERVICE_ACCOUNT` secret — never read or store it in the project.
+
+## Cost discipline
+
+Only **free** services (Supabase free tier, FCM, OpenStreetMap tiles; later Google Maps **SDK for Android** free tier). **Do not** add paid APIs (Places, Geocoding, Directions). Any feature that would cost money goes **behind a feature flag**, off by default. See `docs/KOSTEN.md`. Roadmap and phase order live in `docs/ROADMAP.md`.
