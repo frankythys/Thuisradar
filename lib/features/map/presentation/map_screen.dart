@@ -108,6 +108,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     setState(() => _selected = entry);
   }
 
+  /// Tik op een groepspin: zoom in zodat de leden uit elkaar gaan.
+  void _onGroupTap(LatLng center) {
+    _autoFit.lock();
+    final zoom = (_mapController.camera.zoom + 2).clamp(1.0, 18.0);
+    _mapController.move(center, zoom);
+  }
+
+  void _deselect() {
+    if (_selected != null) setState(() => _selected = null);
+  }
+
   void _openDetail(MemberOnMap entry) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -199,8 +210,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           FamilyMap(
             controller: _mapController,
             members: members,
+            now: now,
+            selectedUserId: selected?.member.userId,
+            myUserId: myId,
+            onMemberTap: _select,
+            onGroupTap: _onGroupTap,
             onUserGesture: _autoFit.lock,
-            onMarkerTap: _select,
+            onMapTap: _deselect,
             onMapReady: () {
               _mapReady = true;
               _fit(members);
@@ -258,6 +274,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               now: now,
               onSelect: _select,
               onDetails: _openDetail,
+              selectedUserId: selected?.member.userId,
               controller: _sheetController,
             ),
           if (selected case final entry?)

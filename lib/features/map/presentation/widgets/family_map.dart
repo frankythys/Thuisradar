@@ -3,17 +3,22 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/member_on_map.dart';
-import 'member_marker.dart';
+import 'clustered_marker_layer.dart';
 
-/// OpenStreetMap-kaart met een marker per gezinslid dat een locatie heeft.
+/// OpenStreetMap-kaart met een marker (of groepspin) per gezinslid met locatie.
 class FamilyMap extends StatelessWidget {
   const FamilyMap({
     super.key,
     required this.controller,
     required this.members,
+    required this.now,
+    required this.onMemberTap,
+    required this.onGroupTap,
+    this.selectedUserId,
+    this.myUserId,
     this.onMapReady,
     this.onUserGesture,
-    this.onMarkerTap,
+    this.onMapTap,
   });
 
   static const fallbackCenter = LatLng(50.85, 4.35); // België
@@ -21,13 +26,18 @@ class FamilyMap extends StatelessWidget {
 
   final MapController controller;
   final List<MemberOnMap> members;
+  final DateTime now;
+  final ValueChanged<MemberOnMap> onMemberTap;
+  final ValueChanged<LatLng> onGroupTap;
+  final String? selectedUserId;
+  final String? myUserId;
   final VoidCallback? onMapReady;
 
   /// Vuurt wanneer de gebruiker zelf de kaart zoomt of verschuift.
   final VoidCallback? onUserGesture;
 
-  /// Tik op de marker van een gezinslid.
-  final ValueChanged<MemberOnMap>? onMarkerTap;
+  /// Tik op een lege plek op de kaart (om de selectie op te heffen).
+  final VoidCallback? onMapTap;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +47,7 @@ class FamilyMap extends StatelessWidget {
         initialCenter: fallbackCenter,
         initialZoom: 8,
         onMapReady: onMapReady,
+        onTap: (_, _) => onMapTap?.call(),
         onPositionChanged: (camera, hasGesture) {
           if (hasGesture) onUserGesture?.call();
         },
@@ -47,21 +58,13 @@ class FamilyMap extends StatelessWidget {
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: userAgent,
         ),
-        MarkerLayer(
-          markers: [
-            for (final entry in members)
-              if (entry.location case final location?)
-                Marker(
-                  point: LatLng(location.latitude, location.longitude),
-                  width: MemberMarker.width,
-                  height: MemberMarker.height,
-                  alignment: Alignment.topCenter,
-                  child: GestureDetector(
-                    onTap: () => onMarkerTap?.call(entry),
-                    child: MemberMarker(entry: entry),
-                  ),
-                ),
-          ],
+        ClusteredMarkerLayer(
+          members: members,
+          now: now,
+          onMemberTap: onMemberTap,
+          onGroupTap: onGroupTap,
+          selectedUserId: selectedUserId,
+          myUserId: myUserId,
         ),
         const SimpleAttributionWidget(source: Text('OpenStreetMap-bijdragers')),
       ],

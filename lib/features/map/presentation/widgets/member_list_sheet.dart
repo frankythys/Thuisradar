@@ -13,11 +13,13 @@ class MemberListSheet extends StatelessWidget {
     required this.now,
     required this.onSelect,
     required this.onDetails,
+    this.selectedUserId,
     this.controller,
   });
 
   final List<MemberOnMap> members;
   final String? currentUserId;
+  final String? selectedUserId;
   final DateTime now;
 
   /// Laat de ouder het paneel programmatisch in-/uitschuiven.
@@ -60,6 +62,7 @@ class MemberListSheet extends StatelessWidget {
                 entry: entry,
                 isMe: entry.member.userId == currentUserId,
                 now: now,
+                selected: entry.member.userId == selectedUserId,
                 onTap: () => onSelect(entry),
                 onDetails: () => onDetails(entry),
               ),

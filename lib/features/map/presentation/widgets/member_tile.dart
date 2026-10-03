@@ -13,6 +13,7 @@ class MemberTile extends StatelessWidget {
     required this.entry,
     required this.isMe,
     required this.now,
+    this.selected = false,
     this.onTap,
     this.onDetails,
   });
@@ -20,6 +21,9 @@ class MemberTile extends StatelessWidget {
   final MemberOnMap entry;
   final bool isMe;
   final DateTime now;
+
+  /// Gemarkeerd omdat dit lid op de kaart geselecteerd is.
+  final bool selected;
 
   /// Tik op de tegel: beweeg de kaart naar dit lid.
   final VoidCallback? onTap;
@@ -36,13 +40,19 @@ class MemberTile extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: tokens.spaceXs),
       child: Material(
-        color: AppColors.ground,
+        color: selected ? AppColors.primarySoft : AppColors.ground,
         borderRadius: BorderRadius.circular(tokens.radiusCard),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(tokens.radiusCard),
-          child: Padding(
+          child: Container(
             padding: EdgeInsets.all(tokens.spaceMd),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(tokens.radiusCard),
+              border: Border(
+                left: BorderSide(color: selected ? AppColors.primary : Colors.transparent, width: 4),
+              ),
+            ),
             child: Row(
               children: [
                 MemberAvatar(member: entry.member, statusColor: location == null ? null : AppColors.primary),
