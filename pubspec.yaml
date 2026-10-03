@@ -59,6 +59,16 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   mocktail: ^1.0.5
+  flutter_launcher_icons: ^0.14.4
+
+# App-icoon genereren: zet een 1024x1024 PNG op assets/icon/icon.png en draai
+# `dart run flutter_launcher_icons`. Zolang het bestand er niet is, blijft het
+# standaard Flutter-icoon staan.
+flutter_launcher_icons:
+  android: true
+  ios: false
+  min_sdk_android: 21
+  image_path: "assets/icon/icon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
