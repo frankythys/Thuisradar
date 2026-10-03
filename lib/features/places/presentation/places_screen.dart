@@ -23,6 +23,35 @@ class PlacesScreen extends ConsumerWidget {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => AddPlaceScreen(familyId: family.id)));
   }
 
+  Future<void> _delete(BuildContext context, WidgetRef ref, Place place) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Plaats verwijderen?'),
+        content: Text('"${place.name}" wordt verwijderd voor het hele gezin.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.alert),
+            child: const Text('Verwijderen'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await ref.read(placesRepositoryProvider).delete(place.id);
+    } on Object catch (error) {
+      debugPrint('Plaats verwijderen mislukt: $error');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Verwijderen mislukt. Probeer opnieuw.')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
@@ -54,7 +83,7 @@ class PlacesScreen extends ConsumerWidget {
                       child: _PlaceCard(
                         place: place,
                         presentCount: presence.where((p) => p.placeId == place.id).length,
-                        onDelete: () => ref.read(placesRepositoryProvider).delete(place.id),
+                        onDelete: () => _delete(context, ref, place),
                       ),
                     ),
                 ],
