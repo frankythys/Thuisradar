@@ -3,23 +3,34 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/member_avatar.dart';
+import '../../../places/domain/place_status.dart';
+import '../../../places/presentation/place_icons.dart';
 import '../../domain/member_on_map.dart';
 
 /// Groepspin voor leden die op het scherm dicht bij elkaar staan: overlappende
-/// avatars (max 3 + "+N"), een statusballonnetje en een puntje naar de locatie.
+/// avatars (max 3 + "+N"), een statusballon met de meest recente status, en een
+/// puntje naar de locatie.
 class GroupPin extends StatelessWidget {
-  const GroupPin({super.key, required this.members, required this.now, this.myUserId, this.selectedUserId});
+  const GroupPin({
+    super.key,
+    required this.members,
+    required this.now,
+    this.placeByUser = const {},
+    this.myUserId,
+    this.selectedUserId,
+  });
 
-  static const width = 200.0;
-  static const height = 110.0;
+  static const width = 220.0;
+  static const height = 120.0;
 
-  static const _avatar = 40.0;
-  static const _step = 26.0;
+  static const _avatar = 48.0;
+  static const _step = 30.0;
   static const _maxShown = 3;
 
   /// Leden in deze groep; de eerste is "ik" (indien aanwezig), die bovenop ligt.
   final List<MemberOnMap> members;
   final DateTime now;
+  final Map<String, PlaceStatus> placeByUser;
   final String? myUserId;
   final String? selectedUserId;
 
@@ -32,7 +43,7 @@ class GroupPin extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _bubble(context),
+        _Bubble(info: _info(), now: now),
         const SizedBox(height: 4),
         SizedBox(
           width: clusterWidth,
@@ -89,32 +100,13 @@ class GroupPin extends StatelessWidget {
       ),
       child: Text(
         '+$extra',
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
       ),
     );
   }
 
-  Widget _bubble(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: width),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: const [BoxShadow(color: Color(0x26121C1C), blurRadius: 6, offset: Offset(0, 2))],
-      ),
-      child: Text(
-        _statusText(),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-
-  /// Meest recente status binnen de groep. (D2 vervangt dit door plaatsen,
-  /// bv. "Liam is aangekomen · 15 u geleden".)
-  String _statusText() {
+  /// Meest recente status binnen de groep: icoon, titel en tijd.
+  ({IconData icon, String title, DateTime? at}) _info() {
     MemberOnMap? latest;
     for (final member in members) {
       final location = member.location;
@@ -123,9 +115,74 @@ class GroupPin extends StatelessWidget {
         latest = member;
       }
     }
-    if (latest == null) return '${members.length} gezinsleden';
+    if (latest == null) {
+      return (icon: Icons.group, title: '${members.length} gezinsleden', at: null);
+    }
 
     final name = latest.member.userId == myUserId ? 'Jij' : latest.member.displayName;
-    return '$name · ${formatRelative(latest.location!.updatedAt, now: now)}';
+    final place = placeByUser[latest.member.userId];
+    if (place != null) {
+      return (
+        icon: placeIcon(place.icon),
+        title: '$name is aangekomen',
+        at: place.since ?? latest.location!.updatedAt,
+      );
+    }
+    if (speedKmh(latest.location!.speedMps) != null) {
+      return (
+        icon: Icons.directions_car_filled_outlined,
+        title: '$name is onderweg',
+        at: latest.location!.updatedAt,
+      );
+    }
+    return (icon: Icons.location_on_outlined, title: name, at: latest.location!.updatedAt);
+  }
+}
+
+class _Bubble extends StatelessWidget {
+  const _Bubble({required this.info, required this.now});
+
+  final ({IconData icon, String title, DateTime? at}) info;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: GroupPin.width),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [BoxShadow(color: Color(0x26121C1C), blurRadius: 8, offset: Offset(0, 2))],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(info.icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  info.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.labelLarge?.copyWith(color: AppColors.ink),
+                ),
+                if (info.at != null)
+                  Text(
+                    formatRelative(info.at!, now: now),
+                    style: text.labelSmall?.copyWith(color: AppColors.muted),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

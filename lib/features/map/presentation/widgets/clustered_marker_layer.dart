@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../places/domain/place_status.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/member_on_map.dart';
 import 'group_pin.dart';
@@ -16,6 +17,7 @@ class ClusteredMarkerLayer extends StatelessWidget {
     required this.now,
     required this.onMemberTap,
     required this.onGroupTap,
+    this.placeByUser = const {},
     this.selectedUserId,
     this.myUserId,
   });
@@ -24,6 +26,7 @@ class ClusteredMarkerLayer extends StatelessWidget {
   final DateTime now;
   final ValueChanged<MemberOnMap> onMemberTap;
   final ValueChanged<LatLng> onGroupTap;
+  final Map<String, PlaceStatus> placeByUser;
   final String? selectedUserId;
   final String? myUserId;
 
@@ -75,7 +78,11 @@ class ClusteredMarkerLayer extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: GestureDetector(
               onTap: () => onMemberTap(member),
-              child: MemberMarker(entry: member, selected: member.member.userId == selectedUserId),
+              child: MemberMarker(
+                entry: member,
+                selected: member.member.userId == selectedUserId,
+                placeStatus: placeByUser[member.member.userId],
+              ),
             ),
           ),
         );
@@ -91,6 +98,7 @@ class ClusteredMarkerLayer extends StatelessWidget {
               child: GroupPin(
                 members: groupMembers,
                 now: now,
+                placeByUser: placeByUser,
                 myUserId: myUserId,
                 selectedUserId: selectedUserId,
               ),

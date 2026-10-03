@@ -222,6 +222,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             controller: _mapController,
             members: members,
             places: places,
+            placeByUser: placeByUser,
             now: now,
             selectedUserId: selected?.member.userId,
             myUserId: myId,

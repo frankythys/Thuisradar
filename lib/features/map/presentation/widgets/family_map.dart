@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../places/domain/place.dart';
+import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
@@ -18,6 +19,7 @@ class FamilyMap extends StatelessWidget {
     required this.onMemberTap,
     required this.onGroupTap,
     this.places = const [],
+    this.placeByUser = const {},
     this.selectedUserId,
     this.myUserId,
     this.onMapReady,
@@ -31,6 +33,7 @@ class FamilyMap extends StatelessWidget {
   final MapController controller;
   final List<MemberOnMap> members;
   final List<Place> places;
+  final Map<String, PlaceStatus> placeByUser;
   final DateTime now;
   final ValueChanged<MemberOnMap> onMemberTap;
   final ValueChanged<LatLng> onGroupTap;
@@ -98,6 +101,7 @@ class FamilyMap extends StatelessWidget {
         ClusteredMarkerLayer(
           members: members,
           now: now,
+          placeByUser: placeByUser,
           onMemberTap: onMemberTap,
           onGroupTap: onGroupTap,
           selectedUserId: selectedUserId,

@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/member_avatar.dart';
+import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
 
 class MemberMarker extends StatelessWidget {
-  const MemberMarker({super.key, required this.entry, this.selected = false});
+  const MemberMarker({super.key, required this.entry, this.selected = false, this.placeStatus});
 
-  static const width = 110.0;
+  static const width = 120.0;
   static const height = 92.0;
 
   final MemberOnMap entry;
@@ -16,10 +17,15 @@ class MemberMarker extends StatelessWidget {
   /// Geselecteerd lid: accent-selectiering en iets groter.
   final bool selected;
 
+  /// Waar dit lid nu is (plaats), indien binnen een zone.
+  final PlaceStatus? placeStatus;
+
   @override
   Widget build(BuildContext context) {
     final speed = speedKmh(entry.location?.speedMps);
-    final label = speed != null ? '$speed km/u' : entry.member.displayName;
+    final label = placeStatus != null
+        ? placeStatus!.name
+        : (speed != null ? '$speed km/u' : entry.member.displayName);
 
     return Transform.scale(
       scale: selected ? 1.15 : 1.0,
