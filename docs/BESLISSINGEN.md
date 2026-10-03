@@ -32,6 +32,13 @@ roadmap (D2–D5 + afwerking). Volgens `../CLAUDE.md`.
 - **App-icoon**: `flutter_launcher_icons` geconfigureerd op `assets/icon/icon.png`. Zolang dat bestand ontbreekt blijft het standaard Flutter-icoon; zet er een 1024×1024 PNG neer en draai `dart run flutter_launcher_icons`.
 - **Testdata opkuisen**: handmatig in Supabase (geen code).
 
+## Push-aanroep (SQL i.p.v. dashboard)
+
+- Beide Edge Functions (`send-sos-push`, `send-place-push`) worden aangeroepen via **pg_net-triggers** in `supabase/migrations/007_push_triggers.sql` — geen Database Webhook in het dashboard nodig. (Supabase Database Webhooks zijn onder de motorkap net zulke pg_net-triggers.)
+- URL + webhook-geheim staan in `private.push_config` (RLS dicht), via één INSERT die de eigenaar zelf typt → **geen secret in git**.
+- Een bestaande dashboard-webhook op `sos_alerts` moet verwijderd worden om dubbele SOS-pushes te vermijden.
+
 ## Migraties
 
-- Alle resterende DB-wijzigingen voor D3–D5 zitten in `supabase/migrations/006_rest.sql` (messages + event_reads + realtime). Eén keer draaien in de SQL Editor.
+- D3–D5: `supabase/migrations/006_rest.sql` (messages + event_reads + realtime).
+- Push-triggers: `supabase/migrations/007_push_triggers.sql` (onvermijdelijke extra migratie voor de pg_net-aanroep). Eén keer draaien in de SQL Editor.
