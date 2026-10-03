@@ -15,6 +15,7 @@ import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/widgets/sos_hold_button.dart';
 import '../application/map_providers.dart';
+import '../domain/auto_fit.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_header.dart';
 import 'widgets/family_map.dart';
@@ -34,8 +35,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   static const _memberZoom = 15.0;
 
   final _mapController = MapController();
+  final _autoFit = AutoFitController();
   bool _mapReady = false;
-  bool _hasFittedCamera = false;
 
   @override
   void initState() {
@@ -60,16 +61,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await ref.read(authRepositoryProvider).signOut();
   }
 
-  /// Toont alle leden met een locatie, één keer zodra de data er is.
-  void _fitAllOnce(List<MemberOnMap> members) {
-    if (_hasFittedCamera || !_mapReady) return;
+  /// Maakt de kaart passend. Automatisch hoogstens één keer en nooit meer nadat
+  /// de gebruiker zelf heeft gezoomd/verschoven; [deliberate] (centreerknop)
+  /// mag altijd.
+  void _fit(List<MemberOnMap> members, {bool deliberate = false}) {
     final points = [
       for (final m in members)
         if (m.location case final l?) LatLng(l.latitude, l.longitude),
     ];
-    if (points.isEmpty) return;
+    if (!_autoFit.shouldFit(mapReady: _mapReady, hasPoints: points.isNotEmpty, deliberate: deliberate)) {
+      return;
+    }
 
-    _hasFittedCamera = true;
+    _autoFit.markFitted();
     if (points.length == 1) {
       _mapController.move(points.single, _memberZoom);
     } else {
@@ -81,6 +85,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
       );
     }
+  }
+
+  /// Beweegt bewust naar één gezinslid (vanuit de lijst). Mag altijd.
+  void _focus(MemberOnMap entry) {
+    final location = entry.location;
+    if (location == null) return;
+    _mapController.move(LatLng(location.latitude, location.longitude), _memberZoom);
   }
 
   void _openDetail(MemberOnMap entry) {
@@ -153,8 +164,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
 
     if (members.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fitAllOnce(members));
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fit(members));
     }
+
+    final sheetTop = MediaQuery.sizeOf(context).height * 0.34;
 
     return Scaffold(
       body: Stack(
@@ -162,10 +175,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           FamilyMap(
             controller: _mapController,
             members: members,
+            onUserGesture: _autoFit.lock,
             onMapReady: () {
               _mapReady = true;
-              _fitAllOnce(members);
+              _fit(members);
             },
+          ),
+          Positioned(
+            right: 16,
+            bottom: sheetTop + 16,
+            child: _RecenterButton(onPressed: () => _fit(members, deliberate: true)),
           ),
           SafeArea(
             child: Padding(
@@ -212,9 +231,35 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               members: members,
               currentUserId: ref.watch(currentUserIdProvider),
               now: now,
-              onSelect: _openDetail,
+              onSelect: _focus,
+              onDetails: _openDetail,
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Zwevende knop om de kaart bewust terug op iedereen te centreren.
+class _RecenterButton extends StatelessWidget {
+  const _RecenterButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      elevation: 3,
+      shadowColor: const Color(0x33121C1C),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: const Tooltip(
+          message: 'Toon iedereen',
+          child: SizedBox(width: 48, height: 48, child: Icon(Icons.my_location, color: AppColors.primary)),
+        ),
       ),
     );
   }

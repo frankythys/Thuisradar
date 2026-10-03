@@ -7,7 +7,13 @@ import 'member_marker.dart';
 
 /// OpenStreetMap-kaart met een marker per gezinslid dat een locatie heeft.
 class FamilyMap extends StatelessWidget {
-  const FamilyMap({super.key, required this.controller, required this.members, this.onMapReady});
+  const FamilyMap({
+    super.key,
+    required this.controller,
+    required this.members,
+    this.onMapReady,
+    this.onUserGesture,
+  });
 
   static const fallbackCenter = LatLng(50.85, 4.35); // België
   static const userAgent = 'be.thuisradar.thuisradar';
@@ -15,6 +21,9 @@ class FamilyMap extends StatelessWidget {
   final MapController controller;
   final List<MemberOnMap> members;
   final VoidCallback? onMapReady;
+
+  /// Vuurt wanneer de gebruiker zelf de kaart zoomt of verschuift.
+  final VoidCallback? onUserGesture;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +33,9 @@ class FamilyMap extends StatelessWidget {
         initialCenter: fallbackCenter,
         initialZoom: 8,
         onMapReady: onMapReady,
+        onPositionChanged: (camera, hasGesture) {
+          if (hasGesture) onUserGesture?.call();
+        },
         interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
       ),
       children: [

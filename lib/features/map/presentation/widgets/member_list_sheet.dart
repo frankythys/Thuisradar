@@ -12,12 +12,18 @@ class MemberListSheet extends StatelessWidget {
     required this.currentUserId,
     required this.now,
     required this.onSelect,
+    required this.onDetails,
   });
 
   final List<MemberOnMap> members;
   final String? currentUserId;
   final DateTime now;
+
+  /// Tik op een lid: beweeg de kaart ernaartoe.
   final ValueChanged<MemberOnMap> onSelect;
+
+  /// Chevron: open het detailscherm van dat lid.
+  final ValueChanged<MemberOnMap> onDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +56,7 @@ class MemberListSheet extends StatelessWidget {
                 isMe: entry.member.userId == currentUserId,
                 now: now,
                 onTap: () => onSelect(entry),
+                onDetails: () => onDetails(entry),
               ),
           ],
         ),

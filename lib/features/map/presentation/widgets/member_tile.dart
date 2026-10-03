@@ -8,12 +8,24 @@ import '../../../../shared/widgets/member_avatar.dart';
 import '../../domain/member_on_map.dart';
 
 class MemberTile extends StatelessWidget {
-  const MemberTile({super.key, required this.entry, required this.isMe, required this.now, this.onTap});
+  const MemberTile({
+    super.key,
+    required this.entry,
+    required this.isMe,
+    required this.now,
+    this.onTap,
+    this.onDetails,
+  });
 
   final MemberOnMap entry;
   final bool isMe;
   final DateTime now;
+
+  /// Tik op de tegel: beweeg de kaart naar dit lid.
   final VoidCallback? onTap;
+
+  /// Chevron rechts: open het detailscherm van dit lid.
+  final VoidCallback? onDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +62,11 @@ class MemberTile extends StatelessWidget {
                 ),
                 SizedBox(width: tokens.spaceSm),
                 BatteryBadge(level: location?.battery, isCharging: location?.isCharging),
-                const Icon(Icons.chevron_right, color: AppColors.muted),
+                IconButton(
+                  onPressed: onDetails,
+                  tooltip: 'Details',
+                  icon: const Icon(Icons.chevron_right, color: AppColors.muted),
+                ),
               ],
             ),
           ),
