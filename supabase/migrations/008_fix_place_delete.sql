@@ -14,6 +14,13 @@ alter table public.place_presence replica identity full;
 alter table public.family_events
   drop constraint if exists family_events_place_id_fkey;
 
+-- Verweesde verwijzingen (naar reeds verwijderde plaatsen) opschonen, anders
+-- weigert de nieuwe foreign key. De gebeurtenis zelf blijft bewaard.
+update public.family_events
+set place_id = null
+where place_id is not null
+  and place_id not in (select id from public.places);
+
 alter table public.family_events
   add constraint family_events_place_id_fkey
     foreign key (place_id) references public.places (id) on delete set null;
