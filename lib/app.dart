@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/push/push_gate.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/auth_gate.dart';
 import 'features/onboarding/presentation/onboarding_gate.dart';
@@ -13,7 +14,7 @@ class ThuisradarApp extends StatelessWidget {
       title: 'Thuisradar',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      home: const OnboardingGate(child: AuthGate()),
+      home: const PushGate(child: OnboardingGate(child: AuthGate())),
     );
   }
 }
