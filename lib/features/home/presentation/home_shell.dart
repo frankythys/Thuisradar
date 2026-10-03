@@ -8,6 +8,8 @@ import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../map/presentation/map_screen.dart';
+import '../../notifications/application/events_providers.dart';
+import '../../notifications/presentation/notifications_screen.dart';
 import '../../places/presentation/places_screen.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
@@ -35,6 +37,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final myId = ref.watch(currentUserIdProvider);
     final active = ref.watch(activeSosProvider(familyId)).value ?? const [];
     final incoming = sosToShow(active, myUserId: myId, dismissed: _dismissed);
+    final unread = ref.watch(unreadCountProvider(familyId));
 
     return Stack(
       children: [
@@ -49,14 +52,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 icon: Icons.chat_bubble_outline,
                 message: 'Binnenkort kun je hier met je gezin chatten.',
               ),
-              const _SoonTab(
-                title: 'Meldingen',
-                icon: Icons.notifications_outlined,
-                message: 'Binnenkort zie je hier aankomst, vertrek en SOS-meldingen.',
-              ),
+              NotificationsScreen(family: widget.family),
             ],
           ),
-          bottomNavigationBar: AppBottomNav(current: _tab, onSelected: (tab) => setState(() => _tab = tab)),
+          bottomNavigationBar: AppBottomNav(current: _tab, meldingenBadge: unread, onSelected: _onSelectTab),
         ),
         if (incoming != null)
           Positioned.fill(
@@ -72,6 +71,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ),
       ],
     );
+  }
+
+  void _onSelectTab(AppTab tab) {
+    setState(() => _tab = tab);
+    // Meldingen openen = alles als gelezen markeren (badge verdwijnt).
+    if (tab == AppTab.meldingen) {
+      final familyId = widget.family.id;
+      final userId = ref.read(currentUserIdProvider);
+      if (userId != null) {
+        ref.read(eventsRepositoryProvider).markSeen(userId, familyId).then((_) {
+          if (mounted) ref.invalidate(lastSeenProvider(familyId));
+        });
+      }
+    }
   }
 
   String _nameFor(String userId, String familyId) {

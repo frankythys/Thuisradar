@@ -8,10 +8,13 @@ enum AppTab { kaart, plaatsen, chat, meldingen }
 /// Onderste navigatiebalk in de Thuisradar-stijl (actief = teal met
 /// primaryContainer-indicator).
 class AppBottomNav extends StatelessWidget {
-  const AppBottomNav({super.key, required this.current, required this.onSelected});
+  const AppBottomNav({super.key, required this.current, required this.onSelected, this.meldingenBadge = 0});
 
   final AppTab current;
   final ValueChanged<AppTab> onSelected;
+
+  /// Aantal ongelezen meldingen (0 = geen badge).
+  final int meldingenBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -33,25 +36,27 @@ class AppBottomNav extends StatelessWidget {
       child: NavigationBar(
         selectedIndex: current.index,
         onDestinationSelected: (index) => onSelected(AppTab.values[index]),
-        destinations: const [
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.map_outlined),
             selectedIcon: Icon(Icons.map),
             label: 'Kaart',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.place_outlined),
             selectedIcon: Icon(Icons.place),
             label: 'Plaatsen',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.chat_bubble_outline),
             selectedIcon: Icon(Icons.chat_bubble),
             label: 'Chat',
           ),
           NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications),
+            icon: meldingenBadge > 0
+                ? Badge(label: Text('$meldingenBadge'), child: const Icon(Icons.notifications_outlined))
+                : const Icon(Icons.notifications_outlined),
+            selectedIcon: const Icon(Icons.notifications),
             label: 'Meldingen',
           ),
         ],
