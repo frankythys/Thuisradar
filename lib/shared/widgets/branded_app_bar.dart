@@ -22,10 +22,21 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
 
+    // Toon een duidelijke terugpijl zodra er iets te poppen valt (gepushte schermen).
+    final effectiveLeading =
+        leading ??
+        (Navigator.of(context).canPop()
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Terug',
+                onPressed: () => Navigator.of(context).maybePop(),
+              )
+            : null);
+
     return AppBar(
-      leadingWidth: leading == null ? 0 : null,
-      leading: leading,
-      titleSpacing: leading == null ? tokens.spaceMd : 0,
+      leadingWidth: effectiveLeading == null ? 0 : null,
+      leading: effectiveLeading,
+      titleSpacing: effectiveLeading == null ? tokens.spaceMd : 0,
       title: Row(
         children: [
           const _LogoTile(),

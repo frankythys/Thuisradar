@@ -103,4 +103,41 @@ void main() {
     expect(find.text('THUISRADAR'), findsOneWidget);
     expect(find.text('Kaart'), findsOneWidget);
   });
+
+  testWidgets('BrandedAppBar toont geen terugknop op een root-scherm', (tester) async {
+    await pumpThemed(tester, const SizedBox(), appBar: const BrandedAppBar(title: 'Kaart'));
+    expect(find.byTooltip('Terug'), findsNothing);
+  });
+
+  testWidgets('BrandedAppBar toont een werkende terugknop op een gepusht scherm', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const Scaffold(appBar: BrandedAppBar(title: 'Detail')),
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Detail'), findsOneWidget);
+    expect(find.byTooltip('Terug'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Terug'));
+    await tester.pumpAndSettle();
+    expect(find.text('Detail'), findsNothing);
+    expect(find.text('open'), findsOneWidget);
+  });
 }
