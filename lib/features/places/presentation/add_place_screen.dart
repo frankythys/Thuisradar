@@ -121,6 +121,28 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   child: Icon(placeIcon(_icon), color: AppColors.primary, size: 40),
                 ),
                 const Icon(Icons.circle, size: 8, color: AppColors.primary),
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: Material(
+                    color: Colors.white,
+                    shape: const CircleBorder(),
+                    elevation: 3,
+                    shadowColor: const Color(0x33121C1C),
+                    child: InkWell(
+                      onTap: _goToCurrentLocation,
+                      customBorder: const CircleBorder(),
+                      child: const Tooltip(
+                        message: 'Mijn locatie',
+                        child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Icon(Icons.my_location, color: AppColors.primary),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
