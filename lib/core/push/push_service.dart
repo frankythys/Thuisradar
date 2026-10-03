@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _sosChannelId = 'sos_alerts';
 const _sosChannelName = 'SOS-alarmen';
+const _placesChannelId = 'places';
+const _placesChannelName = 'Plaatsen';
 
 /// Regelt FCM: het alarm-notificatiekanaal, tokenregistratie in device_tokens,
 /// en het tonen van SOS-meldingen terwijl de app op de voorgrond staat.
@@ -19,8 +21,8 @@ class PushService {
 
   StreamSubscription<String>? _tokenRefreshSub;
 
-  /// Max belang + alarm-audio, zodat de SOS ook op stil opvalt.
-  static const _channel = AndroidNotificationChannel(
+  /// SOS: max belang + alarm-audio, zodat het ook op stil opvalt.
+  static const _sosChannel = AndroidNotificationChannel(
     _sosChannelId,
     _sosChannelName,
     description: 'Dringende noodoproepen van je gezin',
@@ -29,13 +31,21 @@ class PushService {
     audioAttributesUsage: AudioAttributesUsage.alarm,
   );
 
+  /// Plaatsen: gewone melding met standaardgeluid (geen alarm).
+  static const _placesChannel = AndroidNotificationChannel(
+    _placesChannelId,
+    _placesChannelName,
+    description: 'Aankomst en vertrek bij plaatsen',
+    importance: Importance.defaultImportance,
+  );
+
   Future<void> init() async {
     await _local.initialize(
       const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
     );
-    await _local
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
+    final android = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await android?.createNotificationChannel(_sosChannel);
+    await android?.createNotificationChannel(_placesChannel);
 
     FirebaseMessaging.onMessage.listen(_showForeground);
   }
@@ -83,20 +93,27 @@ class PushService {
     final notification = message.notification;
     if (notification == null) return;
 
+    final isSos = message.data['type'] == 'sos';
+    final details = isSos
+        ? const AndroidNotificationDetails(
+            _sosChannelId,
+            _sosChannelName,
+            importance: Importance.max,
+            priority: Priority.max,
+            category: AndroidNotificationCategory.alarm,
+            audioAttributesUsage: AudioAttributesUsage.alarm,
+          )
+        : const AndroidNotificationDetails(
+            _placesChannelId,
+            _placesChannelName,
+            importance: Importance.defaultImportance,
+          );
+
     _local.show(
       notification.hashCode,
       notification.title,
       notification.body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _sosChannelId,
-          _sosChannelName,
-          importance: Importance.max,
-          priority: Priority.max,
-          category: AndroidNotificationCategory.alarm,
-          audioAttributesUsage: AudioAttributesUsage.alarm,
-        ),
-      ),
+      NotificationDetails(android: details),
     );
   }
 }
