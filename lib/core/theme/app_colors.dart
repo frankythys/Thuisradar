@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   static const primary = Color(0xFF0E6E5C);
   static const primarySoft = Color(0xFFDCEFE9);
+  static const secondary = Color(0xFF6D4BD8);
   static const alert = Color(0xFFB4370A);
+
+  /// Lichte oranje tint achter lage-batterij-pills en SOS-badges.
+  static const alertSoft = Color(0xFFF7E0D4);
   static const ink = Color(0xFF12201C);
   static const muted = Color(0xFF5B6763);
   static const ground = Color(0xFFF3F5F4);
