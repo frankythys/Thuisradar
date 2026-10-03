@@ -107,6 +107,11 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   options: MapOptions(
                     initialCenter: _center,
                     initialZoom: 16,
+                    minZoom: 3,
+                    maxZoom: 18,
+                    cameraConstraint: CameraConstraint.contain(
+                      bounds: LatLngBounds(const LatLng(-85, -180), const LatLng(85, 180)),
+                    ),
                     onPositionChanged: (camera, _) => setState(() => _center = camera.center),
                     interactionOptions: const InteractionOptions(
                       flags: InteractiveFlag.all & ~InteractiveFlag.rotate,

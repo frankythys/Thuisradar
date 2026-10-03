@@ -51,6 +51,12 @@ class FamilyMap extends StatelessWidget {
       options: MapOptions(
         initialCenter: fallbackCenter,
         initialZoom: 8,
+        minZoom: 3,
+        maxZoom: 18,
+        // Binnen één wereld blijven: geen grijze leegte of herhaalde markers.
+        cameraConstraint: CameraConstraint.contain(
+          bounds: LatLngBounds(const LatLng(-85, -180), const LatLng(85, 180)),
+        ),
         onMapReady: onMapReady,
         onTap: (_, _) => onMapTap?.call(),
         onPositionChanged: (camera, hasGesture) {
