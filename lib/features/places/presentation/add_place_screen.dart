@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
+import '../../auth/application/auth_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../map/presentation/widgets/family_map.dart';
 import '../application/places_providers.dart';
@@ -34,7 +35,21 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _goToCurrentLocation());
+    // Meteen starten op de locatie die de app al kent (via de tracker), zodat
+    // de kaart direct bij de gebruiker staat — ook binnenshuis zonder verse fix.
+    final myId = ref.read(currentUserIdProvider);
+    final locations = ref.read(familyLocationsProvider(widget.familyId)).value ?? const [];
+    for (final location in locations) {
+      if (location.userId == myId) {
+        _center = LatLng(location.latitude, location.longitude);
+      }
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_center != FamilyMap.fallbackCenter) {
+        _controller.move(_center, 16);
+      }
+      _goToCurrentLocation();
+    });
   }
 
   @override

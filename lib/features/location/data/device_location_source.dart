@@ -29,23 +29,31 @@ class DeviceLocationSource {
 
   Future<void> openSettings() => Geolocator.openAppSettings();
 
-  /// Eén verse GPS-meting, of null als dat niet lukt binnen [timeout].
-  Future<DevicePosition?> currentPosition({Duration timeout = const Duration(seconds: 5)}) async {
+  /// Een verse GPS-meting; lukt dat niet binnen [timeout] (bv. binnenshuis),
+  /// dan de laatst bekende positie. Null als er helemaal niets is.
+  Future<DevicePosition?> currentPosition({Duration timeout = const Duration(seconds: 8)}) async {
     try {
       final p = await Geolocator.getCurrentPosition(
         locationSettings: LocationSettings(accuracy: LocationAccuracy.high, timeLimit: timeout),
       );
-      return DevicePosition(
-        latitude: p.latitude,
-        longitude: p.longitude,
-        timestamp: p.timestamp,
-        accuracyMeters: p.accuracy,
-        speedMps: p.speed < 0 ? null : p.speed,
-      );
+      return _toDevice(p);
     } on Exception {
-      return null;
+      try {
+        final last = await Geolocator.getLastKnownPosition();
+        return last == null ? null : _toDevice(last);
+      } on Exception {
+        return null;
+      }
     }
   }
+
+  DevicePosition _toDevice(Position p) => DevicePosition(
+    latitude: p.latitude,
+    longitude: p.longitude,
+    timestamp: p.timestamp,
+    accuracyMeters: p.accuracy,
+    speedMps: p.speed < 0 ? null : p.speed,
+  );
 
   Stream<DevicePosition> positions({Duration interval = defaultInterval}) {
     return Geolocator.getPositionStream(locationSettings: _settings(interval)).map(
