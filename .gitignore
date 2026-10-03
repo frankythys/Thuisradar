@@ -54,3 +54,6 @@ env.json
 /android/app/google-services.json
 *service-account*.json
 *service_account*.json
+
+# Supabase CLI tijdelijke bestanden
+supabase/.temp/
