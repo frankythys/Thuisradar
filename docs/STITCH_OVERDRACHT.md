@@ -1,5 +1,11 @@
 # Stitch-overdracht — 4 oktober 2026
 
+## Aanvulling — kaartstart en horizontaal schuiven
+- Kaart centreert bij openen één keer op de ingelogde persoon, zodra diens locatie beschikbaar is, met overzichtszoom 12 en ruimte voor de ledenlijst. Locaties van andere leden nemen de startfocus niet over.
+- Na handmatig schuiven/zoomen springt de kaart niet automatisch terug. De bestaande centreerknop toont nog steeds het gezin samen.
+- De beperking tot lengtegraad -180/+180 is vervangen door uitsluitend een verticale begrenzing: links/rechts kan de wereldkaart nu doorlopen.
+- 14 gerichte kaarttests geslaagd, inclusief eigen startlocatie en beide wereldranden. Geen build of visuele controle uitgevoerd.
+
 ## Aanvulling — inloggegevens onthouden
 - Gebruiker bevestigt: builds én visuele controle blijven bij gebruiker.
 - Gewoon inloggen heeft nu ‘Inloggegevens onthouden’ (standaard aan): e-mailadres (de loginnaam) en wachtwoord worden uitsluitend na geslaagde login versleuteld op het toestel opgeslagen en bij het volgende loginscherm ingevuld. Wachtwoord blijft verborgen.

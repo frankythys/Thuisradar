@@ -46,6 +46,7 @@ class MapScreen extends ConsumerStatefulWidget {
 
 class _MapScreenState extends ConsumerState<MapScreen> {
   static const _memberZoom = 15.0;
+  static const _startupZoom = 12.0;
 
   static const _focusZoom = 16.0;
 
@@ -85,8 +86,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// de gebruiker zelf heeft gezoomd/verschoven; [deliberate] (centreerknop)
   /// mag altijd.
   void _fit(List<MemberOnMap> members, {bool deliberate = false}) {
+    if (!mounted) return;
+    final own = startupMapMember(members, ref.read(currentUserIdProvider));
+    final targets = deliberate ? members : [?own];
     final points = [
-      for (final m in members)
+      for (final m in targets)
         if (m.location case final l?) LatLng(l.latitude, l.longitude),
     ];
     if (!_autoFit.shouldFit(
@@ -98,14 +102,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     _autoFit.markFitted();
-    if (points.length == 1) {
+    if (points.length == 1 && deliberate) {
       _mapController.move(points.single, _memberZoom);
     } else {
       _mapController.fitCamera(
         CameraFit.coordinates(
           coordinates: points,
           padding: const EdgeInsets.fromLTRB(60, 120, 60, 320),
-          maxZoom: _memberZoom,
+          maxZoom: deliberate ? _memberZoom : _startupZoom,
         ),
       );
     }

@@ -11,8 +11,22 @@ class MemberOnMap {
   bool get hasLocation => location != null;
 }
 
+/// Wacht op de eigen locatie, ook als andere gezinsleden eerder geladen zijn.
+MemberOnMap? startupMapMember(List<MemberOnMap> members, String? userId) {
+  if (userId == null) return null;
+  for (final member in members) {
+    if (member.member.userId == userId && member.hasLocation) return member;
+  }
+  return null;
+}
+
 /// Koppelt leden aan locaties; volgorde van de leden blijft behouden.
-List<MemberOnMap> combineMembers(List<FamilyMember> members, List<MemberLocation> locations) {
+List<MemberOnMap> combineMembers(
+  List<FamilyMember> members,
+  List<MemberLocation> locations,
+) {
   final byUser = {for (final l in locations) l.userId: l};
-  return [for (final m in members) MemberOnMap(member: m, location: byUser[m.userId])];
+  return [
+    for (final m in members) MemberOnMap(member: m, location: byUser[m.userId]),
+  ];
 }

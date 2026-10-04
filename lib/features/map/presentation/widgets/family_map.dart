@@ -56,16 +56,16 @@ class FamilyMap extends StatelessWidget {
         initialZoom: 8,
         minZoom: 3,
         maxZoom: 18,
-        // Binnen één wereld blijven: geen grijze leegte of herhaalde markers.
-        cameraConstraint: CameraConstraint.contain(
-          bounds: LatLngBounds(const LatLng(-85, -180), const LatLng(85, 180)),
-        ),
+        // Horizontaal doorlopen; alleen de boven- en onderrand begrenzen.
+        cameraConstraint: const CameraConstraint.containLatitude(),
         onMapReady: onMapReady,
         onTap: (_, _) => onMapTap?.call(),
         onPositionChanged: (camera, hasGesture) {
           if (hasGesture) onUserGesture?.call();
         },
-        interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        ),
       ),
       children: [
         TileLayer(
@@ -93,7 +93,11 @@ class FamilyMap extends StatelessWidget {
                   point: LatLng(place.latitude, place.longitude),
                   width: 32,
                   height: 32,
-                  child: Icon(placeIcon(place.icon), size: 20, color: AppColors.primary),
+                  child: Icon(
+                    placeIcon(place.icon),
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
                 ),
             ],
           ),
