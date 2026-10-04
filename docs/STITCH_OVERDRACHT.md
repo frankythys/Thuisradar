@@ -1,5 +1,9 @@
 # Stitch-overdracht — 4 oktober 2026
 
+## Laatste gebruikersbevestiging
+- Gebruiker bevestigt dat het geluid werkt; de telefoon stond op stil.
+- Gebruiker vraagt alle wijzigingen te committen en pushen. Codecommit `93787f9` stond al op `origin/main`; werkmap was schoon. Deze bevestiging wordt apart vastgelegd en gepusht.
+
 ## Aanvulling — chatpush en meldingsgeluiden
 - Gebruiker meldde geen/zacht geluid bij chat, SOS en thuiskomst. Op aangesloten Samsung stond STREAM_NOTIFICATION gedempt; alarmstream niet gedempt (12/15), Niet storen uit. Algemene toestelinstellingen niet gewijzigd.
 - Chatpush ontbrak. Migratie 012 en `send-chat-push` zijn nu uitgerold: nieuwe berichten (ook bijlagen/check-ins) melden aan andere gezinsleden; geen berichtinhoud/bijlagepad op vergrendelscherm. Trigger gecontroleerd met onderschepte `private.call_push` in BEGIN/ROLLBACK: geen echte push of blijvend testbericht.
