@@ -1,5 +1,14 @@
 # Stitch-overdracht — 4 oktober 2026
 
+## Aanvulling — inloggegevens onthouden
+- Gebruiker bevestigt: builds én visuele controle blijven bij gebruiker.
+- Gewoon inloggen heeft nu ‘Inloggegevens onthouden’ (standaard aan): e-mailadres (de loginnaam) en wachtwoord worden uitsluitend na geslaagde login versleuteld op het toestel opgeslagen en bij het volgende loginscherm ingevuld. Wachtwoord blijft verborgen.
+- Uitvinken verwijdert de onthouden gegevens; profielactie verwijdert zowel onthouden gegevens als biometrische login.
+- Na geslaagde gewone login wordt een bestaande biometrische login van hetzelfde account bijgewerkt met het actuele wachtwoord. Een ander account verwijdert de oude biometrische login.
+- Biometrische login bewaart ook de gegevens volgens de onthouden-keuze. Annuleren van de biometrische prompt leest geen credentials en logt niet in.
+- Controle: 9 gerichte auth-tests geslaagd; flutter analyze schoon. Geen APK-/emulatorbuild of visuele controle uitgevoerd. Biometrische hardware blijft op toestel te controleren.
+- Wachtwoordherstel/deeplink-flow blijft een afzonderlijk open codepunt; deze aanvulling implementeert die flow niet.
+
 ## Opdracht en laatste gebruikerssturing
 - Project: `C:\Programming\Thuisradar`, branch `main`, remote `origin` (frankythys/Thuisradar).
 - Oorspronkelijk: alle 20 schermen zoals de Stitch-mockups; plaatsen verwijderen herstellen; controleren, committen en pushen zonder vragen.

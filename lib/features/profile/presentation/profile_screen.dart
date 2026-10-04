@@ -411,19 +411,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 20),
             OutlinedButton.icon(
               onPressed: () async {
-                await ref.read(biometricLoginProvider).disable();
+                final login = ref.read(biometricLoginProvider);
+                try {
+                  await login.forgetRememberedLogin();
+                  await login.disable();
+                } catch (_) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Verwijderen is niet gelukt. Probeer opnieuw.',
+                        ),
+                      ),
+                    );
+                  }
+                  return;
+                }
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Opgeslagen biometrische login verwijderd.',
+                        'Opgeslagen inloggegevens en biometrische login verwijderd.',
                       ),
                     ),
                   );
                 }
               },
               icon: const Icon(Icons.fingerprint),
-              label: const Text('Biometrische login verwijderen'),
+              label: const Text('Opgeslagen inloggegevens verwijderen'),
             ),
             OutlinedButton.icon(
               onPressed: () async {

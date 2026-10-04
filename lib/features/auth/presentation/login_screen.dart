@@ -30,7 +30,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   _Mode _mode = _Mode.login;
   bool _busy = false;
   bool _obscure = true;
+  bool _remember = true;
+  bool _loadingSaved = true;
   String? _message;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreLogin();
+  }
+
+  Future<void> _restoreLogin() async {
+    try {
+      final saved = await ref.read(biometricLoginProvider).rememberedLogin();
+      if (!mounted) return;
+      // A late storage response must not overwrite the user's typing.
+      if (saved != null && _email.text.isEmpty && _password.text.isEmpty) {
+        _email.text = saved['email']!;
+        _password.text = saved['password']!;
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _message = 'Opgeslagen inloggegevens konden niet worden geladen. Vul ze opnieuw in.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingSaved = false);
+    }
+  }
+
+  Future<void> _setRemember(bool value) async {
+    setState(() {
+      _remember = value;
+      _busy = true;
+    });
+    try {
+      if (!value) {
+        await ref.read(biometricLoginProvider).forgetRememberedLogin();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _message = 'De opgeslagen login kon niet worden verwijderd. Probeer opnieuw.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -48,9 +96,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     final auth = ref.read(authRepositoryProvider);
+    final service = ref.read(biometricLoginProvider);
+    final email = _email.text.trim();
+    final password = _password.text;
+    final remember = _remember;
     try {
       if (_mode == _Mode.login) {
-        await auth.signIn(email: _email.text.trim(), password: _password.text);
+        await auth.signIn(email: email, password: password);
+        await service.rememberSuccessfulLogin(
+          email: email,
+          password: password,
+          remember: remember,
+        );
       } else {
         final signedIn = await auth.signUp(
           email: _email.text.trim(),
@@ -65,6 +122,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } on AuthException catch (e) {
       if (mounted) setState(() => _message = e.message);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _message = 'Inloggen of het onthouden van je gegevens is niet gelukt. Probeer opnieuw.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -99,6 +162,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _biometric() async {
+    if (_busy) return;
+    setState(() => _busy = true);
     final service = ref.read(biometricLoginProvider);
     final auth = ref.read(authRepositoryProvider);
     try {
@@ -135,6 +200,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         auth,
         email: _email.text.trim(),
         password: _password.text,
+        remember: _remember,
       );
     } catch (error) {
       if (mounted) {
@@ -262,6 +328,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ? 'Minstens 8 tekens'
                             : null,
                       ),
+                      if (!isRegister)
+                        Material(
+                          color: Colors.transparent,
+                          child: CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            title: const Text('Inloggegevens onthouden'),
+                            subtitle: const Text(
+                              'E-mailadres en wachtwoord versleuteld bewaren op dit toestel.',
+                            ),
+                            value: _remember,
+                            onChanged: _busy || _loadingSaved
+                                ? null
+                                : (value) => _setRemember(value ?? false),
+                          ),
+                        ),
                       if (!isRegister)
                         Align(
                           alignment: Alignment.centerRight,
