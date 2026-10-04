@@ -58,4 +58,4 @@ C:\Programming\flutter\bin\flutter.bat drive --driver=test_driver/stitch_driver.
 ```
 - Screenshots zijn telkens de laatste handeling van een integration-test wegens Android surface-conversie.
 - Geheimen staan in genegeerde `env.json`, `google-services.json` en Supabase-tempconfig; nooit committen.
-- Commit/push: wordt aan het einde van deze sessie uitgevoerd; controleer `git log -1` en `git status` voor de definitieve hash/status.
+- Codecommit `0efd67a` is succesvol gepusht naar `origin/main`. Deze definitieve overdracht volgt als kleine documentatiecommit. Analyzer schoon, 92 tests geslaagd, backend uitgerold. Build en nieuwste visuele controle blijven bij gebruiker.
