@@ -5,6 +5,8 @@ import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/core/utils/clock.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/application/location_history_providers.dart';
+import 'package:thuisradar/features/location/application/location_providers.dart';
+import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
 import 'package:thuisradar/features/member/presentation/member_detail_screen.dart';
 import 'package:thuisradar/features/places/application/places_providers.dart';
@@ -20,6 +22,10 @@ Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() r
         clockProvider.overrideWith((ref) => Stream.value(DateTime(2026, 1, 2, 10))),
         timelineProvider.overrideWith((ref, arg) => result()),
         familyPlacesProvider.overrideWith((ref, arg) => Stream.value(const <Place>[])),
+        // Geen echte Supabase-stroom nodig voor deze schermtests.
+        familyLocationsProvider.overrideWith(
+          (ref, arg) => Stream.value(const <MemberLocation>[]),
+        ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),

@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/app_map_tiles.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
@@ -25,6 +26,7 @@ class FamilyMap extends StatelessWidget {
     this.onMapReady,
     this.onUserGesture,
     this.onMapTap,
+    this.onHistory,
   });
 
   static const fallbackCenter = LatLng(50.85, 4.35); // België
@@ -46,14 +48,21 @@ class FamilyMap extends StatelessWidget {
 
   /// Tik op een lege plek op de kaart (om de selectie op te heffen).
   final VoidCallback? onMapTap;
+  final ValueChanged<MemberOnMap>? onHistory;
 
   @override
   Widget build(BuildContext context) {
+    final ownLocation = members
+        .where((entry) => entry.member.userId == myUserId)
+        .firstOrNull
+        ?.location;
     return FlutterMap(
       mapController: controller,
       options: MapOptions(
-        initialCenter: fallbackCenter,
-        initialZoom: 8,
+        initialCenter: ownLocation == null
+            ? fallbackCenter
+            : LatLng(ownLocation.latitude, ownLocation.longitude),
+        initialZoom: ownLocation == null ? 8 : 12,
         minZoom: 3,
         maxZoom: 18,
         // Horizontaal doorlopen; alleen de boven- en onderrand begrenzen.
@@ -68,10 +77,7 @@ class FamilyMap extends StatelessWidget {
         ),
       ),
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: userAgent,
-        ),
+        const AppMapTiles(),
         if (places.isNotEmpty) ...[
           CircleLayer(
             circles: [
@@ -107,6 +113,7 @@ class FamilyMap extends StatelessWidget {
           now: now,
           placeByUser: placeByUser,
           onMemberTap: onMemberTap,
+          onHistory: onHistory,
           onGroupTap: onGroupTap,
           selectedUserId: selectedUserId,
           myUserId: myUserId,

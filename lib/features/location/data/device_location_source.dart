@@ -7,7 +7,7 @@ import '../domain/device_reading.dart';
 /// foreground service met een vaste melding, zodat hij ook op de achtergrond
 /// blijft werken.
 class DeviceLocationSource {
-  static const _distanceFilterMeters = 25;
+  static const _distanceFilterMeters = 0;
   static const defaultInterval = Duration(seconds: 30);
 
   Future<LocationAccess> ensureAccess() async {

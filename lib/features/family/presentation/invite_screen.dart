@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -21,23 +20,31 @@ class InviteScreen extends StatelessWidget {
 
   final Family family;
 
-  Future<void> _share() async {
-    final uri = Uri.https('wa.me', '/', {
-      'text':
-          'Kom bij ${family.name} op Thuisradar. Je gezinscode: ${family.inviteCode}',
-    });
+  Future<void> _share(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
     try {
-      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
-    } catch (_) {}
-
-    await SharePlus.instance.share(
-      ShareParams(
-        text:
-            'Join onze familie "${family.name}" op Thuisradar.\n'
-            'Open de app, kies "Ik heb een uitnodigingscode" en vul in: ${family.inviteCode}',
-        subject: 'Uitnodiging voor Thuisradar',
-      ),
-    );
+      await SharePlus.instance.share(
+        ShareParams(
+          text:
+              'Kom bij "${family.name}" op Thuisradar.\n'
+              'Open de app, kies "Ik heb een uitnodigingscode" en vul in: ${family.inviteCode}',
+          subject: 'Uitnodiging voor Thuisradar',
+          sharePositionOrigin: box == null
+              ? null
+              : box.localToGlobal(Offset.zero) & box.size,
+        ),
+      );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Verzenden lukt niet. Probeer opnieuw of kopieer de code.',
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _copy(BuildContext context) async {
@@ -83,10 +90,12 @@ class InviteScreen extends StatelessWidget {
               SizedBox(height: tokens.spaceLg),
               _CodeCard(code: family.inviteCode),
               SizedBox(height: tokens.spaceLg),
-              FilledButton.icon(
-                onPressed: _share,
-                icon: const Icon(Icons.share, size: 20),
-                label: const Text('Delen via WhatsApp'),
+              Builder(
+                builder: (buttonContext) => FilledButton.icon(
+                  onPressed: () => _share(buttonContext),
+                  icon: const Icon(Icons.share, size: 20),
+                  label: const Text('Verzenden'),
+                ),
               ),
               SizedBox(height: tokens.spaceSm),
               FilledButton.tonalIcon(

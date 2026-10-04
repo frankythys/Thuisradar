@@ -8,6 +8,7 @@ import '../data/device_location_source.dart';
 import '../data/location_repository.dart';
 import '../domain/device_reading.dart';
 import '../domain/member_location.dart';
+import '../domain/motion_filter.dart';
 import 'location_providers.dart';
 import 'tracking_status.dart';
 import '../../profile/application/profile_providers.dart';
@@ -22,6 +23,12 @@ class LocationTracker extends Notifier<TrackingStatus> {
   String? _familyId;
   bool _fast = false;
   int _generation = 0;
+  int _streamGeneration = 0;
+  MotionFilter _motion = MotionFilter();
+  Future<void> _uploads = Future<void>.value();
+  Duration get _interval => _motion.wantsFastUpdates
+      ? const Duration(seconds: 5)
+      : (_fast ? _sosInterval : DeviceLocationSource.defaultInterval);
 
   DeviceLocationSource get _device => ref.read(deviceLocationSourceProvider);
   BatterySource get _battery => ref.read(batterySourceProvider);
@@ -55,7 +62,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
     state = TrackingStatus.fromAccess(access);
     if (access != LocationAccess.granted) return;
 
-    _attach();
+    unawaited(_attach());
   }
 
   Future<void> openSettings() => _device.openSettings();
@@ -67,19 +74,26 @@ class LocationTracker extends Notifier<TrackingStatus> {
     if (_subscription != null) _attach();
   }
 
-  void _attach() {
-    _subscription?.cancel();
-    _subscription = _device
-        .positions(
-          interval: _fast ? _sosInterval : DeviceLocationSource.defaultInterval,
-        )
-        .listen(
-          _onPosition,
-          onError: (Object error) {
-            debugPrint('Locatiestroom fout: $error');
-            if (ref.mounted) state = TrackingStatus.error;
-          },
-        );
+  Future<void> _attach() async {
+    final streamGeneration = ++_streamGeneration;
+    final generation = _generation;
+    final old = _subscription;
+    _subscription = null;
+    await old?.cancel();
+    if (!ref.mounted || generation != _generation || streamGeneration != _streamGeneration) return;
+    _subscription = _device.positions(interval: _interval).listen(
+      (position) {
+        if (generation != _generation || streamGeneration != _streamGeneration) return;
+        _uploads = _uploads.then((_) async {
+          if (!ref.mounted || generation != _generation) return;
+          await _onPosition(position);
+        });
+      },
+      onError: (Object error) {
+        debugPrint('Locatiestroom fout: $error');
+        if (ref.mounted && generation == _generation) state = TrackingStatus.error;
+      },
+    );
   }
 
   void stop() {
@@ -96,6 +110,12 @@ class LocationTracker extends Notifier<TrackingStatus> {
     final generation = _generation;
     if (userId == null || familyId == null) return;
 
+    final oldInterval = _interval;
+    final accepted = _motion.accept(position, DateTime.now());
+    if (accepted == null) return;
+    if (_interval != oldInterval) unawaited(_attach());
+    position = accepted;
+    try {
     final battery = await _battery.read();
     if (!ref.mounted || generation != _generation) return;
     final location = MemberLocation(
@@ -110,7 +130,6 @@ class LocationTracker extends Notifier<TrackingStatus> {
       updatedAt: position.timestamp,
     );
 
-    try {
       await _repository.upload(location);
       if (ref.mounted && generation == _generation) {
         state = TrackingStatus.active;
@@ -125,6 +144,8 @@ class LocationTracker extends Notifier<TrackingStatus> {
 
   void _cancel() {
     _generation++;
+    _streamGeneration++;
+    _motion = MotionFilter();
     _subscription?.cancel();
     _subscription = null;
   }

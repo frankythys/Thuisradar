@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/member_avatar.dart';
+import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
 
 class MemberMarker extends StatelessWidget {
-  const MemberMarker({super.key, required this.entry, this.selected = false, this.placeStatus});
+  const MemberMarker({
+    super.key,
+    required this.entry,
+    required this.now,
+    this.selected = false,
+    this.placeStatus,
+  });
 
   static const width = 120.0;
   static const height = 92.0;
 
   final MemberOnMap entry;
+  final DateTime now;
 
   /// Geselecteerd lid: accent-selectiering en iets groter.
   final bool selected;
@@ -22,7 +29,7 @@ class MemberMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final speed = speedKmh(entry.location?.speedMps);
+    final speed = TripStatus.at(entry.location, now).speedKmh;
     final label = placeStatus != null
         ? placeStatus!.name
         : (speed != null ? '$speed km/u' : entry.member.displayName);

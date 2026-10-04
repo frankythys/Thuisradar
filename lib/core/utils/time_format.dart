@@ -11,17 +11,26 @@ String formatRelative(DateTime moment, {required DateTime now}) {
   return 'op $day/$month';
 }
 
-/// Snelheid in km/u, afgerond; null als stilstaand of onbekend.
-int? speedKmh(double? metersPerSecond) {
-  if (metersPerSecond == null || metersPerSecond < 1.5) return null;
-  return (metersPerSecond * 3.6).round();
-}
-
 /// Kloktijd als "HH:mm".
 String formatClock(DateTime moment) {
   final hour = moment.hour.toString().padLeft(2, '0');
   final minute = moment.minute.toString().padLeft(2, '0');
   return '$hour:$minute';
+}
+
+/// Sinds-tijd voor de ledenlijst: "13:03", "16:49 gisteren" of "14:02 op
+/// 28/09". Kort genoeg voor een tweede regel naast de status.
+String formatSince(DateTime moment, {required DateTime now}) {
+  final day = DateTime(moment.year, moment.month, moment.day);
+  final today = DateTime(now.year, now.month, now.day);
+  final days = today.difference(day).inDays;
+  final clock = formatClock(moment);
+  if (days <= 0) return clock;
+  if (days == 1) return '$clock gisteren';
+
+  final date = moment.day.toString().padLeft(2, '0');
+  final month = moment.month.toString().padLeft(2, '0');
+  return '$clock op $date/$month';
 }
 
 /// Duur in het Nederlands: "25 min", "1 u", "2 u 15 min".

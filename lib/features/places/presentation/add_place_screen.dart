@@ -8,6 +8,7 @@ import '../../family/application/family_providers.dart';
 import '../../family/domain/family_member.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
+import '../../../shared/widgets/app_map_tiles.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../map/presentation/widgets/family_map.dart';
@@ -74,7 +75,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     final position = await ref
         .read(deviceLocationSourceProvider)
         .currentPosition();
-    if (position != null && mounted && _selection.resolve(revision, LatLng(position.latitude, position.longitude), '')) {
+    if (position != null &&
+        mounted &&
+        _selection.resolve(
+          revision,
+          LatLng(position.latitude, position.longitude),
+          '',
+        )) {
       _selection.move(
         LatLng(position.latitude, position.longitude),
         userGesture: true,
@@ -92,7 +99,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     setState(() => _searching = true);
     try {
       final matches = await Geocoding().locationFromAddress(query);
-      if (mounted && matches.isEmpty) throw const FormatException('Adres niet gevonden');
+      if (mounted && matches.isEmpty) {
+        throw const FormatException('Adres niet gevonden');
+      }
       if (mounted &&
           matches.isNotEmpty &&
           _selection.resolve(
@@ -122,24 +131,70 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
   Future<void> _save() async {
     final name = _name.text.trim();
-    if (name.isEmpty || _busy) return;
+    if (_busy || _searching) return;
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vul eerst een naam voor de plaats in.')),
+      );
+      return;
+    }
     setState(() => _busy = true);
+    final center = _center;
+    final radius = _radius.round();
+    final icon = _icon;
+    final watchedMembers = _watchedMembers.toList();
+    final arrival = _arrival;
+    final departure = _departure;
+    var address = _selection.address?.trim();
+    final repository = ref.read(placesRepositoryProvider);
     try {
-      await ref
-          .read(placesRepositoryProvider)
-          .create(
-            familyId: widget.familyId,
-            name: name,
-            latitude: _center.latitude,
-            longitude: _center.longitude,
-            radiusMeters: _radius.round(),
-            icon: _icon,
-            address: _selection.address?.isEmpty == true ? null : _selection.address,
-            watchedMembers: _watchedMembers.toList(),
-            notifyArrival: _arrival,
-            notifyDeparture: _departure,
+      if (address == null || address.isEmpty) {
+        try {
+          final marks = await Geocoding()
+              .placemarkFromCoordinates(center.latitude, center.longitude)
+              .timeout(const Duration(seconds: 3));
+          if (marks.isNotEmpty) {
+            final mark = marks.first;
+            address = [mark.street, mark.postalCode, mark.locality]
+                .whereType<String>()
+                .map((part) => part.trim())
+                .where((part) => part.isNotEmpty)
+                .join(', ');
+          }
+        } catch (_) {
+          // Een ontbrekend adres mag het opslaan van de locatie niet blokkeren.
+        }
+      }
+      if (!mounted) return;
+      await repository.create(
+        familyId: widget.familyId,
+        name: name,
+        latitude: center.latitude,
+        longitude: center.longitude,
+        radiusMeters: radius,
+        icon: icon,
+        address: address == null || address.isEmpty ? null : address,
+        watchedMembers: watchedMembers,
+        notifyArrival: arrival,
+        notifyDeparture: departure,
+      );
+      if (mounted) {
+        final messenger = ScaffoldMessenger.of(context);
+        Navigator.of(context).pop();
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+              content: Text(
+                address != null && address.isNotEmpty
+                    ? '$name opgeslagen\n$address'
+                    : '$name opgeslagen — adres niet beschikbaar',
+              ),
+            ),
           );
-      if (mounted) Navigator.of(context).pop();
+      }
     } on Exception {
       if (mounted) {
         setState(() => _busy = false);
@@ -178,10 +233,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           ),
         ),
       ),
-      body: ListView(
+      body: Column(
         children: [
-          SizedBox(
-            height: 260,
+          Expanded(
+            flex: 6,
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -207,11 +262,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     ),
                   ),
                   children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: FamilyMap.userAgent,
-                    ),
+                    const AppMapTiles(),
                     CircleLayer(
                       circles: [
                         CircleMarker(
@@ -298,155 +349,175 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
+          Expanded(
+            flex: 4,
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Icon(Icons.radar, size: 20, color: AppColors.primary),
-                    const SizedBox(width: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.radar,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Straalzone',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const Spacer(),
+                        Text('${_radius.round()} meter'),
+                      ],
+                    ),
+                    Slider(
+                      value: _radius,
+                      min: 50,
+                      max: 500,
+                      divisions: 45,
+                      onChanged: (value) => setState(() => _radius = value),
+                    ),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [Text('50 m (compact)'), Text('500 m (ruim)')],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Meldingen worden verzonden zodra iemand deze cirkel binnenrijdt of verlaat.',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 24),
                     Text(
-                      'Straalzone',
+                      'Naam van de plaats',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const Spacer(),
-                    Text('${_radius.round()} meter'),
-                  ],
-                ),
-                Slider(
-                  value: _radius,
-                  min: 50,
-                  max: 500,
-                  divisions: 45,
-                  onChanged: (value) => setState(() => _radius = value),
-                ),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [Text('50 m (compact)'), Text('500 m (ruim)')],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Meldingen worden verzonden zodra iemand deze cirkel binnenrijdt of verlaat.',
-                  style: TextStyle(fontSize: 12, color: AppColors.muted),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Naam van de plaats',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _name,
-                  decoration: const InputDecoration(
-                    hintText: 'Thuis',
-                    fillColor: AppColors.surfaceLow,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Kies een herkenbaar icoon',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final key in placeIconKeys)
-                      ChoiceChip(
-                        showCheckmark: false,
-                        selected: _icon == key,
-                        selectedColor: AppColors.primary,
-                        onSelected: (_) => setState(() => _icon = key),
-                        label: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              placeIcon(key),
-                              color: _icon == key
-                                  ? Colors.white
-                                  : AppColors.primary,
-                            ),
-                            Text(
-                              placeIconLabel(key),
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: _icon == key
-                                    ? Colors.white
-                                    : AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _name,
+                      decoration: const InputDecoration(
+                        hintText: 'Thuis',
+                        fillColor: AppColors.surfaceLow,
                       ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Voor wie gelden meldingen?',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const Text(
-                  'Kies welke gezinsleden meldingen activeren',
-                  style: TextStyle(fontSize: 12, color: AppColors.muted),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    FilterChip(
-                      label: const Text('Iedereen'),
-                      selected: _watchedMembers.isEmpty,
-                      onSelected: (_) => setState(_watchedMembers.clear),
                     ),
-                    for (final member
-                        in ref
-                                .watch(familyMembersProvider(widget.familyId))
-                                .value ??
-                            const <FamilyMember>[])
-                      FilterChip(
-                        label: Text(member.displayName),
-                        selected: _watchedMembers.contains(member.userId),
-                        onSelected: (selected) => setState(
-                          () => selected
-                              ? _watchedMembers.add(member.userId)
-                              : _watchedMembers.remove(member.userId),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Kies een herkenbaar icoon',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final key in placeIconKeys)
+                          ChoiceChip(
+                            showCheckmark: false,
+                            selected: _icon == key,
+                            selectedColor: AppColors.primary,
+                            onSelected: (_) => setState(() => _icon = key),
+                            label: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  placeIcon(key),
+                                  color: _icon == key
+                                      ? Colors.white
+                                      : AppColors.primary,
+                                ),
+                                Text(
+                                  placeIconLabel(key),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: _icon == key
+                                        ? Colors.white
+                                        : AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Voor wie gelden meldingen?',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const Text(
+                      'Kies welke gezinsleden meldingen activeren',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        FilterChip(
+                          label: const Text('Iedereen'),
+                          selected: _watchedMembers.isEmpty,
+                          onSelected: (_) => setState(_watchedMembers.clear),
                         ),
+                        for (final member
+                            in ref
+                                    .watch(
+                                      familyMembersProvider(widget.familyId),
+                                    )
+                                    .value ??
+                                const <FamilyMember>[])
+                          FilterChip(
+                            label: Text(member.displayName),
+                            selected: _watchedMembers.contains(member.userId),
+                            onSelected: (selected) => setState(
+                              () => selected
+                                  ? _watchedMembers.add(member.userId)
+                                  : _watchedMembers.remove(member.userId),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Meldingsvoorkeuren',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      tileColor: AppColors.surfaceLow,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
+                      secondary: const Icon(
+                        Icons.login,
+                        color: AppColors.primary,
+                      ),
+                      title: const Text('Melding bij aankomst'),
+                      subtitle: const Text(
+                        'Wanneer iemand de cirkel binnenkomt',
+                      ),
+                      value: _arrival,
+                      onChanged: (v) => setState(() => _arrival = v),
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      tileColor: AppColors.surfaceLow,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      secondary: const Icon(
+                        Icons.logout,
+                        color: AppColors.primary,
+                      ),
+                      title: const Text('Melding bij vertrek'),
+                      subtitle: const Text('Wanneer iemand de cirkel verlaat'),
+                      value: _departure,
+                      onChanged: (v) => setState(() => _departure = v),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Meldingsvoorkeuren',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  tileColor: AppColors.surfaceLow,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  secondary: const Icon(Icons.login, color: AppColors.primary),
-                  title: const Text('Melding bij aankomst'),
-                  subtitle: const Text('Wanneer iemand de cirkel binnenkomt'),
-                  value: _arrival,
-                  onChanged: (v) => setState(() => _arrival = v),
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  tileColor: AppColors.surfaceLow,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  secondary: const Icon(Icons.logout, color: AppColors.primary),
-                  title: const Text('Melding bij vertrek'),
-                  subtitle: const Text('Wanneer iemand de cirkel verlaat'),
-                  value: _departure,
-                  onChanged: (v) => setState(() => _departure = v),
-                ),
-              ],
+              ),
             ),
           ),
         ],

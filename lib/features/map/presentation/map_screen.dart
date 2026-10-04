@@ -1,4 +1,3 @@
-import '../../chat/application/chat_providers.dart';
 import '../../location/application/tracking_status.dart';
 import 'widgets/offline_members.dart';
 
@@ -14,9 +13,13 @@ import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../location/application/location_providers.dart';
+import '../../family/presentation/invite_screen.dart';
+import '../../family/presentation/family_setup_screen.dart';
 import '../../member/presentation/member_detail_screen.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
+import '../../places/presentation/add_place_screen.dart';
+import '../../places/presentation/places_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
@@ -27,7 +30,6 @@ import '../domain/auto_fit.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_header.dart';
 import 'widgets/family_map.dart';
-import 'widgets/member_info_card.dart';
 import 'widgets/member_list_sheet.dart';
 import 'widgets/tracking_banner.dart';
 import 'widgets/no_locations_card.dart';
@@ -168,6 +170,30 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  void _openInvite() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => InviteScreen(family: widget.family),
+      ),
+    );
+  }
+
+  void _openPlaces() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PlacesScreen(family: widget.family),
+      ),
+    );
+  }
+
+  void _addPlace() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AddPlaceScreen(familyId: widget.family.id),
+      ),
+    );
+  }
+
   void _snack(String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
@@ -287,6 +313,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             selectedUserId: selected?.member.userId,
             myUserId: myId,
             onMemberTap: _select,
+            onHistory: _openDetail,
             onGroupTap: _onGroupTap,
             onUserGesture: _autoFit.lock,
             onMapTap: _deselect,
@@ -395,45 +422,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             )
           else
             MemberListSheet(
-              onManage: _openProfile,
-              onCheckIn: () async {
-                if (myId == null) return;
-                try {
-                  await ref
-                      .read(chatRepositoryProvider)
-                      .send(
-                        familyId: familyId,
-                        userId: myId,
-                        body: '✓ Check-in: alles goed met mij.',
-                      );
-                  if (mounted) _snack('Check-in gedeeld met je gezin.');
-                } catch (_) {
-                  if (mounted) {
-                    _snack('Check-in versturen mislukt. Probeer opnieuw.');
-                  }
-                }
-              },
+              family: widget.family,
               members: members,
-              currentUserId: ref.watch(currentUserIdProvider),
+              currentUserId: myId,
               now: now,
               onSelect: _select,
-              onDetails: _openDetail,
               selectedUserId: selected?.member.userId,
               placeByUser: placeByUser,
               controller: _sheetController,
-            ),
-          if (selected case final entry?)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: size.height * 0.14 + 16,
-              child: MemberInfoCard(
-                entry: entry,
-                now: now,
-                placeStatus: placeByUser[entry.member.userId],
-                onHistory: () => _openDetail(entry),
-                onClose: () => setState(() => _selected = null),
+              onInvite: _openInvite,
+              onCreateCircle: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const FamilySetupScreen(),
+                ),
               ),
+              onPlaces: _openPlaces,
+              onAddPlace: _addPlace,
             ),
         ],
       ),

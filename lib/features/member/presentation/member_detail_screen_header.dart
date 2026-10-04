@@ -11,8 +11,7 @@ class _Header extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
     final now = ref.watch(clockProvider).value ?? DateTime.now();
-    final speed = speedKmh(location?.speedMps);
-    final moving = speed != null;
+    final trip = TripStatus.at(location, now);
 
     return Column(
       children: [
@@ -35,18 +34,14 @@ class _Header extends ConsumerWidget {
             shape: StadiumBorder(),
           ),
           child: Text(
-            location == null
-                ? 'Nog geen locatie'
-                : (moving ? 'Onderweg' : 'Stilstaand'),
+            location == null ? 'Nog geen locatie' : trip.label,
             style: text.labelLarge?.copyWith(color: AppColors.primary),
           ),
         ),
         if (location != null) ...[
           SizedBox(height: tokens.spaceSm),
           Text(
-            moving
-                ? 'Snelheid: $speed km/u · bijgewerkt ${formatRelative(location!.updatedAt, now: now)}'
-                : 'Bijgewerkt ${formatRelative(location!.updatedAt, now: now)}',
+            trip.description(location, now),
             style: text.bodyMedium?.copyWith(color: AppColors.muted),
             textAlign: TextAlign.center,
           ),

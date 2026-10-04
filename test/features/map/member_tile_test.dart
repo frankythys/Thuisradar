@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
@@ -18,32 +19,38 @@ MemberOnMap _entry() => MemberOnMap(
   ),
 );
 
+Widget _wrap(MemberTile tile) => ProviderScope(
+  child: MaterialApp(theme: AppTheme.light(), home: Scaffold(body: tile)),
+);
+
 void main() {
-  testWidgets('tik op de rij en op de chevron zijn aparte acties', (tester) async {
+  testWidgets('tik op de rij opent het lid', (tester) async {
     var taps = 0;
-    var details = 0;
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        home: Scaffold(
-          body: MemberTile(
-            entry: _entry(),
-            isMe: false,
-            now: DateTime(2026, 1, 2, 10, 5),
-            onTap: () => taps++,
-            onDetails: () => details++,
-          ),
+      _wrap(
+        MemberTile(
+          entry: _entry(),
+          isMe: false,
+          now: DateTime(2026, 1, 2, 10, 5),
+          onTap: () => taps++,
         ),
       ),
     );
 
-    await tester.tap(find.byTooltip('Details'));
-    expect(details, 1);
-    expect(taps, 0);
-
     await tester.tap(find.text('Papa'));
     expect(taps, 1);
-    expect(details, 1);
+  });
+
+  testWidgets('toont de naam, sinds-tijd en batterijstand', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        MemberTile(entry: _entry(), isMe: false, now: DateTime(2026, 1, 2, 10, 0, 20)),
+      ),
+    );
+
+    expect(find.text('Papa'), findsOneWidget);
+    expect(find.text('Sinds 10:00'), findsOneWidget);
+    expect(find.text('80%'), findsOneWidget);
   });
 }

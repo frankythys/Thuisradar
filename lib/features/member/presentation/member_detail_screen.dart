@@ -21,8 +21,12 @@ import 'package:latlong2/latlong.dart';
 
 import '../../family/domain/family_member.dart';
 import '../../location/application/location_history_providers.dart';
+import '../../location/application/location_providers.dart';
+import '../../location/application/address_providers.dart';
+import '../../location/domain/place_address.dart';
 import '../../location/domain/member_location.dart';
 import '../../location/domain/timeline.dart';
+import '../../location/domain/trip_status.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place_timeline.dart';
 
@@ -66,10 +70,24 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     ).subtract(Duration(days: _dayOffset));
   }
 
+  /// De live locatie uit de realtime-stroom; valt terug op de meegegeven
+  /// locatie zolang de stroom nog niet geladen is. Zo ververst het
+  /// detailscherm mee met nieuwe updates.
+  MemberLocation? _liveLocation(WidgetRef ref) {
+    final locations = ref.watch(familyLocationsProvider(widget.familyId)).value;
+    if (locations != null) {
+      for (final location in locations) {
+        if (location.userId == widget.member.userId) return location;
+      }
+    }
+    return widget.location;
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final location = widget.location;
+    final location = _liveLocation(ref);
+    final now = ref.watch(clockProvider).value ?? DateTime.now();
     final query = (userId: widget.member.userId, day: _selectedDay);
     final timeline = ref.watch(
       _dayOffset == 2
@@ -85,7 +103,11 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           children: [
             _Header(member: widget.member, location: location),
             const SizedBox(height: 16),
-            _Stats(location: location, timeline: timeline.value ?? const []),
+            _Stats(
+              location: location,
+              timeline: timeline.value ?? const [],
+              now: now,
+            ),
             const SizedBox(height: 16),
             _DayChips(
               selected: _dayOffset,
@@ -120,6 +142,40 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                       route: [
                         for (final entry in timeline.value ?? <TimelineEntry>[])
                           LatLng(entry.latitude, entry.longitude),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            ref
+                                .watch(
+                                  placeAddressProvider(
+                                    snapToAddressGrid(
+                                      location.latitude,
+                                      location.longitude,
+                                    ),
+                                  ),
+                                )
+                                .when(
+                                  data: (address) =>
+                                      address == null || address.isEmpty
+                                      ? 'Adres niet beschikbaar'
+                                      : address.label,
+                                  loading: () => 'Adres ophalen…',
+                                  error: (_, _) => 'Adres niet beschikbaar',
+                                ),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
                       ],
                     ),
                   ],

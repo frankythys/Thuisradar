@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/battery_badge.dart';
 import '../../../../shared/widgets/member_avatar.dart';
+import '../../../location/application/address_providers.dart';
+import '../../../location/domain/place_address.dart';
+import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
 
 /// Compact kaartje dat verschijnt wanneer je een lid kiest (lijst of marker):
-/// avatar, naam, status en batterij, met een knop naar de geschiedenis.
-class MemberInfoCard extends StatelessWidget {
+/// avatar, naam, status (straat + gemeente) en batterij, met een knop naar de
+/// geschiedenis.
+class MemberInfoCard extends ConsumerWidget {
   const MemberInfoCard({
     super.key,
     required this.entry,
@@ -27,10 +32,19 @@ class MemberInfoCard extends StatelessWidget {
   final PlaceStatus? placeStatus;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
     final location = entry.location;
+    final address = location == null
+        ? null
+        : ref
+              .watch(
+                placeAddressProvider(
+                  snapToAddressGrid(location.latitude, location.longitude),
+                ),
+              )
+              .value;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -60,7 +74,7 @@ class MemberInfoCard extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: tokens.spaceXs),
-                  Text(_status(), style: text.bodySmall?.copyWith(color: AppColors.muted)),
+                  Text(_status(address), style: text.bodySmall?.copyWith(color: AppColors.muted)),
                   SizedBox(height: tokens.spaceSm),
                   Align(
                     alignment: Alignment.centerLeft,
@@ -86,7 +100,7 @@ class MemberInfoCard extends StatelessWidget {
     );
   }
 
-  String _status() {
+  String _status(PlaceAddress? address) {
     final location = entry.location;
     if (location == null) return 'Nog geen locatie gedeeld';
 
@@ -95,8 +109,7 @@ class MemberInfoCard extends StatelessWidget {
       return place.since == null ? place.name : '${place.name} · sinds ${formatClock(place.since!)}';
     }
 
-    final updated = formatRelative(location.updatedAt, now: now);
-    final speed = speedKmh(location.speedMps);
-    return speed == null ? 'Bijgewerkt $updated' : 'Onderweg · $speed km/u · $updated';
+    // Straat + gemeente waar het lid nu is (indien beschikbaar).
+    return TripStatus.at(location, now).description(location, now, address: address?.label);
   }
 }

@@ -1,10 +1,11 @@
 part of 'member_detail_screen.dart';
 
 class _Stats extends StatelessWidget {
-  const _Stats({required this.location, required this.timeline});
+  const _Stats({required this.location, required this.timeline, required this.now});
 
   final MemberLocation? location;
   final List<TimelineEntry> timeline;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +15,7 @@ class _Stats extends StatelessWidget {
         .fold<double>(0, (sum, e) => sum + (e.distanceMeters ?? 0));
     final seen = location == null
         ? '—'
-        : formatRelative(location!.updatedAt, now: DateTime.now());
+        : formatRelative(location!.updatedAt, now: now);
 
     return Row(
       children: [

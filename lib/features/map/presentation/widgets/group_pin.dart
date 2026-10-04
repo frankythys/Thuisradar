@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/member_avatar.dart';
+import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/member_on_map.dart';
@@ -128,7 +129,7 @@ class GroupPin extends StatelessWidget {
         at: place.since ?? latest.location!.updatedAt,
       );
     }
-    if (speedKmh(latest.location!.speedMps) != null) {
+    if (TripStatus.at(latest.location, now).speedKmh != null) {
       return (
         icon: Icons.directions_car_filled_outlined,
         title: '$name is onderweg',

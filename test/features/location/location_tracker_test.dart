@@ -65,7 +65,7 @@ void main() {
   final position = DevicePosition(
     latitude: 50.85,
     longitude: 4.35,
-    timestamp: DateTime.utc(2026, 10, 2, 16),
+    timestamp: DateTime.now(),
   );
 
   Future<void> start() => container
