@@ -16,24 +16,31 @@ class PushGate extends ConsumerStatefulWidget {
 }
 
 class _PushGateState extends ConsumerState<PushGate> {
+  Future<void> _pending = Future.value();
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(pushServiceProvider).init();
-    });
+    final service = ref.read(pushServiceProvider);
+    _pending = service.init();
+    // Also register a session that was already restored before this gate mounted.
+    // Serialize changes so a slow logout cannot delete the next account's token.
+    ref.listenManual(currentUserIdProvider, (previous, next) {
+      _pending = _pending
+          .then((_) async {
+            if (!mounted) return;
+            if (next != null) {
+              await service.registerFor(next);
+            } else if (previous != null) {
+              await service.unregister();
+            }
+          })
+          .catchError((Object error) {
+            debugPrint('Pushregistratie mislukt: $error');
+          });
+    }, fireImmediately: true);
   }
 
   @override
-  Widget build(BuildContext context) {
-    ref.listen(currentUserIdProvider, (previous, next) {
-      final service = ref.read(pushServiceProvider);
-      if (next != null) {
-        service.registerFor(next);
-      } else if (previous != null) {
-        service.unregister();
-      }
-    });
-    return widget.child;
-  }
+  Widget build(BuildContext context) => widget.child;
 }

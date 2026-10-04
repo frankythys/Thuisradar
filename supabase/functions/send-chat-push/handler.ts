@@ -1,13 +1,4 @@
-// Edge Function: stuurt een gewone push-melding (kanaal "places", geen
-// alarmgeluid) wanneer er een aankomst/vertrek-gebeurtenis in family_events komt.
-// Via een Database Webhook op family_events INSERT. Niet naar de verzender zelf.
-//
-// Beveiliging: zelfde geheime header als de SOS-functie (SOS_WEBHOOK_SECRET).
-// Deploy met `--no-verify-jwt`.
-//
-// Secrets: FCM_SERVICE_ACCOUNT, SOS_WEBHOOK_SECRET, SUPABASE_URL,
-// SUPABASE_SERVICE_ROLE_KEY (laatste twee standaard aanwezig).
-
+// Chat push via the authenticated database trigger. No message contents on the lock screen.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as jose from "npm:jose@5";
 import { invalidFcmToken } from "../_shared/fcm_result.ts";
@@ -45,6 +36,7 @@ async function sendPush(
   accessToken: string,
   token: string,
   body: string,
+  notificationVersion: number,
 ): Promise<"ok" | "invalid" | "error"> {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
@@ -52,12 +44,15 @@ async function sendPush(
     body: JSON.stringify({
       message: {
         token,
-        notification: { title: "Plaatsen", body },
+        notification: { title: "Thuisradar · Chat", body },
         android: {
           priority: "high",
-          notification: { channel_id: "places", sound: "default" },
+          notification: {
+            channel_id: notificationVersion >= 2 ? "chat_messages" : "places",
+            sound: notificationVersion >= 2 ? "thuisradar_message" : "default",
+          },
         },
-        data: { type: "place" },
+        data: { type: "chat" },
       },
     }),
   });
@@ -67,7 +62,7 @@ async function sendPush(
   return "error";
 }
 
-Deno.serve(async (req) => {
+export async function handleRequest(req: Request): Promise<Response> {
   const secret = Deno.env.get("SOS_WEBHOOK_SECRET");
   if (!secret || req.headers.get("x-webhook-secret") !== secret) {
     return new Response("unauthorized", { status: 401 });
@@ -75,9 +70,8 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => null);
   const record = body?.record;
-  // Enkel aankomst/vertrek; SOS heeft zijn eigen functie.
-  if (record?.type !== "arrival" && record?.type !== "departure") {
-    return new Response(JSON.stringify({ skipped: true }), { status: 200 });
+  if (!record?.id || !record?.family_id || !record?.user_id) {
+    return new Response("invalid message", { status: 400 });
   }
 
   const supabase = createClient(
@@ -85,33 +79,27 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // Re-read the stored row before selecting recipients.
+  const { data: stored, error: messageError } = await supabase
+    .from("messages").select("id, family_id, user_id").eq("id", record.id).maybeSingle();
+  if (messageError) return new Response("message unavailable", { status: 503 });
+  if (!stored || stored.family_id !== record.family_id || stored.user_id !== record.user_id) {
+    return new Response("message not found", { status: 404 });
+  }
   const { data: actor } = await supabase
-    .from("profiles").select("display_name").eq("id", record.actor_user_id).single();
-  const actorName = actor?.display_name ?? "Een gezinslid";
+    .from("profiles").select("display_name").eq("id", stored.user_id).single();
+  const message = `Nieuw bericht van ${actor?.display_name ?? "een gezinslid"}`;
 
-  const { data: place } = await supabase
-    .from("places").select("name").eq("id", record.place_id).single();
-  const placeName = place?.name ?? "een plaats";
-
-  const verb = record.type === "arrival" ? "is aangekomen op" : "is vertrokken van";
-  const message = `${actorName} ${verb} ${placeName}`;
-
-  const { data: members } = await supabase
-    .from("family_members").select("user_id").eq("family_id", record.family_id).neq("user_id", record.actor_user_id);
+  const { data: members, error: membersError } = await supabase
+    .from("family_members").select("user_id").eq("family_id", stored.family_id).neq("user_id", stored.user_id);
+  if (membersError) return new Response("members unavailable", { status: 503 });
   const userIds = (members ?? []).map((m) => m.user_id);
   if (userIds.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 
-  const { data: preferences, error: preferencesError } = await supabase
-    .from("notification_preferences").select("user_id, arrival, departure, sos").in("user_id", userIds);
-  if (preferencesError) return new Response("preferences unavailable", { status: 503 });
-  const eventType: "arrival" | "departure" = record.type;
-  const disabled = new Set((preferences ?? []).filter((p) => p[eventType] === false).map((p) => p.user_id));
-  const recipients = userIds.filter((id) => !disabled.has(id));
-  if (recipients.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
-
-  const { data: tokens } = await supabase
-    .from("device_tokens").select("token").in("user_id", recipients);
-  const tokenList = (tokens ?? []).map((t) => t.token as string);
+  const { data: tokens, error: tokensError } = await supabase
+    .from("device_tokens").select("token, notification_version").in("user_id", userIds);
+  if (tokensError) return new Response("tokens unavailable", { status: 503 });
+  const tokenList = tokens ?? [];
   if (tokenList.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 
   const sa = JSON.parse(Deno.env.get("FCM_SERVICE_ACCOUNT")!) as ServiceAccount;
@@ -121,8 +109,8 @@ Deno.serve(async (req) => {
   let sent = 0;
   let failed = 0;
   await Promise.all(
-    tokenList.map(async (token) => {
-      const result = await sendPush(sa.project_id, accessToken, token, message);
+    tokenList.map(async ({ token, notification_version }) => {
+      const result = await sendPush(sa.project_id, accessToken, token, message, notification_version);
       if (result === "invalid") invalid.push(token);
       else if (result === "ok") sent++;
       else failed++;
@@ -134,4 +122,5 @@ Deno.serve(async (req) => {
     JSON.stringify({ sent, failed, cleaned: invalid.length }),
     { headers: { "Content-Type": "application/json" } },
   );
-});
+}
+

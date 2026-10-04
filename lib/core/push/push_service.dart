@@ -5,10 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const _sosChannelId = 'sos_alerts';
-const _sosChannelName = 'SOS-alarmen';
-const _placesChannelId = 'places';
-const _placesChannelName = 'Plaatsen';
+import 'push_channels.dart';
 
 /// Regelt FCM: het alarm-notificatiekanaal, tokenregistratie in device_tokens,
 /// en het tonen van SOS-meldingen terwijl de app op de voorgrond staat.
@@ -21,33 +18,29 @@ class PushService {
 
   StreamSubscription<String>? _tokenRefreshSub;
 
-  /// SOS: max belang + alarm-audio, zodat het ook op stil opvalt.
-  static const _sosChannel = AndroidNotificationChannel(
-    _sosChannelId,
-    _sosChannelName,
-    description: 'Dringende noodoproepen van je gezin',
-    importance: Importance.max,
-    playSound: true,
-    audioAttributesUsage: AudioAttributesUsage.alarm,
-  );
+  StreamSubscription<RemoteMessage>? _foregroundSub;
 
-  /// Plaatsen: gewone melding met standaardgeluid (geen alarm).
-  static const _placesChannel = AndroidNotificationChannel(
-    _placesChannelId,
-    _placesChannelName,
-    description: 'Aankomst en vertrek bij plaatsen',
-    importance: Importance.defaultImportance,
-  );
+  void dispose() {
+    _foregroundSub?.cancel();
+    _tokenRefreshSub?.cancel();
+  }
 
   Future<void> init() async {
     await _local.initialize(
-      const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
     );
-    final android = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await android?.createNotificationChannel(_sosChannel);
-    await android?.createNotificationChannel(_placesChannel);
+    final android = _local
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    await android?.createNotificationChannel(PushChannels.sos);
+    await android?.createNotificationChannel(PushChannels.places);
+    await android?.createNotificationChannel(PushChannels.chat);
 
-    FirebaseMessaging.onMessage.listen(_showForeground);
+    await _foregroundSub?.cancel();
+    _foregroundSub = FirebaseMessaging.onMessage.listen(_showForeground);
   }
 
   /// Vraagt toestemming en bewaart het FCM-token voor deze gebruiker.
@@ -57,7 +50,9 @@ class PushService {
     if (token != null) await _save(token, userId);
 
     await _tokenRefreshSub?.cancel();
-    _tokenRefreshSub = _messaging.onTokenRefresh.listen((t) => _save(t, userId));
+    _tokenRefreshSub = _messaging.onTokenRefresh.listen(
+      (t) => _save(t, userId),
+    );
   }
 
   /// Verwijdert het token bij uitloggen.
@@ -82,6 +77,7 @@ class PushService {
         'token': token,
         'user_id': userId,
         'platform': 'android',
+        'notification_version': 2,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'token');
     } on Exception catch (e) {
@@ -93,21 +89,7 @@ class PushService {
     final notification = message.notification;
     if (notification == null) return;
 
-    final isSos = message.data['type'] == 'sos';
-    final details = isSos
-        ? const AndroidNotificationDetails(
-            _sosChannelId,
-            _sosChannelName,
-            importance: Importance.max,
-            priority: Priority.max,
-            category: AndroidNotificationCategory.alarm,
-            audioAttributesUsage: AudioAttributesUsage.alarm,
-          )
-        : const AndroidNotificationDetails(
-            _placesChannelId,
-            _placesChannelName,
-            importance: Importance.defaultImportance,
-          );
+    final details = PushChannels.details(message.data['type'] as String?);
 
     _local.show(
       notification.hashCode,

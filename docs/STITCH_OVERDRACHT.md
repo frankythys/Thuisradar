@@ -1,5 +1,16 @@
 # Stitch-overdracht — 4 oktober 2026
 
+## Aanvulling — chatpush en meldingsgeluiden
+- Gebruiker meldde geen/zacht geluid bij chat, SOS en thuiskomst. Op aangesloten Samsung stond STREAM_NOTIFICATION gedempt; alarmstream niet gedempt (12/15), Niet storen uit. Algemene toestelinstellingen niet gewijzigd.
+- Chatpush ontbrak. Migratie 012 en `send-chat-push` zijn nu uitgerold: nieuwe berichten (ook bijlagen/check-ins) melden aan andere gezinsleden; geen berichtinhoud/bijlagepad op vergrendelscherm. Trigger gecontroleerd met onderschepte `private.call_push` in BEGIN/ROLLBACK: geen echte push of blijvend testbericht.
+- Nieuw kanaal `chat_messages` met eigen korte toon; SOS-kanaal `sos_alerts_v2` met oorspronkelijke gegenereerde alarmtoon van 4,5 seconden via alarmvolume. Android-resources en generator in git; keep.xml voorkomt verwijderen bij resource shrinking.
+- `device_tokens.notification_version` zorgt dat oude installaties bestaande kanalen/geluiden blijven gebruiken. Nieuwe app registreert versie 2 nadat de kanalen zijn gemaakt. Nieuwe geluiden vereisen gebruikersbuild/installatie én eenmaal openen.
+- Plaatsenpush heeft nu hoge afleverprioriteit; geluid blijft een gewone melding en volgt stilstand/meldingsvolume van Android. SOS respecteert nog steeds blokkades/Niet storen; geen gegarandeerde doorbraak of continue sirene.
+- Pushregistratie bij reeds herstelde sessies hersteld; in-/uitloggen wordt sequentieel afgehandeld. Voorgrondmeldingen onderscheiden chat/SOS/plaatsen en de listener wordt opgeruimd.
+- Alle drie pushfuncties verwijderen alleen expliciet verlopen FCM-tokens en tellen afleverfouten niet langer als succes. Webhookgeheim blijft vereist.
+- Verificatie: 101 Flutter-tests geslaagd; analyzer schoon; drie Edge Functions typechecked; twee Deno-tests met gemockte netwerkverzoeken geslaagd (ontvangers, afzender uitsluiten, privacy, oude app, fouten); migratie uitgerold en aanwezigheid bevestigd; chat-endpoint weigert verzoek zonder geheim met 401.
+- Geen APK-/emulatorbuild, visuele controle, hoorbare toesteltest of echte gezinsmelding uitgevoerd. Gebruiker bouwt/test; voor chat/plaatsen moet meldingsgeluid op het toestel aanstaan.
+
 ## Aanvulling — kaartstart en horizontaal schuiven
 - Kaart centreert bij openen één keer op de ingelogde persoon, zodra diens locatie beschikbaar is, met overzichtszoom 12 en ruimte voor de ledenlijst. Locaties van andere leden nemen de startfocus niet over.
 - Na handmatig schuiven/zoomen springt de kaart niet automatisch terug. De bestaande centreerknop toont nog steeds het gezin samen.

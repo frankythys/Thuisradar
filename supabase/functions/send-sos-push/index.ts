@@ -11,6 +11,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as jose from "npm:jose@5";
+import { invalidFcmToken } from "../_shared/fcm_result.ts";
 
 interface ServiceAccount {
   project_id: string;
@@ -53,6 +54,7 @@ async function sendPush(
   token: string,
   actorName: string,
   record: { family_id: string; lat: number; lng: number },
+  notificationVersion: number,
 ): Promise<"ok" | "invalid" | "error"> {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
@@ -64,9 +66,8 @@ async function sendPush(
         android: {
           priority: "high",
           notification: {
-            channel_id: "sos_alerts",
-            sound: "default",
-            default_sound: true,
+            channel_id: notificationVersion >= 2 ? "sos_alerts_v2" : "sos_alerts",
+            sound: notificationVersion >= 2 ? "thuisradar_sos" : "default",
             notification_priority: "PRIORITY_MAX",
             visibility: "PUBLIC",
           },
@@ -84,16 +85,14 @@ async function sendPush(
 
   if (res.ok) return "ok";
   const err = await res.json().catch(() => null);
-  const status = err?.error?.status;
-  if (res.status === 404 || status === "NOT_FOUND" || status === "UNREGISTERED" || status === "INVALID_ARGUMENT") {
-    return "invalid";
-  }
+  if (invalidFcmToken(err)) return "invalid";
   return "error";
 }
 
 Deno.serve(async (req) => {
   // 1. Alleen de webhook met het juiste geheim mag binnen.
-  if (req.headers.get("x-webhook-secret") !== Deno.env.get("SOS_WEBHOOK_SECRET")) {
+  const secret = Deno.env.get("SOS_WEBHOOK_SECRET");
+  if (!secret || req.headers.get("x-webhook-secret") !== secret) {
     return new Response("unauthorized", { status: 401 });
   }
 
@@ -133,9 +132,9 @@ Deno.serve(async (req) => {
 
   const { data: tokens } = await supabase
     .from("device_tokens")
-    .select("token")
+    .select("token, notification_version")
     .in("user_id", recipients);
-  const tokenList = (tokens ?? []).map((t) => t.token as string);
+  const tokenList = tokens ?? [];
   if (tokenList.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 
   // 3. FCM-token + alle pushes versturen.
@@ -143,10 +142,14 @@ Deno.serve(async (req) => {
   const accessToken = await getAccessToken(sa);
 
   const invalid: string[] = [];
+  let sent = 0;
+  let failed = 0;
   await Promise.all(
-    tokenList.map(async (token) => {
-      const result = await sendPush(sa.project_id, accessToken, token, actorName, record);
+    tokenList.map(async ({ token, notification_version }) => {
+      const result = await sendPush(sa.project_id, accessToken, token, actorName, record, notification_version);
       if (result === "invalid") invalid.push(token);
+      else if (result === "ok") sent++;
+      else failed++;
     }),
   );
 
@@ -156,7 +159,7 @@ Deno.serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({ sent: tokenList.length - invalid.length, cleaned: invalid.length }),
+    JSON.stringify({ sent, failed, cleaned: invalid.length }),
     { headers: { "Content-Type": "application/json" } },
   );
 });

@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../supabase/supabase_providers.dart';
 import 'push_service.dart';
 
-final pushServiceProvider = Provider<PushService>(
-  (ref) => PushService(
+final pushServiceProvider = Provider<PushService>((ref) {
+  final service = PushService(
     ref.watch(supabaseClientProvider),
     FirebaseMessaging.instance,
     FlutterLocalNotificationsPlugin(),
-  ),
-);
+  );
+  ref.onDispose(service.dispose);
+  return service;
+});
