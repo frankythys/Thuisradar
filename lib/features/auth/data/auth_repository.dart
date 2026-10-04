@@ -18,7 +18,11 @@ class AuthRepository {
 
   /// Geeft `true` terug als er meteen een sessie is, `false` als de gebruiker
   /// eerst zijn e-mail moet bevestigen.
-  Future<bool> signUp({required String email, required String password, required String displayName}) async {
+  Future<bool> signUp({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
     final response = await _client.auth.signUp(
       email: email,
       password: password,
@@ -27,13 +31,19 @@ class AuthRepository {
     return response.session != null;
   }
 
+  Future<void> resetPassword(String email) =>
+      _client.auth.resetPasswordForEmail(email);
+
   Future<void> signOut() => _client.auth.signOut();
 
   /// Werkt de weergavenaam van de ingelogde gebruiker bij.
   Future<void> updateDisplayName(String name) async {
     final user = _client.auth.currentUser;
     if (user == null) return;
-    await _client.from('profiles').update({'display_name': name}).eq('id', user.id);
+    await _client
+        .from('profiles')
+        .update({'display_name': name})
+        .eq('id', user.id);
   }
 
   /// Zorgt dat er een profielrij bestaat voor de ingelogde gebruiker.
@@ -46,7 +56,10 @@ class AuthRepository {
     await _client
         .from('profiles')
         .upsert(
-          {'id': user.id, 'display_name': (name == null || name.isEmpty) ? 'Gezinslid' : name},
+          {
+            'id': user.id,
+            'display_name': (name == null || name.isEmpty) ? 'Gezinslid' : name,
+          },
           onConflict: 'id',
           ignoreDuplicates: true,
         );

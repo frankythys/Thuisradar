@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../shared/widgets/radar_logo.dart';
 import '../application/onboarding_providers.dart';
 import '../domain/onboarding_slide.dart';
 import 'widgets/onboarding_hero.dart';
@@ -36,7 +37,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_isLast) {
       _finish();
     } else {
-      _controller.nextPage(duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
+      _controller.nextPage(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      );
     }
   }
 
@@ -50,16 +54,36 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           padding: EdgeInsets.all(tokens.spaceMd),
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(onPressed: _finish, child: const Text('Overslaan')),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: RadarLogo(size: 32),
+              ),
+              Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.primaryContainer,
+                    child: Icon(Icons.radar, size: 20, color: Colors.white),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Thuisradar',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _finish,
+                    child: const Text('Overslaan'),
+                  ),
+                ],
               ),
               Expanded(
                 child: PageView.builder(
                   controller: _controller,
                   itemCount: onboardingSlides.length,
                   onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (context, i) => _SlideView(slide: onboardingSlides[i]),
+                  itemBuilder: (context, i) =>
+                      _SlideView(slide: onboardingSlides[i]),
                 ),
               ),
               SizedBox(height: tokens.spaceMd),
@@ -76,6 +100,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ],
                 ),
               ),
+              if (_isLast)
+                TextButton(
+                  onPressed: _finish,
+                  child: const Text('Ik heb al een gezinscode'),
+                ),
             ],
           ),
         ),
@@ -97,19 +126,51 @@ class _SlideView extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          SizedBox(height: tokens.spaceLg),
+          SizedBox(height: tokens.spaceSm),
+          if (slide.illustrationBase.endsWith('_4')) ...[
+            Text(
+              slide.title,
+              style: text.headlineLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              slide.body,
+              style: text.bodyMedium?.copyWith(color: AppColors.muted),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+          ],
           OnboardingHero(base: slide.illustrationBase, icon: slide.icon),
           SizedBox(height: tokens.spaceXl),
-          Text(slide.title, style: text.headlineLarge, textAlign: TextAlign.center),
-          SizedBox(height: tokens.spaceMd),
-          Text(
-            slide.body,
-            style: text.bodyLarge?.copyWith(color: AppColors.muted),
-            textAlign: TextAlign.center,
-          ),
+          if (!slide.illustrationBase.endsWith('_4')) ...[
+            Text(
+              slide.title,
+              style: text.headlineLarge,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: tokens.spaceSm),
+            Text(
+              slide.body,
+              style: text.bodyMedium?.copyWith(color: AppColors.muted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          if (slide.illustrationBase.endsWith('_4'))
+            const _Footnote(
+              title: 'Geen vals alarm',
+              body: '3 seconden vasthouden om te activeren',
+            ),
           if (slide.footnote != null) ...[
             SizedBox(height: tokens.spaceXl),
             _Footnote(title: slide.footnoteTitle!, body: slide.footnote!),
+            if (slide.illustrationBase.endsWith('_2')) ...[
+              const SizedBox(height: 12),
+              const _Footnote(
+                title: 'Geen advertenties',
+                body: 'Jullie privacy is heilig',
+              ),
+            ],
           ],
         ],
       ),
@@ -145,7 +206,10 @@ class _Footnote extends StatelessWidget {
               children: [
                 Text(title, style: text.titleMedium),
                 SizedBox(height: tokens.spaceXs),
-                Text(body, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
+                Text(
+                  body,
+                  style: text.bodyMedium?.copyWith(color: AppColors.muted),
+                ),
               ],
             ),
           ),

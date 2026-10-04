@@ -13,7 +13,7 @@ void main() {
   });
 
   test('eerste vier gezinslid-kleuren volgen DESIGN.md', () {
-    expect(tokens.memberColor(0), AppColors.primary);
+    expect(tokens.memberColor(0), AppColors.primaryContainer);
     expect(tokens.memberColor(1), const Color(0xFF6D4BD8));
     expect(tokens.memberColor(2), const Color(0xFF2563EB));
     expect(tokens.memberColor(3), const Color(0xFFB45309));

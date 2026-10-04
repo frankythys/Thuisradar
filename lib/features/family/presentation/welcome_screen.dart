@@ -1,3 +1,7 @@
+import '../../location/application/location_providers.dart';
+import '../../location/domain/member_location.dart';
+import '../../../shared/widgets/battery_badge.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +17,10 @@ import '../application/family_providers.dart';
 import '../domain/family.dart';
 import '../domain/family_member.dart';
 
+part 'welcome_screen_members_card.dart';
+part 'welcome_screen_count_pill.dart';
+part 'welcome_screen_welcome_hero.dart';
+
 /// Scherm 9: na het joinen van een familie. Verwelkomt en toont de leden.
 class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key, required this.family});
@@ -20,7 +28,9 @@ class WelcomeScreen extends ConsumerWidget {
   final Family family;
 
   void _continue(BuildContext context) {
-    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(builder: (_) => const PermissionsScreen()));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const PermissionsScreen()),
+    );
   }
 
   @override
@@ -31,7 +41,7 @@ class WelcomeScreen extends ConsumerWidget {
     final myId = ref.watch(currentUserIdProvider);
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Welkom'),
+      appBar: const BrandedAppBar(title: 'Gezinsoverzicht Gereed'),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(tokens.spaceLg),
@@ -40,7 +50,11 @@ class WelcomeScreen extends ConsumerWidget {
             children: [
               const _WelcomeHero(),
               SizedBox(height: tokens.spaceLg),
-              Text('Welkom bij ${family.name}!', style: text.headlineLarge, textAlign: TextAlign.center),
+              Text(
+                'Welkom bij ${family.name}!',
+                style: text.headlineLarge,
+                textAlign: TextAlign.center,
+              ),
               SizedBox(height: tokens.spaceSm),
               Text(
                 'Je bent nu verbonden met de veilige familiekring.',
@@ -49,7 +63,13 @@ class WelcomeScreen extends ConsumerWidget {
               ),
               SizedBox(height: tokens.spaceLg),
               members.when(
-                data: (list) => _MembersCard(members: list, myId: myId),
+                data: (list) => _MembersCard(
+                  members: list,
+                  myId: myId,
+                  locations:
+                      ref.watch(familyLocationsProvider(family.id)).value ??
+                      const [],
+                ),
                 loading: () => const Padding(
                   padding: EdgeInsets.all(24),
                   child: Center(child: CircularProgressIndicator()),
@@ -71,132 +91,6 @@ class WelcomeScreen extends ConsumerWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _MembersCard extends StatelessWidget {
-  const _MembersCard({required this.members, required this.myId});
-
-  final List<FamilyMember> members;
-  final String? myId;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final tokens = context.tokens;
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('Huidige gezinsleden', style: text.titleLarge),
-              const Spacer(),
-              _CountPill(count: members.length),
-            ],
-          ),
-          SizedBox(height: tokens.spaceMd),
-          for (final member in members) ...[
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: tokens.spaceSm),
-              child: Row(
-                children: [
-                  MemberAvatar(member: member, size: 48),
-                  SizedBox(width: tokens.spaceMd),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(member.displayName, style: text.titleMedium),
-                        Text(
-                          member.userId == myId ? 'Jij' : (member.isOwner ? 'Beheerder' : 'Gezinslid'),
-                          style: text.bodySmall?.copyWith(color: AppColors.muted),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          SizedBox(height: tokens.spaceSm),
-          Container(
-            padding: EdgeInsets.all(tokens.spaceMd),
-            decoration: BoxDecoration(
-              color: AppColors.ground,
-              borderRadius: BorderRadius.circular(tokens.radiusInput),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.lock_outline, size: 18, color: AppColors.muted),
-                SizedBox(width: tokens.spaceMd),
-                Expanded(
-                  child: Text(
-                    'Locaties worden enkel binnen deze kring gedeeld. Je gegevens blijven privé.',
-                    style: text.bodyMedium?.copyWith(color: AppColors.muted),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CountPill extends StatelessWidget {
-  const _CountPill({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
-      child: Text(
-        '$count ${count == 1 ? 'lid' : 'leden'}',
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.primary),
-      ),
-    );
-  }
-}
-
-class _WelcomeHero extends StatelessWidget {
-  const _WelcomeHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 160,
-      height: 160,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          _ring(160, 0.2),
-          _ring(118, 0.4),
-          Container(
-            width: 84,
-            height: 84,
-            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-            child: const Icon(Icons.home_rounded, color: Colors.white, size: 40),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _ring(double size, double opacity) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Color.lerp(AppColors.ground, AppColors.primary, opacity),
       ),
     );
   }

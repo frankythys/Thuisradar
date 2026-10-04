@@ -17,9 +17,13 @@ class MemberListSheet extends StatelessWidget {
     this.selectedUserId,
     this.placeByUser = const {},
     this.controller,
+    this.onCheckIn,
+    this.onManage,
   });
 
   final List<MemberOnMap> members;
+  final VoidCallback? onCheckIn;
+  final VoidCallback? onManage;
   final String? currentUserId;
   final String? selectedUserId;
   final Map<String, PlaceStatus> placeByUser;
@@ -38,7 +42,7 @@ class MemberListSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       controller: controller,
-      initialChildSize: 0.34,
+      initialChildSize: 0.48,
       minChildSize: 0.14,
       maxChildSize: 0.8,
       snap: true,
@@ -46,7 +50,13 @@ class MemberListSheet extends StatelessWidget {
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: [BoxShadow(color: Color(0x1A121C1C), blurRadius: 24, offset: Offset(0, -6))],
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x1A121C1C),
+              blurRadius: 24,
+              offset: Offset(0, -6),
+            ),
+          ],
         ),
         child: ListView(
           controller: scrollController,
@@ -55,9 +65,23 @@ class MemberListSheet extends StatelessWidget {
             const _Handle(),
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
-              child: Text(
-                'Familie · ${members.length} ${members.length == 1 ? 'lid' : 'leden'}',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Familie · ${members.length} ${members.length == 1 ? 'lid' : 'leden'}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  if (onManage != null)
+                    TextButton(
+                      onPressed: onManage,
+                      child: const Text('Beheer'),
+                    ),
+                ],
               ),
             ),
             for (final entry in members)
@@ -69,6 +93,46 @@ class MemberListSheet extends StatelessWidget {
                 placeStatus: placeByUser[entry.member.userId],
                 onTap: () => onSelect(entry),
                 onDetails: () => onDetails(entry),
+              ),
+            if (onCheckIn != null)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceLow,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Iedereen veilig',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            'Laat weten dat het goed gaat',
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: onCheckIn,
+                      child: const Text('Check-in →'),
+                    ),
+                  ],
+                ),
               ),
           ],
         ),
@@ -86,7 +150,10 @@ class _Handle extends StatelessWidget {
       child: Container(
         width: 36,
         height: 4,
-        decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+        decoration: BoxDecoration(
+          color: AppColors.border,
+          borderRadius: BorderRadius.circular(2),
+        ),
       ),
     );
   }

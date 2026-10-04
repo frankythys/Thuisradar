@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,7 +11,13 @@ import '../../auth/application/auth_providers.dart';
 import '../application/family_providers.dart';
 import '../domain/family.dart';
 import 'invite_screen.dart';
+import 'invite_code_input.dart';
 import 'welcome_screen.dart';
+
+part 'family_setup_screen_card_header.dart';
+part 'family_setup_screen_badge.dart';
+part 'family_setup_screen_field_label.dart';
+part 'family_setup_screen_step_pill.dart';
 
 /// Scherm 7: een familie aanmaken of er een joinen met een code.
 class FamilySetupScreen extends ConsumerStatefulWidget {
@@ -33,7 +40,10 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
     super.dispose();
   }
 
-  Future<void> _run(Future<Family> Function() action, Widget Function(Family) next) async {
+  Future<void> _run(
+    Future<Family> Function() action,
+    Widget Function(Family) next,
+  ) async {
     if (_busy) return;
     setState(() {
       _busy = true;
@@ -43,7 +53,8 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
       final family = await action();
       ref.invalidate(myFamilyProvider);
       if (!mounted) return;
-      await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => next(family)));
+      await Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => next(family)));
     } on PostgrestException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
@@ -92,7 +103,10 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
               children: [
                 _StepPill(),
                 const Spacer(),
-                Text('Gezinsconfiguratie', style: text.bodyMedium?.copyWith(color: AppColors.muted)),
+                Text(
+                  'Gezinsconfiguratie',
+                  style: text.bodyMedium?.copyWith(color: AppColors.muted),
+                ),
               ],
             ),
             SizedBox(height: tokens.spaceMd),
@@ -117,13 +131,20 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                     body: 'Start een nieuwe besloten gezinskring en nodig je gezinsleden uit.',
                   ),
                   SizedBox(height: tokens.spaceMd),
-                  _FieldLabel(label: 'Familienaam', trailing: 'Privé & gecodeerd'),
+                  _FieldLabel(
+                    label: 'Familienaam',
+                    trailing: 'Privé & gecodeerd',
+                  ),
                   SizedBox(height: tokens.spaceSm),
                   TextField(
                     controller: _familyName,
                     decoration: const InputDecoration(
-                      hintText: 'bv. Familie Thys',
-                      prefixIcon: Icon(Icons.groups_outlined, color: AppColors.primary),
+                      hintText: 'Familie Thys',
+                      fillColor: AppColors.surfaceLow,
+                      prefixIcon: Icon(
+                        Icons.groups_outlined,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                   SizedBox(height: tokens.spaceMd),
@@ -147,7 +168,10 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                 const Expanded(child: Divider()),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd),
-                  child: Text('OF AANSLUITEN', style: text.labelMedium?.copyWith(color: AppColors.muted)),
+                  child: Text(
+                    'OF AANSLUITEN',
+                    style: text.labelMedium?.copyWith(color: AppColors.muted),
+                  ),
                 ),
                 const Expanded(child: Divider()),
               ],
@@ -163,18 +187,36 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                     iconColor: AppColors.secondary,
                     iconBackground: const Color(0xFFE7DEFF),
                     title: 'Ik heb een uitnodigingscode',
-                    body: 'Voer de 8-cijferige code in die je van een gezinslid hebt ontvangen.',
+                    body: 'Voer de 8-tekens lange code in die je van een gezinslid hebt ontvangen.',
                   ),
                   SizedBox(height: tokens.spaceMd),
-                  _FieldLabel(label: 'Toegangscode'),
-                  SizedBox(height: tokens.spaceSm),
-                  TextField(
-                    controller: _inviteCode,
-                    textCapitalization: TextCapitalization.characters,
-                    textAlign: TextAlign.center,
-                    style: text.headlineMedium?.copyWith(color: AppColors.primary, letterSpacing: 4),
-                    decoration: const InputDecoration(hintText: 'A7K2 M9QX'),
+                  Row(
+                    children: [
+                      const Expanded(child: _FieldLabel(label: 'Toegangscode')),
+                      TextButton(
+                        onPressed: () async {
+                          final data = await Clipboard.getData(
+                            Clipboard.kTextPlain,
+                          );
+                          if (mounted && data?.text != null) {
+                            _inviteCode.text = data!.text!
+                                .replaceAll(RegExp('[^a-zA-Z0-9]'), '')
+                                .toUpperCase()
+                                .substring(
+                                  0,
+                                  data.text!
+                                      .replaceAll(RegExp('[^a-zA-Z0-9]'), '')
+                                      .length
+                                      .clamp(0, 8),
+                                );
+                          }
+                        },
+                        child: const Text('Plak klembord'),
+                      ),
+                    ],
                   ),
+                  SizedBox(height: tokens.spaceSm),
+                  InviteCodeInput(controller: _inviteCode),
                   SizedBox(height: tokens.spaceMd),
                   FilledButton.icon(
                     onPressed: _busy ? null : _join,
@@ -190,7 +232,10 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
             ),
             if (_error != null) ...[
               SizedBox(height: tokens.spaceMd),
-              Text(_error!, style: text.bodyMedium?.copyWith(color: AppColors.alert)),
+              Text(
+                _error!,
+                style: text.bodyMedium?.copyWith(color: AppColors.alert),
+              ),
             ],
             SizedBox(height: tokens.spaceLg),
             Container(
@@ -201,7 +246,11 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lock_outline, size: 18, color: AppColors.muted),
+                  const Icon(
+                    Icons.lock_outline,
+                    size: 18,
+                    color: AppColors.muted,
+                  ),
                   SizedBox(width: tokens.spaceMd),
                   Expanded(
                     child: Text(
@@ -214,114 +263,6 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _CardHeader extends StatelessWidget {
-  const _CardHeader({
-    required this.icon,
-    required this.iconColor,
-    required this.iconBackground,
-    required this.title,
-    required this.body,
-    this.badge,
-  });
-
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBackground;
-  final String title;
-  final String body;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final tokens = context.tokens;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: iconBackground,
-            borderRadius: BorderRadius.circular(tokens.radiusInput),
-          ),
-          child: Icon(icon, color: iconColor, size: 28),
-        ),
-        SizedBox(width: tokens.spaceMd),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text(title, style: text.titleLarge)),
-                  if (badge != null) _Badge(label: badge!),
-                ],
-              ),
-              SizedBox(height: tokens.spaceXs),
-              Text(body, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
-      child: Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.primary)),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel({required this.label, this.trailing});
-
-  final String label;
-  final String? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Row(
-      children: [
-        Text(label, style: text.titleMedium),
-        const Spacer(),
-        if (trailing != null) Text(trailing!, style: text.bodySmall?.copyWith(color: AppColors.muted)),
-      ],
-    );
-  }
-}
-
-class _StepPill extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.circle, size: 8, color: AppColors.primary),
-          const SizedBox(width: 6),
-          Text('Stap 2 van 3', style: text.labelMedium?.copyWith(color: AppColors.primary)),
-        ],
       ),
     );
   }

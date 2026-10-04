@@ -1,0 +1,20 @@
+<svg aria-hidden="true" class="w-56 h-56 relative z-10" fill="none" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+<path d="M120 28C72 28 42 42 42 76C42 144 120 208 120 208C120 208 198 144 198 76C198 42 168 28 120 28Z" fill="#a0f2db" fill-opacity="0.32"></path>
+<path d="M120 40C80 40 54 52 54 82C54 138 120 192 120 192C120 192 186 138 186 82C186 52 160 40 120 40Z" fill="#ffffff" stroke="#005445" stroke-linejoin="round" stroke-width="4"></path>
+<path d="M80 134L120 94L160 134" fill="none" stroke="#005445" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"></path>
+<path d="M92 122V156C92 158.2 93.8 160 96 160H144C146.2 160 148 158.2 148 156V122" fill="#e1f2eb" stroke="#005445" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"></path>
+<path d="M112 160V138C112 136.9 112.9 136 114 136H126C127.1 136 128 136.9 128 138V160" fill="#005445"></path>
+<path d="M68 96C68 116 120 116 120 96" stroke="#005445" stroke-dasharray="4 4" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M172 96C172 116 120 116 120 96" stroke="#005445" stroke-dasharray="4 4" stroke-linecap="round" stroke-width="2.5"></path>
+<path d="M120 96V78" stroke="#005445" stroke-dasharray="4 4" stroke-linecap="round" stroke-width="2.5"></path>
+<circle cx="120" cy="74" fill="#005445" r="14"></circle>
+<circle cx="120" cy="74" fill="#ffffff" r="7"></circle>
+<circle cx="68" cy="96" fill="#633fcd" r="13"></circle>
+<circle cx="68" cy="96" fill="#ffffff" r="6"></circle>
+<circle cx="172" cy="96" fill="#0e6e5c" r="13"></circle>
+<circle cx="172" cy="96" fill="#ffffff" r="6"></circle>
+<g transform="translate(106, 110)">
+<circle cx="14" cy="14" fill="#005445" r="12"></circle>
+<path d="M10 14L13 17L18 11" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</g>
+</svg>

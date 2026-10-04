@@ -43,8 +43,8 @@ const onboardingSlides = <OnboardingSlide>[
     body:
         'Jullie locaties zijn uitsluitend zichtbaar binnen jullie eigen familiekring. '
         'Geen trackers, nooit verkocht of gedeeld.',
-    footnoteTitle: 'End-to-end beveiligd',
-    footnote: 'Alleen gezinsleden hebben toegang. Geen advertenties.',
+    footnoteTitle: 'Besloten gezinskring',
+    footnote: 'Alleen gezinsleden hebben toegang',
   ),
   OnboardingSlide(
     icon: Icons.notifications_active_rounded,

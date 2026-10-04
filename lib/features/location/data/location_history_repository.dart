@@ -12,14 +12,28 @@ class LocationHistoryRepository {
     final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));
 
-    final rows = await _client
-        .from('location_history')
-        .select('lat, lng, speed_mps, battery, recorded_at')
-        .eq('user_id', userId)
-        .gte('recorded_at', start.toUtc().toIso8601String())
-        .lt('recorded_at', end.toUtc().toIso8601String())
-        .order('recorded_at');
+    return fetchRange(userId, start, end);
+  }
 
-    return [for (final row in rows) TrackPoint.fromJson(row)];
+  Future<List<TrackPoint>> fetchRange(
+    String userId,
+    DateTime start,
+    DateTime end,
+  ) async {
+    final points = <TrackPoint>[];
+    const pageSize = 1000;
+    for (var offset = 0; ; offset += pageSize) {
+      final rows = await _client
+          .from('location_history')
+          .select('lat, lng, speed_mps, battery, recorded_at')
+          .eq('user_id', userId)
+          .gte('recorded_at', start.toUtc().toIso8601String())
+          .lt('recorded_at', end.toUtc().toIso8601String())
+          .order('recorded_at')
+          .range(offset, offset + pageSize - 1);
+      points.addAll(rows.map(TrackPoint.fromJson));
+      if (rows.length < pageSize) break;
+    }
+    return points;
   }
 }

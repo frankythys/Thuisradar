@@ -1,3 +1,7 @@
+import '../../chat/application/chat_providers.dart';
+import '../../location/application/tracking_status.dart';
+import 'widgets/offline_members.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +20,8 @@ import '../../places/domain/place.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
-import '../../sos/presentation/widgets/sos_hold_button.dart';
+import '../../sos/presentation/sos_screen.dart';
+import '../../../shared/widgets/branded_app_bar.dart';
 import '../application/map_providers.dart';
 import '../domain/auto_fit.dart';
 import '../domain/member_on_map.dart';
@@ -25,6 +30,10 @@ import 'widgets/family_map.dart';
 import 'widgets/member_info_card.dart';
 import 'widgets/member_list_sheet.dart';
 import 'widgets/tracking_banner.dart';
+import 'widgets/no_locations_card.dart';
+
+part 'map_screen_recenter_button.dart';
+part 'map_screen_own_sos_banner.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key, required this.family});
@@ -62,7 +71,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _startTracking() {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
-    ref.read(locationTrackerProvider.notifier).start(userId: userId, familyId: widget.family.id);
+    ref
+        .read(locationTrackerProvider.notifier)
+        .start(userId: userId, familyId: widget.family.id);
   }
 
   Future<void> _signOut() async {
@@ -78,7 +89,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       for (final m in members)
         if (m.location case final l?) LatLng(l.latitude, l.longitude),
     ];
-    if (!_autoFit.shouldFit(mapReady: _mapReady, hasPoints: points.isNotEmpty, deliberate: deliberate)) {
+    if (!_autoFit.shouldFit(
+      mapReady: _mapReady,
+      hasPoints: points.isNotEmpty,
+      deliberate: deliberate,
+    )) {
       return;
     }
 
@@ -104,9 +119,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (location == null) return;
 
     _autoFit.lock();
-    _mapController.move(LatLng(location.latitude, location.longitude), _focusZoom);
+    _mapController.move(
+      LatLng(location.latitude, location.longitude),
+      _focusZoom,
+    );
     if (_sheetController.isAttached) {
-      _sheetController.animateTo(0.14, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+      _sheetController.animateTo(
+        0.14,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
     }
     setState(() => _selected = entry);
   }
@@ -123,20 +145,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _openProfile() {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)));
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ProfileScreen(family: widget.family),
+      ),
+    );
   }
 
   void _openDetail(MemberOnMap entry) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            MemberDetailScreen(member: entry.member, familyId: widget.family.id, location: entry.location),
+        builder: (_) => MemberDetailScreen(
+          member: entry.member,
+          familyId: widget.family.id,
+          location: entry.location,
+        ),
       ),
     );
   }
 
   void _snack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _raiseSos() async {
@@ -148,11 +178,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     // Verse GPS-positie (max 5 s), anders de laatst gedeelde locatie.
-    final fresh = await ref.read(deviceLocationSourceProvider).currentPosition();
+    final fresh = await ref
+        .read(deviceLocationSourceProvider)
+        .currentPosition();
     var lat = fresh?.latitude;
     var lng = fresh?.longitude;
     if (lat == null || lng == null) {
-      final members = ref.read(membersOnMapProvider(familyId)).value ?? const <MemberOnMap>[];
+      final members =
+          ref.read(membersOnMapProvider(familyId)).value ??
+          const <MemberOnMap>[];
       for (final m in members) {
         if (m.member.userId == myId && m.location != null) {
           lat = m.location!.latitude;
@@ -168,7 +202,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     try {
       await ref
           .read(sosRepositoryProvider)
-          .raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng);
+          .raise(
+            familyId: familyId,
+            userId: myId,
+            latitude: lat,
+            longitude: lng,
+          );
       _snack('SOS verzonden naar je gezin.');
     } on Exception {
       _snack('SOS versturen mislukt. Probeer opnieuw.');
@@ -184,7 +223,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final now = ref.watch(clockProvider).value ?? DateTime.now();
 
     final myId = ref.watch(currentUserIdProvider);
-    final activeSos = ref.watch(activeSosProvider(familyId)).value ?? const <SosAlert>[];
+    final activeSos =
+        ref.watch(activeSosProvider(familyId)).value ?? const <SosAlert>[];
     SosAlert? myAlert;
     for (final alert in activeSos) {
       if (alert.userId == myId) myAlert = alert;
@@ -192,7 +232,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     // Tijdens een eigen actieve SOS vaker uploaden, daarna terug normaal.
     ref.listen(activeSosProvider(familyId), (_, next) {
-      final mine = (next.value ?? const <SosAlert>[]).any((a) => a.userId == myId);
+      final mine = (next.value ?? const <SosAlert>[]).any(
+        (a) => a.userId == myId,
+      );
       ref.read(locationTrackerProvider.notifier).setFastUpdates(mine);
     });
 
@@ -200,7 +242,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fit(members));
     }
 
-    final places = ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
+    final noLocations =
+        membersAsync.hasValue && members.every((m) => m.location == null);
+    final offline = trackingStatus == TrackingStatus.offline;
+    final places =
+        ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
     final placeByUser = ref.watch(currentPlaceByUserProvider(familyId));
 
     // Houd het gekozen lid vers (locatie/batterij uit de realtime-stroom).
@@ -213,9 +259,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     final size = MediaQuery.sizeOf(context);
-    final sheetTop = size.height * 0.34;
+    final sheetTop = size.height * 0.48;
 
     return Scaffold(
+      appBar: BrandedAppBar(
+        title: 'Kaart',
+        actions: [
+          IconButton(
+            tooltip: 'Profiel',
+            onPressed: _openProfile,
+            icon: const Icon(Icons.account_circle, color: AppColors.primary),
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           FamilyMap(
@@ -238,7 +294,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           Positioned(
             right: 16,
             bottom: sheetTop + 16,
-            child: _RecenterButton(onPressed: () => _fit(members, deliberate: true)),
+            child: _RecenterButton(
+              onPressed: () => _fit(members, deliberate: true),
+            ),
           ),
           SafeArea(
             child: Padding(
@@ -246,19 +304,52 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (offline)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: TrackingBanner(
+                        status: trackingStatus,
+                        onRetry: _startTracking,
+                        onOpenSettings: () => ref
+                            .read(deviceLocationSourceProvider)
+                            .openSettings(),
+                      ),
+                    ),
                   Row(
                     children: [
-                      FamilyHeader(family: widget.family, onSignOut: _signOut, onProfile: _openProfile),
+                      FamilyHeader(
+                        family: widget.family,
+                        onSignOut: _signOut,
+                        onProfile: _openProfile,
+                      ),
                       const Spacer(),
-                      SosHoldButton(onActivate: _raiseSos),
+                      FilledButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => SosScreen(
+                              familyId: familyId,
+                              onActivate: _raiseSos,
+                            ),
+                          ),
+                        ),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(90, 44),
+                          backgroundColor: const Color(0xFFA04700),
+                        ),
+                        icon: const Icon(Icons.shield_outlined, size: 18),
+                        label: const Text('SOS'),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  TrackingBanner(
-                    status: trackingStatus,
-                    onRetry: _startTracking,
-                    onOpenSettings: () => ref.read(locationTrackerProvider.notifier).openSettings(),
-                  ),
+                  if (!offline)
+                    TrackingBanner(
+                      status: trackingStatus,
+                      onRetry: _startTracking,
+                      onOpenSettings: () => ref
+                          .read(locationTrackerProvider.notifier)
+                          .openSettings(),
+                    ),
                   if (myAlert case final alert?) ...[
                     const SizedBox(height: 12),
                     _OwnSosBanner(
@@ -272,6 +363,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
           ),
+          if (noLocations)
+            Positioned(
+              top: offline ? 195 : 100,
+              left: 24,
+              right: 24,
+              child: NoLocationsCard(
+                family: widget.family,
+                onSettings: () =>
+                    ref.read(deviceLocationSourceProvider).openSettings(),
+              ),
+            ),
           if (membersAsync.hasError)
             ErrorView(
               message: 'Familie kon niet geladen worden.',
@@ -280,8 +382,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 ref.invalidate(familyLocationsProvider(familyId));
               },
             )
+          else if (noLocations)
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 16,
+              child: OfflineMembers(members: members, onDetails: _openDetail),
+            )
           else
             MemberListSheet(
+              onManage: _openProfile,
+              onCheckIn: () async {
+                if (myId == null) return;
+                try {
+                  await ref
+                      .read(chatRepositoryProvider)
+                      .send(
+                        familyId: familyId,
+                        userId: myId,
+                        body: '✓ Check-in: alles goed met mij.',
+                      );
+                  if (mounted) _snack('Check-in gedeeld met je gezin.');
+                } catch (_) {
+                  if (mounted) {
+                    _snack('Check-in versturen mislukt. Probeer opnieuw.');
+                  }
+                }
+              },
               members: members,
               currentUserId: ref.watch(currentUserIdProvider),
               now: now,
@@ -311,62 +438,3 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 }
 
 /// Zwevende knop om de kaart bewust terug op iedereen te centreren.
-class _RecenterButton extends StatelessWidget {
-  const _RecenterButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      shape: const CircleBorder(),
-      elevation: 3,
-      shadowColor: const Color(0x33121C1C),
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: const Tooltip(
-          message: 'Toon iedereen',
-          child: SizedBox(width: 48, height: 48, child: Icon(Icons.my_location, color: AppColors.primary)),
-        ),
-      ),
-    );
-  }
-}
-
-/// Banner voor de verzender zelf: zijn SOS is actief, met een knop om op te lossen.
-class _OwnSosBanner extends StatelessWidget {
-  const _OwnSosBanner({required this.onResolve});
-
-  final Future<void> Function() onResolve;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-
-    return Material(
-      color: AppColors.alert,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-        child: Row(
-          children: [
-            const Icon(Icons.shield, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'SOS actief · je gezin is gewaarschuwd',
-                style: text.bodyMedium?.copyWith(color: Colors.white),
-              ),
-            ),
-            TextButton(
-              onPressed: onResolve,
-              child: const Text('Oplossen', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

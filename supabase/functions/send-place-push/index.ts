@@ -102,8 +102,16 @@ Deno.serve(async (req) => {
   const userIds = (members ?? []).map((m) => m.user_id);
   if (userIds.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 
+  const { data: preferences, error: preferencesError } = await supabase
+    .from("notification_preferences").select("user_id, arrival, departure, sos").in("user_id", userIds);
+  if (preferencesError) return new Response("preferences unavailable", { status: 503 });
+  const eventType: "arrival" | "departure" = record.type;
+  const disabled = new Set((preferences ?? []).filter((p) => p[eventType] === false).map((p) => p.user_id));
+  const recipients = userIds.filter((id) => !disabled.has(id));
+  if (recipients.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
+
   const { data: tokens } = await supabase
-    .from("device_tokens").select("token").in("user_id", userIds);
+    .from("device_tokens").select("token").in("user_id", recipients);
   const tokenList = (tokens ?? []).map((t) => t.token as string);
   if (tokenList.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 

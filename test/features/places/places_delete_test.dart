@@ -59,6 +59,8 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => repo.delete('p1')).called(1);
+    expect(find.text('Nog geen plaatsen'), findsOneWidget);
+    expect(find.byTooltip('Verwijderen'), findsNothing);
   });
 
   testWidgets('annuleren verwijdert niets', (tester) async {
@@ -72,4 +74,16 @@ void main() {
 
     verifyNever(() => repo.delete(any()));
   });
+  testWidgets('mislukte verwijdering behoudt de plaats en toont een fout', (tester) async {
+    when(() => repo.delete(any())).thenThrow(Exception('database unavailable'));
+    await _pump(tester, repo);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Verwijderen'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Verwijderen'));
+    await tester.pumpAndSettle();
+    expect(find.text('Thuis'), findsOneWidget);
+    expect(find.text('Verwijderen mislukt. Probeer opnieuw.'), findsOneWidget);
+  });
+
 }

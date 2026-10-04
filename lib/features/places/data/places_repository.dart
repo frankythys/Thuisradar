@@ -23,6 +23,10 @@ class PlacesRepository {
     required double longitude,
     required int radiusMeters,
     required String icon,
+    String? address,
+    List<String>? watchedMembers,
+    bool notifyArrival = true,
+    bool notifyDeparture = true,
   }) {
     return _client.from('places').insert({
       'family_id': familyId,
@@ -31,11 +35,25 @@ class PlacesRepository {
       'lng': longitude,
       'radius_m': radiusMeters,
       'icon': icon,
+      'address': address,
+      'watched_members': watchedMembers,
+      'notify_arrival': notifyArrival,
+      'notify_departure': notifyDeparture,
     });
   }
 
-  Future<void> delete(String id) {
-    return _client.from('places').delete().eq('id', id);
+  Future<void> delete(String id) async {
+    final deleted = await _client
+        .from('places')
+        .delete()
+        .eq('id', id)
+        .select('id');
+    if (deleted.isEmpty) {
+      throw const PostgrestException(
+        message: 'De plaats kon niet worden verwijderd. Controleer je gezinslidmaatschap en probeer opnieuw.',
+        code: 'place_delete_not_confirmed',
+      );
+    }
   }
 
   /// Realtime aanwezigheid (enkel wie momenteel binnen is).
@@ -44,6 +62,11 @@ class PlacesRepository {
         .from('place_presence')
         .stream(primaryKey: ['user_id', 'place_id'])
         .eq('family_id', familyId)
-        .map((rows) => rows.map(PlacePresence.fromJson).where((p) => p.isInside).toList());
+        .map(
+          (rows) => rows
+              .map(PlacePresence.fromJson)
+              .where((p) => p.isInside)
+              .toList(),
+        );
   }
 }

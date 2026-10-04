@@ -1,3 +1,6 @@
+import '../../location/application/location_providers.dart';
+import '../../profile/presentation/profile_screen.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -50,7 +53,27 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               NotificationsScreen(family: widget.family),
             ],
           ),
-          bottomNavigationBar: AppBottomNav(current: _tab, meldingenBadge: unread, onSelected: _onSelectTab),
+          bottomNavigationBar: AppBottomNav(
+            offline:
+                _tab == AppTab.kaart &&
+                ref.watch(familyLocationsProvider(familyId)).value?.isEmpty ==
+                    true,
+            onFamily: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) => ProfileScreen(family: widget.family),
+              ),
+            ),
+            onSettings: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (_) => ProfileScreen(family: widget.family),
+              ),
+            ),
+            current: _tab,
+            meldingenBadge: unread,
+            onSelected: _onSelectTab,
+          ),
         ),
         if (incoming != null)
           Positioned.fill(

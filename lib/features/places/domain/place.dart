@@ -9,6 +9,9 @@ class Place {
     required this.radiusMeters,
     required this.icon,
     this.watchedMembers,
+    this.address,
+    this.notifyArrival = true,
+    this.notifyDeparture = true,
   });
 
   factory Place.fromJson(Map<String, dynamic> json) => Place(
@@ -20,6 +23,9 @@ class Place {
     radiusMeters: json['radius_m'] as int,
     icon: json['icon'] as String? ?? 'home',
     watchedMembers: (json['watched_members'] as List<dynamic>?)?.cast<String>(),
+    address: json['address'] as String?,
+    notifyArrival: json['notify_arrival'] as bool? ?? true,
+    notifyDeparture: json['notify_departure'] as bool? ?? true,
   );
 
   final String id;
@@ -29,6 +35,9 @@ class Place {
   final double longitude;
   final int radiusMeters;
   final String icon;
+  final String? address;
+  final bool notifyArrival;
+  final bool notifyDeparture;
 
   /// Over wie je meldingen wilt; null/leeg = iedereen.
   final List<String>? watchedMembers;

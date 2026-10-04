@@ -23,6 +23,7 @@ void main() {
   testWidgets('wisselt naar registreren en toont het naamveld', (tester) async {
     await _pump(tester);
 
+    await tester.ensureVisible(find.text('Nieuw? Maak een account'));
     await tester.tap(find.text('Nieuw? Maak een account'));
     await tester.pumpAndSettle();
 

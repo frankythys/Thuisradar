@@ -11,3 +11,12 @@ IconData placeIcon(String key) => switch (key) {
   'store' => Icons.store_outlined,
   _ => Icons.place_outlined,
 };
+
+String placeIconLabel(String key) => switch (key) {
+  'home' => 'Thuis',
+  'school' => 'School',
+  'work' => 'Werk',
+  'sports' => 'Sport',
+  'store' => 'Winkel',
+  _ => 'Andere',
+};

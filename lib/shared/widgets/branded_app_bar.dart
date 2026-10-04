@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
+import 'radar_logo.dart';
+import 'privacy_action.dart';
+import 'profile_action.dart';
 
 /// App-balk met de Thuisradar-logotegel, een kleine merknaam-overline en een
 /// titel, plus optionele acties rechts. Hergebruikt op bijna elk hoofdscherm.
 class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const BrandedAppBar({super.key, required this.title, this.actions = const [], this.leading});
+  const BrandedAppBar({
+    super.key,
+    required this.title,
+    this.actions = const [],
+    this.leading,
+  });
 
   final String title;
   final List<Widget> actions;
@@ -39,39 +47,30 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: effectiveLeading == null ? tokens.spaceMd : 0,
       title: Row(
         children: [
-          const _LogoTile(),
+          const RadarLogo(),
           SizedBox(width: tokens.spaceSm + tokens.spaceXs),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('THUISRADAR', style: text.labelSmall?.copyWith(color: AppColors.muted)),
-              Text(title, style: text.titleLarge),
-            ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'THUISRADAR',
+                  style: text.labelSmall?.copyWith(color: AppColors.muted),
+                ),
+                Text(title, style: text.titleLarge),
+              ],
+            ),
           ),
         ],
       ),
       actions: [
+        const PrivacyAction(),
         ...actions,
+        if (actions.isEmpty && title != 'Profiel & instellingen')
+          const ProfileAction(),
         SizedBox(width: tokens.spaceSm),
       ],
-    );
-  }
-}
-
-class _LogoTile extends StatelessWidget {
-  const _LogoTile();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(context.tokens.radiusMd),
-      ),
-      child: const Icon(Icons.home_rounded, color: Colors.white, size: 22),
     );
   }
 }

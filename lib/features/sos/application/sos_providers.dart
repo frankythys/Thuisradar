@@ -12,3 +12,8 @@ final sosRepositoryProvider = Provider<SosRepository>(
 final activeSosProvider = StreamProvider.family<List<SosAlert>, String>(
   (ref, familyId) => ref.watch(sosRepositoryProvider).watchActive(familyId),
 );
+
+final sosReceiptsProvider =
+    StreamProvider.family<List<Map<String, dynamic>>, String>(
+      (ref, alertId) => ref.watch(sosRepositoryProvider).watchReceipts(alertId),
+    );

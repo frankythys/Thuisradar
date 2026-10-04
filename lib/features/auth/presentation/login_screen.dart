@@ -4,7 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../shared/widgets/radar_logo.dart';
 import '../application/auth_providers.dart';
+import '../data/biometric_login.dart';
+
+part 'login_screen_field.dart';
+part 'login_screen_privacy_chip.dart';
+part 'login_screen_privacy_note.dart';
 
 enum _Mode { login, register }
 
@@ -52,7 +58,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           displayName: _name.text.trim(),
         );
         if (!signedIn && mounted) {
-          setState(() => _message = 'Bevestig je e-mailadres en log daarna in.');
+          setState(
+            () => _message = 'Bevestig je e-mailadres en log daarna in.',
+          );
         }
       }
     } on AuthException catch (e) {
@@ -67,123 +75,291 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _message = null;
   });
 
+  Future<void> _resetPassword() async {
+    if (!_email.text.contains('@')) {
+      setState(() => _message = 'Vul eerst je e-mailadres in.');
+      return;
+    }
+    try {
+      await ref.read(authRepositoryProvider).resetPassword(_email.text.trim());
+      if (mounted) {
+        setState(
+          () => _message =
+              'Controleer je e-mail om je wachtwoord opnieuw in te stellen.',
+        );
+      }
+    } on Exception {
+      if (mounted) {
+        setState(
+          () => _message =
+              'De herstelmail kon niet worden verstuurd. Probeer opnieuw.',
+        );
+      }
+    }
+  }
+
+  Future<void> _biometric() async {
+    final service = ref.read(biometricLoginProvider);
+    final auth = ref.read(authRepositoryProvider);
+    try {
+      final enabled = await service.enabled;
+      if (!mounted) return;
+      if (!enabled) {
+        if (!_formKey.currentState!.validate()) return;
+        final allow = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Biometrie inschakelen'),
+            content: const Text(
+              'Bewaar je login versleuteld op dit toestel om voortaan met je vingerafdruk of gezicht in te loggen. Je kunt dit verwijderen in je profiel.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annuleren'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Inschakelen'),
+              ),
+            ],
+          ),
+        );
+        if (allow != true || !mounted) return;
+      }
+      setState(() {
+        _busy = true;
+        _message = null;
+      });
+      await service.signIn(
+        auth,
+        email: _email.text.trim(),
+        password: _password.text,
+      );
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _message = error is StateError ? error.message.toString() : 'Biometrisch inloggen lukt niet. Gebruik je e-mailadres en wachtwoord.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isRegister = _mode == _Mode.register;
     final text = Theme.of(context).textTheme;
-    final tokens = context.tokens;
-
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(tokens.spaceLg),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _PrivacyChip(),
-                SizedBox(height: tokens.spaceLg),
-                const _LogoTile(),
-                SizedBox(height: tokens.spaceSm),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 18, color: AppColors.ink),
-                    SizedBox(width: tokens.spaceXs),
-                    Text('Thuisradar', style: text.titleMedium),
-                  ],
-                ),
-                SizedBox(height: tokens.spaceSm),
+                if (isRegister)
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: _toggleMode,
+                        icon: const Icon(Icons.arrow_back),
+                      ),
+                      const Spacer(),
+                      const _PrivacyChip(),
+                    ],
+                  ),
+                const SizedBox(height: 24),
+                const Center(child: RadarLogo(size: 64)),
+                const SizedBox(height: 12),
                 Text(
-                  isRegister ? 'Maak je account' : 'Welkom terug',
-                  style: text.headlineLarge,
+                  'Thuisradar',
+                  style: text.titleMedium,
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: tokens.spaceSm),
-                Text(
-                  isRegister
-                      ? 'Een veilige en besloten cirkel voor jouw gezin.'
-                      : 'Log in om je familie te zien.',
-                  style: text.bodyLarge?.copyWith(color: AppColors.muted),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: tokens.spaceXl),
-                if (isRegister) ...[
-                  _Field(
-                    label: 'Naam',
-                    trailingLabel: 'Voor je gezin',
-                    helper: 'Zo zien je gezinsleden je, bv. Papa',
-                    controller: _name,
-                    hintText: 'bv. Peter of Papa',
-                    icon: Icons.person_outline,
-                    textInputAction: TextInputAction.next,
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Vul een naam in' : null,
+                if (!isRegister) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    '• • VEILIG & VERTROUWD',
+                    style: text.labelSmall?.copyWith(color: AppColors.primary),
+                    textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: tokens.spaceMd),
                 ],
-                _Field(
-                  label: 'E-mailadres',
-                  controller: _email,
-                  hintText: 'naam@voorbeeld.be',
-                  icon: Icons.mail_outline,
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
-                  textInputAction: TextInputAction.next,
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Ongeldig e-mailadres' : null,
-                ),
-                SizedBox(height: tokens.spaceMd),
-                _Field(
-                  label: 'Wachtwoord',
-                  helper: 'Minimaal 8 tekens',
-                  controller: _password,
-                  hintText: 'Minimaal 8 tekens',
-                  icon: Icons.lock_outline,
-                  obscureText: _obscure,
-                  autofillHints: const [AutofillHints.password],
-                  onFieldSubmitted: (_) => _submit(),
-                  suffix: IconButton(
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                    icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                const SizedBox(height: 24),
+                Container(
+                  padding: EdgeInsets.all(isRegister ? 0 : 24),
+                  decoration: BoxDecoration(
+                    color: isRegister ? AppColors.ground : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  validator: (v) => (v == null || v.length < 8) ? 'Minstens 8 tekens' : null,
-                ),
-                if (_message != null) ...[
-                  SizedBox(height: tokens.spaceMd),
-                  Text(_message!, style: text.bodyMedium?.copyWith(color: AppColors.alert)),
-                ],
-                SizedBox(height: tokens.spaceLg),
-                if (isRegister) const _PrivacyNote(),
-                if (isRegister) SizedBox(height: tokens.spaceLg),
-                FilledButton(
-                  onPressed: _busy ? null : _submit,
-                  child: _busy
-                      ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(isRegister ? 'Account aanmaken' : 'Inloggen'),
-                            SizedBox(width: tokens.spaceSm),
-                            const Icon(Icons.arrow_forward, size: 20),
-                          ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        isRegister ? 'Maak je account' : 'Welkom terug',
+                        style: text.headlineLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isRegister
+                            ? 'Een veilige en besloten cirkel voor jouw gezin.'
+                            : 'Log in om verbonden te blijven met je familie.',
+                        style: text.bodyMedium?.copyWith(
+                          color: AppColors.muted,
                         ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      if (isRegister) ...[
+                        _Field(
+                          label: 'Naam',
+                          trailingLabel: 'Voor je gezin',
+                          helper: 'Zo zien je gezinsleden je, bv. Papa',
+                          controller: _name,
+                          hintText: 'bv. Peter of Papa',
+                          icon: Icons.person_outline,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) => v == null || v.trim().isEmpty
+                              ? 'Vul een naam in'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      _Field(
+                        label: 'E-mailadres',
+                        controller: _email,
+                        hintText: 'naam@voorbeeld.be',
+                        icon: Icons.mail_outline,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        textInputAction: TextInputAction.next,
+                        validator: (v) => v == null || !v.contains('@')
+                            ? 'Ongeldig e-mailadres'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _Field(
+                        label: 'Wachtwoord',
+                        helper: isRegister ? 'Minimaal 8 tekens' : null,
+                        controller: _password,
+                        hintText: isRegister ? 'Minimaal 8 tekens' : '••••••••',
+                        icon: Icons.lock_outline,
+                        obscureText: _obscure,
+                        autofillHints: const [AutofillHints.password],
+                        onFieldSubmitted: (_) => _submit(),
+                        suffix: IconButton(
+                          onPressed: () => setState(() => _obscure = !_obscure),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                        ),
+                        validator: (v) => v == null || v.length < 8
+                            ? 'Minstens 8 tekens'
+                            : null,
+                      ),
+                      if (!isRegister)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _busy ? null : _resetPassword,
+                            child: const Text('Wachtwoord vergeten?'),
+                          ),
+                        ),
+                      if (_message != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            _message!,
+                            style: text.bodyMedium?.copyWith(
+                              color: AppColors.alert,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                      if (isRegister) ...[
+                        const _PrivacyNote(),
+                        const SizedBox(height: 28),
+                      ],
+                      FilledButton(
+                        onPressed: _busy ? null : _submit,
+                        child: _busy
+                            ? const SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    isRegister
+                                        ? 'Account aanmaken'
+                                        : 'Inloggen',
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.arrow_forward, size: 18),
+                                ],
+                              ),
+                      ),
+                      if (!isRegister) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 18),
+                          child: Row(
+                            children: [
+                              Expanded(child: Divider()),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                child: Text('OF'),
+                              ),
+                              Expanded(child: Divider()),
+                            ],
+                          ),
+                        ),
+                        FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.surfaceLow,
+                            foregroundColor: AppColors.primary,
+                          ),
+                          onPressed: _busy ? null : _biometric,
+                          icon: const Icon(Icons.fingerprint),
+                          label: const Text('Inloggen met biometrie'),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 16),
                 TextButton(
                   onPressed: _busy ? null : _toggleMode,
-                  child: Text(isRegister ? 'Ik heb al een account' : 'Nieuw? Maak een account'),
+                  child: Text(
+                    isRegister
+                        ? 'Ik heb al een account'
+                        : 'Nieuw? Maak een account',
+                  ),
                 ),
-                SizedBox(height: tokens.spaceSm),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.lock_outline, size: 16, color: AppColors.muted),
-                    SizedBox(width: tokens.spaceXs),
-                    Text(
-                      'Versleuteld & alleen zichtbaar voor jouw gezin',
-                      style: text.bodySmall?.copyWith(color: AppColors.muted),
+                    const Icon(
+                      Icons.lock_outline,
+                      size: 14,
+                      color: AppColors.muted,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'Versleuteld & alleen zichtbaar voor jouw gezin',
+                        style: text.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ],
                 ),
@@ -197,158 +373,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 
 /// Gelabeld invoerveld met leidend icoon en optionele helper-tekst.
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.label,
-    required this.controller,
-    required this.hintText,
-    required this.icon,
-    this.trailingLabel,
-    this.helper,
-    this.obscureText = false,
-    this.keyboardType,
-    this.autofillHints,
-    this.textInputAction,
-    this.onFieldSubmitted,
-    this.suffix,
-    this.validator,
-  });
-
-  final String label;
-  final String? trailingLabel;
-  final String? helper;
-  final TextEditingController controller;
-  final String hintText;
-  final IconData icon;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final Iterable<String>? autofillHints;
-  final TextInputAction? textInputAction;
-  final ValueChanged<String>? onFieldSubmitted;
-  final Widget? suffix;
-  final FormFieldValidator<String>? validator;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final tokens = context.tokens;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(label, style: text.titleMedium),
-            const Spacer(),
-            if (trailingLabel != null)
-              Text(trailingLabel!, style: text.bodySmall?.copyWith(color: AppColors.muted)),
-          ],
-        ),
-        SizedBox(height: tokens.spaceSm),
-        TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          autofillHints: autofillHints,
-          textInputAction: textInputAction,
-          onFieldSubmitted: onFieldSubmitted,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hintText,
-            prefixIcon: Icon(icon, color: AppColors.primary),
-            suffixIcon: suffix,
-          ),
-        ),
-        if (helper != null) ...[
-          SizedBox(height: tokens.spaceXs),
-          Row(
-            children: [
-              const Icon(Icons.info_outline, size: 14, color: AppColors.muted),
-              SizedBox(width: tokens.spaceXs),
-              Text(helper!, style: text.bodySmall?.copyWith(color: AppColors.muted)),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _PrivacyChip extends StatelessWidget {
-  const _PrivacyChip();
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Align(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: const ShapeDecoration(color: Colors.white, shape: StadiumBorder()),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.shield_outlined, size: 16, color: AppColors.primary),
-            const SizedBox(width: 6),
-            Text('PRIVACY EERST', style: text.labelSmall?.copyWith(color: AppColors.primary)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LogoTile extends StatelessWidget {
-  const _LogoTile();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(context.tokens.radiusCard),
-        ),
-        child: const Icon(Icons.home_rounded, color: Colors.white, size: 34),
-      ),
-    );
-  }
-}
-
-class _PrivacyNote extends StatelessWidget {
-  const _PrivacyNote();
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final tokens = context.tokens;
-
-    return Container(
-      padding: EdgeInsets.all(tokens.spaceMd),
-      decoration: BoxDecoration(
-        color: AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(tokens.radiusCard),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.verified_user_outlined, color: AppColors.primary),
-          SizedBox(width: tokens.spaceMd),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Alleen voor genodigden', style: text.titleMedium),
-                SizedBox(height: tokens.spaceXs),
-                Text(
-                  'Jouw locatiegegevens worden nooit verkocht of gedeeld buiten je gezinskring.',
-                  style: text.bodyMedium?.copyWith(color: AppColors.muted),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -66,5 +66,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+<key>NSFaceIDUsageDescription</key><string>Log veilig in met Face ID.</string>
+<key>NSMicrophoneUsageDescription</key><string>Neem een spraakbericht op voor je gezin.</string>
+<key>NSPhotoLibraryUsageDescription</key><string>Kies een foto om met je gezin te delen.</string>
 </dict>
 </plist>

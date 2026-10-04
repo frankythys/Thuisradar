@@ -47,6 +47,14 @@ dependencies:
   firebase_core: ^4.1.1
   firebase_messaging: ^16.0.2
   flutter_local_notifications: ^19.0.0
+  geocoding: ^5.0.0
+  url_launcher: ^6.3.3
+  local_auth: ^3.0.2
+  flutter_secure_storage: ^11.2.0
+  image_picker: ^1.2.3
+  record: ^7.1.1
+  audioplayers: ^6.8.1
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +68,9 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   mocktail: ^1.0.5
   flutter_launcher_icons: ^0.14.4
+  integration_test:
+    sdk: flutter
+  http: ^1.6.0
 
 # App-icoon genereren: zet een 1024x1024 PNG op assets/icon/icon.png en draai
 # `dart run flutter_launcher_icons`. Zolang het bestand er niet is, blijft het

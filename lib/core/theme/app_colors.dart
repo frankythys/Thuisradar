@@ -2,17 +2,19 @@ import 'package:flutter/material.dart';
 
 /// Kleuren uit het ontwerp (Thuisradar · Android schermen).
 abstract final class AppColors {
-  static const primary = Color(0xFF0E6E5C);
-  static const primarySoft = Color(0xFFDCEFE9);
-  static const secondary = Color(0xFF6D4BD8);
+  static const primary = Color(0xFF005445);
+  static const primaryContainer = Color(0xFF0E6E5C);
+  static const primarySoft = Color(0xFFE1F2EB);
+  static const secondary = Color(0xFF633FCD);
   static const alert = Color(0xFFB4370A);
 
   /// Lichte oranje tint achter lage-batterij-pills en SOS-badges.
   static const alertSoft = Color(0xFFF7E0D4);
-  static const ink = Color(0xFF12201C);
-  static const muted = Color(0xFF5B6763);
-  static const ground = Color(0xFFF3F5F4);
-  static const border = Color(0xFFE2E7E5);
+  static const ink = Color(0xFF101E1A);
+  static const muted = Color(0xFF3E4945);
+  static const ground = Color(0xFFEDFDF6);
+  static const surfaceLow = Color(0xFFE7F7F0);
+  static const border = Color(0xFFBEC9C4);
 
   /// Vaste kleur per gezinslid, op volgorde van toetreden.
   static const members = [
