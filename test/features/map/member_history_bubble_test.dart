@@ -96,8 +96,11 @@ void main() {
         final avatarRect = tester.getRect(avatar);
         final bubbleRect = tester.getRect(find.byType(MemberHistoryBubble));
         expect(bubbleRect.top, lessThan(avatarRect.top));
-        expect(bubbleRect.left, greaterThan(avatarRect.center.dx));
-        expect(bubbleRect.left, lessThan(avatarRect.right));
+        // De ballon staat rechts van de avatar, net voorbij de rand.
+        expect(
+          bubbleRect.left,
+          inInclusiveRange(avatarRect.right, avatarRect.right + 24),
+        );
         expect(bubbleRect.bottom, greaterThan(avatarRect.top));
         return bubbleRect.topLeft - avatarRect.topLeft;
       }

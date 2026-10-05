@@ -69,7 +69,7 @@ void main() {
       ),
     );
     final avatar = tester.widget<MemberAvatar>(find.byType(MemberAvatar));
-    expect(avatar.size, 72);
+    expect(avatar.size, MemberMarker.avatarSize);
     expect(avatar.ring, isFalse);
     expect(AppColors.members, isNot(contains(AppColors.mapSelection)));
     expect(

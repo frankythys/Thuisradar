@@ -17,7 +17,7 @@ abstract final class AppColors {
   static const border = Color(0xFFBEC9C4);
 
   /// Alleen voor kaartselectie; bewust geen kiesbare profielkleur.
-  static const mapSelection = Color(0xFF3B1468);
+  static const mapSelection = Color(0xFF5B2E9E);
 
   /// Vaste kleur per gezinslid, op volgorde van toetreden.
   static const members = [

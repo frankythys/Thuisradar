@@ -230,9 +230,9 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           height: 48,
           alignment: Alignment.topRight,
           child: Transform.translate(
-            // De avatar begint 104 px boven het kaartpunt. Laat de ballon
+            // De avatar begint 96 px boven het kaartpunt. Laat de ballon
             // zijn rechterbovenhoek overlappen, onafhankelijk van de camera.
-            offset: const Offset(18, -62),
+            offset: const Offset(32, -62),
             child: MemberHistoryBubble(
               entry: selected,
               now: widget.now,

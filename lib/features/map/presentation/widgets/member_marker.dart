@@ -9,8 +9,8 @@ class MemberMarker extends StatelessWidget {
   const MemberMarker({super.key, required this.entry, required this.now, this.selected = false});
 
   static const width = 120.0;
-  static const height = 104.0;
-  static const avatarSize = 72.0;
+  static const height = 96.0;
+  static const avatarSize = 64.0;
 
   final MemberOnMap entry;
   final DateTime now;
@@ -42,7 +42,7 @@ class _Avatar extends StatelessWidget {
     final avatar = MemberAvatar(member: entry.member, size: MemberMarker.avatarSize, ring: !selected);
     if (!selected) return avatar;
 
-    // Donkerpaars is gereserveerd voor selectie en vervangt de witte rand volledig.
+    // Paars is gereserveerd voor selectie en vervangt de witte rand volledig.
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
