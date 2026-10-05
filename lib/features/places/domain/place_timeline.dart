@@ -12,20 +12,25 @@ List<TimelineEntry> attachPlaceNames(List<TimelineEntry> entries, List<Place> pl
   ];
 }
 
-TimelineEntry _withPlace(TimelineEntry entry, List<Place> places) {
+/// Naam van de eigen plaats waar het punt in ligt, of null als het nergens in valt.
+String? placeNameAt(List<Place> places, double latitude, double longitude) {
   for (final place in places) {
-    final distance = distanceMeters(entry.latitude, entry.longitude, place.latitude, place.longitude);
-    if (distance <= place.radiusMeters) {
-      return TimelineEntry(
-        kind: entry.kind,
-        start: entry.start,
-        end: entry.end,
-        latitude: entry.latitude,
-        longitude: entry.longitude,
-        distanceMeters: entry.distanceMeters,
-        placeName: place.name,
-      );
-    }
+    final distance = distanceMeters(latitude, longitude, place.latitude, place.longitude);
+    if (distance <= place.radiusMeters) return place.name;
   }
-  return entry;
+  return null;
+}
+
+TimelineEntry _withPlace(TimelineEntry entry, List<Place> places) {
+  final name = placeNameAt(places, entry.latitude, entry.longitude);
+  if (name == null) return entry;
+  return TimelineEntry(
+    kind: entry.kind,
+    start: entry.start,
+    end: entry.end,
+    latitude: entry.latitude,
+    longitude: entry.longitude,
+    distanceMeters: entry.distanceMeters,
+    placeName: name,
+  );
 }

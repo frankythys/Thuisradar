@@ -35,8 +35,11 @@ class TimelineEntry {
   Duration get duration => end.difference(start);
 }
 
-const _defaultStopRadiusMeters = 100.0;
-const _defaultMinStop = Duration(minutes: 5);
+/// Binnen welke straal rond een punt tellen metingen als "op dezelfde plek"?
+const kStopRadiusMeters = 100.0;
+
+/// Hoe lang moet het toestel op dezelfde plek blijven voor het een stop is?
+const kMinStop = Duration(minutes: 5);
 
 /// Bouwt een tijdlijn uit ruwe geschiedenispunten: opeenvolgende punten binnen
 /// [stopRadiusMeters] van elkaar vormen een cluster; duurt een cluster minstens
@@ -46,8 +49,8 @@ const _defaultMinStop = Duration(minutes: 5);
 /// Puur: geen Flutter of Supabase. Resultaat is chronologisch (oudste eerst).
 List<TimelineEntry> buildTimeline(
   List<TrackPoint> points, {
-  double stopRadiusMeters = _defaultStopRadiusMeters,
-  Duration minStop = _defaultMinStop,
+  double stopRadiusMeters = kStopRadiusMeters,
+  Duration minStop = kMinStop,
 }) {
   if (points.isEmpty) return const [];
 

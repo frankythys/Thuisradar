@@ -9,6 +9,33 @@ String drivingDate(DateTime date) => '${date.day}/${date.month}';
 String drivingTime(DateTime date) =>
     '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 
+/// "79 m" voor korte stukken, anders "13,2 km".
+String drivingDistance(double? meters) {
+  if (meters == null) return 'afstand onbekend';
+  if (meters < 1000) return '${meters.round()} m';
+  return '${drivingNumber(meters / 1000)} km';
+}
+
+/// "7 uur 56 min" of "45 min".
+String drivingDuration(Duration duration) {
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60);
+  if (hours == 0) return '$minutes min';
+  return '$hours uur $minutes min';
+}
+
+const _weekdayNames = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
+
+/// "Vandaag", "Gisteren" of "ma 6/10".
+String drivingDayLabel(DateTime day, {required DateTime now}) {
+  final today = DateTime(now.year, now.month, now.day);
+  final target = DateTime(day.year, day.month, day.day);
+  final difference = today.difference(target).inDays;
+  if (difference == 0) return 'Vandaag';
+  if (difference == 1) return 'Gisteren';
+  return '${_weekdayNames[target.weekday - 1]} ${target.day}/${target.month}';
+}
+
 class DrivingSummary extends StatelessWidget {
   const DrivingSummary({super.key, required this.reports});
   final List<MemberDrivingReport> reports;

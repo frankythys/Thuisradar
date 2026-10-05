@@ -87,7 +87,11 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                       AppCard(
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (_) => DrivingMemberScreen(data: item, week: _week),
+                            builder: (_) => DrivingMemberScreen(
+                              member: item.member,
+                              familyId: widget.family.id,
+                              week: _week,
+                            ),
                           ),
                         ),
                         child: Row(

@@ -7,6 +7,11 @@ import 'package:thuisradar/features/driving/domain/driving_report.dart';
 import 'package:thuisradar/features/driving/presentation/driving_screen.dart';
 import 'package:thuisradar/features/family/domain/family.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
+import 'package:thuisradar/features/location/application/location_history_providers.dart';
+import 'package:thuisradar/features/location/domain/timeline.dart';
+import 'package:thuisradar/features/location/domain/track_point.dart';
+import 'package:thuisradar/features/places/application/places_providers.dart';
+import 'package:thuisradar/features/places/domain/place.dart';
 
 void main() {
   testWidgets('weken wisselen, details openen en geen betaalmuur op smal scherm', (tester) async {
@@ -27,6 +32,11 @@ void main() {
               ),
             ];
           }),
+          // Geen daggeschiedenis in deze test: het detail toont de lege staat.
+          dayHistoryProvider.overrideWith(
+            (ref, query) async => (entries: const <TimelineEntry>[], points: const <TrackPoint>[]),
+          ),
+          familyPlacesProvider.overrideWith((ref, id) => Stream.value(const <Place>[])),
         ],
         child: MaterialApp(
           theme: AppTheme.light(),
@@ -49,12 +59,7 @@ void main() {
     await tester.scrollUntilVisible(find.text('Liam'), 150, scrollable: find.byType(Scrollable).last);
     await tester.tap(find.text('Liam'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Ritten deze week'),
-      150,
-      scrollable: find.byType(Scrollable).last,
-    );
-    expect(find.text('Ritten deze week'), findsOneWidget);
+    expect(find.text('Geen locatiegeschiedenis deze week.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets('laadfout heeft een werkende herhaalactie', (tester) async {
