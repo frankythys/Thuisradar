@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/app_bottom_nav.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../chat/presentation/chat_screen.dart';
+import '../../driving/presentation/driving_screen.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../map/presentation/map_screen.dart';
@@ -48,6 +49,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             index: _tab.index,
             children: [
               MapScreen(family: widget.family),
+              if (_tab == AppTab.rijden)
+                DrivingScreen(family: widget.family)
+              else
+                const SizedBox.shrink(),
               PlacesScreen(family: widget.family),
               ChatScreen(family: widget.family),
               NotificationsScreen(family: widget.family),

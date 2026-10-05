@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 
-/// De vier hoofdtabs: Kaart, Plaatsen, Chat, Meldingen.
-enum AppTab { kaart, plaatsen, chat, meldingen }
+/// De hoofdtabs: Kaart, Rijden, Plaatsen, Chat, Meldingen.
+enum AppTab { kaart, rijden, plaatsen, chat, meldingen }
 
 /// Onderste navigatiebalk in de Thuisradar-stijl (actief = teal met
 /// primaryContainer-indicator).
@@ -105,6 +105,11 @@ class AppBottomNav extends StatelessWidget {
                   icon: Icon(Icons.map_outlined),
                   selectedIcon: Icon(Icons.map),
                   label: 'Kaart',
+                ),
+                const NavigationDestination(
+                  icon: Icon(Icons.directions_car_outlined),
+                  selectedIcon: Icon(Icons.directions_car),
+                  label: 'Rijden',
                 ),
                 const NavigationDestination(
                   icon: Icon(Icons.place_outlined),

@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/core/theme/app_theme.dart';
+import 'package:thuisradar/features/driving/application/driving_providers.dart';
+import 'package:thuisradar/features/driving/domain/driving_report.dart';
+import 'package:thuisradar/features/driving/presentation/driving_screen.dart';
+import 'package:thuisradar/features/family/domain/family.dart';
+import 'package:thuisradar/features/family/domain/family_member.dart';
+
+void main() {
+  testWidgets('weken wisselen, details openen en geen betaalmuur op smal scherm', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final queries = <DrivingQuery>[];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          drivingReportsProvider.overrideWith((ref, query) async {
+            queries.add(query);
+            return [
+              (
+                member: const FamilyMember(userId: '1', displayName: 'Liam', isOwner: false, colorIndex: 0),
+                report: const DrivingReport([], hasHistory: true),
+              ),
+            ];
+          }),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const DrivingScreen(
+            family: Family(id: 'family', name: 'Ons gezin', inviteCode: 'abc'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Wekelijks rijveiligheidsoverzicht'), findsOneWidget);
+    expect(find.byIcon(Icons.lock), findsNothing);
+    expect(find.textContaining('abonnement'), findsNothing);
+    await tester.tap(find.text('Vorige week'));
+    await tester.pumpAndSettle();
+    expect(
+      queries.last.week,
+      drivingWeekStart(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day - 7)),
+    );
+    await tester.scrollUntilVisible(find.text('Liam'), 150, scrollable: find.byType(Scrollable).last);
+    await tester.tap(find.text('Liam'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Ritten deze week'),
+      150,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('Ritten deze week'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('laadfout heeft een werkende herhaalactie', (tester) async {
+    var attempts = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          drivingReportsProvider.overrideWith((ref, query) async {
+            if (++attempts == 1) throw StateError('offline');
+            return [];
+          }),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const DrivingScreen(
+            family: Family(id: 'family', name: 'Ons gezin', inviteCode: 'abc'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Opnieuw proberen'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Er zijn nog geen gezinsleden.'),
+      150,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('Er zijn nog geen gezinsleden.'), findsOneWidget);
+  });
+}
