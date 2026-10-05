@@ -99,10 +99,8 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
       initialChildSize: 0.14,
       minChildSize: 0.14,
       maxChildSize: 0.94,
-      snap: true,
-      // Ook de beginstand is een rustpunt: een kleine correctie bij het
-      // loslaten mag het paneel niet helemaal naar de onderrand sturen.
-      snapSizes: selected == null ? const [0.48] : const [0.60],
+      // Geen snap-punten: het paneel volgt de vinger, zodat je het rustig naar
+      // elke hoogte kunt slepen in plaats van terug te springen naar de helft.
       builder: (context, scrollController) {
         widget.onScrollControllerReady?.call(scrollController);
         return DecoratedBox(

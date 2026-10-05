@@ -258,7 +258,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await gesture.up();
       await tester.pumpAndSettle();
-      expect(controller.size, closeTo(0.48, 0.01));
+      // Het paneel volgt de vinger (geen snap) en blijft ruim open.
+      expect(controller.size, greaterThan(0.3));
     },
   );
 
@@ -276,9 +277,10 @@ void main() {
             matching: find.byType(ListView),
           )
           .first;
+      // Groot genoeg slepen opent het paneel volledig (geen snap-punten meer).
       await tester.dragFrom(
         tester.getTopLeft(list) + const Offset(180, 80),
-        const Offset(0, -220),
+        const Offset(0, -500),
       );
       await tester.pumpAndSettle();
       expect(controller.size, closeTo(0.94, 0.01));
