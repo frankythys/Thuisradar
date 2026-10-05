@@ -13,6 +13,7 @@ import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../location/application/location_providers.dart';
+import '../../location/domain/trip_status.dart';
 import '../../family/presentation/invite_screen.dart';
 import '../../family/presentation/family_setup_screen.dart';
 import '../../member/presentation/member_detail_screen.dart';
@@ -28,7 +29,6 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../application/map_providers.dart';
 import '../domain/auto_fit.dart';
 import '../domain/member_on_map.dart';
-import 'widgets/family_header.dart';
 import 'widgets/family_map.dart';
 import 'widgets/member_list_sheet.dart';
 import 'widgets/tracking_banner.dart';
@@ -51,11 +51,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   static const _startupZoom = 12.0;
 
   static const _focusZoom = 16.0;
+  static const _drivingFollowZoom = 15.0;
 
   final _mapController = MapController();
   final _autoFit = AutoFitController();
   final _sheetController = DraggableScrollableController();
+  ScrollController? _sheetScrollController;
   bool _mapReady = false;
+  bool _followSelected = false;
+  String? _lastFollowedUserId;
+  DateTime? _lastFollowedUpdate;
   MemberOnMap? _selected;
 
   @override
@@ -77,11 +82,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     ref
         .read(locationTrackerProvider.notifier)
         .start(userId: userId, familyId: widget.family.id);
-  }
-
-  Future<void> _signOut() async {
-    ref.read(locationTrackerProvider.notifier).stop();
-    await ref.read(authRepositoryProvider).signOut();
   }
 
   /// Maakt de kaart passend. Automatisch hoogstens één keer en nooit meer nadat
@@ -118,20 +118,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   /// Bewuste keuze van een lid (lijst of marker): zoom ernaartoe, schuif de
-  /// lijst in en toon het info-kaartje. Telt als bewuste beweging en vergrendelt
+  /// persoonsdetails open in het onderpaneel. Telt als bewuste beweging en vergrendelt
   /// auto-fit, zodat de kaart daarna niet meer vanzelf terugspringt.
   void _select(MemberOnMap entry) {
     final location = entry.location;
     if (location == null) return;
 
     _autoFit.lock();
+    _followSelected = true;
+    _lastFollowedUserId = entry.member.userId;
+    _lastFollowedUpdate = location.updatedAt;
     _mapController.move(
       LatLng(location.latitude, location.longitude),
       _focusZoom,
     );
     if (_sheetController.isAttached) {
+      // Reset ook de interne lijstpositie: anders blijft bij inklappen
+      // bijvoorbeeld de onderkant van de Circle-kaart in beeld staan.
+      if (_sheetScrollController?.hasClients == true) {
+        _sheetScrollController!.jumpTo(0);
+      }
       _sheetController.animateTo(
-        0.14,
+        0.60,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
       );
@@ -147,7 +155,33 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _deselect() {
+    _followSelected = false;
+    _lastFollowedUserId = null;
+    _lastFollowedUpdate = null;
     if (_selected != null) setState(() => _selected = null);
+  }
+
+  void _onUserGesture() {
+    _autoFit.lock();
+    _followSelected = false;
+  }
+
+  void _followMovingSelected(MemberOnMap? selected) {
+    if (!_mapReady || !_followSelected || selected?.location == null) return;
+    final location = selected!.location!;
+    final status = TripStatus.at(location, ref.read(clockProvider).value ?? DateTime.now());
+    if (status.state != TripState.moving) return;
+    if (_lastFollowedUserId == selected.member.userId &&
+        _lastFollowedUpdate == location.updatedAt) {
+      return;
+    }
+
+    _lastFollowedUserId = selected.member.userId;
+    _lastFollowedUpdate = location.updatedAt;
+    _mapController.move(
+      LatLng(location.latitude, location.longitude),
+      _drivingFollowZoom,
+    );
   }
 
   void _openProfile() {
@@ -287,9 +321,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       }
       selected ??= chosen;
     }
+    if (selected != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _followMovingSelected(selected),
+      );
+    }
 
     final size = MediaQuery.sizeOf(context);
-    final sheetTop = size.height * 0.48;
+    final sheetTop = size.height * 0.14;
 
     return Scaffold(
       appBar: BrandedAppBar(
@@ -315,7 +354,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onMemberTap: _select,
             onHistory: _openDetail,
             onGroupTap: _onGroupTap,
-            onUserGesture: _autoFit.lock,
+            onUserGesture: _onUserGesture,
             onMapTap: _deselect,
             onMapReady: () {
               _mapReady = true;
@@ -348,11 +387,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   Row(
                     children: [
-                      FamilyHeader(
-                        family: widget.family,
-                        onSignOut: _signOut,
-                        onProfile: _openProfile,
-                      ),
                       const Spacer(),
                       FilledButton.icon(
                         onPressed: () => Navigator.of(context).push(
@@ -405,6 +439,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ref.read(deviceLocationSourceProvider).openSettings(),
               ),
             ),
+          if (!noLocations && !membersAsync.hasError)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ListenableBuilder(
+                  listenable: _sheetController,
+                  builder: (context, _) {
+                    final extent = _sheetController.isAttached
+                        ? _sheetController.size
+                        : 0.14;
+                    final opacity =
+                        ((extent - 0.14) / (0.94 - 0.14)).clamp(0.0, 1.0) *
+                        0.68;
+                    return ColoredBox(
+                      color: Colors.black.withValues(alpha: opacity),
+                    );
+                  },
+                ),
+              ),
+            ),
           if (membersAsync.hasError)
             ErrorView(
               message: 'Familie kon niet geladen worden.',
@@ -428,8 +481,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               now: now,
               onSelect: _select,
               selectedUserId: selected?.member.userId,
+              onDeselect: _deselect,
               placeByUser: placeByUser,
               controller: _sheetController,
+              onScrollControllerReady: (controller) =>
+                  _sheetScrollController = controller,
               onInvite: _openInvite,
               onCreateCircle: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(

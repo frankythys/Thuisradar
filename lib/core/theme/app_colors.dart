@@ -16,10 +16,14 @@ abstract final class AppColors {
   static const surfaceLow = Color(0xFFE7F7F0);
   static const border = Color(0xFFBEC9C4);
 
+  /// Alleen voor kaartselectie; bewust geen kiesbare profielkleur.
+  static const mapSelection = Color(0xFF3B1468);
+
   /// Vaste kleur per gezinslid, op volgorde van toetreden.
   static const members = [
     Color(0xFF0E6E5C),
-    Color(0xFF6D4BD8),
+    // De oude paarse optie is grijs; opgeslagen kleurindexen blijven stabiel.
+    Color(0xFF64748B),
     Color(0xFF2563EB),
     Color(0xFFB45309),
     Color(0xFFBE185D),

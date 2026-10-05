@@ -43,12 +43,8 @@ class ClusteredMarkerLayer extends StatefulWidget {
   State<ClusteredMarkerLayer> createState() => _ClusteredMarkerLayerState();
 }
 
-class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: markerMotionMin,
-  );
+class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(vsync: this, duration: markerMotionMin);
   final Map<String, _Coord> _from = {};
   final Map<String, _Coord> _to = {};
   final Map<String, DateTime> _lastAt = {};
@@ -123,10 +119,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) => _buildLayer(context),
-    );
+    return AnimatedBuilder(animation: _controller, builder: (context, _) => _buildLayer(context));
   }
 
   Widget _buildLayer(BuildContext context) {
@@ -144,16 +137,12 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
         });
 
     final byId = {for (final m in located) m.member.userId: m};
-    final coords = {
-      for (final m in located) m.member.userId: _displayed(m.member.userId),
-    };
+    final coords = {for (final m in located) m.member.userId: _displayed(m.member.userId)};
     final points = [
       for (final m in located)
         ClusterPoint(
           m.member.userId,
-          camera.latLngToScreenOffset(
-            LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
-          ),
+          camera.latLngToScreenOffset(LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng)),
         ),
     ];
 
@@ -170,10 +159,8 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     }
     // Groep met de selectie als laatste tekenen (bovenop).
     groups.sort((a, b) {
-      final aSel =
-          widget.selectedUserId != null && a.contains(widget.selectedUserId);
-      final bSel =
-          widget.selectedUserId != null && b.contains(widget.selectedUserId);
+      final aSel = widget.selectedUserId != null && a.contains(widget.selectedUserId);
+      final bSel = widget.selectedUserId != null && b.contains(widget.selectedUserId);
       return (aSel ? 1 : 0) - (bSel ? 1 : 0);
     });
 
@@ -197,7 +184,6 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
                 entry: member,
                 now: widget.now,
                 selected: member.member.userId == widget.selectedUserId,
-                placeStatus: widget.placeByUser[member.member.userId],
               ),
             ),
           ),
@@ -224,9 +210,18 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       }
     }
 
-    final selected = byId[selectedId];
-    if (selected != null && widget.onHistory != null) {
-      final coordinate = coords[selectedId]!;
+    // Ook zonder selectie blijven losse leden hun infolabel behouden.
+    // Groepen hebben hun eigen statusballon; bij selectie komt de persoonlijke
+    // ballon bovenop, ongeacht snelheid of beschikbaarheid van geschiedenis.
+    final bubbleMembers = selectedId != null && byId.containsKey(selectedId)
+        ? [byId[selectedId]!]
+        : [
+            for (final group in groups)
+              if (group.length == 1) byId[group.single]!,
+          ];
+    for (final selected in bubbleMembers) {
+      final id = selected.member.userId;
+      final coordinate = coords[id]!;
       final point = LatLng(coordinate.lat, coordinate.lng);
       markers.add(
         Marker(
@@ -235,14 +230,14 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           height: 48,
           alignment: Alignment.topRight,
           child: Transform.translate(
-            // De avatar begint 92 px boven het kaartpunt. Laat de ballon
+            // De avatar begint 104 px boven het kaartpunt. Laat de ballon
             // zijn rechterbovenhoek overlappen, onafhankelijk van de camera.
             offset: const Offset(18, -62),
             child: MemberHistoryBubble(
               entry: selected,
               now: widget.now,
-              placeStatus: widget.placeByUser[selectedId],
-              onTap: () => widget.onHistory!(selected),
+              placeStatus: widget.placeByUser[id],
+              onTap: () => (widget.onHistory ?? widget.onMemberTap)(selected),
             ),
           ),
         ),

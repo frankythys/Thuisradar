@@ -27,6 +27,9 @@ class IconFilterChips extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
+  /// Vaste hoogte van de rij, zodat een vastgezette kop deze kan meenemen.
+  static const double chipHeight = 44;
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -76,7 +79,7 @@ class _Chip extends StatelessWidget {
             onTap: onTap,
             customBorder: const StadiumBorder(),
             child: SizedBox(
-              height: 44,
+              height: IconFilterChips.chipHeight,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: tokens.spaceLg),
                 child: Icon(item.icon, size: 20, color: color),

@@ -21,19 +21,25 @@ class MemberHistoryBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = TripStatus.at(entry.location, now);
+    final isMoving = status.state == TripState.moving && status.speedKmh != null;
     final since = placeStatus?.since;
     final hasStay =
         since != null &&
         !since.isAfter(now) &&
         status.state != TripState.stale &&
-        status.state != TripState.moving;
-    final title = hasStay ? 'Hier sinds' : status.label;
+        !isMoving;
+    final title = isMoving
+        ? 'Onderweg'
+        : (hasStay ? 'Hier sinds' : status.label);
     final duration = hasStay ? now.difference(since) : null;
-    final subtitle = duration != null
+    final subtitle = isMoving
+        ? '${status.speedKmh} km/u'
+        : duration != null
         ? (duration.inHours > 0
               ? '${duration.inHours} uur, ${duration.inMinutes.remainder(60)} min'
               : '${duration.inMinutes} min')
         : 'Geschiedenis';
+    final icon = isMoving ? Icons.directions_car : Icons.location_on;
     return Semantics(
       button: true,
       label: 'Geschiedenis van ${entry.member.displayName}',
@@ -54,9 +60,9 @@ class MemberHistoryBubble extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             child: Row(
               children: [
-                const Icon(
-                  Icons.location_on,
-                  color: Color(0xFF7952AC),
+                Icon(
+                  icon,
+                  color: const Color(0xFF7952AC),
                   size: 23,
                 ),
                 const SizedBox(width: 5),

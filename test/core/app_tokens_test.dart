@@ -12,9 +12,9 @@ void main() {
     expect(tokens.memberColor(AppColors.members.length + 1), AppColors.members[1]);
   });
 
-  test('eerste vier gezinslid-kleuren volgen DESIGN.md', () {
+  test('profielkleuren behouden hun index; paars is vervangen door grijs', () {
     expect(tokens.memberColor(0), AppColors.primaryContainer);
-    expect(tokens.memberColor(1), const Color(0xFF6D4BD8));
+    expect(tokens.memberColor(1), const Color(0xFF64748B));
     expect(tokens.memberColor(2), const Color(0xFF2563EB));
     expect(tokens.memberColor(3), const Color(0xFFB45309));
   });

@@ -14,7 +14,7 @@ import 'package:thuisradar/features/places/domain/place.dart';
 
 const _member = FamilyMember(userId: 'u1', displayName: 'Papa', isOwner: true, colorIndex: 0);
 
-Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() result) {
+Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() result, {Widget? home}) {
   return tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -23,19 +23,133 @@ Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() r
         timelineProvider.overrideWith((ref, arg) => result()),
         familyPlacesProvider.overrideWith((ref, arg) => Stream.value(const <Place>[])),
         // Geen echte Supabase-stroom nodig voor deze schermtests.
-        familyLocationsProvider.overrideWith(
-          (ref, arg) => Stream.value(const <MemberLocation>[]),
-        ),
+        familyLocationsProvider.overrideWith((ref, arg) => Stream.value(const <MemberLocation>[])),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
-        home: const MemberDetailScreen(member: _member, familyId: 'fam'),
+        home: home ?? const MemberDetailScreen(member: _member, familyId: 'fam'),
       ),
     ),
   );
 }
 
 void main() {
+  testWidgets('persoonskop past ook tijdens inklappen op een klein scherm', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      () async => <TimelineEntry>[],
+      home: Scaffold(
+        body: DraggableScrollableSheet(
+          controller: controller,
+          initialChildSize: 0.14,
+          minChildSize: 0.14,
+          maxChildSize: 0.94,
+          builder: (context, scroll) => Material(
+            child: MemberDetailScreen(
+              member: _member,
+              familyId: 'fam',
+              scrollController: scroll,
+              onBack: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    for (final size in [0.3, 0.6, 0.94, 0.14]) {
+      controller.jumpTo(size);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'Paneelhoogte $size');
+    }
+    controller.jumpTo(0.94);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Bellen'), 200, scrollable: find.byType(Scrollable).last);
+    expect(find.text('Bellen').hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('details blijven sleepbaar in onderpaneel en bieden terugknop', (tester) async {
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    var returned = false;
+    await _pump(
+      tester,
+      () async => <TimelineEntry>[],
+      home: Scaffold(
+        body: DraggableScrollableSheet(
+          controller: controller,
+          initialChildSize: 0.48,
+          minChildSize: 0.14,
+          maxChildSize: 0.94,
+          builder: (context, scrollController) => Material(
+            child: MemberDetailScreen(
+              member: _member,
+              familyId: 'fam',
+              scrollController: scrollController,
+              onBack: () => returned = true,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Papa'), findsOneWidget);
+    expect(find.byType(Scaffold), findsOneWidget);
+    await tester.drag(find.text('Papa'), const Offset(0, -180));
+    await tester.pumpAndSettle();
+    expect(controller.size, greaterThan(0.48));
+    await tester.tap(find.text('Terug naar personen'));
+    expect(returned, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('terugknop en identiteit blijven staan, de rest scrolt', (tester) async {
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      () async => <TimelineEntry>[],
+      home: DraggableScrollableSheet(
+        controller: controller,
+        initialChildSize: 0.94,
+        minChildSize: 0.14,
+        maxChildSize: 0.94,
+        builder: (context, scrollController) => Material(
+          child: MemberDetailScreen(
+            member: _member,
+            familyId: 'fam',
+            scrollController: scrollController,
+            onBack: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final back = find.text('Terug naar personen');
+    final name = find.text('Papa');
+    final backTop = tester.getTopLeft(back).dy;
+    final nameTop = tester.getTopLeft(name).dy;
+    final statsTop = tester.getTopLeft(find.text('Batterij', skipOffstage: false)).dy;
+
+    await tester.drag(find.byType(ListView), const Offset(0, -200));
+    await tester.pumpAndSettle();
+
+    // Terugknop, naam en status blijven op dezelfde plek staan.
+    expect(tester.getTopLeft(back).dy, backTop);
+    expect(tester.getTopLeft(name).dy, nameTop);
+    expect(find.text('Terug naar personen'), findsOneWidget);
+    // De stats eronder zijn wel omhoog geschoven.
+    expect(tester.getTopLeft(find.text('Batterij', skipOffstage: false)).dy, lessThan(statsTop));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('lege geschiedenis toont de lege staat, geen oneindig laden', (tester) async {
     await _pump(tester, () async => <TimelineEntry>[]);
     await tester.pumpAndSettle();

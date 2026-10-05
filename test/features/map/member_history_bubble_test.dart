@@ -30,6 +30,23 @@ void main() {
     ),
   );
 
+  MemberOnMap movingMember(String id) => MemberOnMap(
+    member: FamilyMember(
+      userId: id,
+      displayName: id,
+      isOwner: false,
+      colorIndex: 0,
+    ),
+    location: MemberLocation(
+      userId: id,
+      familyId: 'fam',
+      latitude: 51,
+      longitude: 3,
+      updatedAt: now,
+      speedMps: 12.5,
+    ),
+  );
+
   testWidgets(
     'geselecteerd groepslid heeft een aanklikbare geschiedenisballon',
     (tester) async {
@@ -122,6 +139,39 @@ void main() {
     );
     expect(find.text('Hier sinds'), findsNothing);
     expect(find.text('Geschiedenis'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rijdend lid toont auto en snelheid in de geschiedenisballon', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 142,
+              height: 48,
+              child: MemberHistoryBubble(
+                entry: movingMember('Liam'),
+                now: now,
+                onTap: () {},
+                placeStatus: PlaceStatus(
+                  name: 'Thuis',
+                  icon: 'home',
+                  since: now.subtract(const Duration(minutes: 15)),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.byIcon(Icons.directions_car), findsOneWidget);
+    expect(find.text('Onderweg'), findsOneWidget);
+    expect(find.text('45 km/u'), findsOneWidget);
+    expect(find.text('Hier sinds'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

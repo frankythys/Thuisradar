@@ -21,11 +21,11 @@ class GroupPin extends StatelessWidget {
     this.selectedUserId,
   });
 
-  static const width = 220.0;
-  static const height = 120.0;
+  static const width = 260.0;
+  static const height = 160.0;
 
-  static const _avatar = 48.0;
-  static const _step = 30.0;
+  static const _avatar = 72.0;
+  static const _step = 48.0;
   static const _maxShown = 3;
 
   /// Leden in deze groep; de eerste is "ik" (indien aanwezig), die bovenop ligt.
@@ -48,7 +48,7 @@ class GroupPin extends StatelessWidget {
         const SizedBox(height: 4),
         SizedBox(
           width: clusterWidth,
-          height: _avatar + 8,
+          height: _avatar + 12,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -73,18 +73,13 @@ class GroupPin extends StatelessWidget {
   }
 
   Widget _avatarFor(MemberOnMap member) {
-    final isMe = member.member.userId == myUserId;
     final isSelected = member.member.userId == selectedUserId;
-    final avatar = MemberAvatar(member: member.member, size: _avatar, ring: true);
-    if (!isMe && !isSelected) return avatar;
+    final avatar = MemberAvatar(member: member.member, size: _avatar, ring: !isSelected);
+    if (!isSelected) return avatar;
 
     return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-        border: Border.all(color: AppColors.primary, width: isSelected ? 3 : 2),
-      ),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.mapSelection),
       child: avatar,
     );
   }

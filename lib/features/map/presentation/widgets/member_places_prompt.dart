@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Plaatsen beheren vanuit dezelfde kaart als de gezinsleden.
+/// Inhoud van de aparte plaatsenkaart onder de gezinsleden.
 class MemberPlacesPrompt extends StatelessWidget {
   const MemberPlacesPrompt({super.key, required this.onManage});
 

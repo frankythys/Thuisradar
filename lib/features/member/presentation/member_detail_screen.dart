@@ -3,6 +3,7 @@ import '../../family/application/family_providers.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../../shared/widgets/contact_actions.dart';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,11 +45,15 @@ class MemberDetailScreen extends ConsumerStatefulWidget {
     required this.member,
     required this.familyId,
     this.location,
+    this.scrollController,
+    this.onBack,
   });
 
   final FamilyMember member;
   final String familyId;
   final MemberLocation? location;
+  final ScrollController? scrollController;
+  final VoidCallback? onBack;
 
   @override
   ConsumerState<MemberDetailScreen> createState() => _MemberDetailScreenState();
@@ -57,17 +62,22 @@ class MemberDetailScreen extends ConsumerStatefulWidget {
 class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   int _dayOffset = 0;
 
+  /// Sleepsweep op het vaste deel: het paneel mee openen of de lijst scrollen.
+  Drag? _headerDrag;
+
+  @override
+  void dispose() {
+    _headerDrag?.cancel();
+    super.dispose();
+  }
+
   static const _dayLabels = ['Vandaag', 'Gisteren', '30 dagen'];
 
   /// Lokale middernacht van de gekozen dag. Zonder tijdscomponent, zodat de
   /// provider-sleutel stabiel blijft tussen rebuilds (anders: oneindig laden).
   DateTime get _selectedDay {
     final now = ref.read(clockProvider).value ?? DateTime.now();
-    return DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).subtract(Duration(days: _dayOffset));
+    return DateTime(now.year, now.month, now.day).subtract(Duration(days: _dayOffset));
   }
 
   /// De live locatie uit de realtime-stroom; valt terug op de meegegeven
@@ -90,11 +100,200 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     final now = ref.watch(clockProvider).value ?? DateTime.now();
     final query = (userId: widget.member.userId, day: _selectedDay);
     final timeline = ref.watch(
-      _dayOffset == 2
-          ? recentTimelineProvider(widget.member.userId)
-          : timelineProvider(query),
+      _dayOffset == 2 ? recentTimelineProvider(widget.member.userId) : timelineProvider(query),
     );
 
+    final body = <Widget>[
+      _Stats(location: location, timeline: timeline.value ?? const [], now: now),
+      const SizedBox(height: 16),
+      _DayChips(selected: _dayOffset, onSelected: (i) => setState(() => _dayOffset = i)),
+      const SizedBox(height: 16),
+      if (location != null) ...[
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.route, size: 20, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text('Actieve route', style: Theme.of(context).textTheme.titleMedium),
+                ],
+              ),
+              const SizedBox(height: 12),
+              LocationPreview(
+                latitude: location.latitude,
+                longitude: location.longitude,
+                initial: widget.member.initial,
+                height: 170,
+                route: [
+                  for (final entry in timeline.value ?? <TimelineEntry>[])
+                    LatLng(entry.latitude, entry.longitude),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 18, color: AppColors.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      ref
+                          .watch(
+                            placeAddressProvider(snapToAddressGrid(location.latitude, location.longitude)),
+                          )
+                          .when(
+                            data: (address) =>
+                                address == null || address.isEmpty ? 'Adres niet beschikbaar' : address.label,
+                            loading: () => 'Adres ophalen…',
+                            error: (_, _) => 'Adres niet beschikbaar',
+                          ),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+      Text(
+        _dayOffset == 2 ? 'Locatiegeschiedenis · 30 dagen' : 'Locatiegeschiedenis',
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      SizedBox(height: tokens.spaceSm),
+      timeline.when(
+        data: (entries) => _Timeline(
+          entries: attachPlaceNames(
+            entries,
+            ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
+          ),
+        ),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(32),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (e, _) => ErrorView(
+          message: 'Geschiedenis laden mislukt.\n$e',
+          onRetry: () => ref.invalidate(timelineProvider(query)),
+        ),
+      ),
+      if (location != null) ...[
+        const SizedBox(height: 20),
+        FilledButton.icon(
+          onPressed: () => openDirections(context, location.latitude, location.longitude),
+          icon: const Icon(Icons.navigation_outlined, size: 20),
+          label: Text('Routebeschrijving naar ${widget.member.displayName}'),
+        ),
+      ],
+      const SizedBox(height: 10),
+      Wrap(
+        spacing: 8,
+        alignment: WrapAlignment.center,
+        children: [
+          TextButton.icon(
+            onPressed: () async {
+              final family = await ref.read(myFamilyProvider.future);
+              if (family != null && context.mounted) {
+                Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ChatScreen(family: family)));
+              }
+            },
+            icon: const Icon(Icons.chat_bubble_outline, size: 16),
+            label: const Text('Stuur bericht'),
+          ),
+          TextButton.icon(
+            onPressed: () => callMember(context, widget.member),
+            icon: const Icon(Icons.call_outlined, size: 16),
+            label: const Text('Bellen'),
+          ),
+          TextButton.icon(
+            onPressed: () async {
+              final family = await ref.read(myFamilyProvider.future);
+              if (family != null && context.mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: family)),
+                );
+              }
+            },
+            icon: const Icon(Icons.notifications_outlined, size: 16),
+            label: const Text('Meldingen'),
+          ),
+        ],
+      ),
+    ];
+
+    final content = ListView(
+      controller: widget.scrollController,
+      padding: widget.scrollController == null
+          ? EdgeInsets.all(tokens.spaceLg)
+          : EdgeInsets.fromLTRB(tokens.spaceLg, tokens.spaceSm, tokens.spaceLg, tokens.spaceLg),
+      children: body,
+    );
+    if (widget.scrollController != null) {
+      // In het paneel blijft de identiteit van de persoon staan; alleen de
+      // stats, dagchips en geschiedenis eronder scrollen weg.
+      final header = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.onBack != null) ...[
+            const Center(child: SizedBox(width: 36, child: Divider(thickness: 4))),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: widget.onBack,
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Terug naar personen'),
+              ),
+            ),
+          ],
+          _Header(member: widget.member, location: location),
+        ],
+      );
+      final fixed = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onVerticalDragStart: (details) {
+          _headerDrag = widget.scrollController!.position.drag(details, () => _headerDrag = null);
+        },
+        onVerticalDragUpdate: (details) => _headerDrag?.update(details),
+        onVerticalDragEnd: (details) => _headerDrag?.end(details),
+        onVerticalDragCancel: () => _headerDrag?.cancel(),
+        child: header,
+      );
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          // Tijdens inklappen kan het hele paneel kleiner zijn dan de kop.
+          // Laat dan ook de kop meescrollen via de controller van het paneel.
+          // Bij grote tekst of lange namen geldt dezelfde toegankelijke layout.
+          final needsScrollingHeader =
+              constraints.maxHeight < 360 ||
+              MediaQuery.textScalerOf(context).scale(16) > 20 ||
+              widget.member.displayName.length > 24;
+          if (needsScrollingHeader) {
+            return ListView(
+              controller: widget.scrollController,
+              padding: EdgeInsets.fromLTRB(tokens.spaceLg, 0, tokens.spaceLg, tokens.spaceLg),
+              children: [
+                header,
+                SizedBox(height: tokens.spaceSm),
+                ...body,
+              ],
+            );
+          }
+          return Column(
+            children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: constraints.maxHeight / 2),
+                child: SingleChildScrollView(child: fixed),
+              ),
+              Expanded(child: content),
+            ],
+          );
+        },
+      );
+    }
     return Scaffold(
       appBar: const BrandedAppBar(title: 'Gezinslid Detail'),
       body: SafeArea(
@@ -103,166 +302,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           children: [
             _Header(member: widget.member, location: location),
             const SizedBox(height: 16),
-            _Stats(
-              location: location,
-              timeline: timeline.value ?? const [],
-              now: now,
-            ),
-            const SizedBox(height: 16),
-            _DayChips(
-              selected: _dayOffset,
-              onSelected: (i) => setState(() => _dayOffset = i),
-            ),
-            const SizedBox(height: 16),
-            if (location != null) ...[
-              AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.route,
-                          size: 20,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Actieve route',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    LocationPreview(
-                      latitude: location.latitude,
-                      longitude: location.longitude,
-                      initial: widget.member.initial,
-                      height: 170,
-                      route: [
-                        for (final entry in timeline.value ?? <TimelineEntry>[])
-                          LatLng(entry.latitude, entry.longitude),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 18,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            ref
-                                .watch(
-                                  placeAddressProvider(
-                                    snapToAddressGrid(
-                                      location.latitude,
-                                      location.longitude,
-                                    ),
-                                  ),
-                                )
-                                .when(
-                                  data: (address) =>
-                                      address == null || address.isEmpty
-                                      ? 'Adres niet beschikbaar'
-                                      : address.label,
-                                  loading: () => 'Adres ophalen…',
-                                  error: (_, _) => 'Adres niet beschikbaar',
-                                ),
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-            Text(
-              _dayOffset == 2
-                  ? 'Locatiegeschiedenis · 30 dagen'
-                  : 'Locatiegeschiedenis',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            SizedBox(height: tokens.spaceSm),
-            timeline.when(
-              data: (entries) => _Timeline(
-                entries: attachPlaceNames(
-                  entries,
-                  ref.watch(familyPlacesProvider(widget.familyId)).value ??
-                      const [],
-                ),
-              ),
-              loading: () => const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (e, _) => ErrorView(
-                message: 'Geschiedenis laden mislukt.\n$e',
-                onRetry: () => ref.invalidate(timelineProvider(query)),
-              ),
-            ),
-            if (location != null) ...[
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: () => openDirections(
-                  context,
-                  location.latitude,
-                  location.longitude,
-                ),
-                icon: const Icon(Icons.navigation_outlined, size: 20),
-                label: Text(
-                  'Routebeschrijving naar ${widget.member.displayName}',
-                ),
-              ),
-            ],
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
-                TextButton.icon(
-                  onPressed: () async {
-                    final family = await ref.read(myFamilyProvider.future);
-                    if (family != null && context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (_) => ChatScreen(family: family),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                  label: const Text('Stuur bericht'),
-                ),
-                TextButton.icon(
-                  onPressed: () => callMember(context, widget.member),
-                  icon: const Icon(Icons.call_outlined, size: 16),
-                  label: const Text('Bellen'),
-                ),
-                TextButton.icon(
-                  onPressed: () async {
-                    final family = await ref.read(myFamilyProvider.future);
-                    if (family != null && context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (_) => ProfileScreen(family: family),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.notifications_outlined, size: 16),
-                  label: const Text('Meldingen'),
-                ),
-              ],
-            ),
+            ...body,
           ],
         ),
       ),

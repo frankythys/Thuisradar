@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
+import 'package:thuisradar/core/utils/clock.dart';
 import 'package:thuisradar/features/family/domain/family.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/application/address_providers.dart';
+import 'package:thuisradar/features/location/application/location_history_providers.dart';
+import 'package:thuisradar/features/location/application/location_providers.dart';
 import 'package:thuisradar/features/location/data/geocoding_source.dart';
 import 'package:thuisradar/features/location/domain/place_address.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
@@ -47,6 +50,9 @@ void main() {
     WidgetTester tester,
     List<MemberOnMap> members, {
     DraggableScrollableController? controller,
+    bool open = true,
+    String? selectedUserId,
+    VoidCallback? onDeselect,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3;
@@ -69,6 +75,12 @@ void main() {
               ),
             ]),
           ),
+          clockProvider.overrideWith((ref) => Stream.value(now)),
+          familyLocationsProvider.overrideWith(
+            (ref, id) => Stream.value(const <MemberLocation>[]),
+          ),
+          timelineProvider.overrideWith((ref, arg) async => const []),
+          recentTimelineProvider.overrideWith((ref, arg) async => const []),
           familyPresenceProvider.overrideWith(
             (ref, id) => Stream.value([
               PlacePresence(
@@ -101,7 +113,9 @@ void main() {
               members: members,
               currentUserId: 'u1',
               now: now,
+              selectedUserId: selectedUserId,
               onSelect: (_) {},
+              onDeselect: onDeselect,
               onInvite: () {},
               onPlaces: () {},
               onAddPlace: () {},
@@ -111,7 +125,35 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    if (open) {
+      if (controller != null) {
+        controller.jumpTo(0.48);
+      } else {
+        await tester.dragFrom(
+          tester.getTopLeft(find.byType(ClipRRect).first) +
+              const Offset(180, 16),
+          const Offset(0, -260),
+        );
+      }
+      await tester.pumpAndSettle();
+    }
   }
+
+  testWidgets('start laag en laat geen lege ruimte onder de gezinsnaam', (
+    tester,
+  ) async {
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await pumpSheet(tester, [], controller: controller, open: false);
+    expect(controller.size, 0.14);
+    controller.jumpTo(0.94);
+    await tester.pumpAndSettle();
+    final gap =
+        tester.getTopLeft(find.bySemanticsLabel('Personen')).dy -
+        tester.getBottomLeft(find.text('Creve Family')).dy;
+    expect(gap, inInclusiveRange(0, 36));
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('toont uitnodigingskaart, familienaam en de leden', (
     tester,
@@ -239,21 +281,115 @@ void main() {
         const Offset(0, -220),
       );
       await tester.pumpAndSettle();
-      expect(controller.size, closeTo(0.8, 0.01));
+      expect(controller.size, closeTo(0.94, 0.01));
       final scroll = tester.state<ScrollableState>(
         find.descendant(of: list, matching: find.byType(Scrollable)).first,
       );
       final before = scroll.position.pixels;
+      final banner = find.text('Nodig anderen uit, blijf samen veiliger');
+      final bannerTop = tester.getTopLeft(banner);
+      final familyTop = tester.getTopLeft(find.text('Creve Family'));
+      final chips = find.bySemanticsLabel('Personen');
+      final chipsTop = tester.getTopLeft(chips);
       await tester.dragFrom(
         tester.getTopLeft(list) + const Offset(180, 300),
         const Offset(0, -160),
       );
       await tester.pumpAndSettle();
-      expect(controller.size, closeTo(0.8, 0.01));
+      expect(controller.size, closeTo(0.94, 0.01));
       expect(scroll.position.pixels, greaterThan(before));
+      expect(banner, findsOneWidget);
+      expect(tester.getTopLeft(banner), bannerTop);
+      expect(tester.getTopLeft(find.text('Creve Family')), familyTop);
+      // De keuzeknoppen blijven onder de familienaam staan tijdens het scrollen.
+      expect(tester.getTopLeft(chips), chipsTop);
+      // Zelfde volgorde als bij het kiezen van een persoon op de kaart.
+      scroll.position.jumpTo(0);
+      controller.animateTo(
+        0.14,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+      await tester.pumpAndSettle();
+      expect(controller.size, closeTo(0.14, 0.01));
+      expect(scroll.position.pixels, 0);
+      expect(
+        find.text('Nodig anderen uit, blijf samen veiliger').hitTestable(),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('de knoppen blijven staan als de ledenlijst scrolt', (
+    tester,
+  ) async {
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await pumpSheet(tester, [
+      for (var i = 0; i < 8; i++) _member(id: 'u$i', name: 'Gezinslid $i'),
+    ], controller: controller);
+    controller.jumpTo(0.94);
+    await tester.pumpAndSettle();
+
+    final chips = find.bySemanticsLabel('Personen');
+    final placesChip = find.bySemanticsLabel('Plaatsen');
+    final startTop = tester.getTopLeft(chips).dy;
+    final nameBottom = tester.getBottomLeft(find.text('Creve Family')).dy;
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, -260));
+    await tester.pumpAndSettle();
+
+    expect(tester.getTopLeft(chips).dy, startTop);
+    expect(tester.getTopLeft(placesChip).dy, startTop);
+    // Onder de familienaam, dus niet losgekomen van de kop.
+    expect(tester.getTopLeft(chips).dy, greaterThan(nameBottom));
+    // De lijst is wel echt opgeschoven.
+    expect(
+      tester.getTopLeft(find.text('Gezinslid 0')).dy,
+      lessThan(nameBottom),
+    );
+    expect(controller.size, closeTo(0.94, 0.01));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('bij een gekozen persoon verdwijnen familienaam en knoppen', (
+    tester,
+  ) async {
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await pumpSheet(
+      tester,
+      [
+        _member(
+          id: 'u2',
+          name: 'Franky',
+          location: MemberLocation(
+            userId: 'u2',
+            familyId: 'fam',
+            latitude: 51,
+            longitude: 3.7,
+            updatedAt: DateTime(2026, 1, 2, 10),
+          ),
+        ),
+      ],
+      controller: controller,
+      selectedUserId: 'u2',
+      onDeselect: () {},
+    );
+    controller.jumpTo(0.94);
+    await tester.pumpAndSettle();
+
+    // Het infoscherm over de persoon staat er wel.
+    expect(find.text('Franky'), findsOneWidget);
+    expect(find.text('Terug naar personen'), findsOneWidget);
+    // De familienaam en de 2 keuzeknoppen mogen er niet staan.
+    expect(find.text('Creve Family'), findsNothing);
+    expect(find.bySemanticsLabel('Personen'), findsNothing);
+    expect(find.bySemanticsLabel('Plaatsen'), findsNothing);
+    expect(find.text('Nodig anderen uit, blijf samen veiliger'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('de chip Plaatsen toont het plaatsenblok', (tester) async {
     await pumpSheet(tester, [_member(id: 'u1', name: 'Liam')]);

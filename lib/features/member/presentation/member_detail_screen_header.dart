@@ -14,19 +14,20 @@ class _Header extends ConsumerWidget {
     final trip = TripStatus.at(location, now);
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         MemberAvatar(
           member: member,
-          size: 80,
+          size: 64,
           statusColor: location == null ? null : AppColors.primary,
         ),
-        SizedBox(height: tokens.spaceMd),
+        SizedBox(height: tokens.spaceSm),
         Text(
           member.displayName,
-          style: text.headlineLarge,
+          style: text.headlineMedium,
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: tokens.spaceSm),
+        SizedBox(height: tokens.spaceXs),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: const ShapeDecoration(
@@ -39,7 +40,7 @@ class _Header extends ConsumerWidget {
           ),
         ),
         if (location != null) ...[
-          SizedBox(height: tokens.spaceSm),
+          SizedBox(height: tokens.spaceXs),
           Text(
             trip.description(location, now),
             style: text.bodyMedium?.copyWith(color: AppColors.muted),
