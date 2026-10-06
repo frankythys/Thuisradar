@@ -5,6 +5,7 @@ import '../../../shared/widgets/contact_actions.dart';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show OverflowBoxFit;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -264,29 +265,23 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
       );
       return LayoutBuilder(
         builder: (context, constraints) {
-          // Tijdens inklappen kan het hele paneel kleiner zijn dan de kop.
-          // Laat dan ook de kop meescrollen via de controller van het paneel.
-          // Bij grote tekst of lange namen geldt dezelfde toegankelijke layout.
-          final needsScrollingHeader =
-              constraints.maxHeight < 360 ||
-              MediaQuery.textScalerOf(context).scale(16) > 20 ||
-              widget.member.displayName.length > 24;
-          if (needsScrollingHeader) {
-            return ListView(
-              controller: widget.scrollController,
-              padding: EdgeInsets.fromLTRB(tokens.spaceLg, 0, tokens.spaceLg, tokens.spaceLg),
-              children: [
-                header,
-                SizedBox(height: tokens.spaceSm),
-                ...body,
-              ],
-            );
-          }
+          // Behoud dezelfde scrollstructuur op elke paneelhoogte. Wisselen
+          // tussen ListView en Column onderbreekt een lopende sleepbeweging.
+          // Net als bij Personen gebruikt ook de kop de paneelcontroller;
+          // een tweede scrollview mag de sleepbeweging niet overnemen.
           return Column(
             children: [
               ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: constraints.maxHeight / 2),
-                child: SingleChildScrollView(child: fixed),
+                constraints: BoxConstraints(maxHeight: constraints.maxHeight),
+                child: ClipRect(
+                  child: OverflowBox(
+                    alignment: Alignment.topCenter,
+                    fit: OverflowBoxFit.deferToChild,
+                    minHeight: 0,
+                    maxHeight: double.infinity,
+                    child: fixed,
+                  ),
+                ),
               ),
               Expanded(child: content),
             ],

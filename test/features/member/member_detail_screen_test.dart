@@ -34,6 +34,62 @@ Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() r
 }
 
 void main() {
+  testWidgets('een doorlopende veeg opent het persoonsvenster voorbij de compacte hoogte', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      () async => <TimelineEntry>[],
+      home: Scaffold(
+        body: DraggableScrollableSheet(
+          controller: controller,
+          initialChildSize: 0.48,
+          minChildSize: 0.14,
+          maxChildSize: 0.94,
+          builder: (context, scroll) => Material(
+            child: MemberDetailScreen(
+              member: _member,
+              familyId: 'fam',
+              scrollController: scroll,
+              onBack: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final gesture = await tester.startGesture(tester.getCenter(find.text('Papa')));
+    for (var i = 0; i < 10; i++) {
+      await gesture.moveBy(const Offset(0, -40));
+      await tester.pump();
+    }
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(controller.size, closeTo(0.94, 0.01));
+    // Ook de vaste kop moet dezelfde lijst bedienen, zonder eigen scrollgebied.
+    expect(find.byType(Scrollable), findsOneWidget);
+    final collapse = await tester.startGesture(tester.getCenter(find.text('Terug naar personen')));
+    for (var i = 0; i < 20; i++) {
+      await collapse.moveBy(const Offset(0, 40));
+      await tester.pump();
+    }
+    await collapse.up();
+    await tester.pumpAndSettle();
+    expect(controller.size, closeTo(0.14, 0.01));
+    final reopen = await tester.startGesture(tester.getCenter(find.byType(Divider).first));
+    for (var i = 0; i < 20; i++) {
+      await reopen.moveBy(const Offset(0, -40));
+      await tester.pump();
+    }
+    await reopen.up();
+    await tester.pumpAndSettle();
+    expect(controller.size, closeTo(0.94, 0.01));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('persoonskop past ook tijdens inklappen op een klein scherm', (tester) async {
     tester.view.physicalSize = const Size(360, 640);
     tester.view.devicePixelRatio = 1;
