@@ -34,6 +34,19 @@ class MemberLocation {
   final bool? isCharging;
   final DateTime updatedAt;
 
+  /// Nieuwe locatie met een andere positie; overige velden blijven gelijk.
+  MemberLocation copyWith({double? latitude, double? longitude}) => MemberLocation(
+    userId: userId,
+    familyId: familyId,
+    latitude: latitude ?? this.latitude,
+    longitude: longitude ?? this.longitude,
+    accuracyMeters: accuracyMeters,
+    speedMps: speedMps,
+    battery: battery,
+    isCharging: isCharging,
+    updatedAt: updatedAt,
+  );
+
   Map<String, dynamic> toJson() => {
     'user_id': userId,
     'family_id': familyId,
