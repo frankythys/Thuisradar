@@ -16,6 +16,7 @@ import '../../../places/domain/place_presence.dart';
 import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
 import 'member_sheet_places.dart';
+import 'member_sheet_dimensions.dart';
 import 'member_tile.dart';
 import 'member_places_prompt.dart';
 import 'create_circle_card.dart';
@@ -89,70 +90,70 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
     final tokens = context.tokens;
     final familyId = widget.family.id;
     final places = ref.watch(familyPlacesProvider(familyId)).value ?? const [];
-    final presence =
-        ref.watch(familyPresenceProvider(familyId)).value ??
-        const <PlacePresence>[];
+    final presence = ref.watch(familyPresenceProvider(familyId)).value ?? const <PlacePresence>[];
     final events = ref.watch(familyEventsProvider(familyId)).value ?? const [];
 
-    return DraggableScrollableSheet(
-      controller: widget.controller,
-      initialChildSize: 0.14,
-      minChildSize: 0.14,
-      maxChildSize: 0.94,
-      // Geen snap-punten: het paneel volgt de vinger, zodat je het rustig naar
-      // elke hoogte kunt slepen in plaats van terug te springen naar de helft.
-      builder: (context, scrollController) {
-        widget.onScrollControllerReady?.call(scrollController);
-        return DecoratedBox(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x1A121C1C),
-                blurRadius: 24,
-                offset: Offset(0, -6),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final minimum = widget.onInvite == null
+            ? 0.14
+            : (MemberSheetDimensions.collapsedHeight(context, constraints.maxWidth) / constraints.maxHeight)
+                  .clamp(0.0, 0.94);
+        return DraggableScrollableSheet(
+          controller: widget.controller,
+          initialChildSize: minimum,
+          minChildSize: minimum,
+          maxChildSize: 0.94,
+          // Geen snap-punten: het paneel volgt de vinger, zodat je het rustig naar
+          // elke hoogte kunt slepen in plaats van terug te springen naar de helft.
+          builder: (context, scrollController) {
+            widget.onScrollControllerReady?.call(scrollController);
+            return DecoratedBox(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [BoxShadow(color: Color(0x1A121C1C), blurRadius: 24, offset: Offset(0, -6))],
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            // Bij een gekozen persoon vult het infoscherm het hele paneel,
-            // zonder familienaam of keuzeknoppen erboven.
-            child: selected != null
-                ? MemberDetailScreen(
-                    key: ValueKey(selected.member.userId),
-                    member: selected.member,
-                    familyId: familyId,
-                    location: selected.location,
-                    scrollController: scrollController,
-                    onBack: widget.onDeselect,
-                  )
-                : LayoutBuilder(
-                    builder: (context, constraints) => Column(
-                      children: [
-                        _headerArea(context, constraints, scrollController),
-                        Expanded(
-                          child: ListView(
-                            controller: scrollController,
-                            padding: EdgeInsets.fromLTRB(
-                              tokens.spaceMd,
-                              tokens.spaceMd,
-                              tokens.spaceMd,
-                              tokens.spaceMd,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                // Bij een gekozen persoon vult het infoscherm het hele paneel,
+                // zonder familienaam of keuzeknoppen erboven.
+                child: selected != null
+                    ? MemberDetailScreen(
+                        key: ValueKey(selected.member.userId),
+                        member: selected.member,
+                        familyId: familyId,
+                        location: selected.location,
+                        scrollController: scrollController,
+                        onBack: widget.onDeselect,
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) => Column(
+                          children: [
+                            _headerArea(context, constraints, scrollController),
+                            Expanded(
+                              child: ListView(
+                                controller: scrollController,
+                                padding: EdgeInsets.fromLTRB(
+                                  tokens.spaceMd,
+                                  tokens.spaceMd,
+                                  tokens.spaceMd,
+                                  tokens.spaceMd,
+                                ),
+                                children: [
+                                  if (_filter == 0)
+                                    ..._membersCard(context)
+                                  else
+                                    ..._places(context, places, presence, events),
+                                ],
+                              ),
                             ),
-                            children: [
-                              if (_filter == 0)
-                                ..._membersCard(context)
-                              else
-                                ..._places(context, places, presence, events),
-                            ],
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-          ),
+                      ),
+              ),
+            );
+          },
         );
       },
     );
@@ -160,17 +161,10 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
 
   /// Vaste kop: greep, uitnodigingskaart, familienaam en de keuzeknoppen.
   /// Blijft staan tijdens het scrollen van de ledenlijst of de persoonsdetail.
-  Widget _headerArea(
-    BuildContext context,
-    BoxConstraints constraints,
-    ScrollController scrollController,
-  ) {
+  Widget _headerArea(BuildContext context, BoxConstraints constraints, ScrollController scrollController) {
     final tokens = context.tokens;
     return SizedBox(
-      height: constraints.maxHeight.clamp(
-        0.0,
-        _headerHeight(context, constraints.maxWidth),
-      ),
+      height: constraints.maxHeight.clamp(0.0, _headerHeight(context, constraints.maxWidth)),
       child: ClipRect(
         child: OverflowBox(
           alignment: Alignment.topCenter,
@@ -179,21 +173,13 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onVerticalDragStart: (details) {
-              _headerDrag = scrollController.position.drag(
-                details,
-                () => _headerDrag = null,
-              );
+              _headerDrag = scrollController.position.drag(details, () => _headerDrag = null);
             },
             onVerticalDragUpdate: (details) => _headerDrag?.update(details),
             onVerticalDragEnd: (details) => _headerDrag?.end(details),
             onVerticalDragCancel: () => _headerDrag?.cancel(),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                tokens.spaceMd,
-                tokens.spaceSm,
-                tokens.spaceMd,
-                tokens.spaceSm,
-              ),
+              padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceMd, tokens.spaceSm),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -203,10 +189,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                     _InviteBanner(onTap: invite),
                     SizedBox(height: tokens.spaceLg),
                   ],
-                  Text(
-                    widget.family.name,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
+                  Text(widget.family.name, style: Theme.of(context).textTheme.headlineMedium),
                   SizedBox(height: tokens.spaceMd),
                   // De keuzeknoppen staan in de vaste kop zodat ze blijven
                   // staan tijdens het scrollen van de ledenlijst.
@@ -232,7 +215,6 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
     setState(() => _filter = index);
   }
 
-
   double _headerHeight(BuildContext context, double width) {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
@@ -256,19 +238,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
         tokens.spaceMd +
         IconFilterChips.chipHeight;
     if (widget.onInvite != null) {
-      final labelWidth = innerWidth - 3 * tokens.spaceMd - 48;
-      final labelsHeight =
-          height(
-            'Nodig anderen uit, blijf samen veiliger',
-            text.titleMedium,
-            labelWidth,
-          ) +
-          tokens.spaceXs +
-          height('Dierbaren toevoegen', text.labelLarge, labelWidth);
-      result +=
-          labelsHeight.clamp(48.0, double.infinity) +
-          2 * tokens.spaceMd +
-          tokens.spaceLg;
+      result += MemberSheetDimensions.inviteHeight(context, width) + tokens.spaceLg;
     }
     return result.ceilToDouble();
   }
@@ -301,17 +271,9 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                   style: TextButton.styleFrom(
                     backgroundColor: const Color(0xFFEDEBEF),
                     foregroundColor: const Color(0xFF393342),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                   ),
                   child: const Text('Voeg een persoon toe'),
                 ),
@@ -327,20 +289,13 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(color: const Color(0xFFDEDBE2)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x16000000),
-              blurRadius: 10,
-              offset: Offset(0, 3),
-            ),
-          ],
+          boxShadow: const [BoxShadow(color: Color(0x16000000), blurRadius: 10, offset: Offset(0, 3))],
         ),
         child: MemberPlacesPrompt(onManage: manage),
       ),
       SizedBox(height: context.tokens.spaceLg),
     ],
-    if (widget.onCreateCircle case final create?)
-      CreateCircleCard(onCreate: create),
+    if (widget.onCreateCircle case final create?) CreateCircleCard(onCreate: create),
   ];
 
   List<Widget> _places(
@@ -394,26 +349,18 @@ class _InviteBanner extends StatelessWidget {
                     color: AppColors.primarySoft,
                     borderRadius: BorderRadius.circular(tokens.radiusMd),
                   ),
-                  child: const Icon(
-                    Icons.mark_email_unread_outlined,
-                    color: AppColors.primary,
-                  ),
+                  child: const Icon(Icons.mark_email_unread_outlined, color: AppColors.primary),
                 ),
                 SizedBox(width: tokens.spaceMd),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Nodig anderen uit, blijf samen veiliger',
-                        style: text.titleMedium,
-                      ),
+                      Text('Nodig anderen uit, blijf samen veiliger', style: text.titleMedium),
                       SizedBox(height: tokens.spaceXs),
                       Text(
                         'Dierbaren toevoegen',
-                        style: text.labelLarge?.copyWith(
-                          color: AppColors.secondary,
-                        ),
+                        style: text.labelLarge?.copyWith(color: AppColors.secondary),
                       ),
                     ],
                   ),
@@ -436,10 +383,7 @@ class _Handle extends StatelessWidget {
       child: Container(
         width: 36,
         height: 4,
-        decoration: BoxDecoration(
-          color: AppColors.border,
-          borderRadius: BorderRadius.circular(2),
-        ),
+        decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
       ),
     );
   }

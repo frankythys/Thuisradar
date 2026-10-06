@@ -24,8 +24,7 @@ const _family = Family(id: 'fam', name: 'Creve Family', inviteCode: 'ABC12345');
 /// Geen echte geocoder in tests: adres is een verrijking.
 class _NoGeocoding extends GeocodingSource {
   @override
-  Future<PlaceAddress?> addressFor(double latitude, double longitude) async =>
-      null;
+  Future<PlaceAddress?> addressFor(double latitude, double longitude) async => null;
 }
 
 MemberOnMap _member({
@@ -34,12 +33,7 @@ MemberOnMap _member({
   int colorIndex = 0,
   MemberLocation? location,
 }) => MemberOnMap(
-  member: FamilyMember(
-    userId: id,
-    displayName: name,
-    isOwner: false,
-    colorIndex: colorIndex,
-  ),
+  member: FamilyMember(userId: id, displayName: name, isOwner: false, colorIndex: colorIndex),
   location: location,
 );
 
@@ -76,19 +70,12 @@ void main() {
             ]),
           ),
           clockProvider.overrideWith((ref) => Stream.value(now)),
-          familyLocationsProvider.overrideWith(
-            (ref, id) => Stream.value(const <MemberLocation>[]),
-          ),
+          familyLocationsProvider.overrideWith((ref, id) => Stream.value(const <MemberLocation>[])),
           timelineProvider.overrideWith((ref, arg) async => const []),
           recentTimelineProvider.overrideWith((ref, arg) async => const []),
           familyPresenceProvider.overrideWith(
             (ref, id) => Stream.value([
-              PlacePresence(
-                userId: 'u2',
-                placeId: 'home',
-                isInside: true,
-                since: DateTime(2026, 1, 2, 8, 3),
-              ),
+              PlacePresence(userId: 'u2', placeId: 'home', isInside: true, since: DateTime(2026, 1, 2, 8, 3)),
             ]),
           ),
           familyEventsProvider.overrideWith(
@@ -130,8 +117,7 @@ void main() {
         controller.jumpTo(0.48);
       } else {
         await tester.dragFrom(
-          tester.getTopLeft(find.byType(ClipRRect).first) +
-              const Offset(180, 16),
+          tester.getTopLeft(find.byType(ClipRRect).first) + const Offset(180, 16),
           const Offset(0, -260),
         );
       }
@@ -139,13 +125,22 @@ void main() {
     }
   }
 
-  testWidgets('start laag en laat geen lege ruimte onder de gezinsnaam', (
-    tester,
-  ) async {
+  testWidgets('start laag en laat geen lege ruimte onder de gezinsnaam', (tester) async {
     final controller = DraggableScrollableController();
     addTearDown(controller.dispose);
     await pumpSheet(tester, [], controller: controller, open: false);
-    expect(controller.size, 0.14);
+    final minimum = tester
+        .widget<DraggableScrollableSheet>(find.byType(DraggableScrollableSheet))
+        .minChildSize;
+    expect(controller.size, minimum);
+    final invite = find.ancestor(of: find.text('Dierbaren toevoegen'), matching: find.byType(InkWell)).first;
+    final sheetBottom = tester.getBottomLeft(find.byType(DraggableScrollableSheet)).dy;
+    expect(tester.getBottomLeft(invite).dy, lessThan(sheetBottom));
+    expect(find.text('Dierbaren toevoegen').hitTestable(), findsOneWidget);
+    await tester.drag(find.text('Nodig anderen uit, blijf samen veiliger'), const Offset(0, 400));
+    await tester.pumpAndSettle();
+    expect(controller.size, minimum);
+    expect(find.text('Dierbaren toevoegen').hitTestable(), findsOneWidget);
     controller.jumpTo(0.94);
     await tester.pumpAndSettle();
     final gap =
@@ -155,9 +150,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('toont uitnodigingskaart, familienaam en de leden', (
-    tester,
-  ) async {
+  testWidgets('toont uitnodigingskaart, familienaam en de leden', (tester) async {
     await pumpSheet(tester, [
       _member(
         id: 'u1',
@@ -174,10 +167,7 @@ void main() {
       _member(id: 'u2', name: 'Frankie', colorIndex: 1),
     ]);
 
-    expect(
-      find.text('Nodig anderen uit, blijf samen veiliger'),
-      findsOneWidget,
-    );
+    expect(find.text('Nodig anderen uit, blijf samen veiliger'), findsOneWidget);
     expect(find.text('Dierbaren toevoegen'), findsOneWidget);
     expect(find.text('Creve Family'), findsOneWidget);
     expect(find.bySemanticsLabel('Personen'), findsOneWidget);
@@ -186,9 +176,7 @@ void main() {
     expect(find.text('85%'), findsOneWidget);
   });
 
-  testWidgets('de blokken staan in de volgorde van het voorbeeld', (
-    tester,
-  ) async {
+  testWidgets('de blokken staan in de volgorde van het voorbeeld', (tester) async {
     await pumpSheet(tester, [
       _member(
         id: 'u1',
@@ -206,17 +194,12 @@ void main() {
     double top(String text) => tester.getTopLeft(find.text(text)).dy;
     final chips = tester.getTopLeft(find.bySemanticsLabel('Personen')).dy;
 
-    expect(
-      top('Nodig anderen uit, blijf samen veiliger'),
-      lessThan(top('Creve Family')),
-    );
+    expect(top('Nodig anderen uit, blijf samen veiliger'), lessThan(top('Creve Family')));
     expect(top('Creve Family'), lessThan(chips));
     expect(chips, lessThan(top('Liam (jij)')));
   });
 
-  testWidgets('lid zonder signaal krijgt de rode offline-staat', (
-    tester,
-  ) async {
+  testWidgets('lid zonder signaal krijgt de rode offline-staat', (tester) async {
     await pumpSheet(tester, [
       _member(
         id: 'u3',
@@ -238,94 +221,64 @@ void main() {
     expect(find.text('65%'), findsOneWidget);
   });
 
-  testWidgets(
-    'korte sleepbeweging klapt het halfopen paneel niet helemaal dicht',
-    (tester) async {
-      final controller = DraggableScrollableController();
-      addTearDown(controller.dispose);
-      await pumpSheet(tester, [
-        _member(id: 'u1', name: 'Liam'),
-      ], controller: controller);
-      final list = find
-          .descendant(
-            of: find.byType(MemberListSheet),
-            matching: find.byType(ListView),
-          )
-          .first;
-      final start = tester.getTopLeft(list) + const Offset(180, 12);
-      final gesture = await tester.startGesture(start);
-      await gesture.moveBy(const Offset(0, 40));
-      await tester.pump(const Duration(milliseconds: 300));
-      await gesture.up();
-      await tester.pumpAndSettle();
-      // Het paneel volgt de vinger (geen snap) en blijft ruim open.
-      expect(controller.size, greaterThan(0.3));
-    },
-  );
+  testWidgets('korte sleepbeweging klapt het halfopen paneel niet helemaal dicht', (tester) async {
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await pumpSheet(tester, [_member(id: 'u1', name: 'Liam')], controller: controller);
+    final list = find.descendant(of: find.byType(MemberListSheet), matching: find.byType(ListView)).first;
+    final start = tester.getTopLeft(list) + const Offset(180, 12);
+    final gesture = await tester.startGesture(start);
+    await gesture.moveBy(const Offset(0, 40));
+    await tester.pump(const Duration(milliseconds: 300));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    // Het paneel volgt de vinger (geen snap) en blijft ruim open.
+    expect(controller.size, greaterThan(0.3));
+  });
 
-  testWidgets(
-    'omhoog vegen opent het paneel en daarna scrolt alleen de inhoud',
-    (tester) async {
-      final controller = DraggableScrollableController();
-      addTearDown(controller.dispose);
-      await pumpSheet(tester, [
-        for (var i = 0; i < 8; i++) _member(id: 'u$i', name: 'Gezinslid $i'),
-      ], controller: controller);
-      final list = find
-          .descendant(
-            of: find.byType(MemberListSheet),
-            matching: find.byType(ListView),
-          )
-          .first;
-      // Groot genoeg slepen opent het paneel volledig (geen snap-punten meer).
-      await tester.dragFrom(
-        tester.getTopLeft(list) + const Offset(180, 80),
-        const Offset(0, -500),
-      );
-      await tester.pumpAndSettle();
-      expect(controller.size, closeTo(0.94, 0.01));
-      final scroll = tester.state<ScrollableState>(
-        find.descendant(of: list, matching: find.byType(Scrollable)).first,
-      );
-      final before = scroll.position.pixels;
-      final banner = find.text('Nodig anderen uit, blijf samen veiliger');
-      final bannerTop = tester.getTopLeft(banner);
-      final familyTop = tester.getTopLeft(find.text('Creve Family'));
-      final chips = find.bySemanticsLabel('Personen');
-      final chipsTop = tester.getTopLeft(chips);
-      await tester.dragFrom(
-        tester.getTopLeft(list) + const Offset(180, 300),
-        const Offset(0, -160),
-      );
-      await tester.pumpAndSettle();
-      expect(controller.size, closeTo(0.94, 0.01));
-      expect(scroll.position.pixels, greaterThan(before));
-      expect(banner, findsOneWidget);
-      expect(tester.getTopLeft(banner), bannerTop);
-      expect(tester.getTopLeft(find.text('Creve Family')), familyTop);
-      // De keuzeknoppen blijven onder de familienaam staan tijdens het scrollen.
-      expect(tester.getTopLeft(chips), chipsTop);
-      // Zelfde volgorde als bij het kiezen van een persoon op de kaart.
-      scroll.position.jumpTo(0);
-      controller.animateTo(
-        0.14,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-      await tester.pumpAndSettle();
-      expect(controller.size, closeTo(0.14, 0.01));
-      expect(scroll.position.pixels, 0);
-      expect(
-        find.text('Nodig anderen uit, blijf samen veiliger').hitTestable(),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+  testWidgets('omhoog vegen opent het paneel en daarna scrolt alleen de inhoud', (tester) async {
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await pumpSheet(tester, [
+      for (var i = 0; i < 8; i++) _member(id: 'u$i', name: 'Gezinslid $i'),
+    ], controller: controller);
+    final list = find.descendant(of: find.byType(MemberListSheet), matching: find.byType(ListView)).first;
+    // Groot genoeg slepen opent het paneel volledig (geen snap-punten meer).
+    await tester.dragFrom(tester.getTopLeft(list) + const Offset(180, 80), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(controller.size, closeTo(0.94, 0.01));
+    final scroll = tester.state<ScrollableState>(
+      find.descendant(of: list, matching: find.byType(Scrollable)).first,
+    );
+    final before = scroll.position.pixels;
+    final banner = find.text('Nodig anderen uit, blijf samen veiliger');
+    final bannerTop = tester.getTopLeft(banner);
+    final familyTop = tester.getTopLeft(find.text('Creve Family'));
+    final chips = find.bySemanticsLabel('Personen');
+    final chipsTop = tester.getTopLeft(chips);
+    await tester.dragFrom(tester.getTopLeft(list) + const Offset(180, 300), const Offset(0, -160));
+    await tester.pumpAndSettle();
+    expect(controller.size, closeTo(0.94, 0.01));
+    expect(scroll.position.pixels, greaterThan(before));
+    expect(banner, findsOneWidget);
+    expect(tester.getTopLeft(banner), bannerTop);
+    expect(tester.getTopLeft(find.text('Creve Family')), familyTop);
+    // De keuzeknoppen blijven onder de familienaam staan tijdens het scrollen.
+    expect(tester.getTopLeft(chips), chipsTop);
+    // Zelfde volgorde als bij het kiezen van een persoon op de kaart.
+    scroll.position.jumpTo(0);
+    final minimum = tester
+        .widget<DraggableScrollableSheet>(find.byType(DraggableScrollableSheet))
+        .minChildSize;
+    controller.animateTo(minimum, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    await tester.pumpAndSettle();
+    expect(controller.size, closeTo(minimum, 0.01));
+    expect(scroll.position.pixels, 0);
+    expect(find.text('Nodig anderen uit, blijf samen veiliger').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets('de knoppen blijven staan als de ledenlijst scrolt', (
-    tester,
-  ) async {
+  testWidgets('de knoppen blijven staan als de ledenlijst scrolt', (tester) async {
     final controller = DraggableScrollableController();
     addTearDown(controller.dispose);
     await pumpSheet(tester, [
@@ -347,17 +300,12 @@ void main() {
     // Onder de familienaam, dus niet losgekomen van de kop.
     expect(tester.getTopLeft(chips).dy, greaterThan(nameBottom));
     // De lijst is wel echt opgeschoven.
-    expect(
-      tester.getTopLeft(find.text('Gezinslid 0')).dy,
-      lessThan(nameBottom),
-    );
+    expect(tester.getTopLeft(find.text('Gezinslid 0')).dy, lessThan(nameBottom));
     expect(controller.size, closeTo(0.94, 0.01));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('bij een gekozen persoon verdwijnen familienaam en knoppen', (
-    tester,
-  ) async {
+  testWidgets('bij een gekozen persoon verdwijnen familienaam en knoppen', (tester) async {
     final controller = DraggableScrollableController();
     addTearDown(controller.dispose);
     await pumpSheet(

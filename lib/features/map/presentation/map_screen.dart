@@ -31,6 +31,7 @@ import '../domain/auto_fit.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_map.dart';
 import 'widgets/member_list_sheet.dart';
+import 'widgets/member_sheet_dimensions.dart';
 import 'widgets/tracking_banner.dart';
 import 'widgets/no_locations_card.dart';
 
@@ -79,9 +80,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _startTracking() {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
-    ref
-        .read(locationTrackerProvider.notifier)
-        .start(userId: userId, familyId: widget.family.id);
+    ref.read(locationTrackerProvider.notifier).start(userId: userId, familyId: widget.family.id);
   }
 
   /// Maakt de kaart passend. Automatisch hoogstens één keer en nooit meer nadat
@@ -95,11 +94,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       for (final m in targets)
         if (m.location case final l?) LatLng(l.latitude, l.longitude),
     ];
-    if (!_autoFit.shouldFit(
-      mapReady: _mapReady,
-      hasPoints: points.isNotEmpty,
-      deliberate: deliberate,
-    )) {
+    if (!_autoFit.shouldFit(mapReady: _mapReady, hasPoints: points.isNotEmpty, deliberate: deliberate)) {
       return;
     }
 
@@ -128,21 +123,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _followSelected = true;
     _lastFollowedUserId = entry.member.userId;
     _lastFollowedUpdate = location.updatedAt;
-    _mapController.move(
-      LatLng(location.latitude, location.longitude),
-      _focusZoom,
-    );
+    _mapController.move(LatLng(location.latitude, location.longitude), _focusZoom);
     if (_sheetController.isAttached) {
       // Reset ook de interne lijstpositie: anders blijft bij inklappen
       // bijvoorbeeld de onderkant van de Circle-kaart in beeld staan.
       if (_sheetScrollController?.hasClients == true) {
         _sheetScrollController!.jumpTo(0);
       }
-      _sheetController.animateTo(
-        0.60,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
+      _sheetController.animateTo(0.60, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     }
     setState(() => _selected = entry);
   }
@@ -171,66 +159,43 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final location = selected!.location!;
     final status = TripStatus.at(location, ref.read(clockProvider).value ?? DateTime.now());
     if (status.state != TripState.moving) return;
-    if (_lastFollowedUserId == selected.member.userId &&
-        _lastFollowedUpdate == location.updatedAt) {
+    if (_lastFollowedUserId == selected.member.userId && _lastFollowedUpdate == location.updatedAt) {
       return;
     }
 
     _lastFollowedUserId = selected.member.userId;
     _lastFollowedUpdate = location.updatedAt;
-    _mapController.move(
-      LatLng(location.latitude, location.longitude),
-      _drivingFollowZoom,
-    );
+    _mapController.move(LatLng(location.latitude, location.longitude), _drivingFollowZoom);
   }
 
   void _openProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ProfileScreen(family: widget.family),
-      ),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)));
   }
 
   void _openDetail(MemberOnMap entry) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => MemberDetailScreen(
-          member: entry.member,
-          familyId: widget.family.id,
-          location: entry.location,
-        ),
+        builder: (_) =>
+            MemberDetailScreen(member: entry.member, familyId: widget.family.id, location: entry.location),
       ),
     );
   }
 
   void _openInvite() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => InviteScreen(family: widget.family),
-      ),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => InviteScreen(family: widget.family)));
   }
 
   void _openPlaces() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => PlacesScreen(family: widget.family),
-      ),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => PlacesScreen(family: widget.family)));
   }
 
   void _addPlace() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => AddPlaceScreen(familyId: widget.family.id),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => AddPlaceScreen(familyId: widget.family.id)));
   }
 
   void _snack(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _raiseSos() async {
@@ -242,15 +207,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     // Verse GPS-positie (max 5 s), anders de laatst gedeelde locatie.
-    final fresh = await ref
-        .read(deviceLocationSourceProvider)
-        .currentPosition();
+    final fresh = await ref.read(deviceLocationSourceProvider).currentPosition();
     var lat = fresh?.latitude;
     var lng = fresh?.longitude;
     if (lat == null || lng == null) {
-      final members =
-          ref.read(membersOnMapProvider(familyId)).value ??
-          const <MemberOnMap>[];
+      final members = ref.read(membersOnMapProvider(familyId)).value ?? const <MemberOnMap>[];
       for (final m in members) {
         if (m.member.userId == myId && m.location != null) {
           lat = m.location!.latitude;
@@ -266,12 +227,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     try {
       await ref
           .read(sosRepositoryProvider)
-          .raise(
-            familyId: familyId,
-            userId: myId,
-            latitude: lat,
-            longitude: lng,
-          );
+          .raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng);
       _snack('SOS verzonden naar je gezin.');
     } on Exception {
       _snack('SOS versturen mislukt. Probeer opnieuw.');
@@ -287,8 +243,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final now = ref.watch(clockProvider).value ?? DateTime.now();
 
     final myId = ref.watch(currentUserIdProvider);
-    final activeSos =
-        ref.watch(activeSosProvider(familyId)).value ?? const <SosAlert>[];
+    final activeSos = ref.watch(activeSosProvider(familyId)).value ?? const <SosAlert>[];
     SosAlert? myAlert;
     for (final alert in activeSos) {
       if (alert.userId == myId) myAlert = alert;
@@ -296,9 +251,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     // Tijdens een eigen actieve SOS vaker uploaden, daarna terug normaal.
     ref.listen(activeSosProvider(familyId), (_, next) {
-      final mine = (next.value ?? const <SosAlert>[]).any(
-        (a) => a.userId == myId,
-      );
+      final mine = (next.value ?? const <SosAlert>[]).any((a) => a.userId == myId);
       ref.read(locationTrackerProvider.notifier).setFastUpdates(mine);
     });
 
@@ -306,11 +259,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _fit(members));
     }
 
-    final noLocations =
-        membersAsync.hasValue && members.every((m) => m.location == null);
+    final noLocations = membersAsync.hasValue && members.every((m) => m.location == null);
     final offline = trackingStatus == TrackingStatus.offline;
-    final places =
-        ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
+    final places = ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
     final placeByUser = ref.watch(currentPlaceByUserProvider(familyId));
 
     // Houd het gekozen lid vers (locatie/batterij uit de realtime-stroom).
@@ -322,13 +273,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       selected ??= chosen;
     }
     if (selected != null) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _followMovingSelected(selected),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) => _followMovingSelected(selected));
     }
 
     final size = MediaQuery.sizeOf(context);
-    final sheetTop = size.height * 0.14;
+    final sheetTop = MemberSheetDimensions.collapsedHeight(context, size.width);
 
     return Scaffold(
       appBar: BrandedAppBar(
@@ -364,9 +313,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           Positioned(
             right: 16,
             bottom: sheetTop + 16,
-            child: _RecenterButton(
-              onPressed: () => _fit(members, deliberate: true),
-            ),
+            child: _RecenterButton(onPressed: () => _fit(members, deliberate: true)),
           ),
           SafeArea(
             child: Padding(
@@ -380,9 +327,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       child: TrackingBanner(
                         status: trackingStatus,
                         onRetry: _startTracking,
-                        onOpenSettings: () => ref
-                            .read(deviceLocationSourceProvider)
-                            .openSettings(),
+                        onOpenSettings: () => ref.read(deviceLocationSourceProvider).openSettings(),
                       ),
                     ),
                   Row(
@@ -391,10 +336,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       FilledButton.icon(
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (_) => SosScreen(
-                              familyId: familyId,
-                              onActivate: _raiseSos,
-                            ),
+                            builder: (_) => SosScreen(familyId: familyId, onActivate: _raiseSos),
                           ),
                         ),
                         style: FilledButton.styleFrom(
@@ -411,9 +353,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     TrackingBanner(
                       status: trackingStatus,
                       onRetry: _startTracking,
-                      onOpenSettings: () => ref
-                          .read(locationTrackerProvider.notifier)
-                          .openSettings(),
+                      onOpenSettings: () => ref.read(locationTrackerProvider.notifier).openSettings(),
                     ),
                   if (myAlert case final alert?) ...[
                     const SizedBox(height: 12),
@@ -435,24 +375,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               right: 24,
               child: NoLocationsCard(
                 family: widget.family,
-                onSettings: () =>
-                    ref.read(deviceLocationSourceProvider).openSettings(),
+                onSettings: () => ref.read(deviceLocationSourceProvider).openSettings(),
               ),
             ),
           if (!noLocations && !membersAsync.hasError)
             Positioned.fill(
               child: IgnorePointer(
-                child: ListenableBuilder(
-                  listenable: _sheetController,
-                  builder: (context, _) {
-                    final extent = _sheetController.isAttached
-                        ? _sheetController.size
-                        : 0.14;
-                    final opacity =
-                        ((extent - 0.14) / (0.94 - 0.14)).clamp(0.0, 1.0) *
-                        0.68;
-                    return ColoredBox(
-                      color: Colors.black.withValues(alpha: opacity),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final minimum = (sheetTop / constraints.maxHeight).clamp(0.0, 0.94);
+                    return ListenableBuilder(
+                      listenable: _sheetController,
+                      builder: (context, _) {
+                        final extent = _sheetController.isAttached ? _sheetController.size : minimum;
+                        final opacity =
+                            ((extent - minimum) / (0.94 - minimum).clamp(0.001, 1.0)).clamp(0.0, 1.0) * 0.68;
+                        return ColoredBox(color: Colors.black.withValues(alpha: opacity));
+                      },
                     );
                   },
                 ),
@@ -484,14 +423,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               onDeselect: _deselect,
               placeByUser: placeByUser,
               controller: _sheetController,
-              onScrollControllerReady: (controller) =>
-                  _sheetScrollController = controller,
+              onScrollControllerReady: (controller) => _sheetScrollController = controller,
               onInvite: _openInvite,
-              onCreateCircle: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const FamilySetupScreen(),
-                ),
-              ),
+              onCreateCircle: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => const FamilySetupScreen())),
               onPlaces: _openPlaces,
               onAddPlace: _addPlace,
             ),
