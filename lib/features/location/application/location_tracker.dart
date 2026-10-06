@@ -16,9 +16,16 @@ import '../../profile/application/profile_providers.dart';
 /// Tijdens een actieve SOS vaker uploaden.
 const _sosInterval = Duration(seconds: 10);
 
+/// Een hangende upload mag de volgende metingen niet blokkeren.
+const _uploadTimeout = Duration(seconds: 15);
+
+/// Na een onderbroken locatiestroom wachten we even voor we opnieuw proberen.
+const _reattachBackoff = Duration(seconds: 5);
+
 /// Deelt de locatie van dit toestel met de familie zolang hij gestart is.
 class LocationTracker extends Notifier<TrackingStatus> {
   StreamSubscription<DevicePosition>? _subscription;
+  Timer? _reattachTimer;
   String? _userId;
   String? _familyId;
   bool _fast = false;
@@ -79,21 +86,39 @@ class LocationTracker extends Notifier<TrackingStatus> {
     final generation = _generation;
     final old = _subscription;
     _subscription = null;
-    await old?.cancel();
+    _reattachTimer?.cancel();
+    // De oude stroom (bij een intervalwissel of herstel) hoeven we niet af te
+    // wachten: eventuele late events worden genegeerd via de generatietellers.
+    unawaited(old?.cancel());
     if (!ref.mounted || generation != _generation || streamGeneration != _streamGeneration) return;
-    _subscription = _device.positions(interval: _interval).listen(
-      (position) {
-        if (generation != _generation || streamGeneration != _streamGeneration) return;
-        _uploads = _uploads.then((_) async {
-          if (!ref.mounted || generation != _generation) return;
-          await _onPosition(position);
-        });
-      },
-      onError: (Object error) {
-        debugPrint('Locatiestroom fout: $error');
-        if (ref.mounted && generation == _generation) state = TrackingStatus.error;
-      },
-    );
+    _subscription = _device
+        .positions(interval: _interval)
+        .listen(
+          (position) {
+            if (generation != _generation || streamGeneration != _streamGeneration) return;
+            _uploads = _uploads.then((_) async {
+              if (!ref.mounted || generation != _generation) return;
+              await _onPosition(position);
+            });
+          },
+          onError: (Object error) {
+            debugPrint('Locatiestroom fout: $error');
+            if (ref.mounted && generation == _generation) state = TrackingStatus.error;
+            _scheduleReattach(generation, streamGeneration);
+          },
+          onDone: () => _scheduleReattach(generation, streamGeneration),
+        );
+  }
+
+  /// Herstelt de locatiestroom nadat Android hem onderweg stopzette of een fout
+  /// gaf, zodat de kaart niet bevriest tot de gebruiker de app herstart.
+  void _scheduleReattach(int generation, int streamGeneration) {
+    if (!ref.mounted || generation != _generation || streamGeneration != _streamGeneration) return;
+    _reattachTimer?.cancel();
+    _reattachTimer = Timer(_reattachBackoff, () {
+      if (generation != _generation || streamGeneration != _streamGeneration) return;
+      if (ref.mounted) unawaited(_attach());
+    });
   }
 
   void stop() {
@@ -116,21 +141,21 @@ class LocationTracker extends Notifier<TrackingStatus> {
     if (_interval != oldInterval) unawaited(_attach());
     position = accepted;
     try {
-    final battery = await _battery.read();
-    if (!ref.mounted || generation != _generation) return;
-    final location = MemberLocation(
-      userId: userId,
-      familyId: familyId,
-      latitude: position.latitude,
-      longitude: position.longitude,
-      accuracyMeters: position.accuracyMeters,
-      speedMps: position.speedMps,
-      battery: battery.level,
-      isCharging: battery.isCharging,
-      updatedAt: position.timestamp,
-    );
+      final battery = await _battery.read().timeout(_uploadTimeout);
+      if (!ref.mounted || generation != _generation) return;
+      final location = MemberLocation(
+        userId: userId,
+        familyId: familyId,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracyMeters: position.accuracyMeters,
+        speedMps: position.speedMps,
+        battery: battery.level,
+        isCharging: battery.isCharging,
+        updatedAt: position.timestamp,
+      );
 
-      await _repository.upload(location);
+      await _repository.upload(location).timeout(_uploadTimeout);
       if (ref.mounted && generation == _generation) {
         state = TrackingStatus.active;
       }
@@ -146,6 +171,8 @@ class LocationTracker extends Notifier<TrackingStatus> {
     _generation++;
     _streamGeneration++;
     _motion = MotionFilter();
+    _reattachTimer?.cancel();
+    _reattachTimer = null;
     _subscription?.cancel();
     _subscription = null;
   }
