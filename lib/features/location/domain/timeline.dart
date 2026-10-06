@@ -133,7 +133,44 @@ List<TimelineEntry> buildTimeline(
   }
   emitMove(null);
 
-  return entries;
+  return _mergeSamePlaceStops(entries, stopRadiusMeters);
+}
+
+/// Een enkele GPS-uitschieter midden in een lange stop maakt soms twee losse
+/// clusters op dezelfde plek, met een schijnverplaatsing ertussen. Liggen twee
+/// opeenvolgende stops binnen [stopRadiusMeters] van elkaar, dan hoorden ze bij
+/// elkaar: voeg ze samen en laat de verplaatsing ertussen vallen.
+List<TimelineEntry> _mergeSamePlaceStops(List<TimelineEntry> entries, double stopRadiusMeters) {
+  final merged = <TimelineEntry>[];
+  TimelineEntry? pendingMove;
+  for (final entry in entries) {
+    if (entry.kind == TimelineKind.move) {
+      pendingMove = entry;
+      continue;
+    }
+    final last = merged.isEmpty ? null : merged.last;
+    if (last != null &&
+        last.kind == TimelineKind.stop &&
+        _distanceMeters(last.latitude, last.longitude, entry.latitude, entry.longitude) <= stopRadiusMeters) {
+      merged[merged.length - 1] = TimelineEntry(
+        kind: TimelineKind.stop,
+        start: last.start,
+        end: entry.end,
+        latitude: last.latitude,
+        longitude: last.longitude,
+        placeName: last.placeName ?? entry.placeName,
+      );
+      pendingMove = null;
+    } else {
+      if (pendingMove != null) {
+        merged.add(pendingMove);
+        pendingMove = null;
+      }
+      merged.add(entry);
+    }
+  }
+  if (pendingMove != null) merged.add(pendingMove);
+  return merged;
 }
 
 class _Cluster {

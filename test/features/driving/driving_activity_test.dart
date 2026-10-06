@@ -75,10 +75,7 @@ void main() {
   test('ritten en verblijven staan chronologisch', () {
     final activities = buildDayActivities([stop(60, 120)], [p(0, 0), p(1, 0.5)]);
 
-    expect(activities.map((a) => a.kind), [
-      DrivingActivityKind.trip,
-      DrivingActivityKind.stay,
-    ]);
+    expect(activities.map((a) => a.kind), [DrivingActivityKind.trip, DrivingActivityKind.stay]);
   });
 
   test('het routespoor van een rit blijft binnen vertrek en aankomst', () {
@@ -90,6 +87,28 @@ void main() {
     expect(track, hasLength(3));
     expect(track.first.recordedAt, day);
     expect(track.last.recordedAt, day.add(const Duration(minutes: 2)));
+  });
+
+  test('een GPS-uitschieter op één plek maakt geen tweede verblijf of spookrit', () {
+    TrackPoint at(int minute, double km) => TrackPoint(
+      latitude: 51 + km * 0.009,
+      longitude: 3,
+      recordedAt: day.add(Duration(minutes: minute)),
+    );
+    // Een werkdag op één plek, met één losse uitschieter van ~200 m.
+    final points = [for (var m = 900; m <= 1080; m += 3) at(m, m == 951 ? 0.2 : 0)];
+
+    final activities = buildDayActivities(buildTimeline(points), points);
+
+    expect(activities.where((a) => a.kind == DrivingActivityKind.stay), hasLength(1));
+    expect(activities.where((a) => a.kind == DrivingActivityKind.trip), isEmpty);
+  });
+
+  test('een rit die eindigt waar ze begon is GPS-ruis, geen rit', () {
+    // Heen 300 m en weer helemaal terug: netto nul verplaatsing.
+    final activities = buildDayActivities(const [], [p(0, 0), p(1, 0.15), p(2, 0.3), p(3, 0.15), p(4, 0)]);
+
+    expect(activities, isEmpty);
   });
 
   test('afstand en duur krijgen een leesbare notatie', () {

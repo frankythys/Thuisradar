@@ -69,6 +69,24 @@ void main() {
     expect(timeline.last.start.isAfter(timeline.first.start), isTrue);
   });
 
+  test('een GPS-uitschieter midden in een lange stop blijft één stop', () {
+    final points = [
+      _p(0, 0, _t(15, 0)),
+      _p(5, 0, _t(15, 20)),
+      _p(5, 0, _t(15, 48)),
+      _p(0, 200, _t(15, 50)), // losse uitschieter, 200 m weg
+      _p(0, 0, _t(15, 53)),
+      _p(5, 0, _t(18, 0)),
+    ];
+
+    final timeline = buildTimeline(points);
+
+    expect(timeline, hasLength(1));
+    expect(timeline.single.kind, TimelineKind.stop);
+    expect(timeline.single.start, _t(15, 0));
+    expect(timeline.single.end, _t(18, 0));
+  });
+
   test('placeName is standaard null zodat Fase D hem kan invullen', () {
     final points = [_p(0, 0, _t(8, 0)), _p(0, 0, _t(8, 30))];
     expect(buildTimeline(points).single.placeName, isNull);

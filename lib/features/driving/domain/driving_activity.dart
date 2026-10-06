@@ -108,6 +108,9 @@ List<DrivingActivity> buildDayActivities(
   for (final track in buildTripTracks(points)) {
     final meters = trackMeters(track);
     if (meters < minTripMeters) continue;
+    // Een "rit" die eindigt waar ze begon (binnen de stopstraal) ging nergens
+    // heen: het zijn GPS-uitschieters op één plek, geen echte verplaatsing.
+    if (_legMeters(track.first, track.last) < kStopRadiusMeters) continue;
     activities.add(
       DrivingActivity(
         kind: DrivingActivityKind.trip,
@@ -143,4 +146,3 @@ List<TrackPoint> activityTrack(DrivingActivity activity, List<TrackPoint> points
   for (final point in points)
     if (!point.recordedAt.isBefore(activity.start) && !point.recordedAt.isAfter(activity.end)) point,
 ];
-
