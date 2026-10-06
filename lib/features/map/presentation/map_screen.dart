@@ -211,7 +211,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     var lat = fresh?.latitude;
     var lng = fresh?.longitude;
     if (lat == null || lng == null) {
-      final members = ref.read(membersOnMapProvider(familyId)).value ?? const <MemberOnMap>[];
+      final members = ref.read(anchoredMembersOnMapProvider(familyId)).value ?? const <MemberOnMap>[];
       for (final m in members) {
         if (m.member.userId == myId && m.location != null) {
           lat = m.location!.latitude;
@@ -237,7 +237,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final familyId = widget.family.id;
-    final membersAsync = ref.watch(membersOnMapProvider(familyId));
+    final membersAsync = ref.watch(anchoredMembersOnMapProvider(familyId));
     final members = membersAsync.value ?? const <MemberOnMap>[];
     final trackingStatus = ref.watch(locationTrackerProvider);
     final now = ref.watch(clockProvider).value ?? DateTime.now();
