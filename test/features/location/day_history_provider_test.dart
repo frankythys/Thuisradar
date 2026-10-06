@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/features/driving/domain/driving_activity.dart';
 import 'package:thuisradar/features/location/application/location_history_providers.dart';
 import 'package:thuisradar/features/location/data/location_history_repository.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
@@ -29,6 +30,10 @@ void main() {
     recordedAt: day.add(Duration(minutes: minutes)),
   );
 
+  // Een meting op dezelfde plek (werk), [minutes] na middernacht.
+  TrackPoint stay(int minutes) =>
+      TrackPoint(latitude: 51, longitude: 3, recordedAt: day.add(Duration(minutes: minutes)));
+
   Future<DayHistory> load(List<TrackPoint> points) async {
     final container = ProviderContainer(
       overrides: [locationHistoryRepositoryProvider.overrideWithValue(_FakeHistory(points))],
@@ -37,15 +42,28 @@ void main() {
     return container.read(dayHistoryProvider((userId: 'u1', day: day)).future);
   }
 
-  test('een gat in de metingen is geen rit van uren', () async {
-    // Kwartier thuis, dan negen uur niets (toestel uit), dan weer even beweging.
+  test('een gat in de metingen levert geen rit van uren op het scherm', () async {
+    // Even beweging, dan negen uur niets (toestel uit), dan weer even beweging.
     final history = await load([point(0), point(1), point(542), point(543)]);
 
-    final moves = history.entries.where((e) => e.kind == TimelineKind.move).toList();
-    expect(moves, hasLength(2));
-    for (final move in moves) {
-      expect(move.duration, lessThanOrEqualTo(const Duration(minutes: 1)));
-    }
+    final activities = buildDayActivities(history.entries, history.points);
+    // Geen enkele activiteit overbrugt het gat van negen uur.
+    expect(activities, isNotEmpty);
+    expect(activities.every((a) => a.duration < const Duration(hours: 1)), isTrue);
+  });
+
+  test('op het werk blijven over meetgaten heen is één verblijf', () async {
+    // Aankomst op werk, dan grote gaten met maar losse metingen op dezelfde
+    // plek (binnenshuis slechte GPS), en pas 's avonds weer dichte metingen.
+    final history = await load([stay(40), stay(221), stay(224), stay(460), stay(540)]);
+
+    final stays = buildDayActivities(
+      history.entries,
+      history.points,
+    ).where((a) => a.kind == DrivingActivityKind.stay).toList();
+
+    expect(stays, hasLength(1));
+    expect(stays.single.duration, const Duration(minutes: 500));
   });
 
   test('een aaneengesloten rit blijft één verplaatsing met het routespoor', () async {
