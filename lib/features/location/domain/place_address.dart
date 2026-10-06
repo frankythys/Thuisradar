@@ -14,17 +14,14 @@ class PlaceAddress {
   bool get isEmpty => label.isEmpty;
 
   /// "Kerkstraat 42, Gent" — enkel de delen die bekend zijn.
-  String get label => [street, municipality]
-      .whereType<String>()
-      .map((part) => part.trim())
-      .where((part) => part.isNotEmpty)
-      .join(', ');
+  String get label => [
+    street,
+    municipality,
+  ].whereType<String>().map((part) => part.trim()).where((part) => part.isNotEmpty).join(', ');
 
   @override
   bool operator ==(Object other) =>
-      other is PlaceAddress &&
-      other.street == street &&
-      other.municipality == municipality;
+      other is PlaceAddress && other.street == street && other.municipality == municipality;
 
   @override
   int get hashCode => Object.hash(street, municipality);
@@ -34,9 +31,10 @@ class PlaceAddress {
 }
 
 /// Raster waarop we coördinaten afronden voor het cacheen van adressen.
-/// 1/2000 graad is ongeveer 55 meter: precies genoeg voor straat + gemeente,
-/// maar niet voor elke meter een nieuwe reverse-geocoding-aanvraag.
-const addressGrid = 2000.0;
+/// 1/20000 graad is ongeveer 5,5 meter: fijn genoeg voor het juiste huisnummer
+/// en de juiste kant van de straat, maar nog steeds gecachet zodat opeenvolgende
+/// updates op dezelfde plek niet telkens opnieuw gecodeerd worden.
+const addressGrid = 20000.0;
 
 /// Rondt een coördinaat af op het adresraster, zodat opeenvolgende
 /// locatie-updates binnen dezelfde buurt dezelfde cachesleutel delen.
