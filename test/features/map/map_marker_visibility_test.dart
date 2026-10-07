@@ -48,7 +48,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Stilstaand'), findsOneWidget);
-    await tester.tap(find.text('Geschiedenis'));
+    await tester.tap(find.text('Stilstaand'));
     expect(opened, isTrue);
     expect(tester.takeException(), isNull);
   });

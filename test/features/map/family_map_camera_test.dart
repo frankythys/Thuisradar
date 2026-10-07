@@ -18,12 +18,7 @@ void main() {
       controller: controller,
       members: [
         MemberOnMap(
-          member: const FamilyMember(
-            userId: 'me',
-            displayName: 'Ik',
-            isOwner: true,
-            colorIndex: 0,
-          ),
+          member: const FamilyMember(userId: 'me', displayName: 'Ik', isOwner: true, colorIndex: 0),
           location: MemberLocation(
             userId: 'me',
             familyId: 'fam',

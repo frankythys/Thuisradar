@@ -7,11 +7,7 @@ import '../../../family/domain/family.dart';
 import '../../../family/presentation/invite_screen.dart';
 
 class NoLocationsCard extends StatelessWidget {
-  const NoLocationsCard({
-    super.key,
-    required this.family,
-    required this.onSettings,
-  });
+  const NoLocationsCard({super.key, required this.family, required this.onSettings});
   final Family family;
   final VoidCallback onSettings;
   @override
@@ -21,10 +17,7 @@ class NoLocationsCard extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.all(18),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.surfaceLow,
-          ),
+          decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.surfaceLow),
           child: const RadarLogo(size: 40),
         ),
         const SizedBox(height: 16),
@@ -41,11 +34,9 @@ class NoLocationsCard extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         FilledButton.icon(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => InviteScreen(family: family),
-            ),
-          ),
+          onPressed: () =>
+              Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => InviteScreen(family: family))),
           icon: const Icon(Icons.group_add_outlined, size: 18),
           label: const Text('Gezinslid uitnodigen'),
         ),
@@ -56,10 +47,7 @@ class NoLocationsCard extends StatelessWidget {
           label: const Text('Controleer gps-instellingen'),
         ),
         const SizedBox(height: 10),
-        Text(
-          'Gezinscode: ${family.inviteCode}',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text('Gezinscode: ${family.inviteCode}', style: Theme.of(context).textTheme.bodySmall),
       ],
     ),
   );

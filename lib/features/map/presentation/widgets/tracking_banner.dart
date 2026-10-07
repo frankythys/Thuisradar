@@ -19,26 +19,17 @@ class TrackingBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (message, action) = switch (status) {
-      TrackingStatus.permissionDenied => (
-        'Geef toestemming voor je locatie.',
-        ('Toestaan', onRetry),
-      ),
+      TrackingStatus.permissionDenied => ('Geef toestemming voor je locatie.', ('Toestaan', onRetry)),
       TrackingStatus.permissionDeniedForever => (
         'Locatie is geblokkeerd. Zet het aan in de instellingen.',
         ('Instellingen', onOpenSettings),
       ),
-      TrackingStatus.serviceDisabled => (
-        'Zet locatie (GPS) aan op je telefoon.',
-        ('Opnieuw', onRetry),
-      ),
+      TrackingStatus.serviceDisabled => ('Zet locatie (GPS) aan op je telefoon.', ('Opnieuw', onRetry)),
       TrackingStatus.offline => (
         'Geen internetverbinding · je locatie wordt bijgewerkt zodra je weer online bent.',
         ('Opnieuw proberen', onRetry),
       ),
-      TrackingStatus.error => (
-        'Je locatie kon niet gelezen worden.',
-        ('Opnieuw', onRetry),
-      ),
+      TrackingStatus.error => ('Je locatie kon niet gelezen worden.', ('Opnieuw', onRetry)),
       _ => (null, null),
     };
     if (message == null) return const SizedBox.shrink();
@@ -54,8 +45,7 @@ class TrackingBanner extends StatelessWidget {
             const Icon(Icons.location_off_outlined, color: AppColors.alert),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
-            if (action != null)
-              TextButton(onPressed: action.$2, child: Text(action.$1)),
+            if (action != null) TextButton(onPressed: action.$2, child: Text(action.$1)),
           ],
         ),
       ),

@@ -19,11 +19,7 @@ class MemberPlacesPrompt extends StatelessWidget {
               child: CircleAvatar(
                 radius: 36,
                 backgroundColor: Color(0xFFF1EBFC),
-                child: Icon(
-                  Icons.home_rounded,
-                  size: 54,
-                  color: Color(0xFF7952AC),
-                ),
+                child: Icon(Icons.home_rounded, size: 54, color: Color(0xFF7952AC)),
               ),
             ),
           ),
@@ -31,20 +27,13 @@ class MemberPlacesPrompt extends StatelessWidget {
           Text(
             'Sla de plaatsen op die het belangrijkst zijn',
             textAlign: TextAlign.center,
-            style: text.titleLarge?.copyWith(
-              fontSize: 20,
-              height: 1.3,
-              fontWeight: FontWeight.w800,
-            ),
+            style: text.titleLarge?.copyWith(fontSize: 20, height: 1.3, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
             'Weet wanneer ze aankomen',
             textAlign: TextAlign.center,
-            style: text.bodyLarge?.copyWith(
-              fontSize: 17,
-              color: const Color(0xFF787083),
-            ),
+            style: text.bodyLarge?.copyWith(fontSize: 17, color: const Color(0xFF787083)),
           ),
           const SizedBox(height: 18),
           TextButton(
@@ -54,13 +43,8 @@ class MemberPlacesPrompt extends StatelessWidget {
               foregroundColor: const Color(0xFF393342),
               minimumSize: const Size.fromHeight(50),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              textStyle: text.titleMedium?.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              textStyle: text.titleMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             child: const Text('Beheer plaatsen', textAlign: TextAlign.center),
           ),

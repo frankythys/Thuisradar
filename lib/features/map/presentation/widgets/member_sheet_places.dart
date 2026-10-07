@@ -41,8 +41,7 @@ class MemberSheetPlaces extends StatelessWidget {
         Row(
           children: [
             Expanded(child: Text('Plaatsen', style: text.titleLarge)),
-            if (onManage != null)
-              TextButton(onPressed: onManage, child: const Text('Beheer')),
+            if (onManage != null) TextButton(onPressed: onManage, child: const Text('Beheer')),
           ],
         ),
         SizedBox(height: tokens.spaceSm),
@@ -102,10 +101,7 @@ class _PlaceRow extends StatelessWidget {
     final tokens = context.tokens;
 
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: tokens.spaceMd,
-        vertical: tokens.spaceMd,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd, vertical: tokens.spaceMd),
       child: Row(
         children: [
           Container(
@@ -125,10 +121,7 @@ class _PlaceRow extends StatelessWidget {
               children: [
                 Text(item.place.name, style: text.titleMedium),
                 SizedBox(height: tokens.spaceXs),
-                Text(
-                  _subtitle(),
-                  style: text.bodySmall?.copyWith(color: AppColors.muted),
-                ),
+                Text(_subtitle(), style: text.bodySmall?.copyWith(color: AppColors.muted)),
               ],
             ),
           ),
@@ -139,15 +132,11 @@ class _PlaceRow extends StatelessWidget {
 
   String _subtitle() {
     if (item.hasPeople) {
-      final who = item.presentCount == 1
-          ? '1 gezinslid hier'
-          : '${item.presentCount} gezinsleden hier';
+      final who = item.presentCount == 1 ? '1 gezinslid hier' : '${item.presentCount} gezinsleden hier';
       return item.since == null ? who : '$who · sinds ${formatClock(item.since!)}';
     }
     final last = item.lastArrival;
-    return last == null
-        ? 'Nog niemand geweest'
-        : 'Laatste aankomst ${formatRelative(last, now: now)}';
+    return last == null ? 'Nog niemand geweest' : 'Laatste aankomst ${formatRelative(last, now: now)}';
   }
 }
 
@@ -165,14 +154,9 @@ class _AddRow extends StatelessWidget {
       type: MaterialType.transparency,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(tokens.radiusCard),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(tokens.radiusCard)),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: tokens.spaceMd,
-            vertical: tokens.spaceMd,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd, vertical: tokens.spaceMd),
           child: Row(
             children: [
               Container(
@@ -186,9 +170,7 @@ class _AddRow extends StatelessWidget {
                 child: const Icon(Icons.add, color: AppColors.primary),
               ),
               SizedBox(width: tokens.spaceMd),
-              Expanded(
-                child: Text('Nieuwe cirkel plaatsen', style: text.titleMedium),
-              ),
+              Expanded(child: Text('Nieuwe cirkel plaatsen', style: text.titleMedium)),
             ],
           ),
         ),

@@ -15,13 +15,7 @@ class CreateCircleCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: const Color(0xFFDEDBE2)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x16000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0x16000000), blurRadius: 10, offset: Offset(0, 3))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -33,11 +27,7 @@ class CreateCircleCard extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 38,
                   backgroundColor: Color(0xFFF1EBFC),
-                  child: Icon(
-                    Icons.family_restroom_rounded,
-                    size: 54,
-                    color: Color(0xFF796294),
-                  ),
+                  child: Icon(Icons.family_restroom_rounded, size: 54, color: Color(0xFF796294)),
                 ),
               ),
               const SizedBox(width: 16),
@@ -57,11 +47,8 @@ class CreateCircleCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       'Houd elke groep beschermd, zonder dingen door elkaar te halen.',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontSize: 17,
-                        height: 1.4,
-                        color: const Color(0xFF787083),
-                      ),
+                      style: Theme.of(context).textTheme.bodyLarge
+                          ?.copyWith(fontSize: 17, height: 1.4, color: const Color(0xFF787083)),
                     ),
                   ],
                 ),
@@ -78,18 +65,11 @@ class CreateCircleCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               elevation: 3,
               shadowColor: const Color(0x66393342),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(17),
-              ),
-              textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+              textStyle: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontSize: 18, fontWeight: FontWeight.w800),
             ),
-            child: const Text(
-              'Nieuwe Circle aanmaken',
-              textAlign: TextAlign.center,
-            ),
+            child: const Text('Nieuwe Circle aanmaken', textAlign: TextAlign.center),
           ),
         ],
       ),

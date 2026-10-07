@@ -38,13 +38,7 @@ class MemberInfoCard extends ConsumerWidget {
     final location = entry.location;
     final address = location == null
         ? null
-        : ref
-              .watch(
-                placeAddressProvider(
-                  snapToAddressGrid(location.latitude, location.longitude),
-                ),
-              )
-              .value;
+        : ref.watch(placeAddressProvider(snapToAddressGrid(location.latitude, location.longitude))).value;
 
     return DecoratedBox(
       decoration: BoxDecoration(

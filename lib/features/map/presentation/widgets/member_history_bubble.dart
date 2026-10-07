@@ -12,6 +12,7 @@ class MemberHistoryBubble extends StatelessWidget {
     required this.now,
     required this.onTap,
     this.placeStatus,
+    this.stationarySince,
   });
 
   final MemberOnMap entry;
@@ -19,24 +20,39 @@ class MemberHistoryBubble extends StatelessWidget {
   final VoidCallback onTap;
   final PlaceStatus? placeStatus;
 
+  /// Sinds wanneer het lid hier stilstaat, ook zonder opgeslagen plek.
+  final DateTime? stationarySince;
+
   @override
   Widget build(BuildContext context) {
     final status = TripStatus.at(entry.location, now);
     final isMoving = status.state == TripState.moving && status.speedKmh != null;
-    final since = placeStatus?.since;
-    final hasStay = since != null && !since.isAfter(now) && status.state != TripState.stale && !isMoving;
-    final title = isMoving ? 'Onderweg' : (hasStay ? placeStatus!.name : status.label);
-    final duration = hasStay ? now.difference(since) : null;
+    final placeSince = placeStatus?.since;
+    final atPlace =
+        placeSince != null && !placeSince.isAfter(now) && status.state != TripState.stale && !isMoving;
+    // Buiten een opgeslagen plek: toon hoelang het lid hier al stilstaat.
+    final stopped =
+        !isMoving &&
+        (status.state == TripState.stationary || status.state == TripState.unknown) &&
+        stationarySince != null &&
+        !stationarySince!.isAfter(now);
+    final sinceTime = atPlace ? placeSince : (stopped ? stationarySince : null);
+    final duration = sinceTime == null ? null : now.difference(sinceTime);
+    final title = isMoving
+        ? 'Onderweg'
+        : atPlace
+        ? placeStatus!.name
+        : stopped
+        ? 'Stilstaand'
+        : status.label;
     final subtitle = isMoving
         ? '${status.speedKmh} km/u'
         : duration != null
-        ? (duration.inHours > 0
-              ? 'sinds ${duration.inHours} uur, ${duration.inMinutes.remainder(60)} min'
-              : 'sinds ${duration.inMinutes} min')
-        : 'Geschiedenis';
+        ? 'sinds ${_formatSince(duration)}'
+        : _formatUpdated(entry.location?.updatedAt, now);
     final icon = isMoving
         ? Icons.directions_car
-        : (hasStay ? placeIcon(placeStatus!.icon) : Icons.location_on);
+        : (atPlace ? placeIcon(placeStatus!.icon) : Icons.location_on);
     return Semantics(
       button: true,
       label: 'Geschiedenis van ${entry.member.displayName}',
@@ -92,4 +108,16 @@ class MemberHistoryBubble extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatSince(Duration duration) => duration.inHours > 0
+    ? '${duration.inHours} uur, ${duration.inMinutes.remainder(60)} min'
+    : '${duration.inMinutes} min';
+
+/// Terugval als er geen verblijfsduur is (bv. verouderde meting): hoelang
+/// geleden de laatste positie binnenkwam, i.p.v. een nietszeggende tekst.
+String _formatUpdated(DateTime? updatedAt, DateTime now) {
+  if (updatedAt == null) return '';
+  final seconds = now.difference(updatedAt).inSeconds.clamp(0, 99999999);
+  return seconds < 60 ? 'bijgewerkt $seconds s geleden' : 'bijgewerkt ${seconds ~/ 60} min geleden';
 }

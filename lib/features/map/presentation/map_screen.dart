@@ -263,6 +263,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final offline = trackingStatus == TrackingStatus.offline;
     final places = ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
     final placeByUser = ref.watch(currentPlaceByUserProvider(familyId));
+    final stationarySinceByUser = ref.watch(stationarySinceProvider(familyId));
 
     // Houd het gekozen lid vers (locatie/batterij uit de realtime-stroom).
     MemberOnMap? selected;
@@ -297,6 +298,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             members: members,
             places: places,
             placeByUser: placeByUser,
+            stationarySinceByUser: stationarySinceByUser,
             now: now,
             selectedUserId: selected?.member.userId,
             myUserId: myId,

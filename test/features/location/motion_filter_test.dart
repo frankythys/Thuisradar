@@ -13,6 +13,15 @@ void main() {
     expect(accepted, isNotNull);
   });
 
+  test('een betrouwbare GPS-snelheid meldt meteen beweging', () {
+    final filter = MotionFilter();
+    final accepted = filter.accept(pos(51, 3, base, accuracy: 10, speed: 8), base);
+
+    expect(accepted, isNotNull);
+    expect(accepted!.speedMps, 8);
+    expect(filter.wantsFastUpdates, isTrue);
+  });
+
   test('een grove fix (binnenshuis) wordt bewaard maar meldt geen beweging', () {
     final accepted = MotionFilter().accept(pos(51, 3, base, accuracy: 80), base);
 

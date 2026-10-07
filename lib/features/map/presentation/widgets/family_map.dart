@@ -21,6 +21,7 @@ class FamilyMap extends StatelessWidget {
     required this.onGroupTap,
     this.places = const [],
     this.placeByUser = const {},
+    this.stationarySinceByUser = const {},
     this.selectedUserId,
     this.myUserId,
     this.onMapReady,
@@ -36,6 +37,7 @@ class FamilyMap extends StatelessWidget {
   final List<MemberOnMap> members;
   final List<Place> places;
   final Map<String, PlaceStatus> placeByUser;
+  final Map<String, DateTime> stationarySinceByUser;
   final DateTime now;
   final ValueChanged<MemberOnMap> onMemberTap;
   final ValueChanged<LatLng> onGroupTap;
@@ -52,10 +54,7 @@ class FamilyMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ownLocation = members
-        .where((entry) => entry.member.userId == myUserId)
-        .firstOrNull
-        ?.location;
+    final ownLocation = members.where((entry) => entry.member.userId == myUserId).firstOrNull?.location;
     return FlutterMap(
       mapController: controller,
       options: MapOptions(
@@ -72,9 +71,7 @@ class FamilyMap extends StatelessWidget {
         onPositionChanged: (camera, hasGesture) {
           if (hasGesture) onUserGesture?.call();
         },
-        interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-        ),
+        interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
       ),
       children: [
         const AppMapTiles(),
@@ -99,11 +96,7 @@ class FamilyMap extends StatelessWidget {
                   point: LatLng(place.latitude, place.longitude),
                   width: 32,
                   height: 32,
-                  child: Icon(
-                    placeIcon(place.icon),
-                    size: 20,
-                    color: AppColors.primary,
-                  ),
+                  child: Icon(placeIcon(place.icon), size: 20, color: AppColors.primary),
                 ),
             ],
           ),
@@ -112,6 +105,7 @@ class FamilyMap extends StatelessWidget {
           members: members,
           now: now,
           placeByUser: placeByUser,
+          stationarySinceByUser: stationarySinceByUser,
           onMemberTap: onMemberTap,
           onHistory: onHistory,
           onGroupTap: onGroupTap,

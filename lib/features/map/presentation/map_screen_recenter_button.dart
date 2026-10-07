@@ -17,11 +17,7 @@ class _RecenterButton extends StatelessWidget {
         customBorder: const CircleBorder(),
         child: const Tooltip(
           message: 'Toon iedereen',
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Icon(Icons.my_location, color: AppColors.primary),
-          ),
+          child: SizedBox(width: 48, height: 48, child: Icon(Icons.my_location, color: AppColors.primary)),
         ),
       ),
     );

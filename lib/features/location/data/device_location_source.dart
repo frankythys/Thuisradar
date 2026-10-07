@@ -8,7 +8,7 @@ import '../domain/device_reading.dart';
 /// blijft werken.
 class DeviceLocationSource {
   static const _distanceFilterMeters = 0;
-  static const defaultInterval = Duration(seconds: 30);
+  static const defaultInterval = Duration(seconds: 15);
 
   Future<LocationAccess> ensureAccess() async {
     if (!await Geolocator.isLocationServiceEnabled()) {

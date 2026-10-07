@@ -44,21 +44,12 @@ class MemberTile extends ConsumerWidget {
     final offline = _isOffline(status);
     final address = location == null
         ? null
-        : ref
-              .watch(
-                placeAddressProvider(
-                  snapToAddressGrid(location.latitude, location.longitude),
-                ),
-              )
-              .value;
+        : ref.watch(placeAddressProvider(snapToAddressGrid(location.latitude, location.longitude))).value;
 
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: tokens.spaceMd,
-          vertical: tokens.spaceMd,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd, vertical: tokens.spaceMd),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -69,20 +60,13 @@ class MemberTile extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isMe
-                        ? '${entry.member.displayName} (jij)'
-                        : entry.member.displayName,
-                    style: text.titleMedium?.copyWith(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    isMe ? '${entry.member.displayName} (jij)' : entry.member.displayName,
+                    style: text.titleMedium?.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
                   ),
                   SizedBox(height: tokens.spaceXs),
                   Text(
                     _status(status, address, offline),
-                    style: text.bodySmall?.copyWith(
-                      color: offline ? AppColors.alert : AppColors.muted,
-                    ),
+                    style: text.bodySmall?.copyWith(color: offline ? AppColors.alert : AppColors.muted),
                   ),
                   if (location != null && !offline)
                     Text(
@@ -97,11 +81,7 @@ class MemberTile extends ConsumerWidget {
                 padding: EdgeInsets.only(top: 4),
                 child: Tooltip(
                   message: 'Geen netwerk of telefoon uit',
-                  child: Icon(
-                    Icons.phonelink_off,
-                    color: AppColors.alert,
-                    size: 22,
-                  ),
+                  child: Icon(Icons.phonelink_off, color: AppColors.alert, size: 22),
                 ),
               ),
           ],
@@ -111,19 +91,13 @@ class MemberTile extends ConsumerWidget {
   }
 
   /// Geen signaal: al even niets ontvangen of nog nooit gedeeld.
-  bool _isOffline(TripStatus status) =>
-      status.state == TripState.stale || status.state == TripState.missing;
+  bool _isOffline(TripStatus status) => status.state == TripState.stale || status.state == TripState.missing;
 
   String _status(TripStatus status, PlaceAddress? address, bool offline) {
     if (status.state == TripState.missing) return 'Nog geen locatie gedeeld';
     if (offline) return 'Geen netwerk of telefoon uit';
 
-    return status.shortDescription(
-      entry.location,
-      now,
-      place: placeStatus?.name,
-      address: address?.label,
-    );
+    return status.shortDescription(entry.location, now, place: placeStatus?.name, address: address?.label);
   }
 }
 
@@ -142,22 +116,14 @@ class _Avatar extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          MemberAvatar(
-            member: entry.member,
-            size: 64,
-            shape: MemberAvatarShape.rounded,
-          ),
+          MemberAvatar(member: entry.member, size: 64, shape: MemberAvatarShape.rounded),
           if (location?.battery != null)
             Positioned(
               left: 0,
               right: 0,
               bottom: -10,
               child: Center(
-                child: BatteryBadge(
-                  level: location!.battery,
-                  isCharging: location.isCharging,
-                  compact: true,
-                ),
+                child: BatteryBadge(level: location!.battery, isCharging: location.isCharging, compact: true),
               ),
             ),
         ],

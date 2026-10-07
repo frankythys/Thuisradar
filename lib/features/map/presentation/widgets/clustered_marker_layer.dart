@@ -25,6 +25,7 @@ class ClusteredMarkerLayer extends StatefulWidget {
     required this.onMemberTap,
     required this.onGroupTap,
     this.placeByUser = const {},
+    this.stationarySinceByUser = const {},
     this.selectedUserId,
     this.myUserId,
     this.onHistory,
@@ -35,6 +36,7 @@ class ClusteredMarkerLayer extends StatefulWidget {
   final ValueChanged<MemberOnMap> onMemberTap;
   final ValueChanged<LatLng> onGroupTap;
   final Map<String, PlaceStatus> placeByUser;
+  final Map<String, DateTime> stationarySinceByUser;
   final String? selectedUserId;
   final String? myUserId;
   final ValueChanged<MemberOnMap>? onHistory;
@@ -237,6 +239,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
               entry: selected,
               now: widget.now,
               placeStatus: widget.placeByUser[id],
+              stationarySince: widget.stationarySinceByUser[id],
               onTap: () => (widget.onHistory ?? widget.onMemberTap)(selected),
             ),
           ),

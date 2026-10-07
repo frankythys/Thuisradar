@@ -26,10 +26,7 @@ class _OwnSosBanner extends StatelessWidget {
             ),
             TextButton(
               onPressed: onResolve,
-              child: const Text(
-                'Oplossen',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text('Oplossen', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

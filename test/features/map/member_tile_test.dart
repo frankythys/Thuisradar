@@ -20,7 +20,10 @@ MemberOnMap _entry() => MemberOnMap(
 );
 
 Widget _wrap(MemberTile tile) => ProviderScope(
-  child: MaterialApp(theme: AppTheme.light(), home: Scaffold(body: tile)),
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    home: Scaffold(body: tile),
+  ),
 );
 
 void main() {
@@ -28,14 +31,7 @@ void main() {
     var taps = 0;
 
     await tester.pumpWidget(
-      _wrap(
-        MemberTile(
-          entry: _entry(),
-          isMe: false,
-          now: DateTime(2026, 1, 2, 10, 5),
-          onTap: () => taps++,
-        ),
-      ),
+      _wrap(MemberTile(entry: _entry(), isMe: false, now: DateTime(2026, 1, 2, 10, 5), onTap: () => taps++)),
     );
 
     await tester.tap(find.text('Papa'));
@@ -44,9 +40,7 @@ void main() {
 
   testWidgets('toont de naam, sinds-tijd en batterijstand', (tester) async {
     await tester.pumpWidget(
-      _wrap(
-        MemberTile(entry: _entry(), isMe: false, now: DateTime(2026, 1, 2, 10, 0, 20)),
-      ),
+      _wrap(MemberTile(entry: _entry(), isMe: false, now: DateTime(2026, 1, 2, 10, 0, 20))),
     );
 
     expect(find.text('Papa'), findsOneWidget);
