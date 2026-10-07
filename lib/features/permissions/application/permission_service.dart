@@ -12,7 +12,14 @@ class PermissionService {
 
   Future<bool> requestLocation() async {
     final access = await _location.ensureAccess();
-    return access == LocationAccess.granted;
+    if (access != LocationAccess.granted) return false;
+    // Android 10+: zonder "Altijd toestaan" stopt de locatie zodra de app naar
+    // de achtergrond gaat. Op Android 11+ opent dit de instellingen; weigeren
+    // mag — delen werkt dan enkel met de app open.
+    if (!await Permission.locationAlways.isGranted) {
+      await Permission.locationAlways.request();
+    }
+    return true;
   }
 
   Future<bool> requestNotifications() async {
