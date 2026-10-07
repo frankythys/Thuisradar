@@ -64,7 +64,7 @@ class _CurrentStayCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(tokens.radiusCard),
-        border: Border.all(color: AppColors.primarySoft),
+        border: Border.all(color: AppColors.border),
         boxShadow: tokens.shadowLevel1,
       ),
       padding: EdgeInsets.all(tokens.spaceMd),
