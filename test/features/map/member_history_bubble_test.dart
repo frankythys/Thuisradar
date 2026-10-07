@@ -87,8 +87,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Hier sinds'), findsOneWidget);
-      expect(find.text('2 uur, 15 min'), findsOneWidget);
+      expect(find.text('Thuis'), findsOneWidget);
+      expect(find.byIcon(Icons.home_rounded), findsOneWidget);
+      expect(find.text('sinds 2 uur, 15 min'), findsOneWidget);
       final avatar = find.byWidgetPredicate(
         (widget) => widget is MemberAvatar && widget.member.userId == 'Franky',
       );
@@ -113,7 +114,7 @@ void main() {
         expect(movedOffset.dx, closeTo(offset.dx, 0.01));
         expect(movedOffset.dy, closeTo(offset.dy, 0.01));
       }
-      await tester.tap(find.text('2 uur, 15 min'));
+      await tester.tap(find.text('sinds 2 uur, 15 min'));
       expect(opened, 'Franky');
       expect(tester.takeException(), isNull);
     },
