@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../places/domain/place_status.dart';
+import '../../domain/bubble_side.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/marker_motion.dart';
 import '../../domain/member_on_map.dart';
@@ -222,25 +223,37 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             for (final group in groups)
               if (group.length == 1) byId[group.single]!,
           ];
+    final screenById = {for (final p in points) p.id: p.position};
     for (final selected in bubbleMembers) {
       final id = selected.member.userId;
       final coordinate = coords[id]!;
       final point = LatLng(coordinate.lat, coordinate.lng);
+      // Kies de vrije kant zodat de ballon nooit over een ander lid valt; dit
+      // wordt bij elke zoom opnieuw bepaald (schermpixels).
+      final self = screenById[id];
+      final onRight =
+          self == null ||
+          chooseBubbleSide(self, [
+                for (final entry in screenById.entries)
+                  if (entry.key != id) entry.value,
+              ]) ==
+              BubbleSide.right;
       markers.add(
         Marker(
           point: point,
           width: 142,
           height: 48,
-          alignment: Alignment.topRight,
+          alignment: onRight ? Alignment.topRight : Alignment.topLeft,
           child: Transform.translate(
-            // De avatar begint 96 px boven het kaartpunt. Laat de ballon
-            // zijn rechterbovenhoek overlappen, onafhankelijk van de camera.
-            offset: const Offset(32, -62),
+            // De avatar begint 96 px boven het kaartpunt. Laat de ballon een
+            // bovenhoek overlappen, aan de kant waar ruimte is.
+            offset: Offset(onRight ? 32 : -32, -62),
             child: MemberHistoryBubble(
               entry: selected,
               now: widget.now,
               placeStatus: widget.placeByUser[id],
               stationarySince: widget.stationarySinceByUser[id],
+              tailLeft: onRight,
               onTap: () => (widget.onHistory ?? widget.onMemberTap)(selected),
             ),
           ),

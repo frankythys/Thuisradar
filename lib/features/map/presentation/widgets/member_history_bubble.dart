@@ -13,6 +13,7 @@ class MemberHistoryBubble extends StatelessWidget {
     required this.onTap,
     this.placeStatus,
     this.stationarySince,
+    this.tailLeft = true,
   });
 
   final MemberOnMap entry;
@@ -22,6 +23,10 @@ class MemberHistoryBubble extends StatelessWidget {
 
   /// Sinds wanneer het lid hier stilstaat, ook zonder opgeslagen plek.
   final DateTime? stationarySince;
+
+  /// Staat de ballon rechts van de avatar? Dan wijst de staart linksonder naar
+  /// de avatar; staat hij links, dan spiegelt de staart naar rechtsonder.
+  final bool tailLeft;
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +65,11 @@ class MemberHistoryBubble extends StatelessWidget {
         color: Colors.white,
         elevation: 3,
         shadowColor: const Color(0x44000000),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(15),
-          topRight: Radius.circular(15),
-          bottomRight: Radius.circular(15),
-          bottomLeft: Radius.circular(4),
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(15),
+          topRight: const Radius.circular(15),
+          bottomRight: Radius.circular(tailLeft ? 15 : 4),
+          bottomLeft: Radius.circular(tailLeft ? 4 : 15),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
