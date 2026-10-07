@@ -205,6 +205,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
                 placeByUser: widget.placeByUser,
                 myUserId: widget.myUserId,
                 selectedUserId: widget.selectedUserId,
+                onMemberTap: widget.onMemberTap,
               ),
             ),
           ),

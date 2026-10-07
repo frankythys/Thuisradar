@@ -84,6 +84,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('tik op een avatar in de groep toont dat lid', (tester) async {
+    MemberOnMap? tapped;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: GroupPin.width,
+              height: GroupPin.height,
+              child: GroupPin(
+                members: [member('Franky'), member('Liam')],
+                now: now,
+                onMemberTap: (m) => tapped = m,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    // De voorste avatar (index 0) ligt bovenop en komt als laatste in de boom.
+    await tester.tap(find.byType(MemberAvatar).last);
+    expect(tapped?.member.userId, 'Franky');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('groepspin met grote avatars en extra leden past in marker', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

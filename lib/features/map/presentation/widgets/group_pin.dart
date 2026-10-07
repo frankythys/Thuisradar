@@ -19,13 +19,14 @@ class GroupPin extends StatelessWidget {
     this.placeByUser = const {},
     this.myUserId,
     this.selectedUserId,
+    this.onMemberTap,
   });
 
   static const width = 260.0;
   static const height = 160.0;
 
   static const _avatar = 72.0;
-  static const _step = 48.0;
+  static const _step = 58.0;
   static const _maxShown = 3;
 
   /// Leden in deze groep; de eerste is "ik" (indien aanwezig), die bovenop ligt.
@@ -34,6 +35,9 @@ class GroupPin extends StatelessWidget {
   final Map<String, PlaceStatus> placeByUser;
   final String? myUserId;
   final String? selectedUserId;
+
+  /// Tik op één avatar in de groep: toon de info van dat lid.
+  final ValueChanged<MemberOnMap>? onMemberTap;
 
   @override
   Widget build(BuildContext context) {
@@ -75,12 +79,17 @@ class GroupPin extends StatelessWidget {
   Widget _avatarFor(MemberOnMap member) {
     final isSelected = member.member.userId == selectedUserId;
     final avatar = MemberAvatar(member: member.member, size: _avatar, ring: !isSelected);
-    if (!isSelected) return avatar;
-
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.mapSelection),
-      child: avatar,
+    final child = isSelected
+        ? Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.mapSelection),
+            child: avatar,
+          )
+        : avatar;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onMemberTap == null ? null : () => onMemberTap!(member),
+      child: child,
     );
   }
 
