@@ -12,9 +12,7 @@ class _TimelineRow extends StatelessWidget {
     final isStop = entry.kind == TimelineKind.stop;
 
     final title = isStop
-        ? (entry.placeName == null
-              ? 'Stilgestaan'
-              : 'Aangekomen op ${entry.placeName}')
+        ? (entry.placeName == null ? 'Stilgestaan' : 'Aangekomen op ${entry.placeName}')
         : 'Onderweg · ${formatDistance(entry.distanceMeters ?? 0)}';
     final subtitle = isStop
         ? '${formatClock(entry.start)}–${formatClock(entry.end)} · ${formatDuration(entry.duration)}'
@@ -28,10 +26,7 @@ class _TimelineRow extends StatelessWidget {
           Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              color: AppColors.primarySoft,
-              shape: BoxShape.circle,
-            ),
+            decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
             child: Icon(
               isStop ? Icons.place : Icons.directions_car_filled_outlined,
               size: 20,
@@ -45,10 +40,7 @@ class _TimelineRow extends StatelessWidget {
               children: [
                 Text(title, style: text.titleMedium),
                 SizedBox(height: tokens.spaceXs),
-                Text(
-                  subtitle,
-                  style: text.bodySmall?.copyWith(color: AppColors.muted),
-                ),
+                Text(subtitle, style: text.bodySmall?.copyWith(color: AppColors.muted)),
               ],
             ),
           ),

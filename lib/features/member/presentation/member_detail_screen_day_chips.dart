@@ -14,8 +14,7 @@ class _DayChips extends StatelessWidget {
     return Wrap(
       runSpacing: 8,
       children: [
-        for (final (index, label)
-            in _MemberDetailScreenState._dayLabels.indexed)
+        for (final (index, label) in _MemberDetailScreenState._dayLabels.indexed)
           Padding(
             padding: EdgeInsets.only(right: tokens.spaceSm),
             child: Material(
@@ -25,15 +24,10 @@ class _DayChips extends StatelessWidget {
                 onTap: () => onSelected(index),
                 customBorder: const StadiumBorder(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   child: Text(
                     label,
-                    style: text.labelLarge?.copyWith(
-                      color: index == selected ? Colors.white : AppColors.ink,
-                    ),
+                    style: text.labelLarge?.copyWith(color: index == selected ? Colors.white : AppColors.ink),
                   ),
                 ),
               ),

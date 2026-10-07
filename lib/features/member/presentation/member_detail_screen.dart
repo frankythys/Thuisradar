@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/clock.dart';
+import '../../../core/utils/geo.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
@@ -30,9 +31,12 @@ import '../../location/domain/member_location.dart';
 import '../../location/domain/timeline.dart';
 import '../../location/domain/trip_status.dart';
 import '../../places/application/places_providers.dart';
+import '../../places/domain/place.dart';
 import '../../places/domain/place_timeline.dart';
+import '../../places/presentation/place_icons.dart';
 
 part 'member_detail_screen_header.dart';
+part 'member_detail_screen_current.dart';
 part 'member_detail_screen_stats.dart';
 part 'member_detail_screen_stat_card.dart';
 part 'member_detail_screen_day_chips.dart';
@@ -105,6 +109,16 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     );
 
     final body = <Widget>[
+      if (_dayOffset == 0 && location != null) ...[
+        _CurrentStayCard(
+          location: location,
+          entries: timeline.value ?? const [],
+          places: ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
+          now: now,
+          onRefresh: () => ref.invalidate(timelineProvider(query)),
+        ),
+        const SizedBox(height: 16),
+      ],
       _Stats(location: location, timeline: timeline.value ?? const [], now: now),
       const SizedBox(height: 16),
       _DayChips(selected: _dayOffset, onSelected: (i) => setState(() => _dayOffset = i)),

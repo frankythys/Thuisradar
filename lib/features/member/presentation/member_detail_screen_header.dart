@@ -16,24 +16,13 @@ class _Header extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        MemberAvatar(
-          member: member,
-          size: 64,
-          statusColor: location == null ? null : AppColors.primary,
-        ),
+        MemberAvatar(member: member, size: 64, statusColor: location == null ? null : AppColors.primary),
         SizedBox(height: tokens.spaceSm),
-        Text(
-          member.displayName,
-          style: text.headlineMedium,
-          textAlign: TextAlign.center,
-        ),
+        Text(member.displayName, style: text.headlineMedium, textAlign: TextAlign.center),
         SizedBox(height: tokens.spaceXs),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: const ShapeDecoration(
-            color: AppColors.primarySoft,
-            shape: StadiumBorder(),
-          ),
+          decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
           child: Text(
             location == null ? 'Nog geen locatie' : trip.label,
             style: text.labelLarge?.copyWith(color: AppColors.primary),

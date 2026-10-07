@@ -13,9 +13,7 @@ class _Stats extends StatelessWidget {
     final distance = timeline
         .where((e) => e.kind == TimelineKind.move)
         .fold<double>(0, (sum, e) => sum + (e.distanceMeters ?? 0));
-    final seen = location == null
-        ? '—'
-        : formatRelative(location!.updatedAt, now: now);
+    final seen = location == null ? '—' : formatRelative(location!.updatedAt, now: now);
 
     return Row(
       children: [
@@ -28,19 +26,11 @@ class _Stats extends StatelessWidget {
         ),
         SizedBox(width: tokens.spaceMd),
         Expanded(
-          child: _StatCard(
-            icon: Icons.route_outlined,
-            value: formatDistance(distance),
-            label: 'Afstand',
-          ),
+          child: _StatCard(icon: Icons.route_outlined, value: formatDistance(distance), label: 'Afstand'),
         ),
         SizedBox(width: tokens.spaceMd),
         Expanded(
-          child: _StatCard(
-            icon: Icons.schedule,
-            value: seen,
-            label: 'Laatst gezien',
-          ),
+          child: _StatCard(icon: Icons.schedule, value: seen, label: 'Laatst gezien'),
         ),
       ],
     );

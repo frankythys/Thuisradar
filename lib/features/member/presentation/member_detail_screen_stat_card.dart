@@ -1,11 +1,7 @@
 part of 'member_detail_screen.dart';
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
+  const _StatCard({required this.icon, required this.value, required this.label});
 
   final IconData icon;
   final String value;
