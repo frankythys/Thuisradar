@@ -147,10 +147,7 @@ void main() {
     ),
     '13_plaatsen': _nav(const PlacesScreen(family: family), AppTab.plaatsen),
     '14_plaats_toevoegen': const AddPlaceScreen(familyId: 'visual-test'),
-    '15_meldingen': _nav(
-      const NotificationsScreen(family: family),
-      AppTab.meldingen,
-    ),
+    '15_meldingen': const NotificationsScreen(family: family),
     '16_familiechat': _nav(const ChatScreen(family: family), AppTab.chat),
     '17_sos': SosScreen(familyId: 'visual-test', onActivate: () async {}),
     '18_sos_ontvangen': SosReceivedOverlay(

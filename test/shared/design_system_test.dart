@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
@@ -15,9 +16,11 @@ import 'package:thuisradar/shared/widgets/sos_button.dart';
 /// Pompt een widget binnen het echte thema, zodat de AppTokens-extensie bestaat.
 Future<void> pumpThemed(WidgetTester tester, Widget child, {PreferredSizeWidget? appBar}) {
   return tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.light(),
-      home: Scaffold(appBar: appBar, body: child),
+    ProviderScope(
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(appBar: appBar, body: child),
+      ),
     ),
   );
 }
@@ -111,18 +114,20 @@ void main() {
 
   testWidgets('BrandedAppBar toont een werkende terugknop op een gepusht scherm', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => Center(
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const Scaffold(appBar: BrandedAppBar(title: 'Detail')),
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const Scaffold(appBar: BrandedAppBar(title: 'Detail')),
+                    ),
                   ),
+                  child: const Text('open'),
                 ),
-                child: const Text('open'),
               ),
             ),
           ),

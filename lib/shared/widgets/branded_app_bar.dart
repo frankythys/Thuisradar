@@ -4,17 +4,13 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import 'radar_logo.dart';
 import 'privacy_action.dart';
+import 'notifications_action.dart';
 import 'profile_action.dart';
 
 /// App-balk met de Thuisradar-logotegel, een kleine merknaam-overline en een
 /// titel, plus optionele acties rechts. Hergebruikt op bijna elk hoofdscherm.
 class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const BrandedAppBar({
-    super.key,
-    required this.title,
-    this.actions = const [],
-    this.leading,
-  });
+  const BrandedAppBar({super.key, required this.title, this.actions = const [], this.leading});
 
   final String title;
   final List<Widget> actions;
@@ -54,10 +50,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'THUISRADAR',
-                  style: text.labelSmall?.copyWith(color: AppColors.muted),
-                ),
+                Text('THUISRADAR', style: text.labelSmall?.copyWith(color: AppColors.muted)),
                 Text(title, style: text.titleLarge),
               ],
             ),
@@ -66,9 +59,9 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         const PrivacyAction(),
+        const NotificationsAction(),
         ...actions,
-        if (actions.isEmpty && title != 'Profiel & instellingen')
-          const ProfileAction(),
+        if (actions.isEmpty && title != 'Profiel & instellingen') const ProfileAction(),
         SizedBox(width: tokens.spaceSm),
       ],
     );
