@@ -46,6 +46,33 @@ void main() {
     expect(anchored.single.location!.longitude, 3.73);
   });
 
+  test('meerdere leden op dezelfde plek worden uitgewaaierd', () {
+    const member2 = FamilyMember(userId: 'u2', displayName: 'Liam', isOwner: false, colorIndex: 1);
+    final second = MemberOnMap(
+      member: member2,
+      location: MemberLocation(
+        userId: 'u2',
+        familyId: 'fam',
+        latitude: 51.0509,
+        longitude: 3.7215,
+        updatedAt: DateTime(2026, 1, 2, 10),
+      ),
+    );
+
+    final anchored = anchorMembersToPlaces([at(51.0503, 3.7206), second], [home], [
+      PlacePresence(userId: 'u1', placeId: 'home', isInside: true, since: DateTime(2026, 1, 2, 8)),
+      PlacePresence(userId: 'u2', placeId: 'home', isInside: true, since: DateTime(2026, 1, 2, 8)),
+    ]);
+
+    final a = anchored[0].location!;
+    final b = anchored[1].location!;
+    // Niet meer op exact hetzelfde punt: ze kunnen bij inzoomen scheiden.
+    expect(a.latitude == b.latitude && a.longitude == b.longitude, isFalse);
+    // Maar wel vlak bij het midden van de plek (binnen de straal).
+    expect((a.latitude - 51.05).abs() < 0.001, isTrue);
+    expect((b.latitude - 51.05).abs() < 0.001, isTrue);
+  });
+
   test('zonder locatie verandert er niets', () {
     final anchored = anchorMembersToPlaces([const MemberOnMap(member: member)], [home], [
       const PlacePresence(userId: 'u1', placeId: 'home', isInside: true),

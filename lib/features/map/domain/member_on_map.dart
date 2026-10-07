@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../family/domain/family_member.dart';
 import '../../location/domain/member_location.dart';
 import '../../places/domain/place.dart';
@@ -55,14 +57,49 @@ List<MemberOnMap> anchorMembersToPlaces(
   }
   if (anchorByUser.isEmpty) return members;
 
-  return [for (final entry in members) _anchored(entry, anchorByUser[entry.member.userId])];
+  // Per plek: hoeveel geankerde leden met locatie staan erop?
+  final totalByPlace = <String, int>{};
+  for (final entry in members) {
+    if (entry.location == null) continue;
+    final place = anchorByUser[entry.member.userId];
+    if (place != null) totalByPlace[place.id] = (totalByPlace[place.id] ?? 0) + 1;
+  }
+
+  final indexByPlace = <String, int>{};
+  final result = <MemberOnMap>[];
+  for (final entry in members) {
+    final place = anchorByUser[entry.member.userId];
+    final location = entry.location;
+    if (place == null || location == null) {
+      result.add(entry);
+      continue;
+    }
+    final total = totalByPlace[place.id] ?? 1;
+    final index = indexByPlace[place.id] ?? 0;
+    indexByPlace[place.id] = index + 1;
+    final point = _fannedPoint(place, index, total);
+    result.add(
+      MemberOnMap(
+        member: entry.member,
+        location: location.copyWith(latitude: point.lat, longitude: point.lng),
+      ),
+    );
+  }
+  return result;
 }
 
-MemberOnMap _anchored(MemberOnMap entry, Place? place) {
-  final location = entry.location;
-  if (place == null || location == null) return entry;
-  return MemberOnMap(
-    member: entry.member,
-    location: location.copyWith(latitude: place.latitude, longitude: place.longitude),
-  );
+/// Straal van de waaier waarin leden op dezelfde plek worden gezet, zodat ze bij
+/// inzoomen uit elkaar gaan (zoals Life360) maar bij uitzoomen één groep blijven.
+const _fanRadiusMeters = 18.0;
+
+/// Eén lid staat exact op het midden; meerdere leden worden verdeeld over een
+/// kleine cirkel rond het midden, zodat ze bij inzoomen zichtbaar scheiden.
+({double lat, double lng}) _fannedPoint(Place place, int index, int total) {
+  if (total <= 1) return (lat: place.latitude, lng: place.longitude);
+  final angle = 2 * math.pi * index / total;
+  final dxMeters = _fanRadiusMeters * math.cos(angle);
+  final dyMeters = _fanRadiusMeters * math.sin(angle);
+  final lat = place.latitude + dyMeters / 111320;
+  final lng = place.longitude + dxMeters / (111320 * math.cos(place.latitude * math.pi / 180));
+  return (lat: lat, lng: lng);
 }
