@@ -55,7 +55,7 @@ async function sendPush(
         notification: { title: "Plaatsen", body },
         android: {
           priority: "high",
-          notification: { channel_id: "places", sound: "default" },
+          notification: { channel_id: "places_v2", sound: "thuisradar_arrival" },
         },
         data: { type: "place" },
       },

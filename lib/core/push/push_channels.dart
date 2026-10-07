@@ -12,12 +12,14 @@ abstract final class PushChannels {
     sound: RawResourceAndroidNotificationSound('thuisradar_sos'),
     audioAttributesUsage: AudioAttributesUsage.alarm,
   );
+  // Nieuw id: Android kan het geluid van een bestaand kanaal niet wijzigen.
   static const places = AndroidNotificationChannel(
-    'places',
+    'places_v2',
     'Plaatsen',
     description: 'Aankomst en vertrek bij plaatsen',
-    importance: Importance.defaultImportance,
+    importance: Importance.high,
     playSound: true,
+    sound: RawResourceAndroidNotificationSound('thuisradar_arrival'),
   );
   static const chat = AndroidNotificationChannel(
     'chat_messages',
