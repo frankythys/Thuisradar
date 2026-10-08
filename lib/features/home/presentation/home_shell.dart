@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/app_bottom_nav.dart';
+import '../../../shared/widgets/lazy_indexed_stack.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../chat/presentation/chat_screen.dart';
 import '../../driving/presentation/driving_screen.dart';
@@ -42,25 +43,33 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     return Stack(
       children: [
         Scaffold(
-          body: IndexedStack(
+          body: LazyIndexedStack(
             index: _tab.index,
-            children: [
-              MapScreen(family: widget.family),
-              if (_tab == AppTab.rijden) DrivingScreen(family: widget.family) else const SizedBox.shrink(),
-              PlacesScreen(family: widget.family),
-              ChatScreen(family: widget.family),
+            builders: [
+              (_) => MapScreen(family: widget.family),
+              (_) => _tab == AppTab.rijden
+                  ? DrivingScreen(family: widget.family)
+                  : const SizedBox.shrink(),
+              (_) => PlacesScreen(family: widget.family),
+              (_) => ChatScreen(family: widget.family),
             ],
           ),
           bottomNavigationBar: AppBottomNav(
             offline:
-                _tab == AppTab.kaart && ref.watch(familyLocationsProvider(familyId)).value?.isEmpty == true,
+                _tab == AppTab.kaart &&
+                ref.watch(familyLocationsProvider(familyId)).value?.isEmpty ==
+                    true,
             onFamily: () => Navigator.push(
               context,
-              MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)),
+              MaterialPageRoute<void>(
+                builder: (_) => ProfileScreen(family: widget.family),
+              ),
             ),
             onSettings: () => Navigator.push(
               context,
-              MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)),
+              MaterialPageRoute<void>(
+                builder: (_) => ProfileScreen(family: widget.family),
+              ),
             ),
             current: _tab,
             onSelected: _onSelectTab,

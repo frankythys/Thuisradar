@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../places/domain/place_status.dart';
+import '../../../location/domain/trip_status.dart';
 import '../../domain/bubble_side.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/marker_motion.dart';
@@ -96,7 +97,12 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
         _from[id] = target;
         _to[id] = target;
       } else if (current.lat != target.lat || current.lng != target.lng) {
-        _from[id] = _displayed(id);
+        // Een rechte animatie tussen twee wegpunten kan dwars door een bocht
+        // snijden. Auto's staan op de ontvangen (eventueel gematchte) positie.
+        _from[id] =
+            TripStatus.at(location, widget.now).state == TripState.moving
+            ? target
+            : _displayed(id);
         _to[id] = target;
         final previousAt = _lastAt[id];
         final gap = previousAt == null
@@ -164,6 +170,19 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     ];
 
     final groups = clusterByScreenDistance(points);
+    // Rijdende auto's houden ieder hun eigen exacte wegpositie.
+    for (final member in located) {
+      if (TripStatus.at(member.location, widget.now).state !=
+          TripState.moving) {
+        continue;
+      }
+      final id = member.member.userId;
+      for (final group in groups) {
+        group.remove(id);
+      }
+      groups.removeWhere((group) => group.isEmpty);
+      groups.add([id]);
+    }
     // Een geselecteerde persoon blijft afzonderlijk herkenbaar, ook thuis
     // tussen andere gezinsleden op dezelfde locatie.
     final selectedId = widget.selectedUserId;
@@ -195,17 +214,23 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       final point = LatLng(anchor.lat, anchor.lng);
       final screenPoint = camera.latLngToScreenOffset(point);
       final single = groupMembers.length == 1;
+      final driving =
+          single &&
+          TripStatus.at(groupMembers.single.location, widget.now).state ==
+              TripState.moving;
       final width = single ? MemberMarker.width : GroupPin.width;
       final height = single ? MemberMarker.height : GroupPin.height;
-      final offset = markerClearance(
-        Rect.fromLTWH(
-          screenPoint.dx - width / 2,
-          single ? screenPoint.dy - height : screenPoint.dy,
-          width,
-          height,
-        ),
-        placePoints,
-      );
+      final offset = driving
+          ? Offset.zero
+          : markerClearance(
+              Rect.fromLTWH(
+                screenPoint.dx - width / 2,
+                single ? screenPoint.dy - height : screenPoint.dy,
+                width,
+                height,
+              ),
+              placePoints,
+            );
       for (final member in groupMembers) {
         offsets[member.member.userId] = offset;
       }
@@ -217,7 +242,9 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
             point: point,
             width: MemberMarker.width,
             height: MemberMarker.height,
-            alignment: Alignment(0, -1 + 2 * offset.dy / height),
+            alignment: driving
+                ? Alignment.center
+                : Alignment(0, -1 + 2 * offset.dy / height),
             child: GestureDetector(
               onTap: () => widget.onMemberTap(member),
               child: MemberMarker(

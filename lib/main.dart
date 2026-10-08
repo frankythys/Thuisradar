@@ -5,12 +5,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/env.dart';
+import 'core/utils/startup_diagnostics.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final diagnostics = StartupDiagnostics();
   Env.assertConfigured();
 
-  await Supabase.initialize(url: Env.supabaseUrl, publishableKey: Env.supabaseKey);
+  await Supabase.initialize(
+    url: Env.supabaseUrl,
+    publishableKey: Env.supabaseKey,
+  );
+  diagnostics.checkpoint('Supabase gereed');
 
   // Firebase is nodig voor push (SOS). Faalt dit, dan draait de app zonder push.
   try {
@@ -18,6 +24,8 @@ Future<void> main() async {
   } on Exception catch (e) {
     debugPrint('Firebase initialiseren mislukt: $e');
   }
+  diagnostics.checkpoint('Firebase gereed of overgeslagen');
 
+  diagnostics.watchFirstFrame();
   runApp(const ProviderScope(child: ThuisradarApp()));
 }

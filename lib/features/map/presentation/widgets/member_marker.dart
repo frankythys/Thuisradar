@@ -31,15 +31,24 @@ class MemberMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final driving = TripStatus.at(entry.location, now).state == TripState.moving;
+    final driving =
+        TripStatus.at(entry.location, now).state == TripState.moving;
 
     final Widget marker;
     if (driving) {
-      marker = _IconMarker(entry: entry, selected: selected, asset: 'assets/markers/auto.png', width: 74);
+      marker = _IconMarker(
+        entry: entry,
+        selected: selected,
+        asset: 'assets/markers/auto.png',
+        width: 74,
+      );
     } else {
       marker = _Avatar(entry: entry, selected: selected);
     }
-    return Column(mainAxisSize: MainAxisSize.min, children: [marker]);
+    // Auto: het midden van het plaatje valt precies op het kaartpunt.
+    return driving
+        ? Center(child: marker)
+        : Column(mainAxisSize: MainAxisSize.min, children: [marker]);
   }
 }
 
@@ -78,7 +87,11 @@ class _IconMarker extends StatelessWidget {
               ),
             ),
           Image.asset(asset, width: width),
-          Positioned(top: 0, left: 0, child: MemberAvatar(member: entry.member, size: 28, ring: true)),
+          Positioned(
+            top: 0,
+            left: 0,
+            child: MemberAvatar(member: entry.member, size: 28, ring: true),
+          ),
         ],
       ),
     );
@@ -93,7 +106,11 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avatar = MemberAvatar(member: entry.member, size: MemberMarker.avatarSize, ring: !selected);
+    final avatar = MemberAvatar(
+      member: entry.member,
+      size: MemberMarker.avatarSize,
+      ring: !selected,
+    );
     if (!selected) return avatar;
 
     // Paars is gereserveerd voor selectie en vervangt de witte rand volledig.
