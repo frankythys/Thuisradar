@@ -23,8 +23,7 @@ class MemberMarker extends StatelessWidget {
   final MemberOnMap entry;
   final DateTime now;
 
-  /// De opgeslagen plek waar dit lid nu is (indien binnen een zone). Thuis
-  /// krijgt een huis-icoon op de kaart.
+  /// De opgeslagen plek wordt in de tekstballon getoond.
   final PlaceStatus? placeStatus;
 
   /// Geselecteerd lid: accent-selectiering en iets groter.
@@ -32,13 +31,10 @@ class MemberMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final atHome = placeStatus?.icon == 'home';
     final driving = TripStatus.at(entry.location, now).state == TripState.moving;
 
     final Widget marker;
-    if (atHome) {
-      marker = _IconMarker(entry: entry, selected: selected, asset: 'assets/markers/huis.png', width: 64);
-    } else if (driving) {
+    if (driving) {
       marker = _IconMarker(entry: entry, selected: selected, asset: 'assets/markers/auto.png', width: 74);
     } else {
       marker = _Avatar(entry: entry, selected: selected);
@@ -47,7 +43,7 @@ class MemberMarker extends StatelessWidget {
   }
 }
 
-/// Een beeld-marker (auto tijdens het rijden of huis als iemand thuis is) met
+/// Een auto-marker tijdens het rijden met
 /// een klein avatar-badge zodat je ziet om wie het gaat.
 class _IconMarker extends StatelessWidget {
   const _IconMarker({

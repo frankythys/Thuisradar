@@ -78,7 +78,10 @@ class MemberHistoryBubble extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             child: Row(
               children: [
-                Icon(icon, color: const Color(0xFF7952AC), size: 23),
+                if (atPlace && placeStatus!.icon == 'home')
+                  Image.asset('assets/markers/huis.png', width: 32, height: 32, fit: BoxFit.contain)
+                else
+                  Icon(icon, color: const Color(0xFF7952AC), size: 23),
                 const SizedBox(width: 5),
                 Expanded(
                   child: Column(

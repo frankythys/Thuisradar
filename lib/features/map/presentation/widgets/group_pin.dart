@@ -124,7 +124,7 @@ class GroupPin extends StatelessWidget {
       return (icon: Icons.group, title: '${members.length} gezinsleden', at: null);
     }
 
-    final name = latest.member.userId == myUserId ? 'Jij' : latest.member.displayName;
+    final name = latest.member.displayName;
     final place = placeByUser[latest.member.userId];
     if (place != null) {
       return (
@@ -165,7 +165,10 @@ class _Bubble extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(info.icon, size: 18, color: AppColors.primary),
+          if (info.icon == Icons.home_rounded)
+            Image.asset('assets/markers/huis.png', width: 28, height: 28, fit: BoxFit.contain)
+          else
+            Icon(info.icon, size: 18, color: AppColors.primary),
           const SizedBox(width: 8),
           Flexible(
             child: Column(

@@ -10,6 +10,7 @@ import 'package:thuisradar/features/location/data/device_location_source.dart';
 import 'package:thuisradar/features/location/domain/device_reading.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
+import 'package:thuisradar/features/location/domain/track_point.dart';
 import 'package:thuisradar/features/map/presentation/map_screen.dart';
 import 'package:thuisradar/features/member/presentation/member_detail_screen.dart';
 import 'package:thuisradar/features/places/application/places_providers.dart';
@@ -58,12 +59,8 @@ void main() {
           ),
           recentTimelineProvider.overrideWith((ref, id) async => history),
           clockProvider.overrideWith((ref) => Stream.value(now)),
-          familyMembersProvider.overrideWith(
-            (ref, id) => Stream.value(members),
-          ),
-          familyLocationsProvider.overrideWith(
-            (ref, id) => Stream.value(id == 'offline' ? [] : locations),
-          ),
+          familyMembersProvider.overrideWith((ref, id) => Stream.value(members)),
+          familyLocationsProvider.overrideWith((ref, id) => Stream.value(id == 'offline' ? [] : locations)),
           familyPlacesProvider.overrideWith((ref, id) => Stream.value(places)),
           familyPresenceProvider.overrideWith(
             (ref, id) => Stream.value([
@@ -75,11 +72,12 @@ void main() {
               ),
             ]),
           ),
-          familyMessagesProvider.overrideWith(
-            (ref, id) => Stream.value(messages),
-          ),
+          familyMessagesProvider.overrideWith((ref, id) => Stream.value(messages)),
           familyEventsProvider.overrideWith((ref, id) => Stream.value(events)),
           timelineProvider.overrideWith((ref, query) async => history),
+          dayHistoryProvider.overrideWith(
+            (ref, query) async => (entries: history, points: const <TrackPoint>[]),
+          ),
           activeSosProvider.overrideWith((ref, id) => Stream.value([])),
           locationTrackerProvider.overrideWith(
             () => _VisualTracker(
@@ -92,11 +90,7 @@ void main() {
           deviceLocationSourceProvider.overrideWithValue(_VisualLocation()),
           notificationPreferencesProvider.overrideWith((ref) async => {}),
         ],
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(),
-          home: screen,
-        ),
+        child: MaterialApp(debugShowCheckedModeBanner: false, theme: AppTheme.light(), home: screen),
       ),
     );
     await tester.pumpAndSettle(
@@ -107,9 +101,7 @@ void main() {
   }
 
   Future<void> capture(WidgetTester tester, String name) async {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(seconds: 2)),
-    );
+    await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 2)));
     await tester.pumpAndSettle();
     await binding.convertFlutterSurfaceToImage();
     await tester.pump();
@@ -131,11 +123,7 @@ void main() {
     '06_inloggen': const LoginScreen(),
     '07_familie_kiezen': const FamilySetupScreen(),
     '08_familie_uitnodigen': const InviteScreen(
-      family: Family(
-        id: 'visual-test',
-        name: 'Familie Thys',
-        inviteCode: 'A7K2M9QX',
-      ),
+      family: Family(id: 'visual-test', name: 'Familie Thys', inviteCode: 'A7K2M9QX'),
     ),
     '10_toestemmingen': const PermissionsScreen(),
     '09_welkom': const WelcomeScreen(family: family),
@@ -167,11 +155,7 @@ void main() {
     '19_profiel': const ProfileScreen(family: family),
     '20_offline': _nav(
       const MapScreen(
-        family: Family(
-          id: 'offline',
-          name: 'Familie Thys',
-          inviteCode: 'A7K2M9QX',
-        ),
+        family: Family(id: 'offline', name: 'Familie Thys', inviteCode: 'A7K2M9QX'),
       ),
       AppTab.kaart,
     ),
@@ -188,10 +172,7 @@ void main() {
       familyId: 'visual-test',
       location: locations.first,
     ),
-    '13_plaatsen_onder': _nav(
-      const PlacesScreen(family: family),
-      AppTab.plaatsen,
-    ),
+    '13_plaatsen_onder': _nav(const PlacesScreen(family: family), AppTab.plaatsen),
     '14_plaats_onder': const AddPlaceScreen(familyId: 'visual-test'),
     '17_sos_onder': SosScreen(familyId: 'visual-test', onActivate: () async {}),
     '19_profiel_onder': const ProfileScreen(family: family),
@@ -213,31 +194,12 @@ void main() {
   });
 }
 
-const family = Family(
-  id: 'visual-test',
-  name: 'Familie Thys',
-  inviteCode: 'A7K2M9QX',
-);
+const family = Family(id: 'visual-test', name: 'Familie Thys', inviteCode: 'A7K2M9QX');
 final now = DateTime(2026, 10, 3, 17, 55);
 const members = [
-  FamilyMember(
-    userId: 'mama',
-    displayName: 'Mama (Sofie)',
-    isOwner: false,
-    colorIndex: 0,
-  ),
-  FamilyMember(
-    userId: 'papa',
-    displayName: 'Papa (Peter)',
-    isOwner: true,
-    colorIndex: 1,
-  ),
-  FamilyMember(
-    userId: 'lucas',
-    displayName: 'Lucas (Jij)',
-    isOwner: false,
-    colorIndex: 2,
-  ),
+  FamilyMember(userId: 'mama', displayName: 'Mama (Sofie)', isOwner: false, colorIndex: 0),
+  FamilyMember(userId: 'papa', displayName: 'Papa (Peter)', isOwner: true, colorIndex: 1),
+  FamilyMember(userId: 'lucas', displayName: 'Lucas (Jij)', isOwner: false, colorIndex: 2),
 ];
 final locations = [
   MemberLocation(
@@ -323,8 +285,7 @@ final messages = [
     id: 2,
     familyId: 'visual-test',
     userId: 'lucas',
-    body:
-        'Training is net begonnen tot 18:45. Daarna fiets ik direct naar huis!',
+    body: 'Training is net begonnen tot 18:45. Daarna fiets ik direct naar huis!',
     createdAt: now.subtract(const Duration(minutes: 9)),
   ),
   Message(
@@ -407,20 +368,15 @@ class _VisualTracker extends LocationTracker {
   _VisualTracker({this.offline = false});
   final bool offline;
   @override
-  TrackingStatus build() =>
-      offline ? TrackingStatus.offline : TrackingStatus.active;
+  TrackingStatus build() => offline ? TrackingStatus.offline : TrackingStatus.active;
   @override
-  Future<void> start({
-    required String userId,
-    required String familyId,
-  }) async {}
+  Future<void> start({required String userId, required String familyId}) async {}
   @override
   void setFastUpdates(bool fast) {}
 }
 
 class _VisualLocation extends DeviceLocationSource {
   @override
-  Future<DevicePosition?> currentPosition({
-    Duration timeout = const Duration(seconds: 8),
-  }) async => DevicePosition(latitude: 51.05, longitude: 3.73, timestamp: now);
+  Future<DevicePosition?> currentPosition({Duration timeout = const Duration(seconds: 8)}) async =>
+      DevicePosition(latitude: 51.05, longitude: 3.73, timestamp: now);
 }
