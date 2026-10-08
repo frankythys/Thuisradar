@@ -12,9 +12,7 @@ class Attachment {
         return null;
       }
       final path = data['attachment'];
-      if (path is! String ||
-          !path.startsWith('$familyId/') ||
-          path.contains('..')) {
+      if (path is! String || !path.startsWith('$familyId/') || path.contains('..')) {
         return null;
       }
       return Attachment(path, data['kind'] as String);

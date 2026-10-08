@@ -9,15 +9,8 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: const ShapeDecoration(
-        color: AppColors.primarySoft,
-        shape: StadiumBorder(),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: AppColors.primary),
-      ),
+      decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
+      child: Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.primary)),
     );
   }
 }

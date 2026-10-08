@@ -9,15 +9,8 @@ class _SuccessHero extends StatelessWidget {
       child: Container(
         width: 76,
         height: 76,
-        decoration: const BoxDecoration(
-          color: AppColors.primarySoft,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.check_circle,
-          size: 42,
-          color: AppColors.primary,
-        ),
+        decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
+        child: const Icon(Icons.check_circle, size: 42, color: AppColors.primary),
       ),
     );
   }

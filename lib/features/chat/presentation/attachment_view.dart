@@ -37,13 +37,9 @@ class _AttachmentViewState extends ConsumerState<AttachmentView> {
   Widget build(BuildContext context) => ref
       .watch(attachmentUrlProvider(widget.attachment.path))
       .when(
-        loading: () => const SizedBox(
-          height: 80,
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
         error: (_, _) => TextButton(
-          onPressed: () =>
-              ref.invalidate(attachmentUrlProvider(widget.attachment.path)),
+          onPressed: () => ref.invalidate(attachmentUrlProvider(widget.attachment.path)),
           child: const Text('Bijlage opnieuw laden'),
         ),
         data: (url) => widget.attachment.kind == 'image'
@@ -53,8 +49,7 @@ class _AttachmentViewState extends ConsumerState<AttachmentView> {
                   url,
                   height: 180,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) =>
-                      const Text('Foto niet beschikbaar'),
+                  errorBuilder: (_, _, _) => const Text('Foto niet beschikbaar'),
                 ),
               )
             : TextButton.icon(
@@ -68,11 +63,8 @@ class _AttachmentViewState extends ConsumerState<AttachmentView> {
                     if (mounted) setState(() => _playing = !_playing);
                   } catch (_) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Afspelen mislukt. Probeer opnieuw.'),
-                        ),
-                      );
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(const SnackBar(content: Text('Afspelen mislukt. Probeer opnieuw.')));
                     }
                   }
                 },

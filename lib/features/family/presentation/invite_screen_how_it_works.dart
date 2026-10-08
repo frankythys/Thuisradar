@@ -4,7 +4,7 @@ class _HowItWorks extends StatelessWidget {
   const _HowItWorks();
 
   static const _steps = [
-    'Laat hen de Thuisradar app installeren.',
+    'Laat hen de CircleBeacon app installeren.',
     'Kies "Ik heb een uitnodigingscode" en vul bovenstaande code in.',
     'Jullie zien elkaar direct veilig op de kaart.',
   ];

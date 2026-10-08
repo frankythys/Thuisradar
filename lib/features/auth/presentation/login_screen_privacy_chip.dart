@@ -9,23 +9,13 @@ class _PrivacyChip extends StatelessWidget {
     return Align(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: const ShapeDecoration(
-          color: Colors.white,
-          shape: StadiumBorder(),
-        ),
+        decoration: const ShapeDecoration(color: Colors.white, shape: StadiumBorder()),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.shield_outlined,
-              size: 16,
-              color: AppColors.primary,
-            ),
+            const Icon(Icons.shield_outlined, size: 16, color: AppColors.primary),
             const SizedBox(width: 6),
-            Text(
-              'PRIVACY EERST',
-              style: text.labelSmall?.copyWith(color: AppColors.primary),
-            ),
+            Text('PRIVACY EERST', style: text.labelSmall?.copyWith(color: AppColors.primary)),
           ],
         ),
       ),

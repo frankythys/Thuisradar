@@ -17,26 +17,15 @@ class ProfileAction extends ConsumerWidget {
         if (!context.mounted) return;
         if (family == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Stel eerst je familie in om je gezinsprofiel te openen.',
-              ),
-            ),
+            const SnackBar(content: Text('Stel eerst je familie in om je gezinsprofiel te openen.')),
           );
           return;
         }
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ProfileScreen(family: family),
-          ),
-        );
+        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: family)));
       } catch (_) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profiel laden mislukt. Probeer opnieuw.'),
-            ),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Profiel laden mislukt. Probeer opnieuw.')));
         }
       }
     },

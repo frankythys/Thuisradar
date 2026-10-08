@@ -45,9 +45,7 @@ abstract final class PushChannels {
       playSound: true,
       sound: channel.sound,
       audioAttributesUsage: channel.audioAttributesUsage,
-      category: type == 'sos'
-          ? AndroidNotificationCategory.alarm
-          : AndroidNotificationCategory.message,
+      category: type == 'sos' ? AndroidNotificationCategory.alarm : AndroidNotificationCategory.message,
     );
   }
 }

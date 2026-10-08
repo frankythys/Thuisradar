@@ -25,8 +25,24 @@ class _NoGeocoding extends GeocodingSource {
 }
 
 const _places = [
-  Place(id: 'home', familyId: 'fam', name: 'Thuis', latitude: 51.0, longitude: 3.7, radiusMeters: 200, icon: 'home'),
-  Place(id: 'work', familyId: 'fam', name: 'Werk', latitude: 51.05, longitude: 3.72, radiusMeters: 200, icon: 'work'),
+  Place(
+    id: 'home',
+    familyId: 'fam',
+    name: 'Thuis',
+    latitude: 51.0,
+    longitude: 3.7,
+    radiusMeters: 200,
+    icon: 'home',
+  ),
+  Place(
+    id: 'work',
+    familyId: 'fam',
+    name: 'Werk',
+    latitude: 51.05,
+    longitude: 3.72,
+    radiusMeters: 200,
+    icon: 'work',
+  ),
 ];
 
 final _entries = [

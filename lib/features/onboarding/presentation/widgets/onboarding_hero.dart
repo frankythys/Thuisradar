@@ -18,10 +18,7 @@ class OnboardingHero extends StatelessWidget {
         child: switch (base.split('_').last) {
           '2' => Stack(
             alignment: Alignment.center,
-            children: [
-              const RadarRings(),
-              SvgPicture.asset('$base.svg', width: 240, height: 240),
-            ],
+            children: [const RadarRings(), SvgPicture.asset('$base.svg', width: 240, height: 240)],
           ),
           '3' => const NotificationScene(),
           '4' => const EmergencyScene(),

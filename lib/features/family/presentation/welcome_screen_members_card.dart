@@ -1,11 +1,7 @@
 part of 'welcome_screen.dart';
 
 class _MembersCard extends StatelessWidget {
-  const _MembersCard({
-    required this.members,
-    required this.myId,
-    required this.locations,
-  });
+  const _MembersCard({required this.members, required this.myId, required this.locations});
 
   final List<FamilyMember> members;
   final String? myId;
@@ -41,22 +37,13 @@ class _MembersCard extends StatelessWidget {
                       children: [
                         Text(member.displayName, style: text.titleMedium),
                         Text(
-                          member.userId == myId
-                              ? 'Jij'
-                              : (member.isOwner ? 'Beheerder' : 'Gezinslid'),
-                          style: text.bodySmall?.copyWith(
-                            color: AppColors.muted,
-                          ),
+                          member.userId == myId ? 'Jij' : (member.isOwner ? 'Beheerder' : 'Gezinslid'),
+                          style: text.bodySmall?.copyWith(color: AppColors.muted),
                         ),
                       ],
                     ),
                   ),
-                  BatteryBadge(
-                    level: locations
-                        .where((l) => l.userId == member.userId)
-                        .firstOrNull
-                        ?.battery,
-                  ),
+                  BatteryBadge(level: locations.where((l) => l.userId == member.userId).firstOrNull?.battery),
                 ],
               ),
             ),
@@ -70,11 +57,7 @@ class _MembersCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.lock_outline,
-                  size: 18,
-                  color: AppColors.muted,
-                ),
+                const Icon(Icons.lock_outline, size: 18, color: AppColors.muted),
                 SizedBox(width: tokens.spaceMd),
                 Expanded(
                   child: Text(

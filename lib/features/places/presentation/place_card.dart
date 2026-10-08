@@ -6,12 +6,7 @@ import '../domain/place.dart';
 import 'place_icons.dart';
 
 class PlaceCard extends StatelessWidget {
-  const PlaceCard({
-    super.key,
-    required this.place,
-    required this.presentCount,
-    required this.onDelete,
-  });
+  const PlaceCard({super.key, required this.place, required this.presentCount, required this.onDelete});
   final Place place;
   final int presentCount;
   final VoidCallback onDelete;
@@ -79,16 +74,11 @@ class PlaceCard extends StatelessWidget {
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLow,
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(color: AppColors.surfaceLow, borderRadius: BorderRadius.circular(12)),
             child: Row(
               children: [
                 Icon(
-                  presentCount == 0
-                      ? Icons.bedtime_outlined
-                      : Icons.person_pin_circle_outlined,
+                  presentCount == 0 ? Icons.bedtime_outlined : Icons.person_pin_circle_outlined,
                   size: 18,
                   color: tint,
                 ),
@@ -114,13 +104,7 @@ class PlaceCard extends StatelessWidget {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                'MELDINGEN',
-                style: text.labelSmall?.copyWith(
-                  fontSize: 9,
-                  color: AppColors.muted,
-                ),
-              ),
+              Text('MELDINGEN', style: text.labelSmall?.copyWith(fontSize: 9, color: AppColors.muted)),
               _Preference('Aankomst', place.notifyArrival),
               _Preference('Vertrek', place.notifyDeparture),
             ],
@@ -141,11 +125,7 @@ class _Label extends StatelessWidget {
     children: [
       Icon(icon, size: 13, color: AppColors.muted),
       const SizedBox(width: 4),
-      Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall
-            ?.copyWith(color: AppColors.muted),
-      ),
+      Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.muted)),
     ],
   );
 }
@@ -164,11 +144,7 @@ class _Preference extends StatelessWidget {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          enabled ? Icons.check : Icons.notifications_off_outlined,
-          size: 12,
-          color: AppColors.primary,
-        ),
+        Icon(enabled ? Icons.check : Icons.notifications_off_outlined, size: 12, color: AppColors.primary),
         const SizedBox(width: 4),
         Text(
           '$label${enabled ? '' : ' uit'}',

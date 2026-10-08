@@ -27,14 +27,9 @@ class PushService {
 
   Future<void> init() async {
     await _local.initialize(
-      const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      ),
+      const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
     );
-    final android = _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
+    final android = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await android?.createNotificationChannel(PushChannels.sos);
     await android?.createNotificationChannel(PushChannels.places);
     await android?.createNotificationChannel(PushChannels.chat);
@@ -50,9 +45,7 @@ class PushService {
     if (token != null) await _save(token, userId);
 
     await _tokenRefreshSub?.cancel();
-    _tokenRefreshSub = _messaging.onTokenRefresh.listen(
-      (t) => _save(t, userId),
-    );
+    _tokenRefreshSub = _messaging.onTokenRefresh.listen((t) => _save(t, userId));
   }
 
   /// Verwijdert het token bij uitloggen.

@@ -74,7 +74,7 @@ class DeviceLocationSource {
         distanceFilter: _distanceFilterMeters,
         intervalDuration: interval,
         foregroundNotificationConfig: const ForegroundNotificationConfig(
-          notificationTitle: 'Thuisradar',
+          notificationTitle: 'CircleBeacon',
           notificationText: 'Je locatie wordt gedeeld met je familie',
           enableWakeLock: true,
           setOngoing: true,

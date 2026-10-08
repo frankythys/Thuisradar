@@ -11,18 +11,13 @@ import '../../family/application/family_providers.dart';
 import 'widgets/sos_hold_button.dart';
 
 class SosScreen extends ConsumerWidget {
-  const SosScreen({
-    super.key,
-    required this.familyId,
-    required this.onActivate,
-  });
+  const SosScreen({super.key, required this.familyId, required this.onActivate});
   final String familyId;
   final Future<void> Function() onActivate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final members =
-        ref.watch(familyMembersProvider(familyId)).value ?? const [];
+    final members = ref.watch(familyMembersProvider(familyId)).value ?? const [];
     final myId = ref.watch(currentUserIdProvider);
     final text = Theme.of(context).textTheme;
     return Scaffold(
@@ -33,33 +28,17 @@ class SosScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
+                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 7,
-                  ),
-                  decoration: const ShapeDecoration(
-                    color: AppColors.alertSoft,
-                    shape: StadiumBorder(),
-                  ),
-                  child: const Text(
-                    '◉ NOODMODUS',
-                    style: TextStyle(color: AppColors.alert, fontSize: 11),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: const ShapeDecoration(color: AppColors.alertSoft, shape: StadiumBorder()),
+                  child: const Text('◉ NOODMODUS', style: TextStyle(color: AppColors.alert, fontSize: 11)),
                 ),
               ],
             ),
             const SizedBox(height: 18),
-            Text(
-              'Hulp nodig?',
-              style: text.headlineLarge,
-              textAlign: TextAlign.center,
-            ),
+            Text('Hulp nodig?', style: text.headlineLarge, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
               'Houd de knop 3 seconden ingedrukt om direct een noodsignaal met je actuele live-locatie naar je hele gezin te sturen.',
@@ -100,10 +79,7 @@ class SosScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Wordt direct gewaarschuwd', style: text.titleLarge),
-                  Text(
-                    'Ontvangen je exacte coördinaten en melding',
-                    style: text.bodySmall,
-                  ),
+                  Text('Ontvangen je exacte coördinaten en melding', style: text.bodySmall),
                   const SizedBox(height: 16),
                   for (final member in members.where((m) => m.userId != myId))
                     Container(
@@ -121,22 +97,12 @@ class SosScreen extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  member.displayName,
-                                  style: text.titleMedium,
-                                ),
-                                Text(
-                                  'Ontvangt luid alarm & route',
-                                  style: text.bodySmall,
-                                ),
+                                Text(member.displayName, style: text.titleMedium),
+                                Text('Ontvangt luid alarm & route', style: text.bodySmall),
                               ],
                             ),
                           ),
-                          const Icon(
-                            Icons.volume_up_outlined,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
+                          const Icon(Icons.volume_up_outlined, color: AppColors.primary, size: 20),
                         ],
                       ),
                     ),

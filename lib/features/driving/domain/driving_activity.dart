@@ -83,6 +83,13 @@ List<List<TrackPoint>> buildTripTracks(
   return trips;
 }
 
+/// Een kort meetgat vlak voor de aankomst (een tunnel, een parkeergarage, even
+/// geen signaal) hoort nog bij de rit. Eindigt een rit minder dan [kArrivalGap]
+/// voor een verblijf begint, dan is dat verblijf de bestemming: de rit krijgt de
+/// plek, de aankomsttijd en de laatste afstand tot daar. Grotere gaten (toestel
+/// uit) overbruggen we niet — dan blijven het losse ritten.
+const kArrivalGap = Duration(minutes: 20);
+
 /// De activiteiten van één dag: verblijven uit de tijdlijn en ritten uit de
 /// echte metingen, chronologisch (oudste eerst). Een "rit" met minder dan
 /// [minTripMeters] beweging is ruis en valt weg.
@@ -92,8 +99,10 @@ List<DrivingActivity> buildDayActivities(
   double minTripMeters = 100,
 }) {
   final activities = <DrivingActivity>[];
+  final stops = <TimelineEntry>[];
   for (final entry in entries) {
     if (entry.kind != TimelineKind.stop) continue;
+    stops.add(entry);
     activities.add(
       DrivingActivity(
         kind: DrivingActivityKind.stay,
@@ -106,18 +115,38 @@ List<DrivingActivity> buildDayActivities(
     );
   }
   for (final track in buildTripTracks(points)) {
-    final meters = trackMeters(track);
+    final last = track.last;
+    // De bestemming: het eerstvolgende verblijf dat binnen [kArrivalGap] na de
+    // laatste meting begint. Zo eindigt de rit op de plek waar hij stopte, ook
+    // als de GPS de laatste meters (tunnel) miste.
+    TimelineEntry? arrival;
+    for (final stop in stops) {
+      if (stop.start.isBefore(last.recordedAt)) continue;
+      if (stop.start.difference(last.recordedAt) > kArrivalGap) continue;
+      if (arrival == null || stop.start.isBefore(arrival.start)) arrival = stop;
+    }
+    final endLatitude = arrival?.latitude ?? last.latitude;
+    final endLongitude = arrival?.longitude ?? last.longitude;
+    final endTime = arrival?.start ?? last.recordedAt;
+
+    var meters = trackMeters(track);
+    if (arrival != null) {
+      meters += distanceMeters(last.latitude, last.longitude, endLatitude, endLongitude);
+    }
     if (meters < minTripMeters) continue;
     // Een "rit" die eindigt waar ze begon (binnen de stopstraal) ging nergens
     // heen: het zijn GPS-uitschieters op één plek, geen echte verplaatsing.
-    if (_legMeters(track.first, track.last) < kStopRadiusMeters) continue;
+    if (distanceMeters(track.first.latitude, track.first.longitude, endLatitude, endLongitude) <
+        kStopRadiusMeters) {
+      continue;
+    }
     activities.add(
       DrivingActivity(
         kind: DrivingActivityKind.trip,
         start: track.first.recordedAt,
-        end: track.last.recordedAt,
-        latitude: track.last.latitude,
-        longitude: track.last.longitude,
+        end: endTime,
+        latitude: endLatitude,
+        longitude: endLongitude,
         distanceMeters: meters,
         fromLatitude: track.first.latitude,
         fromLongitude: track.first.longitude,

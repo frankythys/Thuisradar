@@ -13,11 +13,7 @@ class _FieldLabel extends StatelessWidget {
       children: [
         Text(label, style: text.titleMedium),
         const Spacer(),
-        if (trailing != null)
-          Text(
-            trailing!,
-            style: text.bodySmall?.copyWith(color: AppColors.muted),
-          ),
+        if (trailing != null) Text(trailing!, style: text.bodySmall?.copyWith(color: AppColors.muted)),
       ],
     );
   }

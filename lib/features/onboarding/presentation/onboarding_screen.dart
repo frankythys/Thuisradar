@@ -37,10 +37,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_isLast) {
       _finish();
     } else {
-      _controller.nextPage(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOut,
-      );
+      _controller.nextPage(duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
     }
   }
 
@@ -54,10 +51,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           padding: EdgeInsets.all(tokens.spaceMd),
           child: Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: RadarLogo(size: 32),
-              ),
+              const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: RadarLogo(size: 32)),
               Row(
                 children: [
                   const CircleAvatar(
@@ -66,15 +60,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     child: Icon(Icons.radar, size: 20, color: Colors.white),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Thuisradar',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                  Text('CircleBeacon', style: Theme.of(context).textTheme.titleMedium),
                   const Spacer(),
-                  TextButton(
-                    onPressed: _finish,
-                    child: const Text('Overslaan'),
-                  ),
+                  TextButton(onPressed: _finish, child: const Text('Overslaan')),
                 ],
               ),
               Expanded(
@@ -82,8 +70,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   controller: _controller,
                   itemCount: onboardingSlides.length,
                   onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (context, i) =>
-                      _SlideView(slide: onboardingSlides[i]),
+                  itemBuilder: (context, i) => _SlideView(slide: onboardingSlides[i]),
                 ),
               ),
               SizedBox(height: tokens.spaceMd),
@@ -100,11 +87,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ],
                 ),
               ),
-              if (_isLast)
-                TextButton(
-                  onPressed: _finish,
-                  child: const Text('Ik heb al een gezinscode'),
-                ),
+              if (_isLast) TextButton(onPressed: _finish, child: const Text('Ik heb al een gezinscode')),
             ],
           ),
         ),
@@ -128,11 +111,7 @@ class _SlideView extends StatelessWidget {
         children: [
           SizedBox(height: tokens.spaceSm),
           if (slide.illustrationBase.endsWith('_4')) ...[
-            Text(
-              slide.title,
-              style: text.headlineLarge,
-              textAlign: TextAlign.center,
-            ),
+            Text(slide.title, style: text.headlineLarge, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
               slide.body,
@@ -144,11 +123,7 @@ class _SlideView extends StatelessWidget {
           OnboardingHero(base: slide.illustrationBase, icon: slide.icon),
           SizedBox(height: tokens.spaceXl),
           if (!slide.illustrationBase.endsWith('_4')) ...[
-            Text(
-              slide.title,
-              style: text.headlineLarge,
-              textAlign: TextAlign.center,
-            ),
+            Text(slide.title, style: text.headlineLarge, textAlign: TextAlign.center),
             SizedBox(height: tokens.spaceSm),
             Text(
               slide.body,
@@ -157,19 +132,13 @@ class _SlideView extends StatelessWidget {
             ),
           ],
           if (slide.illustrationBase.endsWith('_4'))
-            const _Footnote(
-              title: 'Geen vals alarm',
-              body: '3 seconden vasthouden om te activeren',
-            ),
+            const _Footnote(title: 'Geen vals alarm', body: '3 seconden vasthouden om te activeren'),
           if (slide.footnote != null) ...[
             SizedBox(height: tokens.spaceXl),
             _Footnote(title: slide.footnoteTitle!, body: slide.footnote!),
             if (slide.illustrationBase.endsWith('_2')) ...[
               const SizedBox(height: 12),
-              const _Footnote(
-                title: 'Geen advertenties',
-                body: 'Jullie privacy is heilig',
-              ),
+              const _Footnote(title: 'Geen advertenties', body: 'Jullie privacy is heilig'),
             ],
           ],
         ],
@@ -206,10 +175,7 @@ class _Footnote extends StatelessWidget {
               children: [
                 Text(title, style: text.titleMedium),
                 SizedBox(height: tokens.spaceXs),
-                Text(
-                  body,
-                  style: text.bodyMedium?.copyWith(color: AppColors.muted),
-                ),
+                Text(body, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
               ],
             ),
           ),

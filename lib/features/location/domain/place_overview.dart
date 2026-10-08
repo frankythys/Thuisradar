@@ -4,12 +4,7 @@ import '../../places/domain/place_presence.dart';
 
 /// Eén plaats in het plaatsenblok van de ledenlijst.
 class PlaceOverview {
-  const PlaceOverview({
-    required this.place,
-    required this.presentCount,
-    this.since,
-    this.lastArrival,
-  });
+  const PlaceOverview({required this.place, required this.presentCount, this.since, this.lastArrival});
 
   final Place place;
 
@@ -51,9 +46,7 @@ List<PlaceOverview> placeOverviews(
     for (final place in places)
       PlaceOverview(
         place: place,
-        presentCount: presence
-            .where((p) => p.placeId == place.id && p.isInside)
-            .length,
+        presentCount: presence.where((p) => p.placeId == place.id && p.isInside).length,
         since: _earliestSince(presence, place.id),
         lastArrival: lastArrival[place.id],
       ),
@@ -61,9 +54,7 @@ List<PlaceOverview> placeOverviews(
 
   overviews.sort((a, b) {
     if (a.hasPeople != b.hasPeople) return a.hasPeople ? -1 : 1;
-    final visits = (arrivals[b.place.id] ?? 0).compareTo(
-      arrivals[a.place.id] ?? 0,
-    );
+    final visits = (arrivals[b.place.id] ?? 0).compareTo(arrivals[a.place.id] ?? 0);
     if (visits != 0) return visits;
     return a.place.name.toLowerCase().compareTo(b.place.name.toLowerCase());
   });

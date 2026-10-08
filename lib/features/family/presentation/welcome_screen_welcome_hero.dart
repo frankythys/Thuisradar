@@ -41,15 +41,8 @@ class _WelcomeHero extends StatelessWidget {
           Container(
             width: 84,
             height: 84,
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.home_rounded,
-              color: Colors.white,
-              size: 40,
-            ),
+            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+            child: const Icon(Icons.home_rounded, color: Colors.white, size: 40),
           ),
         ],
       ),

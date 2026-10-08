@@ -7,14 +7,10 @@ class _RequiredBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: const ShapeDecoration(
-        color: AppColors.primarySoft,
-        shape: StadiumBorder(),
-      ),
+      decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
       child: Text(
         'VEREIST',
-        style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: AppColors.primary),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.primary),
       ),
     );
   }

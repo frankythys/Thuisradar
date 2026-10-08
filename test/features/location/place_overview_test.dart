@@ -4,15 +4,8 @@ import 'package:thuisradar/features/notifications/domain/family_event.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
 import 'package:thuisradar/features/places/domain/place_presence.dart';
 
-Place _place(String id, String name) => Place(
-  id: id,
-  familyId: 'fam',
-  name: name,
-  latitude: 51,
-  longitude: 3.7,
-  radiusMeters: 150,
-  icon: 'home',
-);
+Place _place(String id, String name) =>
+    Place(id: id, familyId: 'fam', name: name, latitude: 51, longitude: 3.7, radiusMeters: 150, icon: 'home');
 
 FamilyEvent _arrival(String placeId, DateTime at) => FamilyEvent(
   id: at.millisecondsSinceEpoch,

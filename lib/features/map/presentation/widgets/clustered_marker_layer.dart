@@ -186,6 +186,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
               child: MemberMarker(
                 entry: member,
                 now: widget.now,
+                placeStatus: widget.placeByUser[member.member.userId],
                 selected: member.member.userId == widget.selectedUserId,
               ),
             ),

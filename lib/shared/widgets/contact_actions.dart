@@ -7,9 +7,7 @@ Future<void> callMember(BuildContext context, FamilyMember member) async {
   if (member.phone == null || member.phone!.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          '${member.displayName} heeft nog geen telefoonnummer gedeeld. Dit kan via Profiel.',
-        ),
+        content: Text('${member.displayName} heeft nog geen telefoonnummer gedeeld. Dit kan via Profiel.'),
       ),
     );
     return;
@@ -19,19 +17,13 @@ Future<void> callMember(BuildContext context, FamilyMember member) async {
     if (!opened) throw StateError('No dialer');
   } catch (_) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('De telefoon-app kon niet worden geopend.'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('De telefoon-app kon niet worden geopend.')));
     }
   }
 }
 
-Future<void> chooseContact(
-  BuildContext context,
-  List<FamilyMember> members,
-) async {
+Future<void> chooseContact(BuildContext context, List<FamilyMember> members) async {
   final member = await showModalBottomSheet<FamilyMember>(
     context: context,
     builder: (context) => SafeArea(

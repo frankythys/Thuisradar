@@ -9,8 +9,9 @@ final geocodingSourceProvider = Provider<GeocodingSource>((ref) => GeocodingSour
 /// het adresraster, zodat dezelfde buurt de aanvraag deelt en hergebruikt.
 /// `autoDispose` zodat een oude buurt geen provider blijft vasthouden; de
 /// bron zelf cachet het resultaat wel.
-final placeAddressProvider = FutureProvider.autoDispose.family<PlaceAddress?, (double, double)>(
-  (ref, coordinates) async {
-    return ref.watch(geocodingSourceProvider).addressFor(coordinates.$1, coordinates.$2);
-  },
-);
+final placeAddressProvider = FutureProvider.autoDispose.family<PlaceAddress?, (double, double)>((
+  ref,
+  coordinates,
+) async {
+  return ref.watch(geocodingSourceProvider).addressFor(coordinates.$1, coordinates.$2);
+});

@@ -85,12 +85,15 @@ class _CurrentStayCard extends ConsumerWidget {
                 ),
               ),
               SizedBox(width: tokens.spaceMd),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
-                child: Icon(icon, color: AppColors.primary),
-              ),
+              if (here?.icon == 'home')
+                Image.asset('assets/markers/huis.png', width: 48, height: 48)
+              else
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
+                  child: Icon(icon, color: AppColors.primary),
+                ),
             ],
           ),
           Padding(

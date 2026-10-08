@@ -25,17 +25,12 @@ void main() {
     expect(chat.audioAttributesUsage, AudioAttributesUsage.notification);
     for (final details in [sos, chat]) {
       final sound = details.sound! as RawResourceAndroidNotificationSound;
-      expect(
-        File('android/app/src/main/res/raw/${sound.sound}.wav').existsSync(),
-        isTrue,
-      );
+      expect(File('android/app/src/main/res/raw/${sound.sound}.wav').existsSync(), isTrue);
       expect(details.playSound, isTrue);
     }
   });
 
-  testWidgets('bestaande sessie registreert pas nadat kanalen klaar zijn', (
-    tester,
-  ) async {
+  testWidgets('bestaande sessie registreert pas nadat kanalen klaar zijn', (tester) async {
     final service = _Push();
     final initialized = Completer<void>();
     when(service.init).thenAnswer((_) => initialized.future);

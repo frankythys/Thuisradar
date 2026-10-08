@@ -43,11 +43,7 @@ class PlacesRepository {
   }
 
   Future<void> delete(String id) async {
-    final deleted = await _client
-        .from('places')
-        .delete()
-        .eq('id', id)
-        .select('id');
+    final deleted = await _client.from('places').delete().eq('id', id).select('id');
     if (deleted.isEmpty) {
       throw const PostgrestException(
         message: 'De plaats kon niet worden verwijderd. Controleer je gezinslidmaatschap en probeer opnieuw.',
@@ -62,11 +58,6 @@ class PlacesRepository {
         .from('place_presence')
         .stream(primaryKey: ['user_id', 'place_id'])
         .eq('family_id', familyId)
-        .map(
-          (rows) => rows
-              .map(PlacePresence.fromJson)
-              .where((p) => p.isInside)
-              .toList(),
-        );
+        .map((rows) => rows.map(PlacePresence.fromJson).where((p) => p.isInside).toList());
   }
 }

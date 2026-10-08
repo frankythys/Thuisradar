@@ -56,13 +56,11 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final members =
-        ref.watch(familyMembersProvider(alert.familyId)).value ?? const [];
+    final members = ref.watch(familyMembersProvider(alert.familyId)).value ?? const [];
     final sender = members.where((m) => m.userId == alert.userId).firstOrNull;
-    final location =
-        (ref.watch(familyLocationsProvider(alert.familyId)).value ?? const [])
-            .where((l) => l.userId == alert.userId)
-            .firstOrNull;
+    final location = (ref.watch(familyLocationsProvider(alert.familyId)).value ?? const [])
+        .where((l) => l.userId == alert.userId)
+        .firstOrNull;
     final receipts = ref.watch(sosReceiptsProvider(alert.id)).value ?? const [];
     final latitude = location?.latitude ?? alert.latitude;
     final longitude = location?.longitude ?? alert.longitude;
@@ -85,29 +83,19 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
                 children: [
                   const Text(
                     '⚠ NOODSITUATIE · NU ACTIEF',
-                    style: TextStyle(
-                      color: Color(0xFFBA1A1A),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: Color(0xFFBA1A1A), fontWeight: FontWeight.w800, fontSize: 11),
                   ),
                   const SizedBox(height: 10),
                   Text(
                     '$name heeft hulp nodig',
-                    style: text.headlineLarge?.copyWith(
-                      color: const Color(0xFF93000A),
-                    ),
+                    style: text.headlineLarge?.copyWith(color: const Color(0xFF93000A)),
                   ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      Chip(
-                        label: Text(
-                          'Zojuist geactiveerd · ${formatClock(alert.createdAt)}',
-                        ),
-                      ),
+                      Chip(label: Text('Zojuist geactiveerd · ${formatClock(alert.createdAt)}')),
                       Chip(
                         label: Text(
                           location == null
@@ -115,8 +103,7 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
                               : 'GPS · ${formatRelative(location.updatedAt, now: now)}',
                         ),
                       ),
-                      if (location?.battery != null)
-                        Chip(label: Text('${location!.battery}%')),
+                      if (location?.battery != null) Chip(label: Text('${location!.battery}%')),
                     ],
                   ),
                 ],
@@ -167,9 +154,7 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: sender == null
-                        ? null
-                        : () => callMember(context, sender),
+                    onPressed: sender == null ? null : () => callMember(context, sender),
                     icon: const Icon(Icons.call_outlined),
                     label: Text('Bel $name'),
                   ),
@@ -185,9 +170,7 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
                       final userId = ref.read(currentUserIdProvider);
                       if (userId == null) return;
                       try {
-                        await ref
-                            .read(sosRepositoryProvider)
-                            .acknowledge(alert.id, userId, onTheWay: true);
+                        await ref.read(sosRepositoryProvider).acknowledge(alert.id, userId, onTheWay: true);
                         await ref
                             .read(chatRepositoryProvider)
                             .send(
@@ -197,21 +180,13 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
                             );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Je gezin weet dat je onderweg bent.',
-                              ),
-                            ),
+                            const SnackBar(content: Text('Je gezin weet dat je onderweg bent.')),
                           );
                         }
                       } on Exception {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Bericht niet verstuurd. Probeer opnieuw.',
-                              ),
-                            ),
+                            const SnackBar(content: Text('Bericht niet verstuurd. Probeer opnieuw.')),
                           );
                         }
                       }

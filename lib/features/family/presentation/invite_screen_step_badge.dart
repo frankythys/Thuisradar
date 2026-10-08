@@ -11,14 +11,10 @@ class _StepBadge extends StatelessWidget {
       width: 28,
       height: 28,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: AppColors.primarySoft,
-        shape: BoxShape.circle,
-      ),
+      decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
       child: Text(
         '$number',
-        style: Theme.of(context).textTheme.labelLarge
-            ?.copyWith(color: AppColors.primary),
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.primary),
       ),
     );
   }

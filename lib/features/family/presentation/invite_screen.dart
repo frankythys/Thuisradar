@@ -26,22 +26,16 @@ class InviteScreen extends StatelessWidget {
       await SharePlus.instance.share(
         ShareParams(
           text:
-              'Kom bij "${family.name}" op Thuisradar.\n'
+              'Kom bij "${family.name}" op CircleBeacon.\n'
               'Open de app, kies "Ik heb een uitnodigingscode" en vul in: ${family.inviteCode}',
-          subject: 'Uitnodiging voor Thuisradar',
-          sharePositionOrigin: box == null
-              ? null
-              : box.localToGlobal(Offset.zero) & box.size,
+          subject: 'Uitnodiging voor CircleBeacon',
+          sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
         ),
       );
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Verzenden lukt niet. Probeer opnieuw of kopieer de code.',
-            ),
-          ),
+          const SnackBar(content: Text('Verzenden lukt niet. Probeer opnieuw of kopieer de code.')),
         );
       }
     }
@@ -50,15 +44,12 @@ class InviteScreen extends StatelessWidget {
   Future<void> _copy(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: family.inviteCode));
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Code gekopieerd')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code gekopieerd')));
     }
   }
 
   void _continue(BuildContext context) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const PermissionsScreen()),
-    );
+    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(builder: (_) => const PermissionsScreen()));
   }
 
   @override
@@ -76,11 +67,7 @@ class InviteScreen extends StatelessWidget {
             children: [
               const _SuccessHero(),
               SizedBox(height: tokens.spaceLg),
-              Text(
-                'Familie aangemaakt!',
-                style: text.headlineLarge,
-                textAlign: TextAlign.center,
-              ),
+              Text('Familie aangemaakt!', style: text.headlineLarge, textAlign: TextAlign.center),
               SizedBox(height: tokens.spaceSm),
               Text(
                 'Nodig je gezinsleden uit om samen locaties en veilige aankomsten te delen.',
@@ -106,10 +93,7 @@ class InviteScreen extends StatelessWidget {
               SizedBox(height: tokens.spaceLg),
               const _HowItWorks(),
               SizedBox(height: tokens.spaceLg),
-              TextButton(
-                onPressed: () => _continue(context),
-                child: const Text('Doorgaan naar app'),
-              ),
+              TextButton(onPressed: () => _continue(context), child: const Text('Doorgaan naar app')),
             ],
           ),
         ),

@@ -11,6 +11,8 @@ import 'package:thuisradar/features/location/application/location_providers.dart
 import 'package:thuisradar/features/location/data/geocoding_source.dart';
 import 'package:thuisradar/features/location/domain/place_address.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
+import 'package:thuisradar/features/location/domain/timeline.dart';
+import 'package:thuisradar/features/location/domain/track_point.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_list_sheet.dart';
 import 'package:thuisradar/features/notifications/application/events_providers.dart';
@@ -71,7 +73,9 @@ void main() {
           ),
           clockProvider.overrideWith((ref) => Stream.value(now)),
           familyLocationsProvider.overrideWith((ref, id) => Stream.value(const <MemberLocation>[])),
-          timelineProvider.overrideWith((ref, arg) async => const []),
+          dayHistoryProvider.overrideWith(
+            (ref, arg) async => (entries: const <TimelineEntry>[], points: const <TrackPoint>[]),
+          ),
           recentTimelineProvider.overrideWith((ref, arg) async => const []),
           familyPresenceProvider.overrideWith(
             (ref, id) => Stream.value([

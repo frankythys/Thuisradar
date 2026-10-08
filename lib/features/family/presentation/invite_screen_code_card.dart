@@ -16,11 +16,7 @@ class _CodeCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.vpn_key_outlined,
-                size: 18,
-                color: AppColors.primary,
-              ),
+              const Icon(Icons.vpn_key_outlined, size: 18, color: AppColors.primary),
               SizedBox(width: tokens.spaceSm),
               Text('Jouw unieke gezinscode', style: text.titleMedium),
             ],
@@ -40,10 +36,7 @@ class _CodeCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: tokens.spaceMd),
-          Text(
-            'Alleen voor jouw gezin',
-            style: text.bodySmall?.copyWith(color: AppColors.muted),
-          ),
+          Text('Alleen voor jouw gezin', style: text.bodySmall?.copyWith(color: AppColors.muted)),
         ],
       ),
     );

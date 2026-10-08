@@ -8,10 +8,7 @@ class FamilyMember {
   });
 
   /// Verwacht een rij uit `family_members` met een geneste `profiles`-relatie.
-  factory FamilyMember.fromJson(
-    Map<String, dynamic> json, {
-    required int colorIndex,
-  }) {
+  factory FamilyMember.fromJson(Map<String, dynamic> json, {required int colorIndex}) {
     final profile = json['profiles'] as Map<String, dynamic>?;
     return FamilyMember(
       userId: json['user_id'] as String,
@@ -30,7 +27,6 @@ class FamilyMember {
   /// Positie in de familie (volgorde van toetreden); bepaalt de vaste kleur.
   final int colorIndex;
 
-  String get initial => displayName.isEmpty
-      ? '?'
-      : String.fromCharCode(displayName.runes.first).toUpperCase();
+  String get initial =>
+      displayName.isEmpty ? '?' : String.fromCharCode(displayName.runes.first).toUpperCase();
 }

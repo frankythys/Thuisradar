@@ -50,9 +50,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final cleared = await ref
-          .read(chatStoreProvider)
-          .clearedAt(widget.family.id);
+      final cleared = await ref.read(chatStoreProvider).clearedAt(widget.family.id);
       if (mounted) setState(() => _clearedAt = cleared);
     });
   }
@@ -69,18 +67,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Chat wissen?'),
-        content: const Text(
-          'Je wist de berichten op dit toestel. Voor de anderen blijft de chat bestaan.',
-        ),
+        content: const Text('Je wist de berichten op dit toestel. Voor de anderen blijft de chat bestaan.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuleren'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Wissen'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Wissen')),
         ],
       ),
     );
@@ -98,15 +88,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     setState(() => _sending = true);
     _input.clear();
     try {
-      await ref
-          .read(chatRepositoryProvider)
-          .send(familyId: widget.family.id, userId: userId, body: body);
+      await ref.read(chatRepositoryProvider).send(familyId: widget.family.id, userId: userId, body: body);
     } on Exception {
       if (mounted) {
         _input.text = body;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bericht versturen mislukt.')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Bericht versturen mislukt.')));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -116,9 +103,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _shareLocation() async {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
-    final position = await ref
-        .read(deviceLocationSourceProvider)
-        .currentPosition();
+    final position = await ref.read(deviceLocationSourceProvider).currentPosition();
     if (position == null || !mounted) return;
     try {
       await ref
@@ -126,16 +111,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           .send(
             familyId: widget.family.id,
             userId: userId,
-            body:
-                'https://www.google.com/maps?q=${position.latitude},${position.longitude}',
+            body: 'https://www.google.com/maps?q=${position.latitude},${position.longitude}',
           );
     } on Exception {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Locatie delen mislukt. Probeer opnieuw.'),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Locatie delen mislukt. Probeer opnieuw.')));
       }
     }
   }
@@ -153,20 +134,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Foto delen met je gezin?'),
-          content: Image.file(
-            File(photo.path),
-            height: 220,
-            fit: BoxFit.contain,
-          ),
+          content: Image.file(File(photo.path), height: 220, fit: BoxFit.contain),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuleren'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Versturen'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Versturen')),
           ],
         ),
       );
@@ -191,18 +162,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             context: context,
             builder: (context) => AlertDialog(
               title: const Text('Spraakbericht versturen?'),
-              content: const Text(
-                'De opname is gestopt. Deel deze met je gezin of verwijder ze.',
-              ),
+              content: const Text('De opname is gestopt. Deel deze met je gezin of verwijder ze.'),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Verwijderen'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Versturen'),
-                ),
+                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Verwijderen')),
+                FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Versturen')),
               ],
             ),
           );
@@ -212,16 +175,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         }
       } else {
         if (!await _recorder.hasPermission()) {
-          _mediaError(
-            'Geef microfoontoestemming om een spraakbericht op te nemen.',
-          );
+          _mediaError('Geef microfoontoestemming om een spraakbericht op te nemen.');
           return;
         }
         final dir = await getTemporaryDirectory();
         await _recorder.start(
           const RecordConfig(encoder: AudioEncoder.aacLc),
-          path:
-              '${dir.path}/voice-${DateTime.now().microsecondsSinceEpoch}.m4a',
+          path: '${dir.path}/voice-${DateTime.now().microsecondsSinceEpoch}.m4a',
         );
         if (mounted) setState(() => _recording = true);
       }
@@ -263,8 +223,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     String message = 'Bijlage kon niet worden verstuurd. Controleer je verbinding en probeer opnieuw.',
   ]) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -273,8 +232,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final tokens = context.tokens;
     final myId = ref.watch(currentUserIdProvider);
     final messages = ref.watch(familyMessagesProvider(widget.family.id));
-    final members =
-        ref.watch(familyMembersProvider(widget.family.id)).value ?? const [];
+    final members = ref.watch(familyMembersProvider(widget.family.id)).value ?? const [];
 
     String nameOf(String userId) {
       for (final m in members) {
@@ -292,10 +250,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       appBar: BrandedAppBar(
         title: 'Chat',
-        actions: [
-          if (visible.isNotEmpty)
-            TextButton(onPressed: _clear, child: const Text('Wissen')),
-        ],
+        actions: [if (visible.isNotEmpty) TextButton(onPressed: _clear, child: const Text('Wissen'))],
       ),
       body: Column(
         children: [
@@ -305,19 +260,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: Row(
               children: [
                 for (final member in members.take(3))
-                  Align(
-                    widthFactor: .75,
-                    child: MemberAvatar(member: member, size: 30),
-                  ),
+                  Align(widthFactor: .75, child: MemberAvatar(member: member, size: 30)),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.family.name,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
+                      Text(widget.family.name, style: Theme.of(context).textTheme.titleMedium),
                       Text(
                         '${members.length} leden · Besloten gezinskring',
                         style: Theme.of(context).textTheme.bodySmall,
@@ -328,10 +277,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 IconButton(
                   tooltip: 'Bel een gezinslid',
                   icon: const Icon(Icons.phone_outlined, size: 20),
-                  onPressed: () => chooseContact(
-                    context,
-                    members.where((m) => m.userId != myId).toList(),
-                  ),
+                  onPressed: () => chooseContact(context, members.where((m) => m.userId != myId).toList()),
                 ),
                 IconButton(
                   tooltip: 'Groepsinformatie',
@@ -340,14 +286,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: Text(widget.family.name),
-                      content: Text(
-                        members.map((m) => m.displayName).join('\n'),
-                      ),
+                      content: Text(members.map((m) => m.displayName).join('\n')),
                       actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Sluiten'),
-                        ),
+                        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Sluiten')),
                       ],
                     ),
                   ),
@@ -357,10 +298,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Text(
-              'Vandaag',
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
+            child: Text('Vandaag', style: Theme.of(context).textTheme.labelSmall),
           ),
           Expanded(
             child: messages.when(
@@ -387,8 +325,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => ErrorView(
                 message: 'Chat laden mislukt.\n$e',
-                onRetry: () =>
-                    ref.invalidate(familyMessagesProvider(widget.family.id)),
+                onRetry: () => ref.invalidate(familyMessagesProvider(widget.family.id)),
               ),
             ),
           ),

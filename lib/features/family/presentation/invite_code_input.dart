@@ -28,15 +28,11 @@ class InviteCodeInput extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          i < value.text.length
-                              ? value.text[i].toUpperCase()
-                              : '•',
+                          i < value.text.length ? value.text[i].toUpperCase() : '•',
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 18,
-                            color: i < value.text.length
-                                ? AppColors.primary
-                                : AppColors.border,
+                            color: i < value.text.length ? AppColors.primary : AppColors.border,
                           ),
                         ),
                       ),

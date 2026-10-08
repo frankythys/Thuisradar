@@ -29,11 +29,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
   Family get family => widget.family;
 
   void _add(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => AddPlaceScreen(familyId: family.id),
-      ),
-    );
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => AddPlaceScreen(familyId: family.id)));
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref, Place place) async {
@@ -43,10 +39,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
         title: const Text('Plaats verwijderen?'),
         content: Text('"${place.name}" wordt verwijderd voor het hele gezin.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuleren'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.alert),
@@ -68,11 +61,8 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     } on Object catch (error) {
       debugPrint('Plaats verwijderen mislukt: $error');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Verwijderen mislukt. Probeer opnieuw.'),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Verwijderen mislukt. Probeer opnieuw.')));
       }
     }
   }
@@ -81,8 +71,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final places = ref.watch(familyPlacesProvider(family.id));
-    final presence =
-        ref.watch(familyPresenceProvider(family.id)).value ?? const [];
+    final presence = ref.watch(familyPresenceProvider(family.id)).value ?? const [];
 
     return Scaffold(
       appBar: const BrandedAppBar(title: 'Plaatsen'),
@@ -103,17 +92,9 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                   message: 'Voeg veilige zones toe zoals Thuis of School om aankomst- en vertrekmeldingen te krijgen.',
                 )
               : ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    tokens.spaceLg,
-                    tokens.spaceLg,
-                    tokens.spaceLg,
-                    96,
-                  ),
+                  padding: EdgeInsets.fromLTRB(tokens.spaceLg, tokens.spaceLg, tokens.spaceLg, 96),
                   children: [
-                    Text(
-                      'Plaatsen',
-                      style: Theme.of(context).textTheme.headlineLarge,
-                    ),
+                    Text('Plaatsen', style: Theme.of(context).textTheme.headlineLarge),
                     const SizedBox(height: 4),
                     Text(
                       'Geregistreerde veilige zones voor je gezin (${list.length} plaatsen)',
@@ -126,13 +107,10 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                         ChoiceChip(
                           label: Text('Alle zones (${list.length})'),
                           selected: !_activeOnly,
-                          onSelected: (_) =>
-                              setState(() => _activeOnly = false),
+                          onSelected: (_) => setState(() => _activeOnly = false),
                         ),
                         ChoiceChip(
-                          label: Text(
-                            '${presence.map((p) => p.placeId).toSet().length} Actief bezocht',
-                          ),
+                          label: Text('${presence.map((p) => p.placeId).toSet().length} Actief bezocht'),
                           selected: _activeOnly,
                           onSelected: (_) => setState(() => _activeOnly = true),
                         ),
@@ -140,17 +118,13 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                     ),
                     const SizedBox(height: 16),
                     for (final place in list.where(
-                      (p) =>
-                          !_activeOnly ||
-                          presence.any((v) => v.placeId == p.id),
+                      (p) => !_activeOnly || presence.any((v) => v.placeId == p.id),
                     ))
                       Padding(
                         padding: EdgeInsets.only(bottom: tokens.spaceMd),
                         child: PlaceCard(
                           place: place,
-                          presentCount: presence
-                              .where((p) => p.placeId == place.id)
-                              .length,
+                          presentCount: presence.where((p) => p.placeId == place.id).length,
                           onDelete: () => _delete(context, ref, place),
                         ),
                       ),

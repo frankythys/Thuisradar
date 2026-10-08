@@ -28,9 +28,7 @@ class WelcomeScreen extends ConsumerWidget {
   final Family family;
 
   void _continue(BuildContext context) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const PermissionsScreen()),
-    );
+    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(builder: (_) => const PermissionsScreen()));
   }
 
   @override
@@ -50,11 +48,7 @@ class WelcomeScreen extends ConsumerWidget {
             children: [
               const _WelcomeHero(),
               SizedBox(height: tokens.spaceLg),
-              Text(
-                'Welkom bij ${family.name}!',
-                style: text.headlineLarge,
-                textAlign: TextAlign.center,
-              ),
+              Text('Welkom bij ${family.name}!', style: text.headlineLarge, textAlign: TextAlign.center),
               SizedBox(height: tokens.spaceSm),
               Text(
                 'Je bent nu verbonden met de veilige familiekring.',
@@ -66,9 +60,7 @@ class WelcomeScreen extends ConsumerWidget {
                 data: (list) => _MembersCard(
                   members: list,
                   myId: myId,
-                  locations:
-                      ref.watch(familyLocationsProvider(family.id)).value ??
-                      const [],
+                  locations: ref.watch(familyLocationsProvider(family.id)).value ?? const [],
                 ),
                 loading: () => const Padding(
                   padding: EdgeInsets.all(24),

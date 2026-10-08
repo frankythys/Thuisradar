@@ -18,12 +18,7 @@ import 'driving_summary.dart';
 /// Eén activiteit als kaart: een rit (met de route op een kaart, van → naar,
 /// tijd en afstand) of een verblijf (plek, tijd en duur).
 class DrivingActivityCard extends StatelessWidget {
-  const DrivingActivityCard({
-    super.key,
-    required this.activity,
-    required this.places,
-    this.route = const [],
-  });
+  const DrivingActivityCard({super.key, required this.activity, required this.places, this.route = const []});
 
   final DrivingActivity activity;
   final List<Place> places;
@@ -94,11 +89,7 @@ class _TripBody extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 6),
                     child: Icon(Icons.arrow_forward, size: 16, color: AppColors.muted),
                   ),
-                  _PlaceLabel(
-                    places: places,
-                    latitude: activity.latitude,
-                    longitude: activity.longitude,
-                  ),
+                  _PlaceLabel(places: places, latitude: activity.latitude, longitude: activity.longitude),
                 ],
               ),
             ),

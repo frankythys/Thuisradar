@@ -8,6 +8,7 @@ import 'package:thuisradar/features/location/application/location_history_provid
 import 'package:thuisradar/features/location/application/location_providers.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
+import 'package:thuisradar/features/location/domain/track_point.dart';
 import 'package:thuisradar/features/member/presentation/member_detail_screen.dart';
 import 'package:thuisradar/features/places/application/places_providers.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
@@ -20,7 +21,9 @@ Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() r
       overrides: [
         // Vaste klok: geen periodieke timer die pumpAndSettle laat hangen.
         clockProvider.overrideWith((ref) => Stream.value(DateTime(2026, 1, 2, 10))),
-        timelineProvider.overrideWith((ref, arg) => result()),
+        dayHistoryProvider.overrideWith(
+          (ref, arg) async => (entries: await result(), points: const <TrackPoint>[]),
+        ),
         familyPlacesProvider.overrideWith((ref, arg) => Stream.value(const <Place>[])),
         // Geen echte Supabase-stroom nodig voor deze schermtests.
         familyLocationsProvider.overrideWith((ref, arg) => Stream.value(const <MemberLocation>[])),

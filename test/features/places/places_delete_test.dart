@@ -85,5 +85,4 @@ void main() {
     expect(find.text('Thuis'), findsOneWidget);
     expect(find.text('Verwijderen mislukt. Probeer opnieuw.'), findsOneWidget);
   });
-
 }

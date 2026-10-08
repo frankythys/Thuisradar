@@ -11,7 +11,7 @@ class ThuisradarApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Thuisradar',
+      title: 'CircleBeacon',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       home: const PushGate(child: OnboardingGate(child: AuthGate())),

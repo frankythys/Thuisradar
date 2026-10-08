@@ -46,10 +46,7 @@ class _CardHeader extends StatelessWidget {
                 ],
               ),
               SizedBox(height: tokens.spaceXs),
-              Text(
-                body,
-                style: text.bodyMedium?.copyWith(color: AppColors.muted),
-              ),
+              Text(body, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
             ],
           ),
         ),

@@ -40,10 +40,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
     super.dispose();
   }
 
-  Future<void> _run(
-    Future<Family> Function() action,
-    Widget Function(Family) next,
-  ) async {
+  Future<void> _run(Future<Family> Function() action, Widget Function(Family) next) async {
     if (_busy) return;
     setState(() {
       _busy = true;
@@ -53,8 +50,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
       final family = await action();
       ref.invalidate(myFamilyProvider);
       if (!mounted) return;
-      await Navigator.of(context)
-          .push(MaterialPageRoute<void>(builder: (_) => next(family)));
+      await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => next(family)));
     } on PostgrestException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } finally {
@@ -103,17 +99,14 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
               children: [
                 _StepPill(),
                 const Spacer(),
-                Text(
-                  'Gezinsconfiguratie',
-                  style: text.bodyMedium?.copyWith(color: AppColors.muted),
-                ),
+                Text('Gezinsconfiguratie', style: text.bodyMedium?.copyWith(color: AppColors.muted)),
               ],
             ),
             SizedBox(height: tokens.spaceMd),
             Text('Jouw familie', style: text.headlineLarge),
             SizedBox(height: tokens.spaceSm),
             Text(
-              'Kies hoe je aan de slag wilt gaan met Thuisradar.',
+              'Kies hoe je aan de slag wilt gaan met CircleBeacon.',
               style: text.bodyLarge?.copyWith(color: AppColors.muted),
             ),
             SizedBox(height: tokens.spaceLg),
@@ -131,20 +124,14 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                     body: 'Start een nieuwe besloten gezinskring en nodig je gezinsleden uit.',
                   ),
                   SizedBox(height: tokens.spaceMd),
-                  _FieldLabel(
-                    label: 'Familienaam',
-                    trailing: 'Privé & gecodeerd',
-                  ),
+                  _FieldLabel(label: 'Familienaam', trailing: 'Privé & gecodeerd'),
                   SizedBox(height: tokens.spaceSm),
                   TextField(
                     controller: _familyName,
                     decoration: const InputDecoration(
                       hintText: 'Familie Thys',
                       fillColor: AppColors.surfaceLow,
-                      prefixIcon: Icon(
-                        Icons.groups_outlined,
-                        color: AppColors.primary,
-                      ),
+                      prefixIcon: Icon(Icons.groups_outlined, color: AppColors.primary),
                     ),
                   ),
                   SizedBox(height: tokens.spaceMd),
@@ -168,10 +155,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                 const Expanded(child: Divider()),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd),
-                  child: Text(
-                    'OF AANSLUITEN',
-                    style: text.labelMedium?.copyWith(color: AppColors.muted),
-                  ),
+                  child: Text('OF AANSLUITEN', style: text.labelMedium?.copyWith(color: AppColors.muted)),
                 ),
                 const Expanded(child: Divider()),
               ],
@@ -195,19 +179,14 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                       const Expanded(child: _FieldLabel(label: 'Toegangscode')),
                       TextButton(
                         onPressed: () async {
-                          final data = await Clipboard.getData(
-                            Clipboard.kTextPlain,
-                          );
+                          final data = await Clipboard.getData(Clipboard.kTextPlain);
                           if (mounted && data?.text != null) {
                             _inviteCode.text = data!.text!
                                 .replaceAll(RegExp('[^a-zA-Z0-9]'), '')
                                 .toUpperCase()
                                 .substring(
                                   0,
-                                  data.text!
-                                      .replaceAll(RegExp('[^a-zA-Z0-9]'), '')
-                                      .length
-                                      .clamp(0, 8),
+                                  data.text!.replaceAll(RegExp('[^a-zA-Z0-9]'), '').length.clamp(0, 8),
                                 );
                           }
                         },
@@ -232,10 +211,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
             ),
             if (_error != null) ...[
               SizedBox(height: tokens.spaceMd),
-              Text(
-                _error!,
-                style: text.bodyMedium?.copyWith(color: AppColors.alert),
-              ),
+              Text(_error!, style: text.bodyMedium?.copyWith(color: AppColors.alert)),
             ],
             SizedBox(height: tokens.spaceLg),
             Container(
@@ -246,15 +222,11 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.lock_outline,
-                    size: 18,
-                    color: AppColors.muted,
-                  ),
+                  const Icon(Icons.lock_outline, size: 18, color: AppColors.muted),
                   SizedBox(width: tokens.spaceMd),
                   Expanded(
                     child: Text(
-                      'Alleen uitgenodigde leden zien elkaar op de Thuisradar kaart.',
+                      'Alleen uitgenodigde leden zien elkaar op de CircleBeacon kaart.',
                       style: text.bodySmall?.copyWith(color: AppColors.muted),
                     ),
                   ),

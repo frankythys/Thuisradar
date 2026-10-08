@@ -51,9 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _message = 'Opgeslagen inloggegevens konden niet worden geladen. Vul ze opnieuw in.',
-        );
+        setState(() => _message = 'Opgeslagen inloggegevens konden niet worden geladen. Vul ze opnieuw in.');
       }
     } finally {
       if (mounted) setState(() => _loadingSaved = false);
@@ -71,9 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _message = 'De opgeslagen login kon niet worden verwijderd. Probeer opnieuw.',
-        );
+        setState(() => _message = 'De opgeslagen login kon niet worden verwijderd. Probeer opnieuw.');
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -103,11 +99,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       if (_mode == _Mode.login) {
         await auth.signIn(email: email, password: password);
-        await service.rememberSuccessfulLogin(
-          email: email,
-          password: password,
-          remember: remember,
-        );
+        await service.rememberSuccessfulLogin(email: email, password: password, remember: remember);
       } else {
         final signedIn = await auth.signUp(
           email: _email.text.trim(),
@@ -115,9 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           displayName: _name.text.trim(),
         );
         if (!signedIn && mounted) {
-          setState(
-            () => _message = 'Bevestig je e-mailadres en log daarna in.',
-          );
+          setState(() => _message = 'Bevestig je e-mailadres en log daarna in.');
         }
       }
     } on AuthException catch (e) {
@@ -146,17 +136,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authRepositoryProvider).resetPassword(_email.text.trim());
       if (mounted) {
-        setState(
-          () => _message =
-              'Controleer je e-mail om je wachtwoord opnieuw in te stellen.',
-        );
+        setState(() => _message = 'Controleer je e-mail om je wachtwoord opnieuw in te stellen.');
       }
     } on Exception {
       if (mounted) {
-        setState(
-          () => _message =
-              'De herstelmail kon niet worden verstuurd. Probeer opnieuw.',
-        );
+        setState(() => _message = 'De herstelmail kon niet worden verstuurd. Probeer opnieuw.');
       }
     }
   }
@@ -179,14 +163,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               'Bewaar je login versleuteld op dit toestel om voortaan met je vingerafdruk of gezicht in te loggen. Je kunt dit verwijderen in je profiel.',
             ),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Annuleren'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Inschakelen'),
-              ),
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Inschakelen')),
             ],
           ),
         );
@@ -196,16 +174,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _busy = true;
         _message = null;
       });
-      await service.signIn(
-        auth,
-        email: _email.text.trim(),
-        password: _password.text,
-        remember: _remember,
-      );
+      await service.signIn(auth, email: _email.text.trim(), password: _password.text, remember: _remember);
     } catch (error) {
       if (mounted) {
         setState(
-          () => _message = error is StateError ? error.message.toString() : 'Biometrisch inloggen lukt niet. Gebruik je e-mailadres en wachtwoord.',
+          () => _message = error is StateError
+              ? error.message.toString()
+              : 'Biometrisch inloggen lukt niet. Gebruik je e-mailadres en wachtwoord.',
         );
       }
     } finally {
@@ -229,10 +204,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 if (isRegister)
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: _toggleMode,
-                        icon: const Icon(Icons.arrow_back),
-                      ),
+                      IconButton(onPressed: _toggleMode, icon: const Icon(Icons.arrow_back)),
                       const Spacer(),
                       const _PrivacyChip(),
                     ],
@@ -240,11 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 24),
                 const Center(child: RadarLogo(size: 64)),
                 const SizedBox(height: 12),
-                Text(
-                  'Thuisradar',
-                  style: text.titleMedium,
-                  textAlign: TextAlign.center,
-                ),
+                Text('CircleBeacon', style: text.titleMedium, textAlign: TextAlign.center),
                 if (!isRegister) ...[
                   const SizedBox(height: 6),
                   Text(
@@ -273,9 +241,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         isRegister
                             ? 'Een veilige en besloten cirkel voor jouw gezin.'
                             : 'Log in om verbonden te blijven met je familie.',
-                        style: text.bodyMedium?.copyWith(
-                          color: AppColors.muted,
-                        ),
+                        style: text.bodyMedium?.copyWith(color: AppColors.muted),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
@@ -288,9 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           hintText: 'bv. Peter of Papa',
                           icon: Icons.person_outline,
                           textInputAction: TextInputAction.next,
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? 'Vul een naam in'
-                              : null,
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Vul een naam in' : null,
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -302,9 +266,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         keyboardType: TextInputType.emailAddress,
                         autofillHints: const [AutofillHints.email],
                         textInputAction: TextInputAction.next,
-                        validator: (v) => v == null || !v.contains('@')
-                            ? 'Ongeldig e-mailadres'
-                            : null,
+                        validator: (v) => v == null || !v.contains('@') ? 'Ongeldig e-mailadres' : null,
                       ),
                       const SizedBox(height: 16),
                       _Field(
@@ -318,15 +280,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onFieldSubmitted: (_) => _submit(),
                         suffix: IconButton(
                           onPressed: () => setState(() => _obscure = !_obscure),
-                          icon: Icon(
-                            _obscure
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                          ),
+                          icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                         ),
-                        validator: (v) => v == null || v.length < 8
-                            ? 'Minstens 8 tekens'
-                            : null,
+                        validator: (v) => v == null || v.length < 8 ? 'Minstens 8 tekens' : null,
                       ),
                       if (!isRegister)
                         Material(
@@ -355,36 +311,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       if (_message != null)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Text(
-                            _message!,
-                            style: text.bodyMedium?.copyWith(
-                              color: AppColors.alert,
-                            ),
-                          ),
+                          child: Text(_message!, style: text.bodyMedium?.copyWith(color: AppColors.alert)),
                         ),
                       const SizedBox(height: 20),
-                      if (isRegister) ...[
-                        const _PrivacyNote(),
-                        const SizedBox(height: 28),
-                      ],
+                      if (isRegister) ...[const _PrivacyNote(), const SizedBox(height: 28)],
                       FilledButton(
                         onPressed: _busy ? null : _submit,
                         child: _busy
                             ? const SizedBox.square(
                                 dimension: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               )
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    isRegister
-                                        ? 'Account aanmaken'
-                                        : 'Inloggen',
-                                  ),
+                                  Text(isRegister ? 'Account aanmaken' : 'Inloggen'),
                                   const SizedBox(width: 8),
                                   const Icon(Icons.arrow_forward, size: 18),
                                 ],
@@ -396,10 +337,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Row(
                             children: [
                               Expanded(child: Divider()),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16),
-                                child: Text('OF'),
-                              ),
+                              Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('OF')),
                               Expanded(child: Divider()),
                             ],
                           ),
@@ -420,21 +358,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: _busy ? null : _toggleMode,
-                  child: Text(
-                    isRegister
-                        ? 'Ik heb al een account'
-                        : 'Nieuw? Maak een account',
-                  ),
+                  child: Text(isRegister ? 'Ik heb al een account' : 'Nieuw? Maak een account'),
                 ),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.lock_outline,
-                      size: 14,
-                      color: AppColors.muted,
-                    ),
+                    const Icon(Icons.lock_outline, size: 14, color: AppColors.muted),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(

@@ -50,7 +50,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('THUISRADAR', style: text.labelSmall?.copyWith(color: AppColors.muted)),
+                Text('CIRCLEBEACON', style: text.labelSmall?.copyWith(color: AppColors.muted)),
                 Text(title, style: text.titleLarge),
               ],
             ),

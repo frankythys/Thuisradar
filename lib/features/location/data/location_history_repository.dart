@@ -15,11 +15,7 @@ class LocationHistoryRepository {
     return fetchRange(userId, start, end);
   }
 
-  Future<List<TrackPoint>> fetchRange(
-    String userId,
-    DateTime start,
-    DateTime end,
-  ) async {
+  Future<List<TrackPoint>> fetchRange(String userId, DateTime start, DateTime end) async {
     final points = <TrackPoint>[];
     const pageSize = 1000;
     for (var offset = 0; ; offset += pageSize) {

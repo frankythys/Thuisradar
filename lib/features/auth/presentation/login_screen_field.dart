@@ -44,10 +44,7 @@ class _Field extends StatelessWidget {
             Text(label, style: text.titleMedium),
             const Spacer(),
             if (trailingLabel != null)
-              Text(
-                trailingLabel!,
-                style: text.bodySmall?.copyWith(color: AppColors.muted),
-              ),
+              Text(trailingLabel!, style: text.bodySmall?.copyWith(color: AppColors.muted)),
           ],
         ),
         SizedBox(height: tokens.spaceSm),
@@ -61,8 +58,7 @@ class _Field extends StatelessWidget {
           validator: validator,
           decoration: InputDecoration(
             hintText: hintText,
-            fillColor:
-                Theme.of(context).scaffoldBackgroundColor == AppColors.ground
+            fillColor: Theme.of(context).scaffoldBackgroundColor == AppColors.ground
                 ? AppColors.surfaceLow
                 : Colors.white,
             prefixIcon: Icon(icon, color: AppColors.primary),
@@ -75,10 +71,7 @@ class _Field extends StatelessWidget {
             children: [
               const Icon(Icons.info_outline, size: 14, color: AppColors.muted),
               SizedBox(width: tokens.spaceXs),
-              Text(
-                helper!,
-                style: text.bodySmall?.copyWith(color: AppColors.muted),
-              ),
+              Text(helper!, style: text.bodySmall?.copyWith(color: AppColors.muted)),
             ],
           ),
         ],

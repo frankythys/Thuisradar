@@ -39,12 +39,7 @@ class TripStatus {
 
   /// Korte statusregel voor de ledenlijst: enkel wat er speelt, zonder tijd.
   /// "Thuis", "Onderweg · 42 km/u" of "Rijden in de buurt van N106".
-  String shortDescription(
-    MemberLocation? location,
-    DateTime now, {
-    String? place,
-    String? address,
-  }) {
+  String shortDescription(MemberLocation? location, DateTime now, {String? place, String? address}) {
     if (location == null) return label;
     if (state == TripState.moving) {
       if (address != null && address.isNotEmpty) return 'Rijden in de buurt van $address';

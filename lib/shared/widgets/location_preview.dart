@@ -49,17 +49,14 @@ class LocationPreview extends StatelessWidget {
             initialCameraFit: fitBounds && points.length > 1
                 ? CameraFit.coordinates(coordinates: points, padding: const EdgeInsets.all(16))
                 : null,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.none,
-            ),
+            interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
           ),
           children: [
             const AppMapTiles(),
             if (lines.isNotEmpty)
               PolylineLayer(
                 polylines: [
-                  for (final line in lines)
-                    Polyline(points: line, color: AppColors.primary, strokeWidth: 4),
+                  for (final line in lines) Polyline(points: line, color: AppColors.primary, strokeWidth: 4),
                 ],
               ),
             if (showMarker)
@@ -101,8 +98,7 @@ class LocationPreview extends StatelessWidget {
               alignment: Alignment.bottomRight,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () =>
-                    launchUrl(Uri.https('www.openstreetmap.org', '/copyright')),
+                onTap: () => launchUrl(Uri.https('www.openstreetmap.org', '/copyright')),
                 child: const Padding(
                   padding: EdgeInsets.fromLTRB(8, 4, 6, 4),
                   child: Text(
@@ -133,25 +129,15 @@ Marker _routePoint({required LatLng point, required Color color, required double
   ),
 );
 
-Future<void> openDirections(
-  BuildContext context,
-  double latitude,
-  double longitude,
-) async {
-  final uri = Uri.https('www.google.com', '/maps/dir/', {
-    'api': '1',
-    'destination': '$latitude,$longitude',
-  });
+Future<void> openDirections(BuildContext context, double latitude, double longitude) async {
+  final uri = Uri.https('www.google.com', '/maps/dir/', {'api': '1', 'destination': '$latitude,$longitude'});
   try {
     if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
   } on Exception {
     /* Toon een herstelbare fout in de app. */
   }
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Route-app openen mislukt. Probeer opnieuw.'),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Route-app openen mislukt. Probeer opnieuw.')));
   }
 }

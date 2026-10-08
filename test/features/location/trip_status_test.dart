@@ -48,10 +48,7 @@ void main() {
 
   test('beschrijving bevat straat, gemeente, snelheid en leeftijd', () {
     final location = _location(speedMps: 11.7, age: const Duration(seconds: 30));
-    final text = TripStatus.at(
-      location,
-      _now,
-    ).description(location, _now, address: 'Kerkstraat 42, Gent');
+    final text = TripStatus.at(location, _now).description(location, _now, address: 'Kerkstraat 42, Gent');
     expect(text, 'Onderweg · Kerkstraat 42, Gent · 42 km/u · bijgewerkt 30 s geleden');
   });
 

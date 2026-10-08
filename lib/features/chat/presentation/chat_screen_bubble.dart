@@ -13,26 +13,15 @@ class _Bubble extends StatelessWidget {
     final tokens = context.tokens;
 
     final shared = Uri.tryParse(message.body);
-    final coordinates = shared?.host == 'www.google.com'
-        ? shared?.queryParameters['q']?.split(',')
-        : null;
-    final lat = coordinates?.length == 2
-        ? double.tryParse(coordinates![0])
-        : null;
-    final lng = coordinates?.length == 2
-        ? double.tryParse(coordinates![1])
-        : null;
+    final coordinates = shared?.host == 'www.google.com' ? shared?.queryParameters['q']?.split(',') : null;
+    final lat = coordinates?.length == 2 ? double.tryParse(coordinates![0]) : null;
+    final lng = coordinates?.length == 2 ? double.tryParse(coordinates![1]) : null;
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.only(bottom: tokens.spaceSm),
-        padding: EdgeInsets.symmetric(
-          horizontal: tokens.spaceMd,
-          vertical: tokens.spaceSm,
-        ),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.75,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd, vertical: tokens.spaceSm),
+        constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.75),
         decoration: BoxDecoration(
           color: mine ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(tokens.radiusInput),
@@ -41,13 +30,8 @@ class _Bubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (name != null)
-              Text(
-                name!,
-                style: text.labelMedium?.copyWith(color: AppColors.primary),
-              ),
-            if (Attachment.parse(message.body, message.familyId)
-                case final attachment?)
+            if (name != null) Text(name!, style: text.labelMedium?.copyWith(color: AppColors.primary)),
+            if (Attachment.parse(message.body, message.familyId) case final attachment?)
               AttachmentView(attachment: attachment)
             else if (lat != null && lng != null) ...[
               LocationPreview(
@@ -59,9 +43,7 @@ class _Bubble extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Gedeelde locatie',
-                style: text.titleMedium?.copyWith(
-                  color: mine ? Colors.white : AppColors.ink,
-                ),
+                style: text.titleMedium?.copyWith(color: mine ? Colors.white : AppColors.ink),
               ),
               TextButton(
                 onPressed: () => openDirections(context, lat, lng),
@@ -70,16 +52,12 @@ class _Bubble extends StatelessWidget {
             ] else
               Text(
                 message.body,
-                style: text.bodyMedium?.copyWith(
-                  color: mine ? Colors.white : AppColors.ink,
-                ),
+                style: text.bodyMedium?.copyWith(color: mine ? Colors.white : AppColors.ink),
               ),
             const SizedBox(height: 2),
             Text(
               formatClock(message.createdAt),
-              style: text.labelSmall?.copyWith(
-                color: mine ? Colors.white70 : AppColors.muted,
-              ),
+              style: text.labelSmall?.copyWith(color: mine ? Colors.white70 : AppColors.muted),
             ),
           ],
         ),

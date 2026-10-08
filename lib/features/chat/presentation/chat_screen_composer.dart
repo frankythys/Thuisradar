@@ -32,10 +32,7 @@ class _Composer extends StatelessWidget {
             IconButton(
               tooltip: 'Deel je locatie',
               onPressed: onShareLocation,
-              icon: const Icon(
-                Icons.add_location_alt_outlined,
-                color: AppColors.primary,
-              ),
+              icon: const Icon(Icons.add_location_alt_outlined, color: AppColors.primary),
             ),
             Expanded(
               child: TextField(

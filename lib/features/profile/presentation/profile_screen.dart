@@ -38,8 +38,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void initState() {
     super.initState();
     final myId = ref.read(currentUserIdProvider);
-    final members =
-        ref.read(familyMembersProvider(widget.family.id)).value ?? const [];
+    final members = ref.read(familyMembersProvider(widget.family.id)).value ?? const [];
     final me = members.where((m) => m.userId == myId);
     _name = TextEditingController(text: me.isEmpty ? '' : me.first.displayName);
     _phone.text = me.firstOrNull?.phone ?? '';
@@ -63,26 +62,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _busy = true);
     try {
       final phone = _phone.text.trim();
-      if (phone.isNotEmpty &&
-          !RegExp(r'^\+?[0-9 ()-]{6,24}$').hasMatch(phone)) {
+      if (phone.isNotEmpty && !RegExp(r'^\+?[0-9 ()-]{6,24}$').hasMatch(phone)) {
         throw const FormatException('Ongeldig telefoonnummer');
       }
       await ref.read(authRepositoryProvider).updateDisplayName(name);
       final id = ref.read(currentUserIdProvider);
       if (id != null) {
-        await ref
-            .read(profileRepositoryProvider)
-            .setPhone(id, phone.isEmpty ? null : phone);
+        await ref.read(profileRepositoryProvider).setPhone(id, phone.isEmpty ? null : phone);
       }
       ref.invalidate(familyMembersProvider(widget.family.id));
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Naam opgeslagen')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Naam opgeslagen')));
       }
     } on Exception {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Opslaan mislukt')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Opslaan mislukt')));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -94,14 +88,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Familie verlaten?'),
-        content: Text(
-          'Je ziet ${widget.family.name} dan niet meer op de kaart.',
-        ),
+        content: Text('Je ziet ${widget.family.name} dan niet meer op de kaart.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Annuleren'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.alert),
@@ -114,9 +103,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final myId = ref.read(currentUserIdProvider);
     if (myId == null) return;
-    await ref
-        .read(familyRepositoryProvider)
-        .leaveFamily(myId, widget.family.id);
+    await ref.read(familyRepositoryProvider).leaveFamily(myId, widget.family.id);
     ref.read(locationTrackerProvider.notifier).stop();
     ref.invalidate(myFamilyProvider);
     if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
@@ -140,17 +127,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
     try {
-      await ref
-          .read(profileRepositoryProvider)
-          .setNotification(userId, key, enabled);
+      await ref.read(profileRepositoryProvider).setNotification(userId, key, enabled);
       ref.invalidate(notificationPreferencesProvider);
     } on Exception {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Voorkeur opslaan mislukt. Probeer opnieuw.'),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Voorkeur opslaan mislukt. Probeer opnieuw.')));
       }
     }
   }
@@ -163,9 +145,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ref.invalidate(familyMembersProvider(widget.family.id));
     } on Exception {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Kleur opslaan mislukt.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kleur opslaan mislukt.')));
       }
     }
   }
@@ -173,13 +153,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final members =
-        ref.watch(familyMembersProvider(widget.family.id)).value ?? const [];
+    final members = ref.watch(familyMembersProvider(widget.family.id)).value ?? const [];
     final userId = ref.watch(currentUserIdProvider);
     final me = members.where((m) => m.userId == userId).firstOrNull;
     final notificationPreferences =
-        ref.watch(notificationPreferencesProvider).value ??
-        const <String, dynamic>{};
+        ref.watch(notificationPreferencesProvider).value ?? const <String, dynamic>{};
     return Scaffold(
       appBar: const BrandedAppBar(title: 'Profiel & instellingen'),
       body: SafeArea(
@@ -188,16 +166,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             if (me != null) Center(child: MemberAvatar(member: me, size: 88)),
             const SizedBox(height: 12),
-            Text(
-              me?.displayName ?? 'Jouw profiel',
-              style: text.headlineMedium,
-              textAlign: TextAlign.center,
-            ),
-            Text(
-              'Jouw persoonlijke plek',
-              style: text.bodySmall,
-              textAlign: TextAlign.center,
-            ),
+            Text(me?.displayName ?? 'Jouw profiel', style: text.headlineMedium, textAlign: TextAlign.center),
+            Text('Jouw persoonlijke plek', style: text.bodySmall, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             Center(child: Text('Kies je kleur', style: text.labelMedium)),
             const SizedBox(height: 10),
@@ -217,11 +187,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           radius: 18,
                           backgroundColor: AppColors.members[i],
                           child: me?.colorIndex == i
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 18,
-                                )
+                              ? const Icon(Icons.check, color: Colors.white, size: 18)
                               : null,
                         ),
                       ),
@@ -237,15 +203,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Locatie delen'),
-                    subtitle: Text(
-                      _sharing ? 'Actief voor je gezin' : 'Delen gepauzeerd',
-                    ),
+                    subtitle: Text(_sharing ? 'Actief voor je gezin' : 'Delen gepauzeerd'),
                     value: _sharing,
                     onChanged: _share,
-                    secondary: const Icon(
-                      Icons.share_location,
-                      color: AppColors.primary,
-                    ),
+                    secondary: const Icon(Icons.share_location, color: AppColors.primary),
                   ),
                   const Text(
                     'Je gezin krijgt je locatie te zien zolang delen aanstaat.',
@@ -255,11 +216,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   OutlinedButton.icon(
                     onPressed: () => _share(!_sharing),
                     icon: Icon(_sharing ? Icons.pause : Icons.play_arrow),
-                    label: Text(
-                      _sharing
-                          ? 'Pauzeer delen met je gezin'
-                          : 'Hervat locatie delen',
-                    ),
+                    label: Text(_sharing ? 'Pauzeer delen met je gezin' : 'Hervat locatie delen'),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -276,24 +233,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(widget.family.name, style: text.titleLarge),
-                      ),
+                      Expanded(child: Text(widget.family.name, style: text.titleLarge)),
                       IconButton(
                         tooltip: 'Gezinslid uitnodigen',
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => InviteScreen(family: widget.family),
-                          ),
-                        ),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).push(MaterialPageRoute<void>(builder: (_) => InviteScreen(family: widget.family))),
                         icon: const Icon(Icons.group_add_outlined),
                       ),
                     ],
                   ),
-                  const Text(
-                    'Samen verbonden',
-                    style: TextStyle(fontSize: 12, color: AppColors.muted),
-                  ),
+                  const Text('Samen verbonden', style: TextStyle(fontSize: 12, color: AppColors.muted)),
                   const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -308,24 +258,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('UITNODIGINGSCODE', style: text.labelSmall),
-                              Text(
-                                widget.family.inviteCode,
-                                style: text.titleLarge,
-                              ),
+                              Text(widget.family.inviteCode, style: text.titleLarge),
                             ],
                           ),
                         ),
                         TextButton.icon(
                           onPressed: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: widget.family.inviteCode),
-                            );
+                            await Clipboard.setData(ClipboardData(text: widget.family.inviteCode));
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Code gekopieerd'),
-                                ),
-                              );
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(content: Text('Code gekopieerd')));
                             }
                           },
                           icon: const Icon(Icons.copy, size: 16),
@@ -339,10 +281,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       contentPadding: EdgeInsets.zero,
                       leading: MemberAvatar(member: member, size: 36),
                       title: Text(member.displayName, style: text.titleMedium),
-                      subtitle: Text(
-                        member.isOwner ? 'Beheerder' : 'Gezinslid',
-                        style: text.bodySmall,
-                      ),
+                      subtitle: Text(member.isOwner ? 'Beheerder' : 'Gezinslid', style: text.bodySmall),
                     ),
                 ],
               ),
@@ -366,8 +305,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ? 'Ontvang noodmeldingen van je gezin'
                             : 'Ontvang een melding bij ${entry.value.toLowerCase()}',
                       ),
-                      value:
-                          notificationPreferences[entry.key] as bool? ?? true,
+                      value: notificationPreferences[entry.key] as bool? ?? true,
                       onChanged: (v) => _notification(entry.key, v),
                     ),
                 ],
@@ -387,10 +325,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _name,
-                    decoration: const InputDecoration(
-                      hintText: 'Naam',
-                      fillColor: AppColors.surfaceLow,
-                    ),
+                    decoration: const InputDecoration(hintText: 'Naam', fillColor: AppColors.surfaceLow),
                   ),
                   const SizedBox(height: 12),
                   Text('Telefoonnummer voor je gezin', style: text.titleMedium),
@@ -401,10 +336,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     decoration: const InputDecoration(hintText: '+32 …'),
                   ),
                   const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: _busy ? null : _saveName,
-                    child: const Text('Naam opslaan'),
-                  ),
+                  FilledButton(onPressed: _busy ? null : _saveName, child: const Text('Naam opslaan')),
                 ],
               ),
             ),
@@ -418,11 +350,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 } catch (_) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Verwijderen is niet gelukt. Probeer opnieuw.',
-                        ),
-                      ),
+                      const SnackBar(content: Text('Verwijderen is niet gelukt. Probeer opnieuw.')),
                     );
                   }
                   return;
@@ -430,9 +358,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text(
-                        'Opgeslagen inloggegevens en biometrische login verwijderd.',
-                      ),
+                      content: Text('Opgeslagen inloggegevens en biometrische login verwijderd.'),
                     ),
                   );
                 }
@@ -458,11 +384,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               style: TextButton.styleFrom(foregroundColor: AppColors.alert),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Thuisradar · versie 1.0.0',
-              style: text.bodySmall,
-              textAlign: TextAlign.center,
-            ),
+            Text('CircleBeacon · versie 1.0.0', style: text.bodySmall, textAlign: TextAlign.center),
           ],
         ),
       ),

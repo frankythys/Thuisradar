@@ -30,10 +30,7 @@ class _PermissionCard extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
+                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                 child: Icon(icon, color: Colors.white, size: 22),
               ),
               SizedBox(width: tokens.spaceMd),
@@ -43,10 +40,7 @@ class _PermissionCard extends StatelessWidget {
                   children: [
                     Text(title, style: text.titleMedium),
                     SizedBox(height: tokens.spaceXs),
-                    Text(
-                      subtitle,
-                      style: text.bodyMedium?.copyWith(color: AppColors.muted),
-                    ),
+                    Text(subtitle, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
                   ],
                 ),
               ),
@@ -64,17 +58,10 @@ class _PermissionCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: AppColors.muted,
-                ),
+                const Icon(Icons.info_outline, size: 16, color: AppColors.muted),
                 SizedBox(width: tokens.spaceSm),
                 Expanded(
-                  child: Text(
-                    note,
-                    style: text.bodySmall?.copyWith(color: AppColors.muted),
-                  ),
+                  child: Text(note, style: text.bodySmall?.copyWith(color: AppColors.muted)),
                 ),
               ],
             ),

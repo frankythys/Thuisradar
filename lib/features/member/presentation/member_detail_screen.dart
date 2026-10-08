@@ -29,6 +29,8 @@ import '../../location/application/address_providers.dart';
 import '../../location/domain/place_address.dart';
 import '../../location/domain/member_location.dart';
 import '../../location/domain/timeline.dart';
+import '../../location/domain/track_point.dart';
+import '../../location/domain/track_segments.dart';
 import '../../location/domain/trip_status.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
@@ -104,9 +106,14 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     final location = _liveLocation(ref);
     final now = ref.watch(clockProvider).value ?? DateTime.now();
     final query = (userId: widget.member.userId, day: _selectedDay);
-    final timeline = ref.watch(
-      _dayOffset == 2 ? recentTimelineProvider(widget.member.userId) : timelineProvider(query),
-    );
+    final recent = _dayOffset == 2;
+    // Dagweergave haalt tijdlijn én ruw routespoor in één keer op; de
+    // 30-dagenweergave enkel de tijdlijn (een maand ruwe punten tekenen we niet).
+    final dayHistory = recent ? null : ref.watch(dayHistoryProvider(query));
+    final timeline = recent
+        ? ref.watch(recentTimelineProvider(widget.member.userId))
+        : dayHistory!.whenData((history) => history.entries);
+    final routePoints = dayHistory?.value?.points ?? const <TrackPoint>[];
 
     final body = <Widget>[
       if (_dayOffset == 0 && location != null) ...[
@@ -115,7 +122,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           entries: timeline.value ?? const [],
           places: ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
           now: now,
-          onRefresh: () => ref.invalidate(timelineProvider(query)),
+          onRefresh: () => ref.invalidate(dayHistoryProvider(query)),
         ),
         const SizedBox(height: 16),
       ],
@@ -141,9 +148,11 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 longitude: location.longitude,
                 initial: widget.member.initial,
                 height: 170,
-                route: [
-                  for (final entry in timeline.value ?? <TimelineEntry>[])
-                    LatLng(entry.latitude, entry.longitude),
+                // Het echte GPS-spoor, geknipt bij meetgaten — nooit een rechte
+                // lijn dwars door de stad.
+                segments: [
+                  for (final segment in splitTrackGaps(routePoints))
+                    [for (final point in segment) LatLng(point.latitude, point.longitude)],
                 ],
               ),
               const SizedBox(height: 10),
@@ -192,7 +201,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         ),
         error: (e, _) => ErrorView(
           message: 'Geschiedenis laden mislukt.\n$e',
-          onRetry: () => ref.invalidate(timelineProvider(query)),
+          onRetry: () => ref.invalidate(
+            recent ? recentTimelineProvider(widget.member.userId) : dayHistoryProvider(query),
+          ),
         ),
       ),
       if (location != null) ...[

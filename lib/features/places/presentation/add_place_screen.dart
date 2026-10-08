@@ -44,14 +44,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     // Meteen starten op de locatie die de app al kent (via de tracker), zodat
     // de kaart direct bij de gebruiker staat â€” ook binnenshuis zonder verse fix.
     final myId = ref.read(currentUserIdProvider);
-    final locations =
-        ref.read(familyLocationsProvider(widget.familyId)).value ?? const [];
+    final locations = ref.read(familyLocationsProvider(widget.familyId)).value ?? const [];
     for (final location in locations) {
       if (location.userId == myId) {
-        _selection.move(
-          LatLng(location.latitude, location.longitude),
-          userGesture: false,
-        );
+        _selection.move(LatLng(location.latitude, location.longitude), userGesture: false);
       }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -72,20 +68,11 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
   Future<void> _goToCurrentLocation() async {
     final revision = _selection.beginSearch();
-    final position = await ref
-        .read(deviceLocationSourceProvider)
-        .currentPosition();
+    final position = await ref.read(deviceLocationSourceProvider).currentPosition();
     if (position != null &&
         mounted &&
-        _selection.resolve(
-          revision,
-          LatLng(position.latitude, position.longitude),
-          '',
-        )) {
-      _selection.move(
-        LatLng(position.latitude, position.longitude),
-        userGesture: true,
-      );
+        _selection.resolve(revision, LatLng(position.latitude, position.longitude), '')) {
+      _selection.move(LatLng(position.latitude, position.longitude), userGesture: true);
       _search.clear();
       _controller.move(_center, 16);
     }
@@ -104,23 +91,14 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       }
       if (mounted &&
           matches.isNotEmpty &&
-          _selection.resolve(
-            revision,
-            LatLng(matches.first.latitude, matches.first.longitude),
-            query,
-          )) {
-        _controller.move(
-          LatLng(matches.first.latitude, matches.first.longitude),
-          16,
-        );
+          _selection.resolve(revision, LatLng(matches.first.latitude, matches.first.longitude), query)) {
+        _controller.move(LatLng(matches.first.latitude, matches.first.longitude), 16);
       }
     } on Exception {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Adres niet gevonden. Verschuif de kaart of probeer een ander adres.',
-            ),
+            content: Text('Adres niet gevonden. Verschuif de kaart of probeer een ander adres.'),
           ),
         );
       }
@@ -133,9 +111,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     final name = _name.text.trim();
     if (_busy || _searching) return;
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vul eerst een naam voor de plaats in.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Vul eerst een naam voor de plaats in.')));
       return;
     }
     setState(() => _busy = true);
@@ -155,11 +132,11 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               .timeout(const Duration(seconds: 3));
           if (marks.isNotEmpty) {
             final mark = marks.first;
-            address = [mark.street, mark.postalCode, mark.locality]
-                .whereType<String>()
-                .map((part) => part.trim())
-                .where((part) => part.isNotEmpty)
-                .join(', ');
+            address = [
+              mark.street,
+              mark.postalCode,
+              mark.locality,
+            ].whereType<String>().map((part) => part.trim()).where((part) => part.isNotEmpty).join(', ');
           }
         } catch (_) {
           // Een ontbrekend adres mag het opslaan van de locatie niet blokkeren.
@@ -198,11 +175,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     } on Exception {
       if (mounted) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Plaats opslaan mislukt. Mogelijk zijn er al 20.'),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Plaats opslaan mislukt. Mogelijk zijn er al 20.')));
       }
     }
   }
@@ -248,10 +222,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     minZoom: 3,
                     maxZoom: 18,
                     cameraConstraint: CameraConstraint.contain(
-                      bounds: LatLngBounds(
-                        const LatLng(-85, -180),
-                        const LatLng(85, 180),
-                      ),
+                      bounds: LatLngBounds(const LatLng(-85, -180), const LatLng(85, 180)),
                     ),
                     onPositionChanged: (camera, gesture) => setState(() {
                       _selection.move(camera.center, userGesture: gesture);
@@ -301,10 +272,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   left: 16,
                   child: Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
                     child: const Text(
                       'Sleep de kaart om de positie te wijzigen',
                       style: TextStyle(fontSize: 10),
@@ -314,11 +282,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 // Vaste pin in het midden.
                 Padding(
                   padding: const EdgeInsets.only(bottom: 36),
-                  child: Icon(
-                    placeIcon(_icon),
-                    color: AppColors.primary,
-                    size: 40,
-                  ),
+                  child: Icon(placeIcon(_icon), color: AppColors.primary, size: 40),
                 ),
                 const Icon(Icons.circle, size: 8, color: AppColors.primary),
                 Positioned(
@@ -337,10 +301,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                         child: SizedBox(
                           width: 48,
                           height: 48,
-                          child: Icon(
-                            Icons.my_location,
-                            color: AppColors.primary,
-                          ),
+                          child: Icon(Icons.my_location, color: AppColors.primary),
                         ),
                       ),
                     ),
@@ -360,16 +321,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.radar,
-                          size: 20,
-                          color: AppColors.primary,
-                        ),
+                        const Icon(Icons.radar, size: 20, color: AppColors.primary),
                         const SizedBox(width: 8),
-                        Text(
-                          'Straalzone',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                        Text('Straalzone', style: Theme.of(context).textTheme.titleMedium),
                         const Spacer(),
                         Text('${_radius.round()} meter'),
                       ],
@@ -391,23 +345,14 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       style: TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                     const SizedBox(height: 24),
-                    Text(
-                      'Naam van de plaats',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text('Naam van de plaats', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _name,
-                      decoration: const InputDecoration(
-                        hintText: 'Thuis',
-                        fillColor: AppColors.surfaceLow,
-                      ),
+                      decoration: const InputDecoration(hintText: 'Thuis', fillColor: AppColors.surfaceLow),
                     ),
                     const SizedBox(height: 24),
-                    Text(
-                      'Kies een herkenbaar icoon',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text('Kies een herkenbaar icoon', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -422,19 +367,12 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                             label: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  placeIcon(key),
-                                  color: _icon == key
-                                      ? Colors.white
-                                      : AppColors.primary,
-                                ),
+                                Icon(placeIcon(key), color: _icon == key ? Colors.white : AppColors.primary),
                                 Text(
                                   placeIconLabel(key),
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: _icon == key
-                                        ? Colors.white
-                                        : AppColors.primary,
+                                    color: _icon == key ? Colors.white : AppColors.primary,
                                   ),
                                 ),
                               ],
@@ -443,10 +381,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text(
-                      'Voor wie gelden meldingen?',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text('Voor wie gelden meldingen?', style: Theme.of(context).textTheme.titleMedium),
                     const Text(
                       'Kies welke gezinsleden meldingen activeren',
                       style: TextStyle(fontSize: 12, color: AppColors.muted),
@@ -461,11 +396,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                           onSelected: (_) => setState(_watchedMembers.clear),
                         ),
                         for (final member
-                            in ref
-                                    .watch(
-                                      familyMembersProvider(widget.familyId),
-                                    )
-                                    .value ??
+                            in ref.watch(familyMembersProvider(widget.familyId)).value ??
                                 const <FamilyMember>[])
                           FilterChip(
                             label: Text(member.displayName),
@@ -479,37 +410,22 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text(
-                      'Meldingsvoorkeuren',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text('Meldingsvoorkeuren', style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     SwitchListTile(
                       tileColor: AppColors.surfaceLow,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      secondary: const Icon(
-                        Icons.login,
-                        color: AppColors.primary,
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      secondary: const Icon(Icons.login, color: AppColors.primary),
                       title: const Text('Melding bij aankomst'),
-                      subtitle: const Text(
-                        'Wanneer iemand de cirkel binnenkomt',
-                      ),
+                      subtitle: const Text('Wanneer iemand de cirkel binnenkomt'),
                       value: _arrival,
                       onChanged: (v) => setState(() => _arrival = v),
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
                       tileColor: AppColors.surfaceLow,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      secondary: const Icon(
-                        Icons.logout,
-                        color: AppColors.primary,
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      secondary: const Icon(Icons.logout, color: AppColors.primary),
                       title: const Text('Melding bij vertrek'),
                       subtitle: const Text('Wanneer iemand de cirkel verlaat'),
                       value: _departure,

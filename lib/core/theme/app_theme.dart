@@ -31,26 +31,11 @@ abstract final class AppTheme {
         filled: true,
         fillColor: Colors.white,
         hintStyle: textTheme.bodyLarge?.copyWith(color: AppColors.muted),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: tokens.spaceMd,
-          vertical: tokens.spaceMd,
-        ),
-        border: _inputBorder(
-          tokens.radiusInput,
-          const BorderSide(color: Colors.transparent),
-        ),
-        enabledBorder: _inputBorder(
-          tokens.radiusInput,
-          const BorderSide(color: Colors.transparent),
-        ),
-        focusedBorder: _inputBorder(
-          tokens.radiusInput,
-          const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: _inputBorder(
-          tokens.radiusInput,
-          const BorderSide(color: AppColors.alert, width: 1.5),
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: tokens.spaceMd, vertical: tokens.spaceMd),
+        border: _inputBorder(tokens.radiusInput, const BorderSide(color: Colors.transparent)),
+        enabledBorder: _inputBorder(tokens.radiusInput, const BorderSide(color: Colors.transparent)),
+        focusedBorder: _inputBorder(tokens.radiusInput, const BorderSide(color: AppColors.primary, width: 2)),
+        errorBorder: _inputBorder(tokens.radiusInput, const BorderSide(color: AppColors.alert, width: 1.5)),
         focusedErrorBorder: _inputBorder(
           tokens.radiusInput,
           const BorderSide(color: AppColors.alert, width: 2),
@@ -75,15 +60,9 @@ abstract final class AppTheme {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          textStyle: textTheme.labelLarge,
-        ),
+        style: TextButton.styleFrom(foregroundColor: AppColors.primary, textStyle: textTheme.labelLarge),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.border,
-        thickness: 1,
-      ),
+      dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.ink,
@@ -121,20 +100,12 @@ abstract final class AppTheme {
   }
 
   static OutlineInputBorder _inputBorder(double radius, BorderSide side) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(radius),
-      borderSide: side,
-    );
+    return OutlineInputBorder(borderRadius: BorderRadius.circular(radius), borderSide: side);
   }
 
   /// Typografie uit DESIGN.md (Serene Hearth). letterSpacing in px = em × fontSize.
   static TextTheme _textTheme(Color ink) {
-    TextStyle style(
-      double size,
-      FontWeight weight,
-      double height,
-      double emTracking,
-    ) {
+    TextStyle style(double size, FontWeight weight, double height, double emTracking) {
       return TextStyle(
         fontFamily: _fontFamily,
         color: ink,

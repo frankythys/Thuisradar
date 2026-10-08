@@ -34,26 +34,15 @@ void main() {
     expect(find.text('Account aanmaken'), findsOneWidget);
   });
 
-  testWidgets('onthouden login wordt ingevuld met verborgen wachtwoord', (
-    tester,
-  ) async {
+  testWidgets('onthouden login wordt ingevuld met verborgen wachtwoord', (tester) async {
     FlutterSecureStorage.setMockInitialValues({
-      'thuisradar_remembered_login':
-          '{"email":"test@example.com","password":"test-password"}',
+      'thuisradar_remembered_login': '{"email":"test@example.com","password":"test-password"}',
     });
     await _pump(tester);
     await tester.pumpAndSettle();
-    final fields = tester
-        .widgetList<TextFormField>(find.byType(TextFormField))
-        .toList();
+    final fields = tester.widgetList<TextFormField>(find.byType(TextFormField)).toList();
     expect(fields[0].controller!.text, 'test@example.com');
     expect(fields[1].controller!.text, 'test-password');
-    expect(
-      tester
-          .widgetList<EditableText>(find.byType(EditableText))
-          .last
-          .obscureText,
-      isTrue,
-    );
+    expect(tester.widgetList<EditableText>(find.byType(EditableText)).last.obscureText, isTrue);
   });
 }

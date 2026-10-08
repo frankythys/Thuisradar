@@ -111,6 +111,48 @@ void main() {
     expect(activities, isEmpty);
   });
 
+  test('een kort meetgat vlak voor de aankomst hoort nog bij de rit', () {
+    // Rijdt noordwaarts; de laatste meting valt 12 min voor de thuis-stop
+    // (tunnel). De rit moet op Thuis eindigen met de aankomsttijd, niet op de
+    // laatste straat waar de GPS nog een fix had.
+    final drive = [p(0, 0), p(1, 0.5), p(2, 1.0)];
+    final thuis = TimelineEntry(
+      kind: TimelineKind.stop,
+      start: day.add(const Duration(minutes: 14)),
+      end: day.add(const Duration(minutes: 40)),
+      latitude: 51 + 1.5 * 0.009,
+      longitude: 3,
+      placeName: 'Thuis',
+    );
+
+    final activities = buildDayActivities([thuis], drive);
+    final trip = activities.firstWhere((a) => a.kind == DrivingActivityKind.trip);
+
+    expect(trip.end, day.add(const Duration(minutes: 14)));
+    expect(trip.latitude, closeTo(51.0135, 0.0001));
+    // De laatste meting (1,0 km) plus het overbrugde stuk tot Thuis (1,5 km).
+    expect(trip.distanceMeters, closeTo(1500, 60));
+  });
+
+  test('een groot meetgat (toestel uit) klikt de aankomst niet vast', () {
+    // De volgende stop begint pas 25 min later: te ver om nog bij de rit te
+    // horen. De rit eindigt dan gewoon op de laatste meting.
+    final drive = [p(0, 0), p(1, 0.5), p(2, 1.0)];
+    final later = TimelineEntry(
+      kind: TimelineKind.stop,
+      start: day.add(const Duration(minutes: 27)),
+      end: day.add(const Duration(minutes: 60)),
+      latitude: 51 + 1.5 * 0.009,
+      longitude: 3,
+      placeName: 'Thuis',
+    );
+
+    final trip = buildDayActivities([later], drive).firstWhere((a) => a.kind == DrivingActivityKind.trip);
+
+    expect(trip.end, day.add(const Duration(minutes: 2)));
+    expect(trip.latitude, closeTo(51.009, 0.0001));
+  });
+
   test('afstand en duur krijgen een leesbare notatie', () {
     expect(drivingDistance(79), '79 m');
     expect(drivingDistance(13200), '13,2 km');

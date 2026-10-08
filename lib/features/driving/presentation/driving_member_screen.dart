@@ -42,19 +42,10 @@ class DrivingMemberScreen extends ConsumerWidget {
       failed = failed || async.hasError;
       final history = async.value;
       if (history == null) continue;
-      final activities = buildDayActivities(
-        attachPlaceNames(history.entries, places),
-        history.points,
-      );
+      final activities = buildDayActivities(attachPlaceNames(history.entries, places), history.points);
       if (activities.isEmpty) continue;
       sections.add(
-        _DaySection(
-          day: day,
-          activities: activities,
-          points: history.points,
-          places: places,
-          now: now,
-        ),
+        _DaySection(day: day, activities: activities, points: history.points, places: places, now: now),
       );
     }
 
@@ -86,7 +77,10 @@ class DrivingMemberScreen extends ConsumerWidget {
       body = const Center(child: Text('Geen locatiegeschiedenis deze week.'));
     }
 
-    return Scaffold(appBar: BrandedAppBar(title: member.displayName), body: body);
+    return Scaffold(
+      appBar: BrandedAppBar(title: member.displayName),
+      body: body,
+    );
   }
 }
 
@@ -119,11 +113,7 @@ class _DaySection extends StatelessWidget {
         Text(drivingDayLabel(day, now: now), style: text.titleLarge),
         SizedBox(height: tokens.spaceSm),
         for (final activity in activities.reversed) ...[
-          DrivingActivityCard(
-            activity: activity,
-            places: places,
-            route: activityTrack(activity, points),
-          ),
+          DrivingActivityCard(activity: activity, places: places, route: activityTrack(activity, points)),
           SizedBox(height: tokens.spaceSm),
         ],
         SizedBox(height: tokens.spaceMd),

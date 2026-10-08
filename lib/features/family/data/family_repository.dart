@@ -23,10 +23,7 @@ class FamilyRepository {
   }
 
   Future<Family> createFamily(String name) async {
-    final row = await _client.rpc(
-      'create_family',
-      params: {'family_name': name},
-    );
+    final row = await _client.rpc('create_family', params: {'family_name': name});
     return Family.fromJson(row as Map<String, dynamic>);
   }
 
@@ -37,26 +34,17 @@ class FamilyRepository {
 
   /// De ingelogde gebruiker verlaat de familie.
   Future<void> leaveFamily(String userId, String familyId) {
-    return _client
-        .from('family_members')
-        .delete()
-        .eq('user_id', userId)
-        .eq('family_id', familyId);
+    return _client.from('family_members').delete().eq('user_id', userId).eq('family_id', familyId);
   }
 
   Future<List<FamilyMember>> fetchMembers(String familyId) async {
     final rows = await _client
         .from('family_members')
-        .select(
-          'user_id, role, joined_at, profiles(display_name, color_index, phone)',
-        )
+        .select('user_id, role, joined_at, profiles(display_name, color_index, phone)')
         .eq('family_id', familyId)
         .order('joined_at');
 
-    return [
-      for (final (index, row) in rows.indexed)
-        FamilyMember.fromJson(row, colorIndex: index),
-    ];
+    return [for (final (index, row) in rows.indexed) FamilyMember.fromJson(row, colorIndex: index)];
   }
 
   /// Realtime ledenlijst: herlaadt de (met profielen gejoinde) leden telkens de

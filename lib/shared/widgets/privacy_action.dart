@@ -15,12 +15,7 @@ class PrivacyAction extends StatelessWidget {
         content: const Text(
           'Alleen leden van jouw gezinskring kunnen je gedeelde locaties en berichten bekijken. De verbinding met de server is versleuteld. Je kunt locatie delen pauzeren in je profiel.',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Sluiten'),
-          ),
-        ],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Sluiten'))],
       ),
     ),
   );

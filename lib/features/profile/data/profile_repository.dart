@@ -4,20 +4,12 @@ class ProfileRepository {
   ProfileRepository(this._client);
   final SupabaseClient _client;
   Future<Map<String, dynamic>> preferences(String userId) async =>
-      await _client
-          .from('notification_preferences')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle() ??
-      {};
+      await _client.from('notification_preferences').select().eq('user_id', userId).maybeSingle() ?? {};
   Future<void> setNotification(String userId, String key, bool enabled) async {
     if (!const ['arrival', 'departure', 'sos'].contains(key)) {
       throw ArgumentError.value(key);
     }
-    await _client.from('notification_preferences').upsert({
-      'user_id': userId,
-      key: enabled,
-    });
+    await _client.from('notification_preferences').upsert({'user_id': userId, key: enabled});
   }
 
   Future<void> setPhone(String userId, String? phone) async {
@@ -25,9 +17,6 @@ class ProfileRepository {
   }
 
   Future<void> setColor(String userId, int index) async {
-    await _client
-        .from('profiles')
-        .update({'color_index': index})
-        .eq('id', userId);
+    await _client.from('profiles').update({'color_index': index}).eq('id', userId);
   }
 }

@@ -39,11 +39,7 @@ class IconFilterChips extends StatelessWidget {
         for (final (index, item) in items.indexed)
           Padding(
             padding: EdgeInsets.only(right: tokens.spaceSm),
-            child: _Chip(
-              item: item,
-              selected: index == selectedIndex,
-              onTap: () => onSelected(index),
-            ),
+            child: _Chip(item: item, selected: index == selectedIndex, onTap: () => onSelected(index)),
           ),
       ],
     );
@@ -70,11 +66,7 @@ class _Chip extends StatelessWidget {
         button: true,
         child: Material(
           color: selected ? AppColors.ink : Colors.white,
-          shape: StadiumBorder(
-            side: selected
-                ? BorderSide.none
-                : const BorderSide(color: AppColors.border),
-          ),
+          shape: StadiumBorder(side: selected ? BorderSide.none : const BorderSide(color: AppColors.border)),
           child: InkWell(
             onTap: onTap,
             customBorder: const StadiumBorder(),

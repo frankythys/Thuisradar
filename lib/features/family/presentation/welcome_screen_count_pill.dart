@@ -9,14 +9,10 @@ class _CountPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: const ShapeDecoration(
-        color: AppColors.primarySoft,
-        shape: StadiumBorder(),
-      ),
+      decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
       child: Text(
         '$count ${count == 1 ? 'lid' : 'leden'}',
-        style: Theme.of(context).textTheme.labelMedium
-            ?.copyWith(color: AppColors.primary),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.primary),
       ),
     );
   }
