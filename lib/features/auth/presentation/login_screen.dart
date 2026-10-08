@@ -9,7 +9,9 @@ import '../../../shared/widgets/radar_logo.dart';
 import '../application/auth_providers.dart';
 import '../data/biometric_login.dart';
 
+part 'login_screen_actions.dart';
 part 'login_screen_field.dart';
+part 'login_screen_header.dart';
 part 'login_screen_privacy_chip.dart';
 part 'login_screen_privacy_note.dart';
 
@@ -195,191 +197,103 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final isRegister = _mode == _Mode.register;
     final text = Theme.of(context).textTheme;
+    final tokens = context.tokens;
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Form(
-            key: _formKey,
-            child: AutofillGroup(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (isRegister)
-                    Row(
-                      children: [
-                        IconButton(onPressed: _toggleMode, icon: const Icon(Icons.arrow_back)),
-                        const Spacer(),
-                        const _PrivacyChip(),
-                      ],
-                    ),
-                  const SizedBox(height: 24),
-                  const Center(child: RadarLogo(size: 64)),
-                  const SizedBox(height: 12),
-                  Text('CircleBeacon', style: text.titleMedium, textAlign: TextAlign.center),
-                  if (!isRegister) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      '• • VEILIG & VERTROUWD',
-                      style: text.labelSmall?.copyWith(color: AppColors.primary),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: EdgeInsets.all(isRegister ? 0 : 24),
-                    decoration: BoxDecoration(
-                      color: isRegister ? AppColors.ground : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+        child: LayoutBuilder(
+          // Minstens schermhoog, zodat de knoppen onderaan staan; scrollt alleen
+          // als het toetsenbord of een klein scherm de ruimte opeist.
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(tokens.spaceLg, tokens.spaceMd, tokens.spaceLg, tokens.spaceLg),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - tokens.spaceMd - tokens.spaceLg),
+              child: IntrinsicHeight(
+                child: Form(
+                  key: _formKey,
+                  child: AutofillGroup(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          isRegister ? 'Maak je account' : 'Welkom terug',
-                          style: text.headlineLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
+                        _LoginHeader(onBack: isRegister ? _toggleMode : null),
+                        SizedBox(height: tokens.spaceXl),
+                        // Zet het formulier iets onder het midden, dicht bij de duim.
+                        const Spacer(),
+                        Text(isRegister ? 'Maak je account' : 'Welkom terug', style: text.headlineLarge),
+                        SizedBox(height: tokens.spaceXs),
                         Text(
                           isRegister
                               ? 'Een veilige en besloten cirkel voor jouw gezin.'
-                              : 'Log in om verbonden te blijven met je familie.',
+                              : 'Log in om te zien waar je gezin is.',
                           style: text.bodyMedium?.copyWith(color: AppColors.muted),
-                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: tokens.spaceLg),
                         if (isRegister) ...[
                           _Field(
                             label: 'Naam',
-                            trailingLabel: 'Voor je gezin',
                             helper: 'Zo zien je gezinsleden je, bv. Papa',
                             controller: _name,
-                            hintText: 'bv. Peter of Papa',
                             icon: Icons.person_outline,
                             textInputAction: TextInputAction.next,
                             validator: (v) => v == null || v.trim().isEmpty ? 'Vul een naam in' : null,
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: tokens.spaceMd),
                         ],
                         _Field(
                           label: 'E-mailadres',
                           controller: _email,
-                          hintText: 'naam@voorbeeld.be',
                           icon: Icons.mail_outline,
                           keyboardType: TextInputType.emailAddress,
                           autofillHints: const [AutofillHints.email],
                           textInputAction: TextInputAction.next,
                           validator: (v) => v == null || !v.contains('@') ? 'Ongeldig e-mailadres' : null,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: tokens.spaceMd),
                         _Field(
                           label: 'Wachtwoord',
                           helper: isRegister ? 'Minimaal 8 tekens' : null,
                           controller: _password,
-                          hintText: isRegister ? 'Minimaal 8 tekens' : '••••••••',
                           icon: Icons.lock_outline,
                           obscureText: _obscure,
                           autofillHints: const [AutofillHints.password],
                           onFieldSubmitted: (_) => _submit(),
                           suffix: IconButton(
+                            tooltip: _obscure ? 'Wachtwoord tonen' : 'Wachtwoord verbergen',
                             onPressed: () => setState(() => _obscure = !_obscure),
                             icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                           ),
                           validator: (v) => v == null || v.length < 8 ? 'Minstens 8 tekens' : null,
                         ),
                         if (!isRegister)
-                          Material(
-                            color: Colors.transparent,
-                            child: CheckboxListTile(
-                              contentPadding: EdgeInsets.zero,
-                              controlAffinity: ListTileControlAffinity.leading,
-                              title: const Text('Inloggegevens onthouden'),
-                              subtitle: const Text(
-                                'E-mailadres en wachtwoord versleuteld bewaren op dit toestel.',
-                              ),
-                              value: _remember,
-                              onChanged: _busy || _loadingSaved
-                                  ? null
-                                  : (value) => _setRemember(value ?? false),
-                            ),
-                          ),
-                        if (!isRegister)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _busy ? null : _resetPassword,
-                              child: const Text('Wachtwoord vergeten?'),
-                            ),
+                          _RememberRow(
+                            value: _remember,
+                            onChanged: _busy || _loadingSaved
+                                ? null
+                                : (value) => _setRemember(value ?? false),
+                            onForgot: _busy ? null : _resetPassword,
                           ),
                         if (_message != null)
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: EdgeInsets.only(top: tokens.spaceSm),
                             child: Text(_message!, style: text.bodyMedium?.copyWith(color: AppColors.alert)),
                           ),
-                        const SizedBox(height: 20),
-                        if (isRegister) ...[const _PrivacyNote(), const SizedBox(height: 28)],
-                        FilledButton(
-                          onPressed: _busy ? null : _submit,
-                          child: _busy
-                              ? const SizedBox.square(
-                                  dimension: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(isRegister ? 'Account aanmaken' : 'Inloggen'),
-                                    const SizedBox(width: 8),
-                                    const Icon(Icons.arrow_forward, size: 18),
-                                  ],
-                                ),
+                        if (isRegister) ...[SizedBox(height: tokens.spaceLg), const _PrivacyNote()],
+                        const Spacer(),
+                        SizedBox(height: tokens.spaceXl),
+                        _LoginActions(
+                          label: isRegister ? 'Account aanmaken' : 'Inloggen',
+                          busy: _busy,
+                          onSubmit: _submit,
+                          onBiometric: isRegister ? null : _biometric,
                         ),
-                        if (!isRegister) ...[
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 18),
-                            child: Row(
-                              children: [
-                                Expanded(child: Divider()),
-                                Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('OF')),
-                                Expanded(child: Divider()),
-                              ],
-                            ),
-                          ),
-                          FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.surfaceLow,
-                              foregroundColor: AppColors.primary,
-                            ),
-                            onPressed: _busy ? null : _biometric,
-                            icon: const Icon(Icons.fingerprint),
-                            label: const Text('Inloggen met biometrie'),
-                          ),
-                        ],
+                        SizedBox(height: tokens.spaceSm),
+                        TextButton(
+                          onPressed: _busy ? null : _toggleMode,
+                          child: Text(isRegister ? 'Ik heb al een account' : 'Nieuw? Maak een account'),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: _busy ? null : _toggleMode,
-                    child: Text(isRegister ? 'Ik heb al een account' : 'Nieuw? Maak een account'),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.lock_outline, size: 14, color: AppColors.muted),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          'Versleuteld & alleen zichtbaar voor jouw gezin',
-                          style: text.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -388,5 +302,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 }
-
-/// Gelabeld invoerveld met leidend icoon en optionele helper-tekst.

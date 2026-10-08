@@ -45,4 +45,21 @@ void main() {
     expect(fields[1].controller!.text, 'test-password');
     expect(tester.widgetList<EditableText>(find.byType(EditableText)).last.obscureText, isTrue);
   });
+
+  testWidgets('past op een telefoonscherm zonder te scrollen', (tester) async {
+    // Samsung A52: 412 × 915 dp, min. status- en navigatiebalk.
+    tester.view.physicalSize = const Size(412, 860);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await _pump(tester);
+    await tester.pumpAndSettle();
+
+    final screen = tester.getRect(find.byType(Scaffold));
+    for (final label in ['Inloggen', 'Nieuw? Maak een account']) {
+      final rect = tester.getRect(find.text(label));
+      expect(screen.contains(rect.bottomRight - const Offset(1, 1)), isTrue, reason: label);
+    }
+    expect(find.byTooltip('Inloggen met biometrie'), findsOneWidget);
+    expect(find.text('OF'), findsNothing);
+  });
 }
