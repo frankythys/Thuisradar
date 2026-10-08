@@ -62,7 +62,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   const SizedBox(width: 8),
                   Text('CircleBeacon', style: Theme.of(context).textTheme.titleMedium),
                   const Spacer(),
-                  TextButton(onPressed: _finish, child: const Text('Overslaan')),
                 ],
               ),
               Expanded(

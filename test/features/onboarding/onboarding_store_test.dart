@@ -13,4 +13,11 @@ void main() {
     await store.markSeen();
     expect(await store.hasSeen(), isTrue);
   });
+
+  test('oude introstatus telt niet als afgeronde onboarding', () async {
+    SharedPreferences.setMockInitialValues({'onboarding_intro_seen': true});
+    final store = OnboardingStore();
+    expect(await store.hasSeen(), isFalse);
+    expect(await OnboardingStore().hasSeen(), isFalse);
+  });
 }

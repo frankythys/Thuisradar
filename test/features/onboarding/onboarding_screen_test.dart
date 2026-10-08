@@ -20,17 +20,25 @@ Future<void> _pump(WidgetTester tester, _FakeStore store) {
   return tester.pumpWidget(
     ProviderScope(
       overrides: [onboardingStoreProvider.overrideWithValue(store)],
-      child: MaterialApp(theme: AppTheme.light(), home: const OnboardingScreen()),
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        home: const OnboardingScreen(),
+      ),
     ),
   );
 }
 
 void main() {
-  testWidgets('doorloopt de slides en rondt af met Aan de slag', (tester) async {
+  testWidgets('doorloopt de slides en rondt af met Aan de slag', (
+    tester,
+  ) async {
     final store = _FakeStore();
     await _pump(tester, store);
 
-    expect(find.text('Altijd weten dat iedereen veilig thuis is'), findsOneWidget);
+    expect(
+      find.text('Altijd weten dat iedereen veilig thuis is'),
+      findsOneWidget,
+    );
     expect(find.text('Volgende'), findsOneWidget);
 
     for (var i = 0; i < 3; i++) {
@@ -44,12 +52,22 @@ void main() {
     expect(store.seen, isTrue);
   });
 
-  testWidgets('Overslaan markeert de onboarding als gezien', (tester) async {
+  testWidgets('afbreken voor de laatste stap rondt onboarding niet af', (
+    tester,
+  ) async {
     final store = _FakeStore();
     await _pump(tester, store);
 
-    await tester.tap(find.text('Overslaan'));
-    await tester.pump();
-    expect(store.seen, isTrue);
+    expect(find.text('Overslaan'), findsNothing);
+    await tester.tap(find.text('Volgende'));
+    await tester.pumpAndSettle();
+    expect(store.seen, isFalse);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _pump(tester, store);
+    expect(
+      find.text('Altijd weten dat iedereen veilig thuis is'),
+      findsOneWidget,
+    );
+    expect(store.seen, isFalse);
   });
 }

@@ -1,7 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Onthoudt of de onboarding al getoond is, zodat die enkel de eerste keer
-/// verschijnt.
+/// Alleen een volledig afgeronde onboarding wordt blijvend onthouden.
 class OnboardingStore {
   static const _seenKey = 'onboarding_seen';
 
