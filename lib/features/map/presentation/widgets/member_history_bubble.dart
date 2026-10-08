@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
@@ -81,7 +82,7 @@ class MemberHistoryBubble extends StatelessWidget {
                 if (atPlace && placeStatus!.icon == 'home')
                   Image.asset('assets/markers/huis.png', width: 32, height: 32, fit: BoxFit.contain)
                 else
-                  Icon(icon, color: const Color(0xFF7952AC), size: 23),
+                  Icon(icon, color: AppColors.primary, size: 23),
                 const SizedBox(width: 5),
                 Expanded(
                   child: Column(
@@ -96,7 +97,7 @@ class MemberHistoryBubble extends StatelessWidget {
                           fontSize: 13,
                           height: 1.2,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF211D27),
+                          color: AppColors.ink,
                         ),
                       ),
                       Text(
@@ -104,7 +105,7 @@ class MemberHistoryBubble extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(fontSize: 12, height: 1.15, color: const Color(0xFF89818F)),
+                            ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
                       ),
                     ],
                   ),

@@ -13,7 +13,7 @@ void main() {
   });
 
   test('profielkleuren behouden hun index; paars is vervangen door grijs', () {
-    expect(tokens.memberColor(0), AppColors.primaryContainer);
+    expect(tokens.memberColor(0), const Color(0xFF0E6E5C));
     expect(tokens.memberColor(1), const Color(0xFF64748B));
     expect(tokens.memberColor(2), const Color(0xFF2563EB));
     expect(tokens.memberColor(3), const Color(0xFFB45309));

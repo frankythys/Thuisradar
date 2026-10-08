@@ -62,7 +62,7 @@ class BatteryBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE4E1E9)),
+          border: Border.all(color: AppColors.border),
           boxShadow: const [BoxShadow(color: Color(0x18000000), blurRadius: 5, offset: Offset(0, 2))],
         ),
         child: Row(

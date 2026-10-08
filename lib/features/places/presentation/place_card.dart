@@ -138,7 +138,7 @@ class _Preference extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
     decoration: BoxDecoration(
-      color: enabled ? const Color(0xFFB8ECDD) : AppColors.surfaceLow,
+      color: enabled ? AppColors.primaryTint : AppColors.surfaceLow,
       borderRadius: BorderRadius.circular(20),
     ),
     child: Row(

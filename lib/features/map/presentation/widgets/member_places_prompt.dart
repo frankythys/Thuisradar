@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 /// Inhoud van de aparte plaatsenkaart onder de gezinsleden.
 class MemberPlacesPrompt extends StatelessWidget {
   const MemberPlacesPrompt({super.key, required this.onManage});
@@ -18,8 +20,8 @@ class MemberPlacesPrompt extends StatelessWidget {
             child: ExcludeSemantics(
               child: CircleAvatar(
                 radius: 36,
-                backgroundColor: Color(0xFFF1EBFC),
-                child: Icon(Icons.home_rounded, size: 54, color: Color(0xFF7952AC)),
+                backgroundColor: AppColors.primarySoft,
+                child: Icon(Icons.home_rounded, size: 54, color: AppColors.primary),
               ),
             ),
           ),
@@ -33,14 +35,14 @@ class MemberPlacesPrompt extends StatelessWidget {
           Text(
             'Weet wanneer ze aankomen',
             textAlign: TextAlign.center,
-            style: text.bodyLarge?.copyWith(fontSize: 17, color: const Color(0xFF787083)),
+            style: text.bodyLarge?.copyWith(fontSize: 17, color: AppColors.muted),
           ),
           const SizedBox(height: 18),
           TextButton(
             onPressed: onManage,
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFFEDEBEF),
-              foregroundColor: const Color(0xFF393342),
+              backgroundColor: AppColors.surfaceLow,
+              foregroundColor: AppColors.ink,
               minimumSize: const Size.fromHeight(50),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

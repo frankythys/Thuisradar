@@ -32,8 +32,10 @@ abstract final class AppTheme {
         fillColor: Colors.white,
         hintStyle: textTheme.bodyLarge?.copyWith(color: AppColors.muted),
         contentPadding: EdgeInsets.symmetric(horizontal: tokens.spaceMd, vertical: tokens.spaceMd),
-        border: _inputBorder(tokens.radiusInput, const BorderSide(color: Colors.transparent)),
-        enabledBorder: _inputBorder(tokens.radiusInput, const BorderSide(color: Colors.transparent)),
+        labelStyle: textTheme.bodyLarge?.copyWith(color: AppColors.muted),
+        floatingLabelStyle: textTheme.labelLarge?.copyWith(color: AppColors.primary),
+        border: _inputBorder(tokens.radiusInput, const BorderSide(color: AppColors.border)),
+        enabledBorder: _inputBorder(tokens.radiusInput, const BorderSide(color: AppColors.border)),
         focusedBorder: _inputBorder(tokens.radiusInput, const BorderSide(color: AppColors.primary, width: 2)),
         errorBorder: _inputBorder(tokens.radiusInput, const BorderSide(color: AppColors.alert, width: 1.5)),
         focusedErrorBorder: _inputBorder(

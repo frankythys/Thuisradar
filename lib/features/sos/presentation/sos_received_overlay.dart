@@ -163,7 +163,7 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFB8ECDD),
+                      backgroundColor: AppColors.primaryTint,
                       foregroundColor: AppColors.primary,
                     ),
                     onPressed: () async {

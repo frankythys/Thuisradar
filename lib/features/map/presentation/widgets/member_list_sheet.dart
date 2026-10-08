@@ -248,7 +248,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(context.tokens.radiusCard),
-        border: Border.all(color: const Color(0xFFB8B3C0), width: 1.25),
+        border: Border.all(color: AppColors.border, width: 1.25),
         boxShadow: context.tokens.shadowLevel1,
       ),
       child: Column(
@@ -269,8 +269,8 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                 child: TextButton(
                   onPressed: invite,
                   style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFFEDEBEF),
-                    foregroundColor: const Color(0xFF393342),
+                    backgroundColor: AppColors.surfaceLow,
+                    foregroundColor: AppColors.ink,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -288,7 +288,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0xFFDEDBE2)),
+          border: Border.all(color: AppColors.border),
           boxShadow: const [BoxShadow(color: Color(0x16000000), blurRadius: 10, offset: Offset(0, 3))],
         ),
         child: MemberPlacesPrompt(onManage: manage),

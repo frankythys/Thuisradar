@@ -127,7 +127,7 @@ class NotificationScene extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surfaceLow,
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: const [BoxShadow(color: Color(0x18005445), blurRadius: 6, offset: Offset(0, 3))],
+                boxShadow: const [BoxShadow(color: Color(0x180A6F91), blurRadius: 6, offset: Offset(0, 3))],
               ),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,5 +294,5 @@ class _SceneChip extends StatelessWidget {
 BoxDecoration _card([double radius = 20]) => BoxDecoration(
   color: Colors.white,
   borderRadius: BorderRadius.circular(radius),
-  boxShadow: const [BoxShadow(color: Color(0x12005445), blurRadius: 18, offset: Offset(0, 6))],
+  boxShadow: const [BoxShadow(color: Color(0x120A6F91), blurRadius: 18, offset: Offset(0, 6))],
 );

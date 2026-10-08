@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 
-/// Kleuren uit het ontwerp (Thuisradar · Android schermen).
+/// Kleuren uit het ontwerp (Thuisradar · Android schermen), palet "Oceaan":
+/// fris blauwgroen op een neutrale, lichtgrijze achtergrond.
 abstract final class AppColors {
-  static const primary = Color(0xFF005445);
-  static const primaryContainer = Color(0xFF0E6E5C);
-  static const primarySoft = Color(0xFFE1F2EB);
+  static const primary = Color(0xFF0A6F91);
+  static const primaryContainer = Color(0xFF13809F);
+  static const primarySoft = Color(0xFFDFF1F6);
+
+  /// Iets sterkere tint voor actieve chips en secundaire knoppen.
+  static const primaryTint = Color(0xFFC4E5EF);
   static const secondary = Color(0xFF633FCD);
   static const alert = Color(0xFFB4370A);
 
   /// Lichte oranje tint achter lage-batterij-pills en SOS-badges.
   static const alertSoft = Color(0xFFF7E0D4);
-  static const ink = Color(0xFF101E1A);
-  static const muted = Color(0xFF3E4945);
-  static const ground = Color(0xFFEDFDF6);
-  static const surfaceLow = Color(0xFFE7F7F0);
-  static const border = Color(0xFFBEC9C4);
+  static const ink = Color(0xFF0F1E24);
+  static const muted = Color(0xFF51646B);
+  static const ground = Color(0xFFF4F7F8);
+  static const surfaceLow = Color(0xFFE8F0F3);
+  static const border = Color(0xFFCFDDE2);
 
   /// Alleen voor kaartselectie; bewust geen kiesbare profielkleur.
   static const mapSelection = Color(0xFF762EEA);
