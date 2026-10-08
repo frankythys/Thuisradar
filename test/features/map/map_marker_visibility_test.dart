@@ -26,6 +26,34 @@ void main() {
     ),
   );
 
+  testWidgets('groepscirkels bedekken huis niet bij inzoomen', (tester) async {
+    final controller = MapController();
+    const home = LatLng(51, 3);
+    const homeKey = ValueKey('home-marker');
+    await tester.pumpWidget(MaterialApp(theme: AppTheme.light(),
+      home: Scaffold(body: FlutterMap(
+        mapController: controller,
+        options: const MapOptions(initialCenter: home, initialZoom: 16),
+        children: [
+          MarkerLayer(markers: [Marker(point: home, width: 32, height: 32,
+            child: const Icon(Icons.home, key: homeKey))]),
+          ClusteredMarkerLayer(members: [member('Franky'), member('Liam')],
+            now: now, reservedPlaces: const [home],
+            onMemberTap: (_) {}, onGroupTap: (_) {}),
+        ],
+      )),
+    ));
+    await tester.pumpAndSettle();
+    for (final zoom in [16.0, 17.0, 18.0]) {
+      controller.move(home, zoom);
+      await tester.pumpAndSettle();
+      expect(tester.getRect(find.byType(GroupPin)).overlaps(
+        tester.getRect(find.byKey(homeKey))), isFalse);
+    }
+    await tester.pumpWidget(const SizedBox());
+    controller.dispose();
+  });
+
   testWidgets('stilstaand lid houdt infolabel zonder selectie of geschiedeniscallback', (tester) async {
     var opened = false;
     await tester.pumpWidget(

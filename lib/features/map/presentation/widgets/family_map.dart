@@ -102,6 +102,10 @@ class FamilyMap extends StatelessWidget {
           ),
         ],
         ClusteredMarkerLayer(
+          reservedPlaces: [
+            for (final place in places)
+              if (place.icon == 'home') LatLng(place.latitude, place.longitude),
+          ],
           members: members,
           now: now,
           placeByUser: placeByUser,

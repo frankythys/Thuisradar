@@ -6,6 +6,7 @@ import '../../../places/domain/place_status.dart';
 import '../../domain/bubble_side.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/marker_motion.dart';
+import '../../domain/marker_clearance.dart';
 import '../../domain/member_on_map.dart';
 import 'group_pin.dart';
 import 'member_marker.dart';
@@ -30,6 +31,7 @@ class ClusteredMarkerLayer extends StatefulWidget {
     this.selectedUserId,
     this.myUserId,
     this.onHistory,
+    this.reservedPlaces = const [],
   });
 
   final List<MemberOnMap> members;
@@ -41,13 +43,18 @@ class ClusteredMarkerLayer extends StatefulWidget {
   final String? selectedUserId;
   final String? myUserId;
   final ValueChanged<MemberOnMap>? onHistory;
+  final List<LatLng> reservedPlaces;
 
   @override
   State<ClusteredMarkerLayer> createState() => _ClusteredMarkerLayerState();
 }
 
-class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(vsync: this, duration: markerMotionMin);
+class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: markerMotionMin,
+  );
   final Map<String, _Coord> _from = {};
   final Map<String, _Coord> _to = {};
   final Map<String, DateTime> _lastAt = {};
@@ -122,7 +129,10 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(animation: _controller, builder: (context, _) => _buildLayer(context));
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) => _buildLayer(context),
+    );
   }
 
   Widget _buildLayer(BuildContext context) {
@@ -140,12 +150,16 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
         });
 
     final byId = {for (final m in located) m.member.userId: m};
-    final coords = {for (final m in located) m.member.userId: _displayed(m.member.userId)};
+    final coords = {
+      for (final m in located) m.member.userId: _displayed(m.member.userId),
+    };
     final points = [
       for (final m in located)
         ClusterPoint(
           m.member.userId,
-          camera.latLngToScreenOffset(LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng)),
+          camera.latLngToScreenOffset(
+            LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
+          ),
         ),
     ];
 
@@ -162,16 +176,39 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     }
     // Groep met de selectie als laatste tekenen (bovenop).
     groups.sort((a, b) {
-      final aSel = widget.selectedUserId != null && a.contains(widget.selectedUserId);
-      final bSel = widget.selectedUserId != null && b.contains(widget.selectedUserId);
+      final aSel =
+          widget.selectedUserId != null && a.contains(widget.selectedUserId);
+      final bSel =
+          widget.selectedUserId != null && b.contains(widget.selectedUserId);
       return (aSel ? 1 : 0) - (bSel ? 1 : 0);
     });
 
     final markers = <Marker>[];
+    final placePoints = [
+      for (final place in widget.reservedPlaces)
+        camera.latLngToScreenOffset(place),
+    ];
+    final offsets = <String, Offset>{};
     for (final group in groups) {
       final groupMembers = [for (final id in group) byId[id]!];
       final anchor = coords[groupMembers.first.member.userId]!;
       final point = LatLng(anchor.lat, anchor.lng);
+      final screenPoint = camera.latLngToScreenOffset(point);
+      final single = groupMembers.length == 1;
+      final width = single ? MemberMarker.width : GroupPin.width;
+      final height = single ? MemberMarker.height : GroupPin.height;
+      final offset = markerClearance(
+        Rect.fromLTWH(
+          screenPoint.dx - width / 2,
+          single ? screenPoint.dy - height : screenPoint.dy,
+          width,
+          height,
+        ),
+        placePoints,
+      );
+      for (final member in groupMembers) {
+        offsets[member.member.userId] = offset;
+      }
 
       if (groupMembers.length == 1) {
         final member = groupMembers.single;
@@ -180,7 +217,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             point: point,
             width: MemberMarker.width,
             height: MemberMarker.height,
-            alignment: Alignment.topCenter,
+            alignment: Alignment(0, -1 + 2 * offset.dy / height),
             child: GestureDetector(
               onTap: () => widget.onMemberTap(member),
               child: MemberMarker(
@@ -198,7 +235,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             point: point,
             width: GroupPin.width,
             height: GroupPin.height,
-            alignment: Alignment.bottomCenter,
+            alignment: Alignment(0, 1 + 2 * offset.dy / height),
             child: GestureDetector(
               onTap: () => widget.onGroupTap(point),
               child: GroupPin(
@@ -244,11 +281,13 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           point: point,
           width: 142,
           height: 48,
-          alignment: onRight ? Alignment.topRight : Alignment.topLeft,
+          alignment: Alignment(
+            onRight ? 1 : -1,
+            -1 + 2 * (offsets[id]?.dy ?? 0) / 48,
+          ),
           child: Transform.translate(
-            // De avatar begint 96 px boven het kaartpunt. Laat de ballon een
-            // bovenhoek overlappen, aan de kant waar ruimte is.
-            offset: Offset(onRight ? 32 : -32, -62),
+            // Zoals de referentie: hoger en verder over de bovenhoek.
+            offset: Offset(onRight ? 20 : -20, -78),
             child: MemberHistoryBubble(
               entry: selected,
               now: widget.now,
