@@ -21,8 +21,9 @@ class PlaceRow extends StatelessWidget {
 
   final Place place;
 
-  /// Gezinsleden die nu in deze plaats zijn.
-  final List<FamilyMember> present;
+  /// Te tonen gezinsleden: wie er nu is (here = true) en wie aan deze plaats
+  /// gekoppeld is maar er nu niet is (here = false, doorzichtig).
+  final List<({FamilyMember member, bool here})> present;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -86,7 +87,7 @@ class PlaceRow extends StatelessWidget {
               ),
             ),
             SizedBox(width: tokens.spaceSm),
-            if (present.isEmpty) Text('Leeg', style: muted) else _PresentStack(members: present),
+            if (present.isEmpty) Text('Leeg', style: muted) else _PresentStack(people: present),
             PopupMenuButton<String>(
               tooltip: 'Opties',
               icon: const Icon(Icons.more_vert, color: AppColors.muted),
@@ -131,31 +132,56 @@ String notificationSummary(Place place) {
   return '$kind · voor ${watched.length} ${watched.length == 1 ? 'lid' : 'leden'}';
 }
 
-class _PresentStack extends StatelessWidget {
-  const _PresentStack({required this.members});
+/// Wie er bij een plaats getoond wordt (op de plek waar anders "Leeg" staat):
+/// eerst wie er nu is, daarna de persoon van wie de plaats is (bv. Werk van
+/// Franky) als die er nu niet is, doorzichtig.
+List<({FamilyMember member, bool here})> placePeople(
+  Place place,
+  List<FamilyMember> members,
+  Set<String> presentUserIds,
+) {
+  return [
+    for (final member in members)
+      if (presentUserIds.contains(member.userId)) (member: member, here: true),
+    for (final member in members)
+      if (member.userId == place.ownerUserId && !presentUserIds.contains(member.userId))
+        (member: member, here: false),
+  ];
+}
 
-  final List<FamilyMember> members;
+class _PresentStack extends StatelessWidget {
+  const _PresentStack({required this.people});
+
+  final List<({FamilyMember member, bool here})> people;
 
   static const _size = 28.0;
   static const _step = 20.0;
 
   @override
   Widget build(BuildContext context) {
-    final shown = members.take(3).toList();
+    final shown = people.take(3).toList();
     return SizedBox(
       width: _size + (shown.length - 1) * _step,
       height: _size,
       child: Stack(
         children: [
-          for (final (index, member) in shown.indexed)
+          for (final (index, person) in shown.indexed)
             Positioned(
               left: index * _step,
               // Dunne witte rand zonder kaartschaduw: dit is een lijst, geen kaart.
-              child: DecoratedBox(
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: MemberAvatar(member: member, size: _size - 4),
+              child: Tooltip(
+                message: person.here
+                    ? '${person.member.displayName} is hier'
+                    : '${person.member.displayName} is er nu niet',
+                child: Opacity(
+                  opacity: person.here ? 1 : 0.4,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                    child: Padding(
+                      padding: const EdgeInsets.all(2),
+                      child: MemberAvatar(member: person.member, size: _size - 4),
+                    ),
+                  ),
                 ),
               ),
             ),

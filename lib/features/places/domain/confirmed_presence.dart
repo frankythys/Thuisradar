@@ -1,5 +1,6 @@
 import '../../../core/utils/geo.dart';
 import '../../location/domain/member_location.dart';
+import '../../location/domain/trip_status.dart';
 import 'place.dart';
 import 'place_presence.dart';
 
@@ -30,4 +31,29 @@ bool _agrees(PlacePresence presence, Place? place, MemberLocation? location) {
   if (!presence.isInside || place == null || location == null) return true;
   final distance = distanceMeters(location.latitude, location.longitude, place.latitude, place.longitude);
   return distance <= place.radiusMeters + presenceToleranceMeters;
+}
+
+/// Wie is nu in [place]? Bevestigde aanwezigheid van de server plus iedereen
+/// van wie de verse GPS-positie binnen de cirkel ligt. Zo verschijnt iemand
+/// meteen, ook als de server de aankomst nog niet verwerkt heeft.
+Set<String> presentUserIdsAt(
+  Place place,
+  List<PlacePresence> confirmed,
+  List<MemberLocation> locations,
+  DateTime now,
+) {
+  return {
+    for (final pres in confirmed)
+      if (pres.placeId == place.id && pres.isInside) pres.userId,
+    for (final location in locations)
+      if (_fresh(location, now) &&
+          distanceMeters(location.latitude, location.longitude, place.latitude, place.longitude) <=
+              place.radiusMeters)
+        location.userId,
+  };
+}
+
+bool _fresh(MemberLocation location, DateTime now) {
+  final state = TripStatus.at(location, now).state;
+  return state != TripState.stale && state != TripState.missing;
 }

@@ -9,6 +9,7 @@ class Place {
     required this.radiusMeters,
     required this.icon,
     this.watchedMembers,
+    this.ownerUserId,
     this.address,
     this.notifyArrival = true,
     this.notifyDeparture = true,
@@ -23,6 +24,7 @@ class Place {
     radiusMeters: json['radius_m'] as int,
     icon: json['icon'] as String? ?? 'home',
     watchedMembers: (json['watched_members'] as List<dynamic>?)?.cast<String>(),
+    ownerUserId: json['owner_user_id'] as String?,
     address: json['address'] as String?,
     notifyArrival: json['notify_arrival'] as bool? ?? true,
     notifyDeparture: json['notify_departure'] as bool? ?? true,
@@ -41,4 +43,8 @@ class Place {
 
   /// Over wie je meldingen wilt; null/leeg = iedereen.
   final List<String>? watchedMembers;
+
+  /// Van wie deze plaats is (bv. Werk van Franky); null = van niemand apart.
+  /// Staat los van [watchedMembers] (wie meldingen krijgt).
+  final String? ownerUserId;
 }

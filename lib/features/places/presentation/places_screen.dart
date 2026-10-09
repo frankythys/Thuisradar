@@ -10,7 +10,11 @@ import '../../../shared/widgets/error_view.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../family/domain/family_member.dart';
+import '../../../core/utils/clock.dart';
+import '../../location/application/location_providers.dart';
+import '../../location/domain/member_location.dart';
 import '../application/places_providers.dart';
+import '../domain/confirmed_presence.dart';
 import '../domain/place.dart';
 import 'add_place_screen.dart';
 import 'place_row.dart';
@@ -79,12 +83,18 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     final tokens = context.tokens;
     final places = ref.watch(familyPlacesProvider(family.id));
     final text = Theme.of(context).textTheme;
-    final presence = ref.watch(familyPresenceProvider(family.id)).value ?? const [];
     final members = ref.watch(familyMembersProvider(family.id)).value ?? const <FamilyMember>[];
-    List<FamilyMember> presentAt(Place place) => [
-      for (final member in members)
-        if (presence.any((p) => p.placeId == place.id && p.userId == member.userId && p.isInside)) member,
-    ];
+    // Zelfde regel als de kaart: een achterlopende aanwezigheid telt niet als
+    // de GPS duidelijk ergens anders is; wie volgens de GPS binnen staat,
+    // telt meteen mee.
+    final locations = ref.watch(familyLocationsProvider(family.id)).value ?? const <MemberLocation>[];
+    final presence = confirmedPresence(
+      ref.watch(familyPresenceProvider(family.id)).value ?? const [],
+      places.value ?? const [],
+      locations,
+    );
+    final now = ref.watch(clockProvider).value ?? DateTime.now();
+    Set<String> presentIds(Place place) => presentUserIdsAt(place, presence, locations, now);
 
     return Scaffold(
       appBar: const BrandedAppBar(title: 'Plaatsen'),
@@ -110,7 +120,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                     Padding(
                       padding: EdgeInsets.fromLTRB(tokens.spaceXs, 0, tokens.spaceXs, tokens.spaceSm),
                       child: Text(
-                        _summary(list.length, list.where((p) => presentAt(p).isNotEmpty).length),
+                        _summary(list.length, list.where((p) => presentIds(p).isNotEmpty).length),
                         style: text.bodyMedium?.copyWith(color: AppColors.muted),
                       ),
                     ),
@@ -122,7 +132,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                             if (index > 0) const Divider(height: 1),
                             PlaceRow(
                               place: place,
-                              present: presentAt(place),
+                              present: placePeople(place, members, presentIds(place)),
                               onEdit: () => Navigator.of(context).push(
                                 MaterialPageRoute<void>(
                                   builder: (_) => AddPlaceScreen(familyId: family.id, place: place),

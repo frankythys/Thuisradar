@@ -27,8 +27,12 @@ class PlacesRepository {
     List<String>? watchedMembers,
     bool notifyArrival = true,
     bool notifyDeparture = true,
+    String? ownerUserId,
   }) {
     return _client.from('places').insert({
+      // Enkel meesturen als het ingevuld is: zo werkt toevoegen ook nog
+      // voordat migratie 013 gedraaid is.
+      'owner_user_id': ?ownerUserId,
       'family_id': familyId,
       'name': name,
       'lat': latitude,
@@ -55,10 +59,14 @@ class PlacesRepository {
     List<String>? watchedMembers,
     bool notifyArrival = true,
     bool notifyDeparture = true,
+    String? ownerUserId,
+    bool includeOwner = false,
   }) async {
     final updated = await _client
         .from('places')
         .update({
+          // Alleen meesturen als er een eigenaar is of was (zie migratie 013).
+          if (includeOwner) 'owner_user_id': ownerUserId,
           'name': name,
           'lat': latitude,
           'lng': longitude,

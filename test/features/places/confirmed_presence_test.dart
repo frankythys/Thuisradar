@@ -39,4 +39,16 @@ void main() {
   test('zonder locatie blijft de aanwezigheid gelden', () {
     expect(confirmedPresence([inside], [home], const []), [inside]);
   });
+
+  test('verse GPS binnen de cirkel telt meteen als aanwezig', () {
+    final now = DateTime(2026, 10, 9, 10, 0, 20);
+    final ids = presentUserIdsAt(home, const [], [at(51.2003, 4.4)], now);
+    expect(ids, {'u'});
+  });
+
+  test('oude GPS binnen de cirkel telt niet zonder bevestiging', () {
+    final now = DateTime(2026, 10, 9, 12);
+    expect(presentUserIdsAt(home, const [], [at(51.2003, 4.4)], now), isEmpty);
+    expect(presentUserIdsAt(home, const [inside], [at(51.2003, 4.4)], now), {'u'});
+  });
 }

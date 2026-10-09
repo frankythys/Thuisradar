@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
 import 'package:thuisradar/features/places/presentation/place_row.dart';
 
-Place _place({bool arrival = true, bool departure = true, List<String>? watched}) => Place(
+Place _place({bool arrival = true, bool departure = true, List<String>? watched, String? owner}) => Place(
   id: 'p',
   familyId: 'f',
   name: 'Thuis',
@@ -13,6 +13,7 @@ Place _place({bool arrival = true, bool departure = true, List<String>? watched}
   notifyArrival: arrival,
   notifyDeparture: departure,
   watchedMembers: watched,
+  ownerUserId: owner,
 );
 
 void main() {

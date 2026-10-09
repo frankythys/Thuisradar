@@ -46,6 +46,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   double _radius = 150;
   String _icon = 'home';
   bool _busy = false;
+  String? _owner;
   bool get _editing => widget.place != null;
 
   @override
@@ -59,6 +60,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       _watchedMembers.addAll(place.watchedMembers ?? const []);
       _arrival = place.notifyArrival;
       _departure = place.notifyDeparture;
+      _owner = place.ownerUserId;
       _selection.resolve(_selection.beginSearch(), at, place.address ?? '');
       if (place.address case final address?) _search.text = address;
       WidgetsBinding.instance.addPostFrameCallback((_) => _controller.move(at, 16));
@@ -157,6 +159,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     final watchedMembers = _watchedMembers.toList();
     final arrival = _arrival;
     final departure = _departure;
+    final owner = _owner;
     var address = _selection.address?.trim();
     final repository = ref.read(placesRepositoryProvider);
     try {
@@ -191,6 +194,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           watchedMembers: watchedMembers,
           notifyArrival: arrival,
           notifyDeparture: departure,
+          ownerUserId: owner,
+          includeOwner: owner != null || place.ownerUserId != null,
         );
         ref.invalidate(familyPlacesProvider(widget.familyId));
       } else {
@@ -205,6 +210,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           watchedMembers: watchedMembers,
           notifyArrival: arrival,
           notifyDeparture: departure,
+          ownerUserId: owner,
         );
       }
       if (mounted) {
@@ -442,6 +448,31 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                                 ),
                               ],
                             ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text('Van wie is deze plaats?', style: Theme.of(context).textTheme.titleMedium),
+                    const Text(
+                      'Bv. Werk van Franky. Die persoon staat dan altijd bij deze plaats.',
+                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        ChoiceChip(
+                          label: const Text('Niemand apart'),
+                          selected: _owner == null,
+                          onSelected: (_) => setState(() => _owner = null),
+                        ),
+                        for (final member
+                            in ref.watch(familyMembersProvider(widget.familyId)).value ??
+                                const <FamilyMember>[])
+                          ChoiceChip(
+                            label: Text(member.displayName),
+                            selected: _owner == member.userId,
+                            onSelected: (_) => setState(() => _owner = member.userId),
                           ),
                       ],
                     ),
