@@ -70,4 +70,41 @@ void main() {
     expect(shortStreet(street: 'Boomsesteenweg 174, 2610 Antwerpen, België'), 'Boomsesteenweg 174');
     expect(shortStreet(), isNull);
   });
+
+  test('de dagkaart tekent enkel de ritten, niet het rondlopen in de winkel', () {
+    final base = trip();
+    // Binnenshuis-GPS in de winkel: tot 35 m alle kanten op.
+    final noisy = [
+      for (final p in base)
+        p.latitude == 51.180 && p.longitude == 4.380
+            ? TrackPoint(
+                latitude: p.latitude + (p.recordedAt.second.isEven ? 0.0003 : -0.0003),
+                longitude: p.longitude + (p.recordedAt.minute.isEven ? 0.0004 : -0.0004),
+                recordedAt: p.recordedAt,
+                speedMps: 0,
+              )
+            : p,
+    ];
+    final routes = dayRoutes(buildTimeline(noisy), noisy);
+    final storeTime = (DateTime(2026, 10, 9, 17, 15), DateTime(2026, 10, 9, 17, 30));
+    for (final segment in routes) {
+      for (final point in segment) {
+        final inStore = point.recordedAt.isAfter(storeTime.$1) && point.recordedAt.isBefore(storeTime.$2);
+        expect(inStore, isFalse, reason: 'punt ${point.recordedAt} hoort bij het verblijf');
+      }
+    }
+    expect(routes, isNotEmpty);
+  });
+
+  test('een GPS-sprong wordt weggelaten', () {
+    final t = DateTime(2026, 10, 9, 17);
+    final track = [
+      TrackPoint(latitude: 51.170, longitude: 4.395, recordedAt: t),
+      TrackPoint(latitude: 51.171, longitude: 4.395, recordedAt: t.add(const Duration(seconds: 10))),
+      // 2 km weg in 5 s: onmogelijk.
+      TrackPoint(latitude: 51.190, longitude: 4.395, recordedAt: t.add(const Duration(seconds: 15))),
+      TrackPoint(latitude: 51.172, longitude: 4.395, recordedAt: t.add(const Duration(seconds: 20))),
+    ];
+    expect(withoutSpikes(track).map((p) => p.latitude), [51.170, 51.171, 51.172]);
+  });
 }

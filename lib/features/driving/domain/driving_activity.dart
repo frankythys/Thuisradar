@@ -190,12 +190,44 @@ double _legMeters(TrackPoint a, TrackPoint b) =>
     distanceMeters(a.latitude, a.longitude, b.latitude, b.longitude);
 
 /// De GPS-punten tussen vertrek en aankomst van [activity]: de echte route van
-/// die rit, zodat de kaart op de rit zelf kan inzoomen. Leeg als er geen
-/// punten in dat tijdsvak vallen.
-List<TrackPoint> activityTrack(DrivingActivity activity, List<TrackPoint> points) => [
-  for (final point in points)
-    if (!point.recordedAt.isBefore(activity.start) && !point.recordedAt.isAfter(activity.end)) point,
+/// die rit, zodat de kaart op de rit zelf kan inzoomen. Zonder GPS-sprongen,
+/// zodat er geen zigzag over de kaart loopt. Leeg voor een verblijf of als er
+/// geen punten in dat tijdsvak vallen.
+List<TrackPoint> activityTrack(DrivingActivity activity, List<TrackPoint> points) {
+  if (activity.kind != DrivingActivityKind.trip) return const [];
+  return withoutSpikes([
+    for (final point in points)
+      if (!point.recordedAt.isBefore(activity.start) && !point.recordedAt.isAfter(activity.end)) point,
+  ]);
+}
+
+/// Alle ritten van een dag als routestukken, zonder het stilstaan ertussen.
+/// Voor de dagkaart: rondlopen in een winkel of binnenshuis-GPS is geen route
+/// en gaf een wirwar van lijnen op de plek waar je stond.
+List<List<TrackPoint>> dayRoutes(List<TimelineEntry> entries, List<TrackPoint> points) => [
+  for (final activity in buildDayActivities(entries, points))
+    if (activity.kind == DrivingActivityKind.trip) ...splitTrackGaps(activityTrack(activity, points)),
 ];
+
+/// Hoger dan dit (≈ 160 km/u) tussen twee metingen is geen rijden maar een
+/// GPS-sprong (bv. even een zendmastpositie).
+const kMaxPlausibleSpeedMps = 45.0;
+
+/// Laat metingen weg die onmogelijk snel van de vorige wegspringen. Een sprong
+/// heen en terug wordt zo één weggelaten punt i.p.v. twee lange lijnen.
+List<TrackPoint> withoutSpikes(List<TrackPoint> track, {double maxSpeedMps = kMaxPlausibleSpeedMps}) {
+  final kept = <TrackPoint>[];
+  for (final point in track) {
+    if (kept.isNotEmpty) {
+      final previous = kept.last;
+      final seconds = point.recordedAt.difference(previous.recordedAt).inMilliseconds / 1000;
+      final meters = _legMeters(previous, point);
+      if (seconds > 0 && meters / seconds > maxSpeedMps && meters > kStopRadiusMeters) continue;
+    }
+    kept.add(point);
+  }
+  return kept;
+}
 
 /// Hoogste gemeten snelheid in km/u langs [track], of null zonder bruikbare
 /// GPS-snelheid. Onzinwaarden (negatief, boven 70 m/s ≈ 250 km/u) tellen niet.

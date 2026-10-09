@@ -34,7 +34,6 @@ import '../../location/domain/place_address.dart';
 import '../../location/domain/member_location.dart';
 import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
-import '../../location/domain/track_segments.dart';
 import '../../location/domain/trip_status.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
@@ -185,7 +184,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 // Het echte GPS-spoor, geknipt bij meetgaten — nooit een rechte
                 // lijn dwars door de stad.
                 segments: [
-                  for (final segment in splitTrackGaps(routePoints))
+                  for (final segment in dayRoutes(dayHistory?.value?.entries ?? const [], routePoints))
                     [for (final point in segment) LatLng(point.latitude, point.longitude)],
                 ],
               ),
