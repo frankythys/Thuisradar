@@ -13,12 +13,23 @@ void main() {
     expect(accepted, isNotNull);
   });
 
-  test('een betrouwbare GPS-snelheid meldt meteen beweging', () {
+  test('een betrouwbare GPS-snelheid meldt beweging vanaf de tweede fix', () {
+    final filter = MotionFilter();
+    final at = base.add(const Duration(seconds: 5));
+    filter.accept(pos(51, 3, base, accuracy: 10, speed: 8), base);
+    final accepted = filter.accept(pos(51.0004, 3, at, accuracy: 10, speed: 8), at);
+
+    expect(accepted!.speedMps, 8);
+    expect(filter.wantsFastUpdates, isTrue);
+  });
+
+  test('de eerste fix na opstart meldt nooit meteen rijden', () {
     final filter = MotionFilter();
     final accepted = filter.accept(pos(51, 3, base, accuracy: 10, speed: 8), base);
 
     expect(accepted, isNotNull);
-    expect(accepted!.speedMps, 8);
+    expect(accepted!.speedMps, isNull);
+    // Wel sneller meten, zodat een echte rit snel bevestigd wordt.
     expect(filter.wantsFastUpdates, isTrue);
   });
 

@@ -62,9 +62,11 @@ class MotionFilter {
     final coarse = accuracy != null && accuracy > _reliableAccuracyMeters;
     var speed = point.speedMps;
     if (speed != null && (!speed.isFinite || speed < 0 || speed > 70)) speed = null;
-    // Een betrouwbare GPS-snelheid (nauwkeurige fix) is onmiddellijk bewijs;
-    // een uit afstand afgeleide snelheid pas na twee metingen.
-    var fromGps = speed != null && !coarse;
+    // Een betrouwbare GPS-snelheid (nauwkeurige fix) is onmiddellijk bewijs,
+    // maar niet op de eerste fix na (her)start: die draagt vaak nog een oude of
+    // valse snelheid mee, waardoor iemand bij het openen even "rijdt".
+    // Een uit afstand afgeleide snelheid telt pas na twee metingen.
+    var fromGps = speed != null && !coarse && previous != null;
     if (coarse) {
       // Te grof om beweging te bewijzen: enkel een aanwezigheidspunt.
       speed = null;
