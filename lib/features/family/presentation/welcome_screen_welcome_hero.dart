@@ -25,8 +25,8 @@ class _WelcomeHero extends StatelessWidget {
             left: 100,
             child: CircleAvatar(
               radius: 12,
-              backgroundColor: Color(0xFFE7DEFF),
-              child: Icon(Icons.person, size: 16, color: AppColors.secondary),
+              backgroundColor: AppColors.primarySoft,
+              child: Icon(Icons.person, size: 16, color: AppColors.primary),
             ),
           ),
           const Positioned(

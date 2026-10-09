@@ -45,9 +45,9 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          // Geen vaste kleuren: gevuld = primary, tonal = secondaryContainer
+          // (licht Oceaan) uit het kleurenschema.
           minimumSize: const Size.fromHeight(52),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
           textStyle: textTheme.labelLarge,
           shape: const StadiumBorder(),
         ),
@@ -80,10 +80,11 @@ abstract final class AppTheme {
       onPrimary: Colors.white,
       primaryContainer: AppColors.primarySoft,
       onPrimaryContainer: AppColors.primary,
-      secondary: AppColors.secondary,
+      // Geen paars meer: secundair is ook Oceaan, lichte knoppen zijn zacht blauw.
+      secondary: AppColors.primaryContainer,
       onSecondary: Colors.white,
-      secondaryContainer: Color(0xFFE7DEFF),
-      onSecondaryContainer: Color(0xFF24115E),
+      secondaryContainer: AppColors.primarySoft,
+      onSecondaryContainer: AppColors.primary,
       error: AppColors.alert,
       onError: Colors.white,
       errorContainer: AppColors.alertSoft,

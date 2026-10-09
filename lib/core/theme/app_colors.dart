@@ -9,7 +9,6 @@ abstract final class AppColors {
 
   /// Iets sterkere tint voor actieve chips en secundaire knoppen.
   static const primaryTint = Color(0xFFC4E5EF);
-  static const secondary = Color(0xFF633FCD);
   static const alert = Color(0xFFB4370A);
 
   /// Lichte oranje tint achter lage-batterij-pills en SOS-badges.

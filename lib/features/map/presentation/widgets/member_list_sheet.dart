@@ -349,10 +349,7 @@ class _InviteBanner extends StatelessWidget {
                     children: [
                       Text('Nodig anderen uit, blijf samen veiliger', style: text.titleMedium),
                       SizedBox(height: tokens.spaceXs),
-                      Text(
-                        'Dierbaren toevoegen',
-                        style: text.labelLarge?.copyWith(color: AppColors.secondary),
-                      ),
+                      Text('Dierbaren toevoegen', style: text.labelLarge?.copyWith(color: AppColors.primary)),
                     ],
                   ),
                 ),
