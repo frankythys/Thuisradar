@@ -61,7 +61,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
         const PrivacyAction(),
         const NotificationsAction(),
         ...actions,
-        if (actions.isEmpty && title != 'Profiel & instellingen') const ProfileAction(),
+        if (actions.isEmpty && title != 'Profiel') const ProfileAction(),
         SizedBox(width: tokens.spaceSm),
       ],
     );

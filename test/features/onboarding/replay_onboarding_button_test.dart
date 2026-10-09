@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/onboarding/application/onboarding_providers.dart';
 import 'package:thuisradar/features/onboarding/data/onboarding_store.dart';
 import 'package:thuisradar/features/onboarding/presentation/replay_onboarding_button.dart';
@@ -26,6 +27,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
+          theme: AppTheme.light(),
           home: Builder(
             builder: (context) => TextButton(
               onPressed: () => Navigator.push(
