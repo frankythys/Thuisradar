@@ -130,6 +130,9 @@ void main() {
     controller.jumpTo(0.94);
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Bellen'), 200, scrollable: find.byType(Scrollable).last);
+    // Met de lagere kop kan de knop net op de rand staan: helemaal in beeld brengen.
+    await tester.ensureVisible(find.text('Bellen'));
+    await tester.pumpAndSettle();
     expect(find.text('Bellen').hitTestable(), findsOneWidget);
   });
 

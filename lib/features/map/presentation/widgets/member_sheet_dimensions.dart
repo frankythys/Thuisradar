@@ -55,7 +55,8 @@ abstract final class MemberSheetDimensions {
   }
 
   /// Ingeklapte hoogte. Alleen in het gezin: greep + uitnodigingskaart. Bij een
-  /// actief gezin: gezinsnaam, knoppen en een stukje van de eerste persoon.
+  /// actief gezin: enkel gezinsnaam en knoppen, zodat de kaart zo groot
+  /// mogelijk blijft.
   static double collapsedHeight(
     BuildContext context,
     double width, {
@@ -65,11 +66,8 @@ abstract final class MemberSheetDimensions {
     final tokens = context.tokens;
     if (showInvite) return (2 * tokens.spaceSm + _handle + inviteHeight(context, width)).ceilToDouble();
     final header = headerHeight(context, width, familyName: familyName, showInvite: false);
-    return (header + tokens.spaceMd + _peek).ceilToDouble();
+    return (header + tokens.spaceSm).ceilToDouble();
   }
 
   static const _handle = 16.0;
-
-  /// Zichtbaar stukje van de eerste persoon onder de knoppen.
-  static const _peek = 56.0;
 }

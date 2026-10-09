@@ -275,7 +275,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
               ),
             ),
           ],
-          _Header(member: widget.member, location: location),
+          Padding(
+            padding: EdgeInsets.fromLTRB(tokens.spaceLg, 0, tokens.spaceLg, tokens.spaceSm),
+            child: _Header(member: widget.member, location: location),
+          ),
         ],
       );
       final fixed = GestureDetector(

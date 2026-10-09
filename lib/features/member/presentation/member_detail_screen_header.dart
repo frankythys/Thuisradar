@@ -13,29 +13,33 @@ class _Header extends ConsumerWidget {
     final now = ref.watch(clockProvider).value ?? DateTime.now();
     final trip = TripStatus.at(location, now);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    // Compact: avatar links, naam en statusregel ernaast. Geen aparte
+    // statuspil meer, zodat de vaste kop in het paneel laag blijft.
+    return Row(
       children: [
-        MemberAvatar(member: member, size: 64, statusColor: location == null ? null : AppColors.primary),
-        SizedBox(height: tokens.spaceSm),
-        Text(member.displayName, style: text.headlineMedium, textAlign: TextAlign.center),
-        SizedBox(height: tokens.spaceXs),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
-          child: Text(
-            location == null ? 'Nog geen locatie' : trip.label,
-            style: text.labelLarge?.copyWith(color: AppColors.primary),
+        MemberAvatar(member: member, size: 56, statusColor: location == null ? null : AppColors.primary),
+        SizedBox(width: tokens.spaceMd),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                member.displayName,
+                style: text.headlineSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: tokens.spaceXs),
+              Text(
+                location == null ? 'Nog geen locatie' : trip.description(location, now),
+                style: text.bodyMedium?.copyWith(color: AppColors.muted),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
-        if (location != null) ...[
-          SizedBox(height: tokens.spaceXs),
-          Text(
-            trip.description(location, now),
-            style: text.bodyMedium?.copyWith(color: AppColors.muted),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ],
     );
   }
