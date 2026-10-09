@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/geo.dart';
+
 import '../../../places/domain/place_status.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../domain/bubble_side.dart';
@@ -53,8 +55,8 @@ class ClusteredMarkerLayer extends StatefulWidget {
 
 class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     with SingleTickerProviderStateMixin {
-  /// Binnen deze schermafstand van het huis-icoon telt iemand als "bij huis".
-  static const _nearPlacePx = 48.0;
+  /// Binnen deze echte afstand van het huis telt iemand als "bij huis".
+  static const _nearPlaceMeters = 200.0;
 
   late final AnimationController _controller = AnimationController(
     vsync: this,
@@ -217,9 +219,9 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     Offset screenOf(String id) =>
         camera.latLngToScreenOffset(LatLng(coords[id]!.lat, coords[id]!.lng));
 
-    // Vrijhouden van het huis-icoon: enkel voor wie echt bij dat icoon staat.
-    // Wie verder weg is, mag niet over het huis heen naar boven geduwd worden
-    // (anders komen mensen op aparte locaties toch op één hoop).
+    // Vrijhouden van het huis-icoon: voor wie echt bij huis is (op echte
+    // afstand, zodat het ook bij inzoomen blijft gelden). Wie verder weg is,
+    // mag niet over het huis heen naar boven geduwd worden.
     final clearance = <String, Offset>{};
     for (final group in groups) {
       if (isDriving(group)) {
@@ -238,8 +240,15 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           height,
         ),
         [
-          for (final place in placePoints)
-            if ((place - screenPoint).distance <= _nearPlacePx) place,
+          for (final (index, place) in widget.reservedPlaces.indexed)
+            if (distanceMeters(
+                  coords[group.first]!.lat,
+                  coords[group.first]!.lng,
+                  place.latitude,
+                  place.longitude,
+                ) <=
+                _nearPlaceMeters)
+              placePoints[index],
         ],
       );
     }

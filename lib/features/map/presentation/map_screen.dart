@@ -117,7 +117,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   /// Bewuste keuze van een lid (lijst of marker): zoom ernaartoe, schuif de
-  /// persoonsdetails open in het onderpaneel. Telt als bewuste beweging en vergrendelt
+  /// persoonsdetails in het onderpaneel, dat beneden blijft zodat de kaart
+  /// zichtbaar blijft. Telt als bewuste beweging en vergrendelt
   /// auto-fit, zodat de kaart daarna niet meer vanzelf terugspringt.
   void _select(MemberOnMap entry) {
     final location = entry.location;
@@ -134,7 +135,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       if (_sheetScrollController?.hasClients == true) {
         _sheetScrollController!.jumpTo(0);
       }
-      _sheetController.animateTo(0.60, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+      // Het paneel blijft (of gaat) beneden: de persoon zie je op de kaart,
+      // de details schuif je zelf omhoog.
+      if (_sheetMinimum case final minimum?) {
+        _sheetController.animateTo(minimum, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+      }
     }
     setState(() => _selected = entry);
   }
