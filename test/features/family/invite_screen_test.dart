@@ -27,8 +27,8 @@ void main() {
       ),
     );
     expect(find.text('A B C 1 2 3 4 5'), findsOneWidget);
-    await tester.ensureVisible(find.text('Verzenden'));
-    await tester.tap(find.text('Verzenden'));
+    await tester.ensureVisible(find.text('Uitnodiging versturen'));
+    await tester.tap(find.text('Uitnodiging versturen'));
     await tester.pumpAndSettle();
 
     expect(shared?.method, 'share');
@@ -51,9 +51,37 @@ void main() {
         ),
       ),
     );
-    await tester.ensureVisible(find.text('Verzenden'));
-    await tester.tap(find.text('Verzenden'));
+    await tester.ensureVisible(find.text('Uitnodiging versturen'));
+    await tester.tap(find.text('Uitnodiging versturen'));
     await tester.pumpAndSettle();
     expect(find.text('Verzenden lukt niet. Probeer opnieuw of kopieer de code.'), findsOneWidget);
+  });
+
+  testWidgets('vanuit kaart of profiel: geen "Familie aangemaakt!" en geen doorgaan-knop', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const InviteScreen(family: family),
+        ),
+      ),
+    );
+    expect(find.text('Nodig je gezin uit'), findsOneWidget);
+    expect(find.text('Familie aangemaakt!'), findsNothing);
+    expect(find.text('Doorgaan naar app'), findsNothing);
+    expect(find.byTooltip('Code kopiëren'), findsOneWidget);
+  });
+
+  testWidgets('net aangemaakt: felicitatie en doorgaan naar de app', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const InviteScreen(family: family, justCreated: true),
+        ),
+      ),
+    );
+    expect(find.text('Familie aangemaakt!'), findsOneWidget);
+    expect(find.text('Doorgaan naar app'), findsOneWidget);
   });
 }

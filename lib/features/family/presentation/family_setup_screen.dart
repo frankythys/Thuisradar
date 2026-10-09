@@ -63,7 +63,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
     if (name.isEmpty) return;
     _run(
       () => ref.read(familyRepositoryProvider).createFamily(name),
-      (family) => InviteScreen(family: family),
+      (family) => InviteScreen(family: family, justCreated: true),
     );
   }
 

@@ -4,9 +4,9 @@ class _HowItWorks extends StatelessWidget {
   const _HowItWorks();
 
   static const _steps = [
-    'Laat hen de CircleBeacon app installeren.',
-    'Kies "Ik heb een uitnodigingscode" en vul bovenstaande code in.',
-    'Jullie zien elkaar direct veilig op de kaart.',
+    'Installeer CircleBeacon',
+    'Kies "Ik heb een uitnodigingscode"',
+    'Vul de code in, klaar',
   ];
 
   @override
@@ -18,12 +18,11 @@ class _HowItWorks extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Hoe werkt het voor gezinsleden?', style: text.titleLarge),
-          SizedBox(height: tokens.spaceMd),
+          Text('Zo werkt het', style: text.titleSmall),
+          SizedBox(height: tokens.spaceSm),
           for (final (index, step) in _steps.indexed) ...[
-            if (index > 0) SizedBox(height: tokens.spaceMd),
+            if (index > 0) SizedBox(height: tokens.spaceSm),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _StepBadge(number: index + 1),
                 SizedBox(width: tokens.spaceMd),

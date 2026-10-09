@@ -16,9 +16,13 @@ part 'invite_screen_step_badge.dart';
 
 /// Scherm 8: na het aanmaken van een familie. Toont de code en laat die delen.
 class InviteScreen extends StatelessWidget {
-  const InviteScreen({super.key, required this.family});
+  const InviteScreen({super.key, required this.family, this.justCreated = false});
 
   final Family family;
+
+  /// Net na het aanmaken: "Familie aangemaakt!" en een knop door naar de app.
+  /// Vanuit kaart of profiel gewoon "Nodig je gezin uit".
+  final bool justCreated;
 
   Future<void> _share(BuildContext context) async {
     final box = context.findRenderObject() as RenderBox?;
@@ -58,42 +62,42 @@ class InviteScreen extends StatelessWidget {
     final tokens = context.tokens;
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Familie uitnodigen'),
+      appBar: const BrandedAppBar(title: 'Gezin uitnodigen'),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(tokens.spaceLg),
+          padding: EdgeInsets.fromLTRB(tokens.spaceLg, tokens.spaceSm, tokens.spaceLg, tokens.spaceLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const _SuccessHero(),
-              SizedBox(height: tokens.spaceLg),
-              Text('Familie aangemaakt!', style: text.headlineLarge, textAlign: TextAlign.center),
-              SizedBox(height: tokens.spaceSm),
+              _SuccessHero(justCreated: justCreated),
+              SizedBox(height: tokens.spaceMd),
               Text(
-                'Nodig je gezinsleden uit om samen locaties en veilige aankomsten te delen.',
-                style: text.bodyLarge?.copyWith(color: AppColors.muted),
+                justCreated ? 'Familie aangemaakt!' : 'Nodig je gezin uit',
+                style: text.headlineMedium,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: tokens.spaceXs),
+              Text(
+                'Stuur de code. Wie ze invult, ziet jullie meteen op de kaart.',
+                style: text.bodyMedium?.copyWith(color: AppColors.muted),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: tokens.spaceLg),
-              _CodeCard(code: family.inviteCode),
-              SizedBox(height: tokens.spaceLg),
+              _CodeCard(code: family.inviteCode, onCopy: () => _copy(context)),
+              SizedBox(height: tokens.spaceMd),
               Builder(
                 builder: (buttonContext) => FilledButton.icon(
                   onPressed: () => _share(buttonContext),
                   icon: const Icon(Icons.share, size: 20),
-                  label: const Text('Verzenden'),
+                  label: const Text('Uitnodiging versturen'),
                 ),
-              ),
-              SizedBox(height: tokens.spaceSm),
-              FilledButton.tonalIcon(
-                onPressed: () => _copy(context),
-                icon: const Icon(Icons.copy, size: 20),
-                label: const Text('Code kopiëren'),
               ),
               SizedBox(height: tokens.spaceLg),
               const _HowItWorks(),
-              SizedBox(height: tokens.spaceLg),
-              TextButton(onPressed: () => _continue(context), child: const Text('Doorgaan naar app')),
+              if (justCreated) ...[
+                SizedBox(height: tokens.spaceMd),
+                TextButton(onPressed: () => _continue(context), child: const Text('Doorgaan naar app')),
+              ],
             ],
           ),
         ),
