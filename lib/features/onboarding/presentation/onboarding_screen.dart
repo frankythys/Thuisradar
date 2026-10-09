@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
-import '../../../shared/widgets/radar_logo.dart';
 import '../application/onboarding_providers.dart';
 import '../domain/onboarding_slide.dart';
-import 'widgets/onboarding_hero.dart';
+import 'widgets/onboarding_parts.dart';
+import 'widgets/onboarding_stage.dart';
+import 'widgets/scenes/scene_bits.dart';
 
 /// Toont de intro-slides; enkel de eerste keer (zie onboarding-gate).
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -20,193 +20,84 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _controller = PageController();
   int _index = 0;
 
+  static final _lastIndex = onboardingSlides.length - 1;
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
-  bool get _isLast => _index == onboardingSlides.length - 1;
+  bool get _isLast => _index == _lastIndex;
 
   Future<void> _finish() async {
     await ref.read(onboardingStoreProvider).markSeen();
     ref.invalidate(onboardingSeenProvider);
   }
 
-  void _next() {
-    if (_isLast) {
-      _finish();
-    } else {
-      _controller.nextPage(duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
-    }
+  void _goTo(int page) {
+    _controller.animateToPage(page, duration: const Duration(milliseconds: 320), curve: Curves.easeOutCubic);
   }
+
+  void _next() => _isLast ? _finish() : _goTo(_index + 1);
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(tokens.spaceMd),
-          child: Column(
-            children: [
-              const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: RadarLogo(size: 32)),
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 16,
-                    backgroundColor: AppColors.primaryContainer,
-                    child: Icon(Icons.radar, size: 20, color: Colors.white),
-                  ),
-                  const SizedBox(width: 8),
-                  Text('CircleBeacon', style: Theme.of(context).textTheme.titleMedium),
-                  const Spacer(),
-                ],
+        child: Column(
+          children: [
+            // Overslaan springt naar de laatste slide; afronden blijft een bewuste keuze.
+            OnboardingTopBar(onSkip: _isLast ? null : () => _goTo(_lastIndex)),
+            Expanded(
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: onboardingSlides.length,
+                onPageChanged: (i) => setState(() => _index = i),
+                itemBuilder: (context, i) => _SlidePage(slide: onboardingSlides[i]),
               ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _controller,
-                  itemCount: onboardingSlides.length,
-                  onPageChanged: (i) => setState(() => _index = i),
-                  itemBuilder: (context, i) => _SlideView(slide: onboardingSlides[i]),
-                ),
-              ),
-              SizedBox(height: tokens.spaceMd),
-              _Dots(count: onboardingSlides.length, index: _index),
-              SizedBox(height: tokens.spaceLg),
-              FilledButton(
-                onPressed: _next,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(_isLast ? 'Aan de slag' : 'Volgende'),
-                    SizedBox(width: tokens.spaceSm),
-                    const Icon(Icons.arrow_forward, size: 20),
-                  ],
-                ),
-              ),
-              if (_isLast) TextButton(onPressed: _finish, child: const Text('Ik heb al een gezinscode')),
-            ],
-          ),
+            ),
+            OnboardingFooter(
+              count: onboardingSlides.length,
+              index: _index,
+              onNext: _next,
+              onHaveCode: _finish,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _SlideView extends StatelessWidget {
-  const _SlideView({required this.slide});
+class _SlidePage extends StatelessWidget {
+  const _SlidePage({required this.slide});
 
   final OnboardingSlide slide;
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
-
-    return SingleChildScrollView(
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd),
       child: Column(
         children: [
-          SizedBox(height: tokens.spaceSm),
-          if (slide.illustrationBase.endsWith('_4')) ...[
-            Text(slide.title, style: text.headlineLarge, textAlign: TextAlign.center),
-            const SizedBox(height: 8),
-            Text(
-              slide.body,
-              style: text.bodyMedium?.copyWith(color: AppColors.muted),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-          ],
-          OnboardingHero(base: slide.illustrationBase, icon: slide.icon),
-          SizedBox(height: tokens.spaceXl),
-          if (!slide.illustrationBase.endsWith('_4')) ...[
-            Text(slide.title, style: text.headlineLarge, textAlign: TextAlign.center),
-            SizedBox(height: tokens.spaceSm),
-            Text(
-              slide.body,
-              style: text.bodyMedium?.copyWith(color: AppColors.muted),
-              textAlign: TextAlign.center,
-            ),
-          ],
-          if (slide.illustrationBase.endsWith('_4'))
-            const _Footnote(title: 'Geen vals alarm', body: '3 seconden vasthouden om te activeren'),
-          if (slide.footnote != null) ...[
-            SizedBox(height: tokens.spaceXl),
-            _Footnote(title: slide.footnoteTitle!, body: slide.footnote!),
-            if (slide.illustrationBase.endsWith('_2')) ...[
-              const SizedBox(height: 12),
-              const _Footnote(title: 'Geen advertenties', body: 'Jullie privacy is heilig'),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _Footnote extends StatelessWidget {
-  const _Footnote({required this.title, required this.body});
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final tokens = context.tokens;
-
-    return Container(
-      padding: EdgeInsets.all(tokens.spaceMd),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(tokens.radiusCard),
-        boxShadow: tokens.shadowLevel1,
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.shield_rounded, color: AppColors.primary),
-          SizedBox(width: tokens.spaceMd),
+          SizedBox(height: tokens.spaceXs),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: text.titleMedium),
-                SizedBox(height: tokens.spaceXs),
-                Text(body, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
-              ],
+            // Vaste verhouding: op hoge schermen komt er lucht rond, niet een uitvergrote scène.
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: sceneAspectRatio,
+                child: OnboardingStage(scene: slide.scene),
+              ),
             ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(tokens.spaceXs, tokens.spaceLg, tokens.spaceXs, 0),
+            child: OnboardingCopy(slide: slide),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Dots extends StatelessWidget {
-  const _Dots({required this.count, required this.index});
-
-  final int count;
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (var i = 0; i < count; i++)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            width: i == index ? 24 : 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: i == index ? AppColors.primary : AppColors.border,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-      ],
     );
   }
 }

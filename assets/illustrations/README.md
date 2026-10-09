@@ -1,13 +1,7 @@
 # Onboarding-illustraties
 
-Zet hier de echte Stitch-illustraties. De onboarding gebruikt ze automatisch;
-ontbreekt een bestand, dan valt dat scherm terug op de radar-cirkel.
+De onboarding tekent zijn illustraties in code (zie
+`lib/features/onboarding/presentation/widgets/scenes/`), met de kleuren uit
+`AppColors`. Zo volgen ze automatisch het kleurpalet van de app.
 
-Verwachte bestandsnamen (PNG **of** SVG, extensie maakt niet uit):
-
-- `onboarding_1` — Altijd weten dat iedereen veilig thuis is
-- `onboarding_2` — Alleen voor je familie
-- `onboarding_3` — Meldingen als het telt
-- `onboarding_4` — Hulp met één knop
-
-Bijvoorbeeld `onboarding_1.png` of `onboarding_1.svg`.
+`onboarding_2.svg` is een oudere illustratie die niet meer gebruikt wordt.

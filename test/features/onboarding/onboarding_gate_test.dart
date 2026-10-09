@@ -57,9 +57,7 @@ Future<void> _start(WidgetTester tester) async {
 void main() {
   setUp(() => VideoPlayerPlatform.instance = _Player());
 
-  testWidgets('afgebroken onboarding toont intro opnieuw na herstart', (
-    tester,
-  ) async {
+  testWidgets('afgebroken onboarding toont intro opnieuw na herstart', (tester) async {
     SharedPreferences.setMockInitialValues({'onboarding_intro_seen': true});
     await _start(tester);
     expect(find.byType(IntroScreen), findsOneWidget);
@@ -72,15 +70,13 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('volledig afronden stopt intro bij volgende appstart', (
-    tester,
-  ) async {
+  testWidgets('volledig afronden stopt intro bij volgende appstart', (tester) async {
     SharedPreferences.setMockInitialValues({});
     await _start(tester);
     await tester.tap(find.text('Overslaan'));
     await tester.pumpAndSettle();
     for (var i = 0; i < 3; i++) {
-      await tester.tap(find.text('Volgende'));
+      await tester.tap(find.byTooltip('Volgende'));
       await tester.pumpAndSettle();
     }
     await tester.tap(find.text('Aan de slag'));

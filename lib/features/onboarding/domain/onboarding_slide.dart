@@ -1,65 +1,55 @@
-import 'package:flutter/material.dart';
+/// Welke illustratie bovenaan een slide staat.
+enum OnboardingScene { map, privacy, alerts, sos }
 
-/// Eén onboarding-slide: puur gegeven, zonder Flutter-logica buiten het icoon.
-@immutable
+/// Eén onboarding-slide: puur gegeven, zonder Flutter.
 class OnboardingSlide {
   const OnboardingSlide({
-    required this.icon,
-    required this.illustrationBase,
+    required this.scene,
+    required this.eyebrow,
     required this.title,
     required this.body,
-    this.footnoteTitle,
-    this.footnote,
+    required this.reassurance,
   });
 
-  final IconData icon;
+  final OnboardingScene scene;
 
-  /// Pad zonder extensie, bv. `assets/illustrations/onboarding_1`. De hero zoekt
-  /// hier een `.png` of `.svg` bij; ontbreekt die, dan toont hij het [icon].
-  final String illustrationBase;
-
+  /// Kort label boven de titel, bv. "Privacy".
+  final String eyebrow;
   final String title;
   final String body;
 
-  /// Optionele uitgelichte belofte onderaan de slide (bv. privacy).
-  final String? footnoteTitle;
-  final String? footnote;
+  /// Eén geruststellende regel onder de uitleg.
+  final String reassurance;
 }
 
-/// De vier slides, tekst letterlijk uit de Stitch-mockups.
+/// De vier slides, in volgorde.
 const onboardingSlides = <OnboardingSlide>[
   OnboardingSlide(
-    icon: Icons.home_rounded,
-    illustrationBase: 'assets/illustrations/onboarding_1',
-    title: 'Altijd weten dat iedereen veilig thuis is',
-    body: 'Een gerust hart voor het hele gezin. Deel elkaars veilige aankomst zonder gedoe of controlesfeer.',
-    footnoteTitle: 'Privacy op de eerste plaats',
-    footnote: 'Enkel zichtbaar voor jullie eigen veilige familiekring.',
+    scene: OnboardingScene.map,
+    eyebrow: 'Live kaart',
+    title: 'Zie in één oogopslag waar iedereen is',
+    body: 'Jullie gezin op één kaart, live bijgewerkt. Geen telefoontjes meer om te vragen waar iemand is.',
+    reassurance: 'Zuinig voor je batterij',
   ),
   OnboardingSlide(
-    icon: Icons.verified_user_rounded,
-    illustrationBase: 'assets/illustrations/onboarding_2',
-    title: 'Alleen voor je familie',
-    body:
-        'Jullie locaties zijn uitsluitend zichtbaar binnen jullie eigen familiekring. '
-        'Geen trackers, nooit verkocht of gedeeld.',
-    footnoteTitle: 'Besloten gezinskring',
-    footnote: 'Alleen gezinsleden hebben toegang',
+    scene: OnboardingScene.privacy,
+    eyebrow: 'Privacy',
+    title: 'Alleen jullie gezin kijkt mee',
+    body: 'Locaties zijn enkel zichtbaar binnen jullie eigen kring. Niemand anders, ook wij niet.',
+    reassurance: 'Je bepaalt zelf wie in je kring zit',
   ),
   OnboardingSlide(
-    icon: Icons.notifications_active_rounded,
-    illustrationBase: 'assets/illustrations/onboarding_3',
-    title: 'Meldingen als het telt',
-    body:
-        'Automatische seintjes bij vertrek en aankomst op vertrouwde plekken '
-        'zoals Thuis, School of Werk.',
+    scene: OnboardingScene.alerts,
+    eyebrow: 'Meldingen',
+    title: 'Een seintje als iemand aankomt',
+    body: 'Automatisch bericht bij vertrek en aankomst op vertrouwde plekken zoals Thuis, School of Werk.',
+    reassurance: 'Per plek aan of uit te zetten',
   ),
   OnboardingSlide(
-    icon: Icons.emergency_rounded,
-    illustrationBase: 'assets/illustrations/onboarding_4',
+    scene: OnboardingScene.sos,
+    eyebrow: 'Noodknop',
     title: 'Hulp met één knop',
-    body:
-        'In noodgevallen stuurt de noodknop direct een discreet alarmsignaal '
-        'met je exacte live-locatie naar het hele gezin.',
+    body: 'Houd de noodknop 3 seconden vast en het hele gezin krijgt meteen een alarm met je live-locatie.',
+    reassurance: 'Geen vals alarm door per ongeluk tikken',
   ),
 ];
