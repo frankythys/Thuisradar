@@ -159,17 +159,16 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     final coords = {
       for (final m in located) m.member.userId: _displayed(m.member.userId),
     };
-    final points = [
+    // Groeperen op echte afstand: enkel wie op dezelfde plek staat, komt
+    // samen in één groepspin, ongeacht de zoom.
+    final groups = clusterByMeters([
       for (final m in located)
-        ClusterPoint(
+        GeoClusterPoint(
           m.member.userId,
-          camera.latLngToScreenOffset(
-            LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
-          ),
+          coords[m.member.userId]!.lat,
+          coords[m.member.userId]!.lng,
         ),
-    ];
-
-    final groups = clusterByScreenDistance(points);
+    ]);
     // Rijdende auto's houden ieder hun eigen exacte wegpositie.
     for (final member in located) {
       if (TripStatus.at(member.location, widget.now).state !=
@@ -288,7 +287,12 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
             for (final group in groups)
               if (group.length == 1) byId[group.single]!,
           ];
-    final screenById = {for (final p in points) p.id: p.position};
+    final screenById = {
+      for (final m in located)
+        m.member.userId: camera.latLngToScreenOffset(
+          LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
+        ),
+    };
     for (final selected in bubbleMembers) {
       final id = selected.member.userId;
       final coordinate = coords[id]!;

@@ -42,4 +42,26 @@ void main() {
     ], thresholdPx: 40);
     expect(groups, hasLength(1));
   });
+
+  test('op echte afstand: aparte locaties blijven apart, ook dicht bij elkaar', () {
+    // ±600 m uit elkaar in Antwerpen: op zoom 12 zou dat vroeger één groep zijn.
+    final groups = clusterByMeters(const [
+      GeoClusterPoint('franky', 51.2000, 4.4000),
+      GeoClusterPoint('liam', 51.2054, 4.4000),
+    ]);
+    expect(groups, [
+      ['franky'],
+      ['liam'],
+    ]);
+  });
+
+  test('op echte afstand: zelfde plek (binnen 60 m) wordt één groep', () {
+    final groups = clusterByMeters(const [
+      GeoClusterPoint('papa', 51.2000, 4.4000),
+      GeoClusterPoint('mama', 51.2002, 4.4002),
+    ]);
+    expect(groups, [
+      ['papa', 'mama'],
+    ]);
+  });
 }
