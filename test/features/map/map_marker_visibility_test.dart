@@ -82,7 +82,7 @@ void main() {
   });
 
   testWidgets(
-    'rijdende auto staat midden op kaartpunt en wordt niet geclusterd',
+    'rijdende persoonscirkel staat op wegpunt met aansluitende tekstballon',
     (tester) async {
       final controller = MapController();
       const point = LatLng(51, 3);
@@ -122,6 +122,7 @@ void main() {
                 ClusteredMarkerLayer(
                   members: cars,
                   now: now,
+                  selectedUserId: 'Franky',
                   reservedPlaces: const [point],
                   onMemberTap: (_) {},
                   onGroupTap: (_) {},
@@ -132,25 +133,35 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      final images = find.byWidgetPredicate(
+      final oldCarImages = find.byWidgetPredicate(
         (widget) =>
             widget is Image &&
             widget.image is AssetImage &&
             (widget.image as AssetImage).assetName == 'assets/markers/auto.png',
       );
-      expect(images, findsNWidgets(2));
+      expect(oldCarImages, findsNothing);
+      final circles = find.byType(MemberAvatar);
+      expect(circles, findsNWidgets(2));
       expect(find.byType(GroupPin), findsNothing);
       for (final zoom in [16.0, 18.0]) {
         controller.move(point, zoom);
         await tester.pumpAndSettle();
         for (var i = 0; i < 2; i++) {
           expect(
-            (tester.getCenter(images.at(i)) -
+            (tester.getCenter(circles.at(i)) -
                     tester.getCenter(find.byKey(pointKey)))
                 .distance,
             lessThan(0.1),
           );
         }
+        final franky = find.byWidgetPredicate(
+          (widget) =>
+              widget is MemberAvatar && widget.member.userId == 'Franky',
+        );
+        expect(
+          tester.getRect(find.text('Rijden')).top,
+          lessThan(tester.getRect(franky).top),
+        );
       }
       await tester.pumpWidget(const SizedBox());
       controller.dispose();
@@ -284,9 +295,14 @@ void main() {
     expect(find.text('+1'), findsOneWidget);
     // De gezamenlijke witte vorm houdt de grote maat (72); de gezichten zelf
     // liggen erbinnen met een dun wit scheidingslijntje of de paarse rand.
-    expect(tester.widget<GroupPinBackdrop>(find.byType(GroupPinBackdrop)).diameter, 72);
     expect(
-      tester.widgetList<MemberAvatar>(find.byType(MemberAvatar)).every((avatar) => avatar.size >= 60),
+      tester.widget<GroupPinBackdrop>(find.byType(GroupPinBackdrop)).diameter,
+      72,
+    );
+    expect(
+      tester
+          .widgetList<MemberAvatar>(find.byType(MemberAvatar))
+          .every((avatar) => avatar.size >= 60),
       isTrue,
     );
     expect(tester.takeException(), isNull);

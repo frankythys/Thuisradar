@@ -7,7 +7,7 @@ import '../../core/theme/app_colors.dart';
 import 'app_map_tiles.dart';
 
 /// Werkelijke kaartpositie, gedeeld door detail, chat en het SOS-scherm.
-class LocationPreview extends StatelessWidget {
+class LocationPreview extends StatefulWidget {
   const LocationPreview({
     super.key,
     required this.latitude,
@@ -18,6 +18,8 @@ class LocationPreview extends StatelessWidget {
     this.height = 220,
     this.fitBounds = false,
     this.showMarker = true,
+    this.allowFullscreen = false,
+    this.interactive = false,
   });
   final double latitude, longitude, height;
   final String initial;
@@ -33,37 +35,166 @@ class LocationPreview extends StatelessWidget {
   /// Toon de avatar-marker. Uit bij routekaarten: daar vertelt de route zelf
   /// het verhaal en tonen we alleen een begin- en een eindpunt.
   final bool showMarker;
+  final bool allowFullscreen;
+  final bool interactive;
+
+  @override
+  State<LocationPreview> createState() => _LocationPreviewState();
+}
+
+class _LocationPreviewState extends State<LocationPreview> {
+  final _controller = MapController();
+  bool _ready = false;
+  bool _fitScheduled = false;
+
+  List<List<LatLng>> get _lines => widget.segments.isNotEmpty
+      ? widget.segments
+      : [if (widget.route.length > 1) widget.route];
+
+  List<LatLng> get _points => [for (final line in _lines) ...line];
+
+  @override
+  void didUpdateWidget(covariant LocationPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldPoints = [
+      for (final line
+          in oldWidget.segments.isNotEmpty
+              ? oldWidget.segments
+              : [oldWidget.route])
+        ...line,
+    ];
+    final points = _points;
+    final changed =
+        oldPoints.length != points.length ||
+        List.generate(
+          points.length,
+          (i) => i,
+        ).any((i) => oldPoints[i] != points[i]);
+    if (changed ||
+        widget.fitBounds != oldWidget.fitBounds ||
+        widget.latitude != oldWidget.latitude ||
+        widget.longitude != oldWidget.longitude) {
+      _scheduleFit();
+    }
+  }
+
+  void _scheduleFit() {
+    if (_fitScheduled || !_ready) return;
+    _fitScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fitScheduled = false;
+      if (!mounted || !_ready) return;
+      final points = _points;
+      if (widget.fitBounds && points.length > 1) {
+        _controller.fitCamera(
+          CameraFit.coordinates(
+            coordinates: points,
+            padding: const EdgeInsets.all(28),
+            maxZoom: 17,
+          ),
+        );
+      } else {
+        _controller.move(
+          widget.fitBounds && points.isNotEmpty
+              ? points.first
+              : LatLng(widget.latitude, widget.longitude),
+          14,
+        );
+      }
+    });
+  }
+
+  void _fullscreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: const Text('Ritkaart')),
+          body: Padding(
+            padding: const EdgeInsets.all(12),
+            child: SizedBox.expand(
+              child: LocationPreview(
+                latitude: widget.latitude,
+                longitude: widget.longitude,
+                initial: widget.initial,
+                segments: _lines,
+                height: double.infinity,
+                fitBounds: true,
+                showMarker: widget.showMarker,
+                interactive: true,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lines = segments.isNotEmpty ? segments : [if (route.length > 1) route];
+    final lines = _lines;
     final points = [for (final line in lines) ...line];
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: SizedBox(
-        height: height,
+        height: widget.height,
         child: FlutterMap(
+          mapController: _controller,
           options: MapOptions(
-            initialCenter: LatLng(latitude, longitude),
+            initialCenter: LatLng(widget.latitude, widget.longitude),
             initialZoom: 14,
-            initialCameraFit: fitBounds && points.length > 1
-                ? CameraFit.coordinates(coordinates: points, padding: const EdgeInsets.all(16))
+            initialCameraFit: widget.fitBounds && points.length > 1
+                ? CameraFit.coordinates(
+                    coordinates: points,
+                    padding: const EdgeInsets.all(28),
+                    maxZoom: 17,
+                  )
                 : null,
-            interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+            onMapReady: () {
+              _ready = true;
+              if (widget.fitBounds) _scheduleFit();
+            },
+            interactionOptions: InteractionOptions(
+              flags: widget.interactive
+                  ? InteractiveFlag.all & ~InteractiveFlag.rotate
+                  : InteractiveFlag.none,
+            ),
           ),
           children: [
             const AppMapTiles(),
             if (lines.isNotEmpty)
               PolylineLayer(
                 polylines: [
-                  for (final line in lines) Polyline(points: line, color: AppColors.primary, strokeWidth: 4),
+                  for (final line in lines.where((line) => line.length > 1))
+                    Polyline(
+                      points: line,
+                      color: AppColors.primary,
+                      strokeWidth: 4,
+                    ),
                 ],
               ),
-            if (showMarker)
+            if (!widget.showMarker && lines.any((line) => line.length == 1))
+              MarkerLayer(
+                markers: [
+                  for (final line in lines)
+                    if (line.length == 1)
+                      _routePoint(
+                        point: line.single,
+                        color: AppColors.muted,
+                        size: 10,
+                      ),
+                ],
+              ),
+            if (widget.showMarker)
               MarkerLayer(
                 markers: [
                   Marker(
-                    point: LatLng(latitude, longitude),
+                    point: LatLng(widget.latitude, widget.longitude),
                     width: 48,
                     height: 48,
                     child: Container(
@@ -74,7 +205,7 @@ class LocationPreview extends StatelessWidget {
                         border: Border.all(color: Colors.white, width: 4),
                       ),
                       child: Text(
-                        initial,
+                        widget.initial,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -88,8 +219,16 @@ class LocationPreview extends StatelessWidget {
             else if (points.length > 1)
               MarkerLayer(
                 markers: [
-                  _routePoint(point: points.first, color: AppColors.muted, size: 14),
-                  _routePoint(point: points.last, color: AppColors.primary, size: 18),
+                  _routePoint(
+                    point: points.first,
+                    color: AppColors.muted,
+                    size: 14,
+                  ),
+                  _routePoint(
+                    point: points.last,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                 ],
               ),
             // Verplichte naamsvermelding van de gratis OpenStreetMap-tegels.
@@ -98,7 +237,8 @@ class LocationPreview extends StatelessWidget {
               alignment: Alignment.bottomRight,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => launchUrl(Uri.https('www.openstreetmap.org', '/copyright')),
+                onTap: () =>
+                    launchUrl(Uri.https('www.openstreetmap.org', '/copyright')),
                 child: const Padding(
                   padding: EdgeInsets.fromLTRB(8, 4, 6, 4),
                   child: Text(
@@ -108,6 +248,26 @@ class LocationPreview extends StatelessWidget {
                 ),
               ),
             ),
+            if (widget.allowFullscreen)
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Material(
+                    color: Colors.white,
+                    elevation: 2,
+                    borderRadius: BorderRadius.circular(12),
+                    child: IconButton(
+                      tooltip: 'Ritkaart vergroten',
+                      onPressed: _fullscreen,
+                      icon: const Icon(
+                        Icons.fullscreen,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -116,7 +276,11 @@ class LocationPreview extends StatelessWidget {
 }
 
 /// Begin- en eindpunt van een route: klein rondje met witte rand.
-Marker _routePoint({required LatLng point, required Color color, required double size}) => Marker(
+Marker _routePoint({
+  required LatLng point,
+  required Color color,
+  required double size,
+}) => Marker(
   point: point,
   width: size,
   height: size,
@@ -129,15 +293,25 @@ Marker _routePoint({required LatLng point, required Color color, required double
   ),
 );
 
-Future<void> openDirections(BuildContext context, double latitude, double longitude) async {
-  final uri = Uri.https('www.google.com', '/maps/dir/', {'api': '1', 'destination': '$latitude,$longitude'});
+Future<void> openDirections(
+  BuildContext context,
+  double latitude,
+  double longitude,
+) async {
+  final uri = Uri.https('www.google.com', '/maps/dir/', {
+    'api': '1',
+    'destination': '$latitude,$longitude',
+  });
   try {
     if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
   } on Exception {
     /* Toon een herstelbare fout in de app. */
   }
   if (context.mounted) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Route-app openen mislukt. Probeer opnieuw.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Route-app openen mislukt. Probeer opnieuw.'),
+      ),
+    );
   }
 }

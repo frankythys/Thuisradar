@@ -206,8 +206,11 @@ void main() {
         ),
       ),
     );
-    expect(find.byIcon(Icons.directions_car), findsOneWidget);
-    expect(find.text('Onderweg'), findsOneWidget);
+    final car = tester.widget<Image>(find.byType(Image));
+    final image = (car.image as ResizeImage).imageProvider as AssetImage;
+    expect(image.assetName, 'assets/icon/Rijdende auto.png');
+    expect(find.byIcon(Icons.directions_car), findsNothing);
+    expect(find.text('Rijden'), findsOneWidget);
     expect(find.text('45 km/u'), findsOneWidget);
     expect(find.text('Hier sinds'), findsNothing);
     expect(tester.takeException(), isNull);

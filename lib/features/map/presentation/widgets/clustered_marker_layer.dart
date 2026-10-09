@@ -308,7 +308,10 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
             point: point,
             width: GroupPin.width,
             height: GroupPin.height,
-            alignment: Alignment(2 * shiftX / width, 1 + 2 * offset.dy / height),
+            alignment: Alignment(
+              2 * shiftX / width,
+              1 + 2 * offset.dy / height,
+            ),
             child: GestureDetector(
               onTap: () => widget.onGroupTap(point),
               child: GroupPin(
@@ -338,7 +341,10 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       for (final m in located)
         m.member.userId:
             camera.latLngToScreenOffset(
-              LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
+              LatLng(
+                coords[m.member.userId]!.lat,
+                coords[m.member.userId]!.lng,
+              ),
             ) +
             Offset(offsets[m.member.userId]?.dx ?? 0, 0),
     };
@@ -367,7 +373,13 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           ),
           child: Transform.translate(
             // Zoals de referentie: hoger en verder over de bovenhoek.
-            offset: Offset(onRight ? 20 : -20, -78),
+            offset: Offset(
+              onRight ? 20 : -20,
+              TripStatus.at(selected.location, widget.now).state ==
+                      TripState.moving
+                  ? -18
+                  : -78,
+            ),
             child: MemberHistoryBubble(
               entry: selected,
               now: widget.now,

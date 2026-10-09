@@ -1,0 +1,278 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Thuisradar kleurvoorstellen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: kiesbalk met paletten bovenaan, daaronder drie telefoons naast elkaar (nu / nieuwe login / kaart) */
+:root {
+  --bg: #f4f5f7; --fg: #15171c; --muted: #5b616e; --line: #dfe2e8; --card: #ffffff; --focus: #3346c9;
+  --font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121419; --fg: #eceef2; --muted: #9aa1ad; --line: #2a2e37; --card: #1b1e25; --focus: #9aa6ff; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #121419; --fg: #eceef2; --muted: #9aa1ad; --line: #2a2e37; --card: #1b1e25; --focus: #9aa6ff; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); padding-inline: 16px; padding-block: 28px 48px }
+.wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 24px }
+header h1 { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 6px; text-wrap: balance }
+header p { margin: 0; color: var(--muted); max-width: 62ch; line-height: 1.5 }
+
+.picker { display: flex; flex-wrap: wrap; gap: 10px }
+.pick { font: inherit; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 10px;
+  border-radius: 14px; border: 1.5px solid var(--line); background: var(--card); color: var(--fg); text-align: left }
+.pick:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px }
+.pick[aria-pressed="true"] { border-color: var(--fg) }
+.pick .dots { display: flex }
+.pick .dots i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--card); margin-left: -6px }
+.pick .dots i:first-child { margin-left: 0 }
+.pick b { display: block; font-size: 14px }
+.pick small { color: var(--muted); font-size: 12px }
+
+.note { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; line-height: 1.5; font-size: 14px }
+.note strong { font-weight: 700 }
+
+.phones { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center }
+.col { display: grid; gap: 10px; justify-items: center }
+.col .cap { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .04em; text-transform: uppercase }
+
+/* ---------- Telefoon (app is altijd licht thema) ---------- */
+.phone { width: 300px; height: 620px; border-radius: 38px; padding: 10px; background: #0d0f13; position: relative; flex: none; max-width: 100% }
+.screen { width: 100%; height: 100%; border-radius: 30px; overflow: hidden; position: relative; background: var(--a-ground);
+  color: var(--a-ink); font-family: var(--font); display: flex; flex-direction: column }
+.status { height: 26px; flex: none; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 11px; font-weight: 700 }
+.overflow-tag { position: absolute; left: 0; right: 0; bottom: 0; height: 90px; display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 14px; background: linear-gradient(transparent, rgba(180,55,10,.22)); pointer-events: none }
+.overflow-tag span { background: #b4370a; color: #fff; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 99px }
+
+/* login */
+.login { flex: 1; padding: 6px 22px 18px; display: flex; flex-direction: column }
+.brand { display: flex; align-items: center; gap: 10px; margin-top: 18px }
+.brand .name { font-weight: 800; font-size: 17px; letter-spacing: -.01em }
+.hello { margin-top: 30px }
+.hello h2 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2 }
+.hello p { margin: 6px 0 0; font-size: 13.5px; color: var(--a-muted); line-height: 1.45 }
+.fields { margin-top: 24px; display: grid; gap: 12px }
+.field { display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 14px; border-radius: 14px; background: #fff;
+  border: 1.5px solid var(--a-border); font-size: 14px }
+.field.focus { border-color: var(--a-primary); box-shadow: 0 0 0 3px var(--a-soft) }
+.field svg { flex: none }
+.field .ph { color: var(--a-muted) }
+.field .val { color: var(--a-ink); font-weight: 500 }
+.row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; font-size: 12.5px }
+.check { display: flex; align-items: center; gap: 8px; font-weight: 500 }
+.box { width: 18px; height: 18px; border-radius: 5px; background: var(--a-primary); display: grid; place-items: center }
+.link { color: var(--a-primary); font-weight: 700 }
+.actions { margin-top: auto; display: grid; gap: 14px }
+.btnrow { display: flex; gap: 10px }
+.btn { flex: 1; height: 52px; border-radius: 99px; background: var(--a-primary); color: #fff; font-weight: 700; font-size: 14.5px;
+  display: flex; align-items: center; justify-content: center; gap: 8px }
+.bio { width: 52px; height: 52px; border-radius: 50%; background: var(--a-soft); display: grid; place-items: center; flex: none }
+.signup { text-align: center; font-size: 13px; color: var(--a-muted) }
+.signup b { color: var(--a-primary) }
+
+/* oud (huidig) login, bewust zoals in de app */
+.old { padding: 14px 16px; display: flex; flex-direction: column; align-items: stretch; gap: 0; font-size: 12px }
+.old .c { text-align: center }
+.old .card { background: #fff; border-radius: 16px; padding: 16px; margin-top: 14px }
+.old .lbl { font-weight: 600; font-size: 13px; margin: 10px 0 5px }
+.old .inp { height: 42px; border-radius: 12px; background: #e7f7f0; display: flex; align-items: center; gap: 8px; padding: 0 10px; color: #3e4945 }
+.old .btn { height: 44px; flex: none }
+.old .or { display: flex; align-items: center; gap: 10px; color: #3e4945; margin: 12px 0; font-size: 11px }
+.old .or::before, .old .or::after { content: ''; flex: 1; height: 1px; background: #bec9c4 }
+
+/* kaart */
+.map { flex: 1; position: relative; background: var(--a-mapbg); overflow: hidden }
+.map svg.streets { position: absolute; inset: 0; width: 100%; height: 100% }
+.top { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center }
+.pill { background: #fff; border-radius: 99px; padding: 8px 12px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 6px 18px -6px rgba(20,24,40,.25) }
+.pill .live { width: 7px; height: 7px; border-radius: 50%; background: var(--a-primary) }
+.marker { position: absolute; transform: translate(-50%, -100%); display: grid; justify-items: center }
+.marker .av { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #fff; display: grid; place-items: center; color: #fff;
+  font-weight: 800; font-size: 13px; box-shadow: 0 6px 14px -4px rgba(20,24,40,.35) }
+.marker .tip { width: 10px; height: 10px; background: #fff; transform: rotate(45deg); margin-top: -6px }
+.marker.sel .av { outline: 3px solid var(--a-primary); outline-offset: 2px }
+.home { position: absolute; transform: translate(-50%, -50%); width: 70px; height: 70px; border-radius: 50%;
+  background: color-mix(in srgb, var(--a-primary) 14%, transparent); border: 1.5px dashed var(--a-primary) }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 22px 22px 0 0; padding: 10px 16px 14px;
+  box-shadow: 0 -8px 28px rgba(20,24,40,.12) }
+.grab { width: 36px; height: 4px; border-radius: 4px; background: var(--a-border); margin: 0 auto 10px }
+.mem { display: flex; align-items: center; gap: 10px }
+.mem .av { width: 36px; height: 36px; border-radius: 50%; color: #fff; font-weight: 800; font-size: 13px; display: grid; place-items: center; flex: none }
+.mem .t { flex: 1; min-width: 0 }
+.mem .t b { display: block; font-size: 14px }
+.mem .t span { font-size: 12px; color: var(--a-muted) }
+.chip { font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 99px; background: var(--a-soft); color: var(--a-primary) }
+.chip.warn { background: #f7e0d4; color: #b4370a }
+.nav { flex: none; height: 64px; background: #fff; border-top: 1px solid var(--a-border); display: flex; justify-content: space-around; align-items: center; font-size: 10.5px; font-weight: 600; color: var(--a-muted) }
+.nav div { display: grid; justify-items: center; gap: 3px }
+.nav .on { color: var(--a-primary) }
+.nav .ic { width: 52px; height: 28px; border-radius: 99px; display: grid; place-items: center }
+.nav .on .ic { background: var(--a-soft) }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px }
+.sw { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 12px }
+.sw i { display: block; height: 44px }
+.sw div { padding: 8px 10px; display: grid; gap: 2px }
+.sw code { color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums }
+h3 { margin: 6px 0 0; font-size: 15px }
+@media (prefers-reduced-motion: no-preference) { .screen, .screen * { transition: background-color .25s, color .25s, border-color .25s } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Thuisradar: kleurvoorstellen</h1>
+    <p>Kies hieronder een kleur. Links zie je het loginscherm zoals het nu is, in het midden het nieuwe, rustigere loginscherm dat zonder scrollen past, en rechts de kaart in dezelfde kleur.</p>
+  </header>
+
+  <div class="picker" id="picker" role="group" aria-label="Kleurpalet"></div>
+  <div class="note" id="note"></div>
+
+  <div class="phones">
+    <div class="col"><div class="cap">Nu</div>
+      <div class="phone"><div class="screen" id="old"></div></div></div>
+    <div class="col"><div class="cap">Nieuw: login</div>
+      <div class="phone"><div class="screen" id="login"></div></div></div>
+    <div class="col"><div class="cap">Nieuw: kaart</div>
+      <div class="phone"><div class="screen" id="mapscreen"></div></div></div>
+  </div>
+
+  <h3>Kleuren van dit voorstel</h3>
+  <div class="swatches" id="swatches"></div>
+</div>
+
+<script>
+const PALETTES = [
+  { id: 'indigo', name: 'Indigo', sub: 'rustig en betrouwbaar',
+    primary: '#3346C9', soft: '#E7EAFC', ground: '#F5F6FA', ink: '#141729', muted: '#5A6075', border: '#D6DAE6', mapbg: '#EEF0F5',
+    note: '<strong>Mijn aanrader.</strong> Blauw past bij kaart en veiligheid, oogt kalm en botst niet met het oranjerood van SOS en lage batterij. De achtergrond wordt neutraal lichtgrijs in plaats van mintgroen.' },
+  { id: 'oceaan', name: 'Oceaan', sub: 'fris blauwgroen',
+    primary: '#0A6F91', soft: '#DFF1F6', ground: '#F4F7F8', ink: '#0F1E24', muted: '#51646B', border: '#CFDDE2', mapbg: '#ECF2F3',
+    note: 'Een tussenweg: nog een vleugje groen, maar frisser en blauwer. Goed als je het huidige gevoel wilt houden zonder het donkere bosgroen.' },
+  { id: 'koraal', name: 'Koraal', sub: 'warm en familiaal',
+    primary: '#D9573B', soft: '#FCE8E2', ground: '#FAF7F5', ink: '#2A1915', muted: '#6D5650', border: '#E8D9D3', mapbg: '#F3EFEC',
+    note: 'Warm en vriendelijk. <strong>Let op:</strong> ligt dicht bij de SOS-kleur, dus SOS zou dan echt rood moeten worden (bv. #C62828) zodat een noodmelding blijft opvallen.' },
+  { id: 'violet', name: 'Violet', sub: 'modern en speels',
+    primary: '#6A45D1', soft: '#EEE8FC', ground: '#F7F6FB', ink: '#1A1530', muted: '#5F5878', border: '#DCD6EA', mapbg: '#F0EEF5',
+    note: 'Modern en speels. Er zit nu al paars in de app (kaartselectie); die selectiekleur zou dan een andere tint moeten krijgen.' },
+];
+const MEMBERS = ['#0E6E5C', '#64748B', '#2563EB', '#B45309', '#BE185D'];
+const ic = {
+  mail: c => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>`,
+  lock: c => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`,
+  eye: c => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" style="margin-left:auto"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  finger: c => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8" stroke-linecap="round"><path d="M12 11v4a6 6 0 0 1-1 3.5"/><path d="M8.5 7.5A5 5 0 0 1 17 11v2.5"/><path d="M5 10a7 7 0 0 1 1.5-4"/><path d="M8 12v2a9 9 0 0 1-1.2 4.5"/><path d="M16 16.5a14 14 0 0 1-.8 3.5"/><path d="M9.5 3.6A8 8 0 0 1 19.6 8"/></svg>`,
+  arrow: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`,
+  tick: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"><path d="m5 12 5 5 9-10"/></svg>`,
+  map: c => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="m9 4-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>`,
+  pin: c => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>`,
+  chat: c => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>`,
+  bell: c => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>`,
+};
+const logo = (c, s = 34) => `<svg width="${s}" height="${s}" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="${c}"/><circle cx="20" cy="20" r="12" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2"/><circle cx="20" cy="20" r="6" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="2"/><circle cx="20" cy="20" r="2.6" fill="#fff"/><path d="M20 20 31 11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+const status = '<div class="status"><span>9:41</span><span>●●● 87%</span></div>';
+
+function setVars(el, p) {
+  for (const k of ['primary','soft','ground','ink','muted','border','mapbg']) el.style.setProperty('--a-' + k, p[k]);
+}
+
+function renderOld() {
+  const el = document.getElementById('old');
+  setVars(el, { primary:'#005445', soft:'#E1F2EB', ground:'#EDFDF6', ink:'#101E1A', muted:'#3E4945', border:'#BEC9C4', mapbg:'#E7F7F0' });
+  el.innerHTML = status + `<div class="old">
+    <div class="c" style="margin-top:6px">${logo('#005445', 46)}</div>
+    <div class="c" style="font-weight:600;font-size:14px;margin-top:6px">CircleBeacon</div>
+    <div class="c" style="color:#005445;font-weight:700;font-size:10px;letter-spacing:.06em;margin-top:4px">• • VEILIG &amp; VERTROUWD</div>
+    <div class="card">
+      <div class="c" style="font-weight:800;font-size:22px">Welkom terug</div>
+      <div class="c" style="color:#3e4945;margin-top:4px">Log in om verbonden te blijven met je familie.</div>
+      <div class="lbl">E-mailadres</div><div class="inp">${ic.mail('#005445')} naam@voorbeeld.be</div>
+      <div class="lbl">Wachtwoord</div><div class="inp">${ic.lock('#005445')} ••••••••</div>
+      <div style="display:flex;gap:8px;margin-top:12px"><div class="box" style="background:#005445;flex:none">${ic.tick}</div>
+        <div><b style="font-size:12.5px">Inloggegevens onthouden</b><div style="color:#3e4945">E-mailadres en wachtwoord versleuteld bewaren op dit toestel.</div></div></div>
+      <div style="text-align:right;color:#005445;font-weight:700;margin:10px 0 14px">Wachtwoord vergeten?</div>
+      <div class="btn" style="background:#005445">Inloggen ${ic.arrow}</div>
+      <div class="or">OF</div>
+      <div class="btn" style="background:#e7f7f0;color:#005445;flex:none">${ic.finger('#005445')} Inloggen met biometrie</div>
+    </div>
+    <div class="c" style="color:#005445;font-weight:700;margin-top:14px">Nieuw? Maak een account</div>
+    <div class="c" style="margin-top:12px">🔒 Versleuteld &amp; alleen zichtbaar voor jouw gezin</div>
+  </div><div class="overflow-tag"><span>Moet scrollen om alles te zien</span></div>`;
+}
+
+function renderLogin(p) {
+  const el = document.getElementById('login'); setVars(el, p);
+  el.innerHTML = status + `<div class="login">
+    <div class="brand">${logo(p.primary)}<span class="name">Thuisradar</span></div>
+    <div class="hello"><h2>Welkom terug</h2><p>Log in om te zien waar je gezin is.</p></div>
+    <div class="fields">
+      <div class="field">${ic.mail(p.muted)}<span class="val">papa@voorbeeld.be</span></div>
+      <div class="field focus">${ic.lock(p.primary)}<span class="val">••••••••••</span>${ic.eye(p.muted)}</div>
+    </div>
+    <div class="row"><span class="check"><span class="box">${ic.tick}</span>Onthouden</span><span class="link">Wachtwoord vergeten?</span></div>
+    <div class="actions">
+      <div class="btnrow"><div class="btn">Inloggen ${ic.arrow}</div><div class="bio" title="Inloggen met biometrie">${ic.finger(p.primary)}</div></div>
+      <div class="signup">Nieuw hier? <b>Maak een account</b></div>
+    </div></div>`;
+}
+
+function renderMap(p) {
+  const el = document.getElementById('mapscreen'); setVars(el, p);
+  const road = '#ffffff', minor = p.border;
+  el.innerHTML = status + `<div class="map">
+    <svg class="streets" viewBox="0 0 280 470" preserveAspectRatio="xMidYMid slice">
+      <rect x="150" y="40" width="110" height="80" rx="10" fill="${p.soft}" opacity=".7"/>
+      <rect x="20" y="260" width="80" height="60" rx="10" fill="${p.soft}" opacity=".7"/>
+      <path d="M-10 150 C80 140 160 190 300 170" stroke="${minor}" stroke-width="16" fill="none"/>
+      <path d="M-10 150 C80 140 160 190 300 170" stroke="${road}" stroke-width="12" fill="none"/>
+      <path d="M120 -10 C110 120 150 260 130 480" stroke="${minor}" stroke-width="14" fill="none"/>
+      <path d="M120 -10 C110 120 150 260 130 480" stroke="${road}" stroke-width="10" fill="none"/>
+      <path d="M-10 330 L300 300" stroke="${road}" stroke-width="7" fill="none"/>
+      <path d="M40 -10 L60 480 M220 -10 L240 480 M-10 70 L300 90" stroke="${road}" stroke-width="5" fill="none"/>
+    </svg>
+    <div class="top"><span class="pill"><span class="live"></span>Gezin Thys</span><span class="pill">4 online</span></div>
+    <div class="home" style="left:58%;top:36%"></div>
+    <div class="marker sel" style="left:58%;top:36%"><div class="av" style="background:${MEMBERS[0]}">P</div><div class="tip"></div></div>
+    <div class="marker" style="left:30%;top:58%"><div class="av" style="background:${MEMBERS[2]}">L</div><div class="tip"></div></div>
+    <div class="marker" style="left:78%;top:62%"><div class="av" style="background:${MEMBERS[4]}">M</div><div class="tip"></div></div>
+    <div class="marker" style="left:22%;top:24%"><div class="av" style="background:${MEMBERS[3]}">E</div><div class="tip"></div></div>
+    <div class="sheet"><div class="grab"></div>
+      <div class="mem"><div class="av" style="background:${MEMBERS[0]}">P</div>
+        <div class="t"><b>Papa</b><span>Thuis · 2 min geleden</span></div><span class="chip">Thuis</span></div>
+      <div class="mem" style="margin-top:10px"><div class="av" style="background:${MEMBERS[2]}">L</div>
+        <div class="t"><b>Liam</b><span>School · nu</span></div><span class="chip warn">12%</span></div>
+    </div></div>
+    <div class="nav">
+      <div class="on"><span class="ic">${ic.map(p.primary)}</span>Kaart</div>
+      <div><span class="ic">${ic.pin(p.muted)}</span>Plaatsen</div>
+      <div><span class="ic">${ic.chat(p.muted)}</span>Chat</div>
+      <div><span class="ic">${ic.bell(p.muted)}</span>Meldingen</div>
+    </div>`;
+}
+
+function renderSwatches(p) {
+  const rows = [['Hoofdkleur', p.primary], ['Zachte tint', p.soft], ['Achtergrond', p.ground], ['Tekst', p.ink], ['Grijze tekst', p.muted], ['Randen', p.border]];
+  document.getElementById('swatches').innerHTML = rows.map(([n, c]) =>
+    `<div class="sw"><i style="background:${c}"></i><div><b>${n}</b><code>${c}</code></div></div>`).join('');
+}
+
+function select(id) {
+  const p = PALETTES.find(x => x.id === id) || PALETTES[0];
+  document.querySelectorAll('.pick').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === p.id));
+  document.getElementById('note').innerHTML = p.note;
+  renderLogin(p); renderMap(p); renderSwatches(p);
+  try { localStorage.setItem('tr-palette', p.id) } catch (e) {}
+}
+
+document.getElementById('picker').innerHTML = PALETTES.map(p =>
+  `<button class="pick" id="pick-${p.id}" data-id="${p.id}" aria-pressed="false">
+     <span class="dots"><i style="background:${p.primary}"></i><i style="background:${p.soft}"></i><i style="background:${p.ground}"></i></span>
+     <span><b>${p.name}</b><small>${p.sub}</small></span></button>`).join('');
+document.querySelectorAll('.pick').forEach(b => b.addEventListener('click', () => select(b.dataset.id)));
+renderOld();
+let start = 'indigo'; try { start = localStorage.getItem('tr-palette') || start } catch (e) {}
+select(start);
+</script>
+
+</body></html>
