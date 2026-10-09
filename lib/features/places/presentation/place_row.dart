@@ -21,8 +21,8 @@ class PlaceRow extends StatelessWidget {
 
   final Place place;
 
-  /// Te tonen gezinsleden: wie er nu is (here = true) en wie aan deze plaats
-  /// gekoppeld is maar er nu niet is (here = false, doorzichtig).
+  /// Te tonen gezinsleden: wie er nu is (here = true) en de persoon van wie
+  /// deze plaats is maar er nu niet is (here = false).
   final List<({FamilyMember member, bool here})> present;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -134,7 +134,7 @@ String notificationSummary(Place place) {
 
 /// Wie er bij een plaats getoond wordt (op de plek waar anders "Leeg" staat):
 /// eerst wie er nu is, daarna de persoon van wie de plaats is (bv. Werk van
-/// Franky) als die er nu niet is, doorzichtig.
+/// Franky) als die er nu niet is.
 List<({FamilyMember member, bool here})> placePeople(
   Place place,
   List<FamilyMember> members,
@@ -173,14 +173,12 @@ class _PresentStack extends StatelessWidget {
                 message: person.here
                     ? '${person.member.displayName} is hier'
                     : '${person.member.displayName} is er nu niet',
-                child: Opacity(
-                  opacity: person.here ? 1 : 0.4,
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                    child: Padding(
-                      padding: const EdgeInsets.all(2),
-                      child: MemberAvatar(member: person.member, size: _size - 4),
-                    ),
+                // Altijd de eigen kleur van de persoon, ook als die er nu niet is.
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: MemberAvatar(member: person.member, size: _size - 4),
                   ),
                 ),
               ),
