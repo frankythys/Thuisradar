@@ -14,13 +14,17 @@ import '../../location/application/location_providers.dart';
 import '../../map/presentation/widgets/family_map.dart';
 import '../application/places_providers.dart';
 import 'place_icons.dart';
+import '../domain/place.dart';
 import '../domain/selected_place_location.dart';
 
 /// Scherm 14: plaats toevoegen door de kaart te verschuiven (vaste pin in het
 /// midden), een adres te zoeken en de meldingen per gezinslid in te stellen.
 class AddPlaceScreen extends ConsumerStatefulWidget {
-  const AddPlaceScreen({super.key, required this.familyId, this.initialLocation});
+  const AddPlaceScreen({super.key, required this.familyId, this.initialLocation, this.place});
   final String familyId;
+
+  /// Te bewerken plaats; null = nieuwe plaats toevoegen.
+  final Place? place;
 
   /// Start op deze plek (bv. waar een gezinslid nu staat) i.p.v. op je eigen
   /// locatie.
@@ -42,9 +46,24 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   double _radius = 150;
   String _icon = 'home';
   bool _busy = false;
+  bool get _editing => widget.place != null;
+
   @override
   void initState() {
     super.initState();
+    if (widget.place case final place?) {
+      final at = LatLng(place.latitude, place.longitude);
+      _name.text = place.name;
+      _radius = place.radiusMeters.toDouble().clamp(50, 500);
+      _icon = place.icon;
+      _watchedMembers.addAll(place.watchedMembers ?? const []);
+      _arrival = place.notifyArrival;
+      _departure = place.notifyDeparture;
+      _selection.resolve(_selection.beginSearch(), at, place.address ?? '');
+      if (place.address case final address?) _search.text = address;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _controller.move(at, 16));
+      return;
+    }
     // Meteen starten op de locatie die de app al kent (via de tracker), zodat
     // de kaart direct bij de gebruiker staat â€” ook binnenshuis zonder verse fix.
     final initial = widget.initialLocation;
@@ -153,18 +172,35 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
         }
       }
       if (!mounted) return;
-      await repository.create(
-        familyId: widget.familyId,
-        name: name,
-        latitude: center.latitude,
-        longitude: center.longitude,
-        radiusMeters: radius,
-        icon: icon,
-        address: address == null || address.isEmpty ? null : address,
-        watchedMembers: watchedMembers,
-        notifyArrival: arrival,
-        notifyDeparture: departure,
-      );
+      final saved = address == null || address.isEmpty ? null : address;
+      if (widget.place case final place?) {
+        await repository.update(
+          id: place.id,
+          name: name,
+          latitude: center.latitude,
+          longitude: center.longitude,
+          radiusMeters: radius,
+          icon: icon,
+          address: saved,
+          watchedMembers: watchedMembers,
+          notifyArrival: arrival,
+          notifyDeparture: departure,
+        );
+        ref.invalidate(familyPlacesProvider(widget.familyId));
+      } else {
+        await repository.create(
+          familyId: widget.familyId,
+          name: name,
+          latitude: center.latitude,
+          longitude: center.longitude,
+          radiusMeters: radius,
+          icon: icon,
+          address: address == null || address.isEmpty ? null : address,
+          watchedMembers: watchedMembers,
+          notifyArrival: arrival,
+          notifyDeparture: departure,
+        );
+      }
       if (mounted) {
         final messenger = ScaffoldMessenger.of(context);
         Navigator.of(context).pop();
@@ -176,8 +212,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               duration: const Duration(seconds: 5),
               content: Text(
                 address != null && address.isNotEmpty
-                    ? '$name opgeslagen\n$address'
-                    : '$name opgeslagen — adres niet beschikbaar',
+                    ? '$name ${_editing ? 'bijgewerkt' : 'opgeslagen'}\n$address'
+                    : '$name ${_editing ? 'bijgewerkt' : 'opgeslagen'} — adres niet beschikbaar',
               ),
             ),
           );
@@ -185,8 +221,15 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     } on Exception {
       if (mounted) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Plaats opslaan mislukt. Mogelijk zijn er al 20.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _editing
+                  ? 'Wijzigingen opslaan mislukt. Probeer opnieuw.'
+                  : 'Plaats opslaan mislukt. Mogelijk zijn er al 20.',
+            ),
+          ),
+        );
       }
     }
   }
@@ -194,7 +237,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Plaats toevoegen'),
+      appBar: BrandedAppBar(title: _editing ? 'Plaats bewerken' : 'Plaats toevoegen'),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
@@ -210,7 +253,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 child: FilledButton.icon(
                   onPressed: _busy || _searching ? null : _save,
                   icon: const Icon(Icons.check, size: 18),
-                  label: Text(_busy ? 'Opslaan…' : 'Plaats opslaan'),
+                  label: Text(
+                    _busy
+                        ? 'Opslaan…'
+                        : _editing
+                        ? 'Wijzigingen opslaan'
+                        : 'Plaats opslaan',
+                  ),
                 ),
               ),
             ],

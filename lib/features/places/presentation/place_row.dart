@@ -8,14 +8,22 @@ import '../domain/place.dart';
 import 'place_icons.dart';
 
 /// Eén plaats als compacte rij: icoon, naam, adres, straal en welke meldingen
-/// aan staan en wie er nu is. Verwijderen zit achter het ⋮-menu.
+/// aan staan en wie er nu is. Tik om te bewerken; bewerken en verwijderen
+/// staan ook in het ⋮-menu.
 class PlaceRow extends StatelessWidget {
-  const PlaceRow({super.key, required this.place, required this.present, required this.onDelete});
+  const PlaceRow({
+    super.key,
+    required this.place,
+    required this.present,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final Place place;
 
   /// Gezinsleden die nu in deze plaats zijn.
   final List<FamilyMember> present;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   @override
@@ -26,74 +34,85 @@ class PlaceRow extends StatelessWidget {
     final address =
         place.address ?? '${place.latitude.toStringAsFixed(4)}, ${place.longitude.toStringAsFixed(4)}';
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        tokens.spaceMd,
-        tokens.spaceSm + tokens.spaceXs,
-        tokens.spaceXs,
-        tokens.spaceSm + tokens.spaceXs,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.primarySoft,
-              borderRadius: BorderRadius.circular(tokens.radiusMd),
+    return InkWell(
+      onTap: onEdit,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          tokens.spaceMd,
+          tokens.spaceSm + tokens.spaceXs,
+          tokens.spaceXs,
+          tokens.spaceSm + tokens.spaceXs,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(tokens.radiusMd),
+              ),
+              child: Icon(placeIcon(place.icon), color: AppColors.primary),
             ),
-            child: Icon(placeIcon(place.icon), color: AppColors.primary),
-          ),
-          SizedBox(width: tokens.spaceMd),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(place.name, style: text.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(address, style: muted, maxLines: 1, overflow: TextOverflow.ellipsis),
-                SizedBox(height: tokens.spaceXs),
-                Row(
-                  children: [
-                    Icon(
-                      place.notifyArrival || place.notifyDeparture
-                          ? Icons.notifications_outlined
-                          : Icons.notifications_off_outlined,
-                      size: 14,
-                      color: AppColors.muted,
-                    ),
-                    SizedBox(width: tokens.spaceXs),
-                    Flexible(
-                      child: Text(
-                        '${place.radiusMeters} m · ${notificationSummary(place)}',
-                        style: muted,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            SizedBox(width: tokens.spaceMd),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(place.name, style: text.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(address, style: muted, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  SizedBox(height: tokens.spaceXs),
+                  Row(
+                    children: [
+                      Icon(
+                        place.notifyArrival || place.notifyDeparture
+                            ? Icons.notifications_outlined
+                            : Icons.notifications_off_outlined,
+                        size: 14,
+                        color: AppColors.muted,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: tokens.spaceXs),
+                      Flexible(
+                        child: Text(
+                          '${place.radiusMeters} m · ${notificationSummary(place)}',
+                          style: muted,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: tokens.spaceSm),
+            if (present.isEmpty) Text('Leeg', style: muted) else _PresentStack(members: present),
+            PopupMenuButton<String>(
+              tooltip: 'Opties',
+              icon: const Icon(Icons.more_vert, color: AppColors.muted),
+              // Na het sluiten van het menu, zodat de bevestiging erbovenop komt.
+              onSelected: (action) => action == 'edit' ? onEdit() : onDelete(),
+              itemBuilder: (context) => [
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.edit_outlined, color: AppColors.primary),
+                    title: Text('Bewerken'),
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.delete_outline, color: AppColors.alert),
+                    title: Text('Verwijderen'),
+                  ),
                 ),
               ],
             ),
-          ),
-          SizedBox(width: tokens.spaceSm),
-          if (present.isEmpty) Text('Leeg', style: muted) else _PresentStack(members: present),
-          PopupMenuButton<String>(
-            tooltip: 'Opties',
-            icon: const Icon(Icons.more_vert, color: AppColors.muted),
-            // Na het sluiten van het menu, zodat de bevestiging erbovenop komt.
-            onSelected: (_) => onDelete(),
-            itemBuilder: (context) => [
-              const PopupMenuItem<String>(
-                value: 'delete',
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.delete_outline, color: AppColors.alert),
-                  title: Text('Verwijderen'),
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

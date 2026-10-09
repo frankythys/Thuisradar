@@ -123,6 +123,11 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                             PlaceRow(
                               place: place,
                               present: presentAt(place),
+                              onEdit: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => AddPlaceScreen(familyId: family.id, place: place),
+                                ),
+                              ),
                               onDelete: () => _delete(context, ref, place),
                             ),
                           ],

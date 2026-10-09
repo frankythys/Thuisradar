@@ -42,6 +42,43 @@ class PlacesRepository {
     });
   }
 
+  /// Bestaande plaats aanpassen (naam, locatie, adres, icoon, straal, voor wie
+  /// en meldingen). Faalt luid als er niets bijgewerkt werd (bv. door RLS).
+  Future<void> update({
+    required String id,
+    required String name,
+    required double latitude,
+    required double longitude,
+    required int radiusMeters,
+    required String icon,
+    String? address,
+    List<String>? watchedMembers,
+    bool notifyArrival = true,
+    bool notifyDeparture = true,
+  }) async {
+    final updated = await _client
+        .from('places')
+        .update({
+          'name': name,
+          'lat': latitude,
+          'lng': longitude,
+          'radius_m': radiusMeters,
+          'icon': icon,
+          'address': address,
+          'watched_members': watchedMembers,
+          'notify_arrival': notifyArrival,
+          'notify_departure': notifyDeparture,
+        })
+        .eq('id', id)
+        .select('id');
+    if (updated.isEmpty) {
+      throw const PostgrestException(
+        message: 'De plaats kon niet worden bijgewerkt. Controleer je gezinslidmaatschap en probeer opnieuw.',
+        code: 'place_update_not_confirmed',
+      );
+    }
+  }
+
   Future<void> delete(String id) async {
     final deleted = await _client.from('places').delete().eq('id', id).select('id');
     if (deleted.isEmpty) {
