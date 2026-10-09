@@ -24,10 +24,13 @@ import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../application/chat_providers.dart';
+import '../domain/chat_days.dart';
 import '../domain/message.dart';
+import '../../family/domain/family_member.dart';
 
 part 'chat_screen_bubble.dart';
 part 'chat_screen_composer.dart';
+part 'chat_screen_day_label.dart';
 
 /// Scherm 16: familiechat.
 class ChatScreen extends ConsumerStatefulWidget {
@@ -79,6 +82,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final now = DateTime.now();
     await ref.read(chatStoreProvider).clear(widget.family.id, now);
     if (mounted) setState(() => _clearedAt = now);
+  }
+
+  void _showGroupInfo(List<String> names) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(widget.family.name),
+        content: Text(names.join('\n')),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Sluiten'))],
+      ),
+    );
   }
 
   Future<void> _send() async {
@@ -234,6 +248,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final messages = ref.watch(familyMessagesProvider(widget.family.id));
     final members = ref.watch(familyMembersProvider(widget.family.id)).value ?? const [];
 
+    FamilyMember? memberOf(String userId) => members.where((m) => m.userId == userId).firstOrNull;
+
     String nameOf(String userId) {
       for (final m in members) {
         if (m.userId == userId) return m.displayName;
@@ -247,59 +263,59 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         if (_clearedAt == null || m.createdAt.isAfter(_clearedAt!)) m,
     ];
 
+    final others = members.where((m) => m.userId != myId).toList();
+    final now = DateTime.now();
+
     return Scaffold(
       appBar: BrandedAppBar(
         title: 'Chat',
-        actions: [if (visible.isNotEmpty) TextButton(onPressed: _clear, child: const Text('Wissen'))],
+        actions: [
+          // Bellen, groepsinfo en wissen samen in één menu: wissen staat niet
+          // meer los in de balk, waar je het per ongeluk aantikt.
+          PopupMenuButton<String>(
+            tooltip: 'Meer opties',
+            icon: const Icon(Icons.more_vert, color: AppColors.primary),
+            onSelected: (action) {
+              if (action == 'call') {
+                chooseContact(context, others);
+              } else if (action == 'info') {
+                _showGroupInfo(members.map((m) => m.displayName).toList());
+              } else {
+                _clear();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'call',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.phone_outlined),
+                  title: Text('Bel een gezinslid'),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'info',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.info_outline),
+                  title: Text('${widget.family.name} · ${members.length} leden'),
+                ),
+              ),
+              if (visible.isNotEmpty)
+                const PopupMenuItem(
+                  value: 'clear',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.delete_outline, color: AppColors.alert),
+                    title: Text('Chat wissen'),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            color: AppColors.surfaceLow,
-            child: Row(
-              children: [
-                for (final member in members.take(3))
-                  Align(widthFactor: .75, child: MemberAvatar(member: member, size: 30)),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(widget.family.name, style: Theme.of(context).textTheme.titleMedium),
-                      Text(
-                        '${members.length} leden · Besloten gezinskring',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Bel een gezinslid',
-                  icon: const Icon(Icons.phone_outlined, size: 20),
-                  onPressed: () => chooseContact(context, members.where((m) => m.userId != myId).toList()),
-                ),
-                IconButton(
-                  tooltip: 'Groepsinformatie',
-                  icon: const Icon(Icons.info_outline, size: 20),
-                  onPressed: () => showDialog<void>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text(widget.family.name),
-                      content: Text(members.map((m) => m.displayName).join('\n')),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Sluiten')),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text('Vandaag', style: Theme.of(context).textTheme.labelSmall),
-          ),
           Expanded(
             child: messages.when(
               data: (_) => visible.isEmpty
@@ -313,12 +329,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       padding: EdgeInsets.all(tokens.spaceLg),
                       itemCount: visible.length,
                       itemBuilder: (context, i) {
-                        final message = visible[visible.length - 1 - i];
+                        final index = visible.length - 1 - i;
+                        final message = visible[index];
                         final mine = message.userId == myId;
-                        return _Bubble(
+                        final bubble = _Bubble(
                           message: message,
                           mine: mine,
                           name: mine ? null : nameOf(message.userId),
+                          sender: mine ? null : memberOf(message.userId),
+                        );
+                        final previous = index == 0 ? null : visible[index - 1].createdAt;
+                        if (!startsNewChatDay(previous, message.createdAt)) return bubble;
+                        // Datum als klein label boven het eerste bericht van die dag.
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _DayLabel(chatDayLabel(message.createdAt, now: now)),
+                            bubble,
+                          ],
                         );
                       },
                     ),
