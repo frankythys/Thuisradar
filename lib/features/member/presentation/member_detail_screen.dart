@@ -42,6 +42,8 @@ import '../../places/domain/place_timeline.dart';
 import '../../places/domain/save_as_place.dart';
 import '../../places/presentation/add_place_screen.dart';
 import '../../places/presentation/place_icons.dart';
+import '../../driving/domain/driving_activity.dart';
+import '../../driving/presentation/driving_activity_card.dart';
 
 part 'member_detail_screen_header.dart';
 part 'member_detail_screen_current.dart';
@@ -50,6 +52,7 @@ part 'member_detail_screen_stat_card.dart';
 part 'member_detail_screen_day_chips.dart';
 part 'member_detail_screen_timeline.dart';
 part 'member_detail_screen_timeline_row.dart';
+part 'member_detail_screen_day_activities.dart';
 
 /// Scherm 12: detail van één gezinslid met stats en de dagtijdlijn.
 class MemberDetailScreen extends ConsumerStatefulWidget {
@@ -219,32 +222,44 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         style: Theme.of(context).textTheme.titleLarge,
       ),
       SizedBox(height: tokens.spaceSm),
-      timeline.when(
-        data: (entries) => _Timeline(
-          entries: attachPlaceNames(
-            entries,
-            ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
-          ),
-          onSaveAsPlace: (entry) => Navigator.of(context).push(
+      if (dayHistory?.value case final history?)
+        _DayActivities(
+          history: history,
+          places: places,
+          onSaveAsPlace: (latitude, longitude) => Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => AddPlaceScreen(
-                familyId: widget.familyId,
-                initialLocation: LatLng(entry.latitude, entry.longitude),
+              builder: (_) =>
+                  AddPlaceScreen(familyId: widget.familyId, initialLocation: LatLng(latitude, longitude)),
+            ),
+          ),
+        )
+      else
+        timeline.when(
+          data: (entries) => _Timeline(
+            entries: attachPlaceNames(
+              entries,
+              ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
+            ),
+            onSaveAsPlace: (entry) => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => AddPlaceScreen(
+                  familyId: widget.familyId,
+                  initialLocation: LatLng(entry.latitude, entry.longitude),
+                ),
               ),
             ),
           ),
-        ),
-        loading: () => const Padding(
-          padding: EdgeInsets.all(32),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-        error: (e, _) => ErrorView(
-          message: 'Geschiedenis laden mislukt.\n$e',
-          onRetry: () => ref.invalidate(
-            recent ? recentTimelineProvider(widget.member.userId) : dayHistoryProvider(query),
+          loading: () => const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => ErrorView(
+            message: 'Geschiedenis laden mislukt.\n$e',
+            onRetry: () => ref.invalidate(
+              recent ? recentTimelineProvider(widget.member.userId) : dayHistoryProvider(query),
+            ),
           ),
         ),
-      ),
       if (location != null) ...[
         const SizedBox(height: 20),
         FilledButton.icon(

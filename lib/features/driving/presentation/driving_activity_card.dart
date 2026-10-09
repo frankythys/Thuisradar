@@ -18,10 +18,19 @@ import 'driving_summary.dart';
 /// Eén activiteit als kaart: een rit (met de route op een kaart, van → naar,
 /// tijd en afstand) of een verblijf (plek, tijd en duur).
 class DrivingActivityCard extends StatelessWidget {
-  const DrivingActivityCard({super.key, required this.activity, required this.places, this.route = const []});
+  const DrivingActivityCard({
+    super.key,
+    required this.activity,
+    required this.places,
+    this.route = const [],
+    this.onSaveAsPlace,
+  });
 
   final DrivingActivity activity;
   final List<Place> places;
+
+  /// Verblijf op een plek die nog geen eigen plaats is: knop "Plaats opslaan".
+  final VoidCallback? onSaveAsPlace;
 
   /// De GPS-punten van deze rit; die tekenen de kaart boven de ritgegevens.
   final List<TrackPoint> route;
@@ -51,8 +60,18 @@ class DrivingActivityCard extends StatelessWidget {
             SizedBox(height: tokens.spaceMd),
           ],
           switch (activity.kind) {
-            DrivingActivityKind.trip => _TripBody(activity: activity, places: places),
-            DrivingActivityKind.stay => _StayBody(activity: activity, places: places),
+            DrivingActivityKind.trip => _TripBody(
+              activity: activity,
+              places: places,
+              topSpeed: topSpeedKmh(route),
+            ),
+            DrivingActivityKind.stay => _StayBody(
+              activity: activity,
+              places: places,
+              onSaveAsPlace: placeNameAt(places, activity.latitude, activity.longitude) == null
+                  ? onSaveAsPlace
+                  : null,
+            ),
           },
         ],
       ),
@@ -61,10 +80,13 @@ class DrivingActivityCard extends StatelessWidget {
 }
 
 class _TripBody extends StatelessWidget {
-  const _TripBody({required this.activity, required this.places});
+  const _TripBody({required this.activity, required this.places, this.topSpeed});
 
   final DrivingActivity activity;
   final List<Place> places;
+
+  /// Hoogste gemeten snelheid in km/u, indien bekend.
+  final int? topSpeed;
 
   @override
   Widget build(BuildContext context) {
@@ -103,16 +125,28 @@ class _TripBody extends StatelessWidget {
           ' · ${drivingDistance(activity.distanceMeters)}',
           style: text.bodyMedium?.copyWith(color: AppColors.muted),
         ),
+        if (topSpeed case final speed?) ...[
+          SizedBox(height: tokens.spaceXs),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.speed, size: 16, color: AppColors.muted),
+              const SizedBox(width: 6),
+              Text('max $speed km/u', style: text.labelLarge),
+            ],
+          ),
+        ],
       ],
     );
   }
 }
 
 class _StayBody extends StatelessWidget {
-  const _StayBody({required this.activity, required this.places});
+  const _StayBody({required this.activity, required this.places, this.onSaveAsPlace});
 
   final DrivingActivity activity;
   final List<Place> places;
+  final VoidCallback? onSaveAsPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +182,14 @@ class _StayBody extends StatelessWidget {
             const Icon(Icons.schedule, size: 16, color: AppColors.muted),
             const SizedBox(width: 6),
             Text(drivingDuration(activity.duration), style: text.labelLarge),
+            if (onSaveAsPlace case final save?) ...[
+              SizedBox(width: tokens.spaceMd),
+              TextButton.icon(
+                onPressed: save,
+                icon: const Icon(Icons.add_location_alt_outlined, size: 18),
+                label: const Text('Plaats opslaan'),
+              ),
+            ],
           ],
         ),
       ],

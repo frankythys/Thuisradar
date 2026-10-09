@@ -281,10 +281,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.byTooltip('Plek opslaan als plaats'),
+      find.text('Plaats opslaan'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.byTooltip('Plek opslaan als plaats'), findsOneWidget);
+    expect(find.text('Plaats opslaan'), findsOneWidget);
   });
 }

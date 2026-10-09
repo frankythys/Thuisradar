@@ -175,3 +175,15 @@ List<TrackPoint> activityTrack(DrivingActivity activity, List<TrackPoint> points
   for (final point in points)
     if (!point.recordedAt.isBefore(activity.start) && !point.recordedAt.isAfter(activity.end)) point,
 ];
+
+/// Hoogste gemeten snelheid in km/u langs [track], of null zonder bruikbare
+/// GPS-snelheid. Onzinwaarden (negatief, boven 70 m/s ≈ 250 km/u) tellen niet.
+int? topSpeedKmh(List<TrackPoint> track) {
+  double? top;
+  for (final point in track) {
+    final speed = point.speedMps;
+    if (speed == null || !speed.isFinite || speed < 0 || speed > 70) continue;
+    if (top == null || speed > top) top = speed;
+  }
+  return top == null ? null : (top * 3.6).round();
+}
