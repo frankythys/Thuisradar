@@ -17,4 +17,13 @@ void main() {
     expect(formatDistance(850), '850 m');
     expect(formatDistance(2400), '2,4 km');
   });
+
+  test('dagkop: vandaag, gisteren en anders weekdag + datum', () {
+    final now = DateTime(2026, 10, 9, 14);
+    expect(formatDayLabel(DateTime(2026, 10, 9, 1), now: now), 'Vandaag');
+    expect(formatDayLabel(DateTime(2026, 10, 8, 23), now: now), 'Gisteren');
+    expect(formatDayLabel(DateTime(2026, 10, 5, 9), now: now), 'ma 5/10');
+    expect(isOtherDay(DateTime(2026, 10, 8, 23, 59), now), isTrue);
+    expect(isOtherDay(DateTime(2026, 10, 9), now), isFalse);
+  });
 }

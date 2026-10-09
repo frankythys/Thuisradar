@@ -6,13 +6,15 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/clock.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
-import '../../../shared/widgets/privacy_note.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/contact_actions.dart';
+import '../../../shared/widgets/filter_chips.dart';
 import '../../location/application/location_providers.dart';
-import '../../../shared/widgets/location_preview.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
+import '../../family/domain/family_member.dart';
 import '../../places/application/places_providers.dart';
 import '../application/events_providers.dart';
 import '../domain/family_event.dart';
@@ -93,87 +95,49 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           e,
     ];
 
+    final filterIndex = _filters.indexWhere((f) => f.type == _filter);
+
     return Scaffold(
       appBar: BrandedAppBar(
         title: 'Meldingen',
-        actions: [if (visible.isNotEmpty) TextButton(onPressed: _clear, child: const Text('Wissen'))],
+        actions: [
+          // Openen markeert al alles als gelezen; wissen staat in het menu.
+          PopupMenuButton<String>(
+            tooltip: 'Meer opties',
+            icon: const Icon(Icons.more_vert, color: AppColors.primary),
+            enabled: visible.isNotEmpty,
+            onSelected: (_) => _clear(),
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'clear',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.delete_outline, color: AppColors.alert),
+                  title: Text('Meldingen wissen'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: events.when(
         data: (_) => ListView(
-          padding: EdgeInsets.all(tokens.spaceLg),
+          padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceMd, tokens.spaceLg),
           children: [
-            Row(
-              children: [
-                Expanded(child: Text('Meldingen', style: Theme.of(context).textTheme.headlineLarge)),
-                TextButton.icon(
-                  onPressed: () => markNotificationsSeen(ref, widget.family.id),
-                  icon: const Icon(Icons.done_all, size: 16),
-                  label: const Text('Alles gelezen'),
-                ),
-              ],
+            FilterChips(
+              labels: [for (final f in _filters) f.label],
+              selectedIndex: filterIndex < 0 ? 0 : filterIndex,
+              onSelected: (i) => setState(() => _filter = _filters[i].type),
             ),
-            const Text('Recente gezinsactiviteiten en veiligheidsupdates'),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final entry in <FamilyEventType?, String>{
-                  null: 'Alles',
-                  FamilyEventType.arrival: 'Aankomst',
-                  FamilyEventType.departure: 'Vertrek',
-                  FamilyEventType.unknown: 'Batterij',
-                  FamilyEventType.sos: 'SOS',
-                }.entries)
-                  ChoiceChip(
-                    label: Text(entry.value),
-                    selected: _filter == entry.key,
-                    onSelected: (_) => setState(() => _filter = entry.key),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 20),
+            SizedBox(height: tokens.spaceMd),
             if (_filter == null || _filter == FamilyEventType.unknown)
               for (final battery in lowBatteries)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: AppColors.alertSoft,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.battery_alert, color: AppColors.alert),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Lage batterij: ${nameOf(battery.userId)}',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Batterijniveau is gedaald naar ${battery.battery}%. Bereikbaarheid en live-locatie kunnen beperkt worden.',
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF7B3500),
-                            minimumSize: const Size(0, 40),
-                          ),
-                          onPressed: () => openDirections(context, battery.latitude, battery.longitude),
-                          icon: const Icon(Icons.navigation_outlined, size: 16),
-                          label: const Text('Start navigatie'),
-                        ),
-                      ),
-                    ],
+                Padding(
+                  padding: EdgeInsets.only(bottom: tokens.spaceSm),
+                  child: _BatteryRow(
+                    name: nameOf(battery.userId),
+                    level: battery.battery ?? 0,
+                    member: members.where((m) => m.userId == battery.userId).firstOrNull,
                   ),
                 ),
             if (visible.isEmpty &&
@@ -183,32 +147,42 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 title: 'Geen meldingen',
                 message: 'Nieuwe gezinsactiviteiten verschijnen hier.',
               ),
-            for (var i = 0; i < visible.length; i++) ...[
-              if (i == 0 || visible[i].createdAt.day != visible[i - 1].createdAt.day)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    visible[i].createdAt.year == now.year &&
-                            visible[i].createdAt.month == now.month &&
-                            visible[i].createdAt.day == now.day
-                        ? 'Vandaag'
-                        : '${visible[i].createdAt.day}/${visible[i].createdAt.month}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
+            for (final day in _byDay(visible)) ...[
               Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _EventTile(
-                  event: visible[i],
-                  text: _describe(visible[i], nameOf(visible[i].actorUserId), placeOf(visible[i].placeId)),
-                  when: formatClock(visible[i].createdAt),
+                padding: EdgeInsets.fromLTRB(tokens.spaceXs, tokens.spaceSm, 0, tokens.spaceSm),
+                child: Text(
+                  formatDayLabel(day.first.createdAt, now: now).toUpperCase(),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.muted),
+                ),
+              ),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    for (final (index, event) in day.indexed) ...[
+                      if (index > 0) const Divider(height: 1),
+                      _EventTile(
+                        event: event,
+                        text: _describe(event, nameOf(event.actorUserId), placeOf(event.placeId)),
+                        when: formatClock(event.createdAt),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            const PrivacyNote(
-              title: 'Privacy voorop',
-              body: 'Locatiemeldingen worden uitsluitend aan je eigen gezinsleden getoond.',
+            SizedBox(height: tokens.spaceMd),
+            Row(
+              children: [
+                const Icon(Icons.lock_outline, size: 16, color: AppColors.muted),
+                SizedBox(width: tokens.spaceSm),
+                Expanded(
+                  child: Text(
+                    'Alleen je gezin ziet deze meldingen.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -219,6 +193,27 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ),
       ),
     );
+  }
+
+  static const _filters = <({String label, FamilyEventType? type})>[
+    (label: 'Alles', type: null),
+    (label: 'Aankomst', type: FamilyEventType.arrival),
+    (label: 'Vertrek', type: FamilyEventType.departure),
+    (label: 'Batterij', type: FamilyEventType.unknown),
+    (label: 'SOS', type: FamilyEventType.sos),
+  ];
+
+  /// Meldingen per kalenderdag, in de volgorde waarin ze binnenkwamen.
+  static List<List<FamilyEvent>> _byDay(List<FamilyEvent> events) {
+    final days = <List<FamilyEvent>>[];
+    for (final event in events) {
+      if (days.isEmpty || isOtherDay(days.last.last.createdAt, event.createdAt)) {
+        days.add([event]);
+      } else {
+        days.last.add(event);
+      }
+    }
+    return days;
   }
 
   String _describe(FamilyEvent event, String name, String? place) {
@@ -252,28 +247,70 @@ class _EventTile extends StatelessWidget {
       FamilyEventType.unknown => Icons.circle_notifications_outlined,
     };
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isSos ? AppColors.alertSoft : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd, vertical: tokens.spaceSm + tokens.spaceXs),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: isSos ? AppColors.alertSoft : AppColors.primarySoft,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 20, color: color),
+            child: Icon(icon, size: 18, color: color),
           ),
           SizedBox(width: tokens.spaceMd),
-          Expanded(child: Text(text, style: theme.bodyLarge)),
+          Expanded(
+            child: Text(text, style: theme.titleSmall?.copyWith(color: isSos ? AppColors.alert : null)),
+          ),
           SizedBox(width: tokens.spaceSm),
           Text(when, style: theme.labelMedium?.copyWith(color: AppColors.muted)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lage batterij als compacte rij met een knop om meteen te bellen.
+class _BatteryRow extends StatelessWidget {
+  const _BatteryRow({required this.name, required this.level, this.member});
+
+  final String name;
+  final int level;
+  final FamilyMember? member;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final tokens = context.tokens;
+    final who = member;
+    return Container(
+      padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceSm, tokens.spaceSm),
+      decoration: BoxDecoration(
+        color: AppColors.alertSoft,
+        borderRadius: BorderRadius.circular(tokens.radiusCard),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.battery_alert, color: AppColors.alert),
+          SizedBox(width: tokens.spaceMd),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$name: batterij $level%', style: text.titleSmall),
+                Text('Live-locatie kan wegvallen', style: text.bodySmall?.copyWith(color: AppColors.muted)),
+              ],
+            ),
+          ),
+          if (who != null)
+            TextButton.icon(
+              onPressed: () => callMember(context, who),
+              style: TextButton.styleFrom(foregroundColor: AppColors.alert),
+              icon: const Icon(Icons.call_outlined, size: 18),
+              label: const Text('Bel'),
+            ),
         ],
       ),
     );
