@@ -60,12 +60,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       _watchedMembers.addAll(place.watchedMembers ?? const []);
       _arrival = place.notifyArrival;
       _departure = place.notifyDeparture;
-      _owner = place.ownerUserId;
+      _owner = place.personUserId;
       _selection.resolve(_selection.beginSearch(), at, place.address ?? '');
       if (place.address case final address?) _search.text = address;
       WidgetsBinding.instance.addPostFrameCallback((_) => _controller.move(at, 16));
       return;
     }
+    _owner = ref.read(currentUserIdProvider);
     // Meteen starten op de locatie die de app al kent (via de tracker), zodat
     // de kaart direct bij de gebruiker staat â€” ook binnenshuis zonder verse fix.
     final initial = widget.initialLocation;
@@ -195,7 +196,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           notifyArrival: arrival,
           notifyDeparture: departure,
           ownerUserId: owner,
-          includeOwner: owner != null || place.ownerUserId != null,
+          includeOwner: owner != place.ownerUserId,
         );
         ref.invalidate(familyPlacesProvider(widget.familyId));
       } else {
@@ -454,18 +455,13 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     const SizedBox(height: 24),
                     Text('Van wie is deze plaats?', style: Theme.of(context).textTheme.titleMedium),
                     const Text(
-                      'Bv. Werk van Franky. Die persoon staat dan altijd bij deze plaats.',
+                      'Bv. Werk van Franky. Die persoon staat altijd bij deze plaats in de lijst.',
                       style: TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       children: [
-                        ChoiceChip(
-                          label: const Text('Niemand apart'),
-                          selected: _owner == null,
-                          onSelected: (_) => setState(() => _owner = null),
-                        ),
                         for (final member
                             in ref.watch(familyMembersProvider(widget.familyId)).value ??
                                 const <FamilyMember>[])

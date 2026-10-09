@@ -72,11 +72,8 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     }
   }
 
-  /// "3 plaatsen · 2 met iemand".
-  static String _summary(int places, int occupied) {
-    final count = '$places ${places == 1 ? 'plaats' : 'plaatsen'}';
-    return occupied == 0 ? count : '$count · $occupied met iemand';
-  }
+  /// "3 plaatsen".
+  static String _summary(int places) => '$places ${places == 1 ? 'plaats' : 'plaatsen'}';
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +117,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                     Padding(
                       padding: EdgeInsets.fromLTRB(tokens.spaceXs, 0, tokens.spaceXs, tokens.spaceSm),
                       child: Text(
-                        _summary(list.length, list.where((p) => presentIds(p).isNotEmpty).length),
+                        _summary(list.length),
                         style: text.bodyMedium?.copyWith(color: AppColors.muted),
                       ),
                     ),

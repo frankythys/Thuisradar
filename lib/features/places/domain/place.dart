@@ -10,6 +10,7 @@ class Place {
     required this.icon,
     this.watchedMembers,
     this.ownerUserId,
+    this.createdBy,
     this.address,
     this.notifyArrival = true,
     this.notifyDeparture = true,
@@ -25,6 +26,7 @@ class Place {
     icon: json['icon'] as String? ?? 'home',
     watchedMembers: (json['watched_members'] as List<dynamic>?)?.cast<String>(),
     ownerUserId: json['owner_user_id'] as String?,
+    createdBy: json['created_by'] as String?,
     address: json['address'] as String?,
     notifyArrival: json['notify_arrival'] as bool? ?? true,
     notifyDeparture: json['notify_departure'] as bool? ?? true,
@@ -44,7 +46,14 @@ class Place {
   /// Over wie je meldingen wilt; null/leeg = iedereen.
   final List<String>? watchedMembers;
 
-  /// Van wie deze plaats is (bv. Werk van Franky); null = van niemand apart.
-  /// Staat los van [watchedMembers] (wie meldingen krijgt).
+  /// Van wie deze plaats is (bv. Werk van Franky), zoals gekozen bij
+  /// bewerken. Staat los van [watchedMembers] (wie meldingen krijgt).
   final String? ownerUserId;
+
+  /// Wie de plaats gemaakt heeft (kolom `created_by`).
+  final String? createdBy;
+
+  /// Elke plaats hoort bij een persoon: de gekozen eigenaar, anders wie ze
+  /// gemaakt heeft.
+  String? get personUserId => ownerUserId ?? createdBy;
 }

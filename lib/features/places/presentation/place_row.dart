@@ -134,7 +134,7 @@ String notificationSummary(Place place) {
 
 /// Wie er bij een plaats getoond wordt (op de plek waar anders "Leeg" staat):
 /// eerst wie er nu is, daarna de persoon van wie de plaats is (bv. Werk van
-/// Franky) als die er nu niet is.
+/// Franky, anders wie ze maakte) als die er nu niet is.
 List<({FamilyMember member, bool here})> placePeople(
   Place place,
   List<FamilyMember> members,
@@ -144,7 +144,7 @@ List<({FamilyMember member, bool here})> placePeople(
     for (final member in members)
       if (presentUserIds.contains(member.userId)) (member: member, here: true),
     for (final member in members)
-      if (member.userId == place.ownerUserId && !presentUserIds.contains(member.userId))
+      if (member.userId == place.personUserId && !presentUserIds.contains(member.userId))
         (member: member, here: false),
   ];
 }
