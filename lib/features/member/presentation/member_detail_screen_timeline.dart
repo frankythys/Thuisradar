@@ -1,9 +1,12 @@
 part of 'member_detail_screen.dart';
 
 class _Timeline extends StatelessWidget {
-  const _Timeline({required this.entries});
+  const _Timeline({required this.entries, this.onSaveAsPlace});
 
   final List<TimelineEntry> entries;
+
+  /// Een stop zonder plaatsnaam (bv. je werk) een naam geven.
+  final ValueChanged<TimelineEntry>? onSaveAsPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,10 @@ class _Timeline extends StatelessWidget {
         children: [
           for (final (index, entry) in ordered.indexed) ...[
             if (index > 0) const Divider(height: 1),
-            _TimelineRow(entry: entry),
+            _TimelineRow(
+              entry: entry,
+              onSaveAsPlace: onSaveAsPlace == null ? null : () => onSaveAsPlace!(entry),
+            ),
           ],
         ],
       ),

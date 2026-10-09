@@ -144,6 +144,12 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           .showSnackBar(const SnackBar(content: Text('Vul eerst een naam voor de plaats in.')));
       return;
     }
+    // Adres getypt maar nog niet gezocht (bv. huisnummer 34 -> 36): eerst
+    // opzoeken, anders zou de oude locatie bewaard worden.
+    if (_search.text.trim().isNotEmpty && _selection.address == null) {
+      await _findAddress();
+      if (!mounted || _selection.address == null) return;
+    }
     setState(() => _busy = true);
     final center = _center;
     final radius = _radius.round();

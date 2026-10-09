@@ -265,4 +265,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Deze plek opslaan als plaats'), findsNothing);
   });
+
+  testWidgets('stop zonder plaatsnaam (bv. werk) kan als plaats opgeslagen worden', (tester) async {
+    await _pump(
+      tester,
+      () async => [
+        TimelineEntry(
+          kind: TimelineKind.stop,
+          start: DateTime(2026, 1, 2, 8),
+          end: DateTime(2026, 1, 2, 9, 30),
+          latitude: 51.21,
+          longitude: 4.41,
+        ),
+      ],
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byTooltip('Plek opslaan als plaats'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.byTooltip('Plek opslaan als plaats'), findsOneWidget);
+  });
 }

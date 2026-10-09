@@ -1,9 +1,10 @@
 part of 'member_detail_screen.dart';
 
 class _TimelineRow extends StatelessWidget {
-  const _TimelineRow({required this.entry});
+  const _TimelineRow({required this.entry, this.onSaveAsPlace});
 
   final TimelineEntry entry;
+  final VoidCallback? onSaveAsPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +45,12 @@ class _TimelineRow extends StatelessWidget {
               ],
             ),
           ),
+          if (isStop && entry.placeName == null && onSaveAsPlace != null)
+            IconButton(
+              tooltip: 'Plek opslaan als plaats',
+              onPressed: onSaveAsPlace,
+              icon: const Icon(Icons.add_location_alt_outlined, color: AppColors.primary),
+            ),
         ],
       ),
     );

@@ -207,6 +207,14 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
             entries,
             ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
           ),
+          onSaveAsPlace: (entry) => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => AddPlaceScreen(
+                familyId: widget.familyId,
+                initialLocation: LatLng(entry.latitude, entry.longitude),
+              ),
+            ),
+          ),
         ),
         loading: () => const Padding(
           padding: EdgeInsets.all(32),
