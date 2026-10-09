@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
+import 'package:thuisradar/features/family/application/family_providers.dart';
 import 'package:thuisradar/features/family/domain/family.dart';
+import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/places/application/places_providers.dart';
 import 'package:thuisradar/features/places/data/places_repository.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
@@ -30,6 +32,7 @@ Future<void> _pump(WidgetTester tester, PlacesRepository repo) {
         placesRepositoryProvider.overrideWithValue(repo),
         familyPlacesProvider.overrideWith((ref, arg) => Stream.value(const [_place])),
         familyPresenceProvider.overrideWith((ref, arg) => Stream.value(const <PlacePresence>[])),
+        familyMembersProvider.overrideWith((ref, arg) => Stream.value(const <FamilyMember>[])),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -37,6 +40,14 @@ Future<void> _pump(WidgetTester tester, PlacesRepository repo) {
       ),
     ),
   );
+}
+
+/// Verwijderen zit achter het ⋮-menu van de plaats.
+Future<void> _openDelete(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('Opties'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Verwijderen'));
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -51,8 +62,7 @@ void main() {
     await _pump(tester, repo);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Verwijderen'));
-    await tester.pumpAndSettle();
+    await _openDelete(tester);
     expect(find.text('Plaats verwijderen?'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Verwijderen'));
@@ -60,15 +70,14 @@ void main() {
 
     verify(() => repo.delete('p1')).called(1);
     expect(find.text('Nog geen plaatsen'), findsOneWidget);
-    expect(find.byTooltip('Verwijderen'), findsNothing);
+    expect(find.byTooltip('Opties'), findsNothing);
   });
 
   testWidgets('annuleren verwijdert niets', (tester) async {
     await _pump(tester, repo);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Verwijderen'));
-    await tester.pumpAndSettle();
+    await _openDelete(tester);
     await tester.tap(find.text('Annuleren'));
     await tester.pumpAndSettle();
 
@@ -78,8 +87,7 @@ void main() {
     when(() => repo.delete(any())).thenThrow(Exception('database unavailable'));
     await _pump(tester, repo);
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Verwijderen'));
-    await tester.pumpAndSettle();
+    await _openDelete(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Verwijderen'));
     await tester.pumpAndSettle();
     expect(find.text('Thuis'), findsOneWidget);

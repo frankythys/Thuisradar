@@ -3,15 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
-import '../../../shared/widgets/privacy_note.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
+import '../../family/domain/family_member.dart';
 import '../application/places_providers.dart';
 import '../domain/place.dart';
 import 'add_place_screen.dart';
-import 'place_card.dart';
+import 'place_row.dart';
 
 /// Scherm 13: lijst van veilige zones met wie er nu is.
 class PlacesScreen extends ConsumerStatefulWidget {
@@ -24,7 +26,6 @@ class PlacesScreen extends ConsumerStatefulWidget {
 }
 
 class _PlacesScreenState extends ConsumerState<PlacesScreen> {
-  bool _activeOnly = false;
   final _deletedIds = <String>{};
   Family get family => widget.family;
 
@@ -67,18 +68,30 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     }
   }
 
+  /// "3 plaatsen · 2 met iemand".
+  static String _summary(int places, int occupied) {
+    final count = '$places ${places == 1 ? 'plaats' : 'plaatsen'}';
+    return occupied == 0 ? count : '$count · $occupied met iemand';
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final places = ref.watch(familyPlacesProvider(family.id));
+    final text = Theme.of(context).textTheme;
     final presence = ref.watch(familyPresenceProvider(family.id)).value ?? const [];
+    final members = ref.watch(familyMembersProvider(family.id)).value ?? const <FamilyMember>[];
+    List<FamilyMember> presentAt(Place place) => [
+      for (final member in members)
+        if (presence.any((p) => p.placeId == place.id && p.userId == member.userId && p.isInside)) member,
+    ];
 
     return Scaffold(
       appBar: const BrandedAppBar(title: 'Plaatsen'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _add(context),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         icon: const Icon(Icons.add_location_alt_outlined),
         label: const Text('Plaats toevoegen'),
       ),
@@ -92,46 +105,43 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                   message: 'Voeg veilige zones toe zoals Thuis of School om aankomst- en vertrekmeldingen te krijgen.',
                 )
               : ListView(
-                  padding: EdgeInsets.fromLTRB(tokens.spaceLg, tokens.spaceLg, tokens.spaceLg, 96),
+                  padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceMd, 96),
                   children: [
-                    Text('Plaatsen', style: Theme.of(context).textTheme.headlineLarge),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Geregistreerde veilige zones voor je gezin (${list.length} plaatsen)',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(tokens.spaceXs, 0, tokens.spaceXs, tokens.spaceSm),
+                      child: Text(
+                        _summary(list.length, list.where((p) => presentAt(p).isNotEmpty).length),
+                        style: text.bodyMedium?.copyWith(color: AppColors.muted),
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
+                    AppCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          for (final (index, place) in list.indexed) ...[
+                            if (index > 0) const Divider(height: 1),
+                            PlaceRow(
+                              place: place,
+                              present: presentAt(place),
+                              onDelete: () => _delete(context, ref, place),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: tokens.spaceMd),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ChoiceChip(
-                          label: Text('Alle zones (${list.length})'),
-                          selected: !_activeOnly,
-                          onSelected: (_) => setState(() => _activeOnly = false),
-                        ),
-                        ChoiceChip(
-                          label: Text('${presence.map((p) => p.placeId).toSet().length} Actief bezocht'),
-                          selected: _activeOnly,
-                          onSelected: (_) => setState(() => _activeOnly = true),
+                        const Icon(Icons.battery_saver_outlined, size: 18, color: AppColors.muted),
+                        SizedBox(width: tokens.spaceSm),
+                        Expanded(
+                          child: Text(
+                            'Meldingen enkel voor de plaatsen die jullie zelf instellen. Dat spaart batterij.',
+                            style: text.bodySmall?.copyWith(color: AppColors.muted),
+                          ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-                    for (final place in list.where(
-                      (p) => !_activeOnly || presence.any((v) => v.placeId == p.id),
-                    ))
-                      Padding(
-                        padding: EdgeInsets.only(bottom: tokens.spaceMd),
-                        child: PlaceCard(
-                          place: place,
-                          presentCount: presence.where((p) => p.placeId == place.id).length,
-                          onDelete: () => _delete(context, ref, place),
-                        ),
-                      ),
-                    const PrivacyNote(
-                      title: 'Zuinig voor batterijen',
-                      body: 'Je gezin ontvangt alleen meldingen voor de veilige zones die jullie zelf instellen.',
-                      icon: Icons.battery_saver_outlined,
                     ),
                   ],
                 );
