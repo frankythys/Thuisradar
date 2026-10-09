@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
+import '../../../core/utils/resync_signal.dart';
 import '../data/location_history_repository.dart';
 import '../domain/timeline.dart';
 import '../domain/track_point.dart';
@@ -47,10 +50,25 @@ final recentTimelineProvider = FutureProvider.family<List<TimelineEntry>, String
 /// een gat wordt nooit een rechte lijn dwars door de stad.
 typedef DayHistory = ({List<TimelineEntry> entries, List<TrackPoint> points});
 
+/// Vandaag loopt nog: zo vaak halen we de dag opnieuw op (het scherm houdt de
+/// vorige gegevens zichtbaar tijdens het herladen).
+const _todayRefresh = Duration(minutes: 1);
+
 final dayHistoryProvider = FutureProvider.family<DayHistory, HistoryQuery>((ref, query) async {
   final repository = ref.watch(locationHistoryRepositoryProvider);
+  // Vandaag is nooit af: periodiek en bij terugkeer naar de app/Verversen
+  // opnieuw ophalen, anders blijft de tijdlijn hangen op het eerste laden.
+  final now = DateTime.now();
+  if (isSameDay(query.day, now)) {
+    final timer = Timer(_todayRefresh, ref.invalidateSelf);
+    final resync = ref.read(resyncSignalProvider).stream.listen((_) => ref.invalidateSelf());
+    ref.onDispose(() {
+      timer.cancel();
+      unawaited(resync.cancel());
+    });
+  }
   try {
-    final points = await repository.fetchDay(query.userId, query.day).timeout(_historyTimeout);
+    final points = sortedByTime(await repository.fetchDay(query.userId, query.day).timeout(_historyTimeout));
     // Verblijven volgen uit de plek (clustering is tijd-onafhankelijk), zodat
     // op het werk blijven één verblijf blijft, ook al vallen er binnenshuis
     // metingen weg. Ritten komen los hiervan uit buildTripTracks (dat zelf
@@ -63,3 +81,9 @@ final dayHistoryProvider = FutureProvider.family<DayHistory, HistoryQuery>((ref,
     rethrow;
   }
 });
+
+bool isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// Oudste eerst, ongeacht hoe de server ze teruggaf.
+List<TrackPoint> sortedByTime(List<TrackPoint> points) =>
+    [...points]..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));

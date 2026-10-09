@@ -25,7 +25,9 @@ class LocationHistoryRepository {
           .eq('user_id', userId)
           .gte('recorded_at', start.toUtc().toIso8601String())
           .lt('recorded_at', end.toUtc().toIso8601String())
-          .order('recorded_at')
+          // Expliciet oplopend: `order()` staat standaard op aflopend (nieuwste
+          // eerst), en ritten, routekaart en gatendetectie verwachten oudste eerst.
+          .order('recorded_at', ascending: true)
           .range(offset, offset + pageSize - 1);
       points.addAll(rows.map(TrackPoint.fromJson));
       if (rows.length < pageSize) break;

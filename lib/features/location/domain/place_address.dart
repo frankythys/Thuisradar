@@ -42,3 +42,18 @@ const addressGrid = 20000.0;
   (latitude * addressGrid).roundToDouble() / addressGrid,
   (longitude * addressGrid).roundToDouble() / addressGrid,
 );
+
+/// Korte straat + huisnummer ("Boomsesteenweg 174"), zoals Life360 het toont.
+///
+/// Android geeft in `street` vaak de volledige adresregel terug
+/// ("Boomsesteenweg 174, 2610 Antwerpen, België"); daarom eerst straatnaam +
+/// huisnummer, en anders enkel het deel van `street` vóór de eerste komma.
+String? shortStreet({String? thoroughfare, String? number, String? street}) {
+  final name = thoroughfare?.trim();
+  if (name != null && name.isNotEmpty) {
+    final nr = number?.trim();
+    return nr == null || nr.isEmpty || name.contains(nr) ? name : '$name $nr';
+  }
+  final line = street?.split(',').first.trim();
+  return line == null || line.isEmpty ? null : line;
+}

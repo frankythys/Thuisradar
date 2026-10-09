@@ -40,10 +40,16 @@ class _CurrentStayCard extends ConsumerWidget {
       }
     }
 
-    // Begin van de lopende stop: de laatste stop in de tijdlijn van vandaag.
+    // Begin van de lopende stop: de laatste stop in de tijdlijn van vandaag,
+    // maar enkel als die op de huidige plek ligt — anders krijgt "Thuis" de
+    // begintijd van de vorige stop (bv. de winkel).
     DateTime? since;
     for (final entry in entries) {
-      if (entry.kind == TimelineKind.stop) since = entry.start;
+      if (entry.kind != TimelineKind.stop) continue;
+      final nearby =
+          distanceMeters(entry.latitude, entry.longitude, location.latitude, location.longitude) <=
+          kStopRadiusMeters + 50;
+      since = nearby ? entry.start : null;
     }
     final ongoing = !moving && !stale && since != null;
 

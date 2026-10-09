@@ -114,7 +114,12 @@ List<DrivingActivity> buildDayActivities(
       ),
     );
   }
-  for (final track in buildTripTracks(points)) {
+  for (final raw in buildTripTracks(points)) {
+    // Enkel het stuk waarin echt gereden wordt: zonder de minuten stilstaan
+    // ervoor (nog thuis) en erna (al aangekomen). Een spoor dat alleen uit
+    // stilstaan bestaat, is geen rit.
+    final track = trimStill(raw);
+    if (track.length < 2 || trackMeters(track) < minTripMeters) continue;
     final last = track.last;
     // De bestemming: het eerstvolgende verblijf dat binnen [kArrivalGap] na de
     // laatste meting begint. Zo eindigt de rit op de plek waar hij stopte, ook
@@ -154,6 +159,22 @@ List<DrivingActivity> buildDayActivities(
     );
   }
   return activities..sort((a, b) => a.start.compareTo(b.start));
+}
+
+/// Knipt het stilstaan aan begin en einde van een spoor weg: vertrek is de
+/// laatste meting nog binnen [radiusMeters] van het beginpunt, aankomst de
+/// eerste meting al binnen [radiusMeters] van het eindpunt.
+List<TrackPoint> trimStill(List<TrackPoint> track, {double radiusMeters = kStopRadiusMeters}) {
+  if (track.length < 2) return track;
+  var first = 0;
+  while (first + 1 < track.length && _legMeters(track.first, track[first + 1]) <= radiusMeters) {
+    first++;
+  }
+  var last = track.length - 1;
+  while (last - 1 > first && _legMeters(track.last, track[last - 1]) <= radiusMeters) {
+    last--;
+  }
+  return track.sublist(first, last + 1);
 }
 
 /// Afgelegde afstand langs een reeks metingen (haversine per been).

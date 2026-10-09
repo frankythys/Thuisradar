@@ -37,7 +37,7 @@ class GeocodingSource {
   }
 
   PlaceAddress _toAddress(Placemark mark) => PlaceAddress(
-    street: _first([mark.street, mark.thoroughfare]),
+    street: shortStreet(thoroughfare: mark.thoroughfare, number: mark.subThoroughfare, street: mark.street),
     municipality: _first([mark.locality, mark.subAdministrativeArea, mark.administrativeArea]),
   );
 
