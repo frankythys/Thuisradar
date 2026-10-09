@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
+import '../../location/application/location_providers.dart';
 import '../data/places_repository.dart';
+import '../domain/confirmed_presence.dart';
 import '../domain/place.dart';
 import '../domain/place_presence.dart';
 import '../domain/place_status.dart';
@@ -22,5 +24,6 @@ final familyPresenceProvider = StreamProvider.family<List<PlacePresence>, String
 final currentPlaceByUserProvider = Provider.family<Map<String, PlaceStatus>, String>((ref, familyId) {
   final places = ref.watch(familyPlacesProvider(familyId)).value ?? const [];
   final presence = ref.watch(familyPresenceProvider(familyId)).value ?? const [];
-  return currentPlaceByUser(places, presence);
+  final locations = ref.watch(familyLocationsProvider(familyId)).value ?? const [];
+  return currentPlaceByUser(places, confirmedPresence(presence, places, locations));
 });

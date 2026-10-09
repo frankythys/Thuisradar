@@ -13,6 +13,7 @@ import '../../location/application/location_providers.dart';
 import '../../location/domain/member_location.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
+import '../../places/domain/confirmed_presence.dart';
 import '../../places/domain/place_presence.dart';
 import '../domain/member_on_map.dart';
 import '../domain/stationary_since.dart';
@@ -74,9 +75,16 @@ final anchoredMembersOnMapProvider =
       final members = ref.watch(membersOnMapProvider(familyId));
       final places =
           ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
-      final presence =
-          ref.watch(familyPresenceProvider(familyId)).value ??
-          const <PlacePresence>[];
+      final locations =
+          ref.watch(familyLocationsProvider(familyId)).value ??
+          const <MemberLocation>[];
+      // Een achterlopende aanwezigheid mag niemand die weg is op Thuis zetten.
+      final presence = confirmedPresence(
+        ref.watch(familyPresenceProvider(familyId)).value ??
+            const <PlacePresence>[],
+        places,
+        locations,
+      );
       final roads = ref.watch(roadMembersOnMapProvider(familyId)).value;
       final now = ref.watch(clockProvider).value ?? DateTime.now();
       return members.whenData((list) {
