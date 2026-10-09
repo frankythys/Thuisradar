@@ -8,12 +8,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/widgets/icon_filter_chips.dart';
 import '../../../family/domain/family.dart';
-import '../../../notifications/application/events_providers.dart';
-import '../../../notifications/domain/family_event.dart';
+import '../../../location/application/location_providers.dart';
+import '../../../location/domain/member_location.dart';
 import '../../../places/application/places_providers.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/domain/place_presence.dart';
 import '../../../places/domain/place_status.dart';
+import '../../../places/presentation/add_place_screen.dart';
 import '../../domain/member_on_map.dart';
 import 'member_sheet_places.dart';
 import 'member_sheet_dimensions.dart';
@@ -92,7 +93,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
     final familyId = widget.family.id;
     final places = ref.watch(familyPlacesProvider(familyId)).value ?? const [];
     final presence = ref.watch(familyPresenceProvider(familyId)).value ?? const <PlacePresence>[];
-    final events = ref.watch(familyEventsProvider(familyId)).value ?? const [];
+    final locations = ref.watch(familyLocationsProvider(familyId)).value ?? const <MemberLocation>[];
     final showInvite = MemberSheetDimensions.showsInvite(
       canInvite: widget.onInvite != null,
       memberCount: widget.members.length,
@@ -152,7 +153,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                                   if (_filter == 0)
                                     ..._membersCard(context)
                                   else
-                                    ..._places(context, places, presence, events),
+                                    ..._places(context, places, presence, locations),
                                 ],
                               ),
                             ),
@@ -293,13 +294,19 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
     BuildContext context,
     List<Place> places,
     List<PlacePresence> presence,
-    List<FamilyEvent> events,
+    List<MemberLocation> locations,
   ) => [
     MemberSheetPlaces(
       places: places,
       presence: presence,
-      events: events,
+      locations: locations,
+      members: [for (final entry in widget.members) entry.member],
       now: widget.now,
+      onEdit: (place) => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AddPlaceScreen(familyId: widget.family.id, place: place),
+        ),
+      ),
       onAddPlace: widget.onAddPlace,
       onManage: widget.onPlaces,
     ),

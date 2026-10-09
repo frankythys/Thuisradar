@@ -20,6 +20,7 @@ import 'package:thuisradar/features/notifications/domain/family_event.dart';
 import 'package:thuisradar/features/places/application/places_providers.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
 import 'package:thuisradar/features/places/domain/place_presence.dart';
+import 'package:thuisradar/features/places/presentation/place_row.dart';
 
 const _family = Family(id: 'fam', name: 'Creve Family', inviteCode: 'ABC12345');
 
@@ -367,15 +368,19 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('de chip Plaatsen toont het plaatsenblok', (tester) async {
-    await pumpSheet(tester, [_member(id: 'u1', name: 'Liam')]);
+  testWidgets('de chip Plaatsen toont dezelfde rijen als het Plaatsen-scherm', (tester) async {
+    await pumpSheet(tester, [_member(id: 'u1', name: 'Liam'), _member(id: 'u2', name: 'Franky')]);
 
     await tester.tap(find.bySemanticsLabel('Plaatsen'));
     await tester.pumpAndSettle();
 
     expect(find.text('Thuis'), findsOneWidget);
     expect(find.text('Beheer'), findsOneWidget);
-    expect(find.text('Nieuwe cirkel plaatsen'), findsOneWidget);
-    expect(find.textContaining('1 gezinslid hier'), findsOneWidget);
+    expect(find.text('Plaats toevoegen'), findsOneWidget);
+    expect(find.byType(PlaceRow), findsOneWidget);
+    expect(find.text('150 m · Aankomst & vertrek'), findsOneWidget);
+    expect(find.byTooltip('Franky is hier'), findsOneWidget);
+    // Verwijderen gebeurt via Beheer, niet vanuit het kaartpaneel.
+    expect(find.byTooltip('Opties'), findsNothing);
   });
 }

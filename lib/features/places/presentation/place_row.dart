@@ -9,14 +9,15 @@ import 'place_icons.dart';
 
 /// Eén plaats als compacte rij: icoon, naam, adres, straal en welke meldingen
 /// aan staan en wie er nu is. Tik om te bewerken; bewerken en verwijderen
-/// staan ook in het ⋮-menu.
+/// staan ook in het ⋮-menu (enkel als [onDelete] gegeven is). Gedeeld door
+/// het Plaatsen-scherm en het plaatsenblok in het kaartpaneel.
 class PlaceRow extends StatelessWidget {
   const PlaceRow({
     super.key,
     required this.place,
     required this.present,
     required this.onEdit,
-    required this.onDelete,
+    this.onDelete,
   });
 
   final Place place;
@@ -25,7 +26,7 @@ class PlaceRow extends StatelessWidget {
   /// deze plaats is maar er nu niet is (here = false).
   final List<({FamilyMember member, bool here})> present;
   final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +42,7 @@ class PlaceRow extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(
           tokens.spaceMd,
           tokens.spaceSm + tokens.spaceXs,
-          tokens.spaceXs,
+          onDelete == null ? tokens.spaceMd : tokens.spaceXs,
           tokens.spaceSm + tokens.spaceXs,
         ),
         child: Row(
@@ -88,30 +89,31 @@ class PlaceRow extends StatelessWidget {
             ),
             SizedBox(width: tokens.spaceSm),
             if (present.isEmpty) Text('Leeg', style: muted) else _PresentStack(people: present),
-            PopupMenuButton<String>(
-              tooltip: 'Opties',
-              icon: const Icon(Icons.more_vert, color: AppColors.muted),
-              // Na het sluiten van het menu, zodat de bevestiging erbovenop komt.
-              onSelected: (action) => action == 'edit' ? onEdit() : onDelete(),
-              itemBuilder: (context) => [
-                const PopupMenuItem<String>(
-                  value: 'edit',
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.edit_outlined, color: AppColors.primary),
-                    title: Text('Bewerken'),
+            if (onDelete case final delete?)
+              PopupMenuButton<String>(
+                tooltip: 'Opties',
+                icon: const Icon(Icons.more_vert, color: AppColors.muted),
+                // Na het sluiten van het menu, zodat de bevestiging erbovenop komt.
+                onSelected: (action) => action == 'edit' ? onEdit() : delete(),
+                itemBuilder: (context) => [
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.edit_outlined, color: AppColors.primary),
+                      title: Text('Bewerken'),
+                    ),
                   ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.delete_outline, color: AppColors.alert),
-                    title: Text('Verwijderen'),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.delete_outline, color: AppColors.alert),
+                      title: Text('Verwijderen'),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),
