@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../features/auth/application/auth_providers.dart';
 import '../../features/family/application/family_providers.dart';
 import '../../features/notifications/application/events_providers.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
@@ -25,12 +24,7 @@ class NotificationsAction extends ConsumerWidget {
       icon: unread > 0 ? Badge(label: Text('$unread'), child: bell) : bell,
       onPressed: () {
         // Openen = alles als gelezen markeren (badge verdwijnt).
-        final userId = ref.read(currentUserIdProvider);
-        if (userId != null) {
-          ref.read(eventsRepositoryProvider).markSeen(userId, family.id).then((_) {
-            ref.invalidate(lastSeenProvider(family.id));
-          });
-        }
+        markNotificationsSeen(ref, family.id).catchError((Object e) => debugPrint('Meldingen gelezen: $e'));
         Navigator.of(context)
             .push(MaterialPageRoute<void>(builder: (_) => NotificationsScreen(family: family)));
       },

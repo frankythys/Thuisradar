@@ -14,5 +14,18 @@ class NotificationsStore {
     await prefs.setInt(_key(familyId), at.millisecondsSinceEpoch);
   }
 
+  /// Gezinsleden van wie de batterijwaarschuwing al gezien is.
+  Future<Set<String>> seenLowBattery(String familyId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_batteryKey(familyId)) ?? const []).toSet();
+  }
+
+  /// Vervangt de lijst; wie intussen weer opgeladen is, valt er zo vanzelf uit.
+  Future<void> setSeenLowBattery(String familyId, Set<String> userIds) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_batteryKey(familyId), userIds.toList());
+  }
+
   String _key(String familyId) => 'events_cleared_$familyId';
+  String _batteryKey(String familyId) => 'low_battery_seen_$familyId';
 }

@@ -18,4 +18,13 @@ void main() {
     // Andere familie blijft ongewijzigd.
     expect(await store.clearedAt('andere'), isNull);
   });
+
+  test('onthoudt geziene batterijwaarschuwingen per familie', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = NotificationsStore();
+    expect(await store.seenLowBattery('f1'), isEmpty);
+    await store.setSeenLowBattery('f1', {'liam'});
+    expect(await store.seenLowBattery('f1'), {'liam'});
+    expect(await store.seenLowBattery('f2'), isEmpty);
+  });
 }

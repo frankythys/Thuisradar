@@ -7,7 +7,6 @@ import '../../../core/utils/clock.dart';
 import '../../../core/utils/time_format.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../../../shared/widgets/privacy_note.dart';
-import '../../auth/application/auth_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../../shared/widgets/location_preview.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -17,6 +16,7 @@ import '../../family/domain/family.dart';
 import '../../places/application/places_providers.dart';
 import '../application/events_providers.dart';
 import '../domain/family_event.dart';
+import '../domain/unread.dart';
 
 /// Scherm 15: feed van aankomst, vertrek en SOS.
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -67,7 +67,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final members = ref.watch(familyMembersProvider(widget.family.id)).value ?? const [];
     final places = ref.watch(familyPlacesProvider(widget.family.id)).value ?? const [];
     final lowBatteries = (ref.watch(familyLocationsProvider(widget.family.id)).value ?? const [])
-        .where((l) => (l.battery ?? 100) <= 20 && l.isCharging != true)
+        .where(isLowBattery)
         .toList();
     final now = ref.watch(clockProvider).value ?? DateTime.now();
 
@@ -106,13 +106,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               children: [
                 Expanded(child: Text('Meldingen', style: Theme.of(context).textTheme.headlineLarge)),
                 TextButton.icon(
-                  onPressed: () async {
-                    final userId = ref.read(currentUserIdProvider);
-                    if (userId != null) {
-                      await ref.read(eventsRepositoryProvider).markSeen(userId, widget.family.id);
-                      ref.invalidate(lastSeenProvider(widget.family.id));
-                    }
-                  },
+                  onPressed: () => markNotificationsSeen(ref, widget.family.id),
                   icon: const Icon(Icons.done_all, size: 16),
                   label: const Text('Alles gelezen'),
                 ),
