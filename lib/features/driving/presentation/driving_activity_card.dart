@@ -132,7 +132,8 @@ class _TripBody extends StatelessWidget {
               ),
             ),
             SizedBox(width: tokens.spaceSm),
-            const Icon(Icons.directions_car_outlined, color: AppColors.primary),
+            // De 3D-auto, zoals Life360 een rit aanduidt.
+            Image.asset('assets/markers/auto.png', width: 56, height: 52, fit: BoxFit.contain),
           ],
         ),
         SizedBox(height: tokens.spaceSm),
