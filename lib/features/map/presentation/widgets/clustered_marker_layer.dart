@@ -6,6 +6,7 @@ import '../../../../core/utils/geo.dart';
 
 import '../../../places/domain/place_status.dart';
 import '../../../location/domain/trip_status.dart';
+import '../../domain/bubble_layout.dart';
 import '../../domain/bubble_side.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/marker_motion.dart';
@@ -348,25 +349,53 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
             ) +
             Offset(offsets[m.member.userId]?.dx ?? 0, 0),
     };
+    double baseDyOf(MemberOnMap member) =>
+        TripStatus.at(member.location, widget.now).state == TripState.moving ? -18 : -78;
+    // Alle ballonnen samen plaatsen, zodat ze nooit over elkaar vallen; per lid
+    // eerst de kant die vrij is van andere leden.
+    final placements = layoutBubbles([
+      for (final member in bubbleMembers)
+        if (screenById[member.member.userId] case final self?)
+          (
+            id: member.member.userId,
+            anchor: self + Offset(0, offsets[member.member.userId]?.dy ?? 0),
+            preferred: chooseBubbleSide(self, [
+              for (final entry in screenById.entries)
+                if (entry.key != member.member.userId) entry.value,
+            ]),
+            baseDy: baseDyOf(member),
+          ),
+    ], avatars: {
+      // Het gezicht van elk los lid, in dezelfde coördinaten als de ballon
+      // (die hangt een ballonhoogte hoger dan zijn ankerpunt).
+      // Een rijdend lid staat gecentreerd op zijn punt, een stilstaand lid
+      // als pin erboven.
+      for (final entry in screenById.entries)
+        entry.key: Rect.fromCenter(
+          center: entry.value +
+              Offset(
+                0,
+                (offsets[entry.key]?.dy ?? 0) +
+                    (isDriving([entry.key])
+                        ? 0
+                        : MemberMarker.avatarSize / 2 - MemberMarker.height) +
+                    kBubbleHeight,
+              ),
+          width: MemberMarker.avatarSize,
+          height: MemberMarker.avatarSize,
+        ),
+    });
     for (final selected in bubbleMembers) {
       final id = selected.member.userId;
       final coordinate = coords[id]!;
       final point = LatLng(coordinate.lat, coordinate.lng);
-      // Kies de vrije kant zodat de ballon nooit over een ander lid valt; dit
-      // wordt bij elke zoom opnieuw bepaald (schermpixels).
-      final self = screenById[id];
-      final onRight =
-          self == null ||
-          chooseBubbleSide(self, [
-                for (final entry in screenById.entries)
-                  if (entry.key != id) entry.value,
-              ]) ==
-              BubbleSide.right;
+      final placement = placements[id];
+      final onRight = placement == null || placement.side == BubbleSide.right;
       markers.add(
         Marker(
           point: point,
-          width: 142,
-          height: 48,
+          width: kBubbleWidth,
+          height: kBubbleHeight,
           alignment: Alignment(
             (onRight ? 1 : -1) + 2 * (offsets[id]?.dx ?? 0) / 142,
             -1 + 2 * (offsets[id]?.dy ?? 0) / 48,
@@ -374,11 +403,8 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           child: Transform.translate(
             // Zoals de referentie: hoger en verder over de bovenhoek.
             offset: Offset(
-              onRight ? 20 : -20,
-              TripStatus.at(selected.location, widget.now).state ==
-                      TripState.moving
-                  ? -18
-                  : -78,
+              onRight ? kBubbleInset : -kBubbleInset,
+              baseDyOf(selected) + (placement?.shiftY ?? 0),
             ),
             child: MemberHistoryBubble(
               entry: selected,
