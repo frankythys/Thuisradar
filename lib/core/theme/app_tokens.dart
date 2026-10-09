@@ -23,6 +23,8 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.shadowLevel1,
     required this.shadowLevel2,
     required this.shadowSheet,
+    required this.shadowMarker,
+    required this.glowSelection,
     required this.memberColors,
   });
 
@@ -47,6 +49,12 @@ class AppTokens extends ThemeExtension<AppTokens> {
 
   /// Niveau 3: vaste bottom sheets en SOS-overlays.
   final List<BoxShadow> shadowSheet;
+
+  /// Duidelijke slagschaduw onder de cirkels op de kaart.
+  final List<BoxShadow> shadowMarker;
+
+  /// Zachte gloed in de selectiekleur rond het gekozen lid op de kaart.
+  final List<BoxShadow> glowSelection;
 
   final List<Color> memberColors;
 
@@ -73,6 +81,15 @@ class AppTokens extends ThemeExtension<AppTokens> {
       BoxShadow(color: Color(0x0812201C), blurRadius: 12, spreadRadius: -2, offset: Offset(0, 4)),
     ],
     shadowSheet: [BoxShadow(color: Color(0x1412201C), blurRadius: 32, offset: Offset(0, -8))],
+    shadowMarker: [
+      BoxShadow(color: Color(0x4012201C), blurRadius: 12, offset: Offset(0, 5)),
+      BoxShadow(color: Color(0x2612201C), blurRadius: 3, offset: Offset(0, 1)),
+    ],
+    // AppColors.mapSelection (#762EEA) op 45 % en 20 %.
+    glowSelection: [
+      BoxShadow(color: Color(0x73762EEA), blurRadius: 18, spreadRadius: 2),
+      BoxShadow(color: Color(0x33762EEA), blurRadius: 36, spreadRadius: 6),
+    ],
     memberColors: AppColors.members,
   );
 
@@ -92,6 +109,8 @@ class AppTokens extends ThemeExtension<AppTokens> {
     List<BoxShadow>? shadowLevel1,
     List<BoxShadow>? shadowLevel2,
     List<BoxShadow>? shadowSheet,
+    List<BoxShadow>? shadowMarker,
+    List<BoxShadow>? glowSelection,
     List<Color>? memberColors,
   }) {
     return AppTokens(
@@ -109,6 +128,8 @@ class AppTokens extends ThemeExtension<AppTokens> {
       shadowLevel1: shadowLevel1 ?? this.shadowLevel1,
       shadowLevel2: shadowLevel2 ?? this.shadowLevel2,
       shadowSheet: shadowSheet ?? this.shadowSheet,
+      shadowMarker: shadowMarker ?? this.shadowMarker,
+      glowSelection: glowSelection ?? this.glowSelection,
       memberColors: memberColors ?? this.memberColors,
     );
   }
@@ -131,6 +152,8 @@ class AppTokens extends ThemeExtension<AppTokens> {
       shadowLevel1: BoxShadow.lerpList(shadowLevel1, other.shadowLevel1, t) ?? shadowLevel1,
       shadowLevel2: BoxShadow.lerpList(shadowLevel2, other.shadowLevel2, t) ?? shadowLevel2,
       shadowSheet: BoxShadow.lerpList(shadowSheet, other.shadowSheet, t) ?? shadowSheet,
+      shadowMarker: BoxShadow.lerpList(shadowMarker, other.shadowMarker, t) ?? shadowMarker,
+      glowSelection: BoxShadow.lerpList(glowSelection, other.glowSelection, t) ?? glowSelection,
       memberColors: t < 0.5 ? memberColors : other.memberColors,
     );
   }

@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_map_tiles.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
+import '../../domain/map_focus.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
 
@@ -106,7 +107,7 @@ class FamilyMap extends StatelessWidget {
             for (final place in places)
               if (place.icon == 'home') LatLng(place.latitude, place.longitude),
           ],
-          members: members,
+          members: membersToShow(members, selectedUserId),
           now: now,
           placeByUser: placeByUser,
           stationarySinceByUser: stationarySinceByUser,

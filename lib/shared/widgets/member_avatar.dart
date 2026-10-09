@@ -43,7 +43,7 @@ class MemberAvatar extends StatelessWidget {
         borderRadius: square ? BorderRadius.circular(size * 0.3) : null,
         color: color,
         border: ring ? Border.all(color: Colors.white, width: 3) : null,
-        boxShadow: ring ? tokens.shadowLevel2 : null,
+        boxShadow: ring ? tokens.shadowMarker : null,
       ),
       child: Text(
         member.initial,

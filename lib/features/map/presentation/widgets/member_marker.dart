@@ -31,36 +31,23 @@ class MemberMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final driving =
-        TripStatus.at(entry.location, now).state == TripState.moving;
+    final driving = TripStatus.at(entry.location, now).state == TripState.moving;
 
     final Widget marker;
     if (driving) {
-      marker = _IconMarker(
-        entry: entry,
-        selected: selected,
-        asset: 'assets/markers/auto.png',
-        width: 74,
-      );
+      marker = _IconMarker(entry: entry, selected: selected, asset: 'assets/markers/auto.png', width: 74);
     } else {
       marker = _Avatar(entry: entry, selected: selected);
     }
     // Auto: het midden van het plaatje valt precies op het kaartpunt.
-    return driving
-        ? Center(child: marker)
-        : Column(mainAxisSize: MainAxisSize.min, children: [marker]);
+    return driving ? Center(child: marker) : Column(mainAxisSize: MainAxisSize.min, children: [marker]);
   }
 }
 
 /// Een auto-marker tijdens het rijden met
 /// een klein avatar-badge zodat je ziet om wie het gaat.
 class _IconMarker extends StatelessWidget {
-  const _IconMarker({
-    required this.entry,
-    required this.selected,
-    required this.asset,
-    required this.width,
-  });
+  const _IconMarker({required this.entry, required this.selected, required this.asset, required this.width});
 
   final MemberOnMap entry;
   final bool selected;
@@ -82,16 +69,12 @@ class _IconMarker extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.mapSelection,
                   borderRadius: BorderRadius.circular(18),
-                  boxShadow: context.tokens.shadowLevel2,
+                  boxShadow: [...context.tokens.glowSelection, ...context.tokens.shadowMarker],
                 ),
               ),
             ),
           Image.asset(asset, width: width),
-          Positioned(
-            top: 0,
-            left: 0,
-            child: MemberAvatar(member: entry.member, size: 28, ring: true),
-          ),
+          Positioned(top: 0, left: 0, child: MemberAvatar(member: entry.member, size: 28, ring: true)),
         ],
       ),
     );
@@ -106,11 +89,7 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avatar = MemberAvatar(
-      member: entry.member,
-      size: MemberMarker.avatarSize,
-      ring: !selected,
-    );
+    final avatar = MemberAvatar(member: entry.member, size: MemberMarker.avatarSize, ring: !selected);
     if (!selected) return avatar;
 
     // Paars is gereserveerd voor selectie en vervangt de witte rand volledig.
@@ -119,7 +98,7 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.mapSelection,
-        boxShadow: context.tokens.shadowLevel2,
+        boxShadow: [...context.tokens.glowSelection, ...context.tokens.shadowMarker],
       ),
       child: avatar,
     );

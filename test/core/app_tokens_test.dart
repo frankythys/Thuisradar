@@ -29,4 +29,11 @@ void main() {
     expect(mid.radiusCard, 30);
     expect(mid.memberColors, other.memberColors);
   });
+
+  test('selectiegloed gebruikt de kaartselectiekleur', () {
+    for (final shadow in tokens.glowSelection) {
+      expect(shadow.color.withValues(alpha: 1), AppColors.mapSelection);
+    }
+    expect(tokens.shadowMarker, isNotEmpty);
+  });
 }

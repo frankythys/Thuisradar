@@ -26,7 +26,7 @@ class _Header extends ConsumerWidget {
             children: [
               Text(
                 member.displayName,
-                style: text.headlineSmall,
+                style: text.headlineMedium,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

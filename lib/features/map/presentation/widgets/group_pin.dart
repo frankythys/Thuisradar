@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/member_avatar.dart';
 import '../../../location/domain/trip_status.dart';
@@ -59,7 +60,7 @@ class GroupPin extends StatelessWidget {
               if (extra > 0) Positioned(left: shown.length * _step, child: _plus(extra)),
               // Achterste eerst tekenen; "ik" (index 0) komt zo bovenop.
               for (final (index, member) in shown.indexed.toList().reversed)
-                Positioned(left: index * _step, child: _avatarFor(member)),
+                Positioned(left: index * _step, child: _avatarFor(context, member)),
             ],
           ),
         ),
@@ -76,13 +77,17 @@ class GroupPin extends StatelessWidget {
     );
   }
 
-  Widget _avatarFor(MemberOnMap member) {
+  Widget _avatarFor(BuildContext context, MemberOnMap member) {
     final isSelected = member.member.userId == selectedUserId;
     final avatar = MemberAvatar(member: member.member, size: _avatar, ring: !isSelected);
     final child = isSelected
         ? Container(
             padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.mapSelection),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.mapSelection,
+              boxShadow: [...context.tokens.glowSelection, ...context.tokens.shadowMarker],
+            ),
             child: avatar,
           )
         : avatar;
