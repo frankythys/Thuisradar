@@ -10,6 +10,7 @@ class _CurrentStayCard extends ConsumerWidget {
     required this.places,
     required this.now,
     required this.onRefresh,
+    this.onSaveAsPlace,
   });
 
   final MemberLocation location;
@@ -17,6 +18,9 @@ class _CurrentStayCard extends ConsumerWidget {
   final List<Place> places;
   final DateTime now;
   final VoidCallback onRefresh;
+
+  /// Zichtbaar als het lid op een nog niet opgeslagen plek staat.
+  final VoidCallback? onSaveAsPlace;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -96,6 +100,14 @@ class _CurrentStayCard extends ConsumerWidget {
                 ),
             ],
           ),
+          if (onSaveAsPlace case final save?) ...[
+            SizedBox(height: tokens.spaceMd),
+            OutlinedButton.icon(
+              onPressed: save,
+              icon: const Icon(Icons.add_location_alt_outlined, size: 20),
+              label: const Text('Deze plek opslaan als plaats'),
+            ),
+          ],
           Padding(
             padding: EdgeInsets.symmetric(vertical: tokens.spaceSm),
             child: const Divider(height: 1),

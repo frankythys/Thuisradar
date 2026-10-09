@@ -35,6 +35,8 @@ import '../../location/domain/trip_status.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
 import '../../places/domain/place_timeline.dart';
+import '../../places/domain/save_as_place.dart';
+import '../../places/presentation/add_place_screen.dart';
 import '../../places/presentation/place_icons.dart';
 
 part 'member_detail_screen_header.dart';
@@ -115,14 +117,25 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         : dayHistory!.whenData((history) => history.entries);
     final routePoints = dayHistory?.value?.points ?? const <TrackPoint>[];
 
+    final places = ref.watch(familyPlacesProvider(widget.familyId)).value ?? const <Place>[];
     final body = <Widget>[
       if (_dayOffset == 0 && location != null) ...[
         _CurrentStayCard(
           location: location,
           entries: timeline.value ?? const [],
-          places: ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
+          places: places,
           now: now,
           onRefresh: () => ref.invalidate(dayHistoryProvider(query)),
+          onSaveAsPlace: canSaveAsPlace(location, places, now)
+              ? () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AddPlaceScreen(
+                      familyId: widget.familyId,
+                      initialLocation: LatLng(location.latitude, location.longitude),
+                    ),
+                  ),
+                )
+              : null,
         ),
         const SizedBox(height: 16),
       ],

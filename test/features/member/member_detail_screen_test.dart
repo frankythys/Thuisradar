@@ -5,13 +5,21 @@ import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/core/utils/clock.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/application/location_history_providers.dart';
+import 'package:thuisradar/features/location/application/address_providers.dart';
 import 'package:thuisradar/features/location/application/location_providers.dart';
+import 'package:thuisradar/features/location/data/geocoding_source.dart';
+import 'package:thuisradar/features/location/domain/place_address.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
 import 'package:thuisradar/features/location/domain/track_point.dart';
 import 'package:thuisradar/features/member/presentation/member_detail_screen.dart';
 import 'package:thuisradar/features/places/application/places_providers.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
+
+class _NoGeocoding extends GeocodingSource {
+  @override
+  Future<PlaceAddress?> addressFor(double latitude, double longitude) async => null;
+}
 
 const _member = FamilyMember(userId: 'u1', displayName: 'Papa', isOwner: true, colorIndex: 0);
 
@@ -27,6 +35,7 @@ Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() r
         familyPlacesProvider.overrideWith((ref, arg) => Stream.value(const <Place>[])),
         // Geen echte Supabase-stroom nodig voor deze schermtests.
         familyLocationsProvider.overrideWith((ref, arg) => Stream.value(const <MemberLocation>[])),
+        geocodingSourceProvider.overrideWithValue(_NoGeocoding()),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -227,5 +236,33 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.textContaining('Geschiedenis laden mislukt'), findsOneWidget);
     expect(find.text('Opnieuw proberen'), findsOneWidget);
+  });
+
+  testWidgets('stilstaan op een onbekende plek biedt "Deze plek opslaan als plaats"', (tester) async {
+    await _pump(
+      tester,
+      () async => <TimelineEntry>[],
+      home: MemberDetailScreen(
+        member: _member,
+        familyId: 'fam',
+        location: MemberLocation(
+          userId: 'u1',
+          familyId: 'fam',
+          latitude: 51.2,
+          longitude: 4.4,
+          speedMps: 0,
+          updatedAt: DateTime(2026, 1, 2, 9, 59, 40),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Deze plek opslaan als plaats'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('zonder locatie geen opslaanknop', (tester) async {
+    await _pump(tester, () async => <TimelineEntry>[]);
+    await tester.pumpAndSettle();
+    expect(find.text('Deze plek opslaan als plaats'), findsNothing);
   });
 }

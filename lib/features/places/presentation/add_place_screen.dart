@@ -19,8 +19,12 @@ import '../domain/selected_place_location.dart';
 /// Scherm 14: plaats toevoegen door de kaart te verschuiven (vaste pin in het
 /// midden), een adres te zoeken en de meldingen per gezinslid in te stellen.
 class AddPlaceScreen extends ConsumerStatefulWidget {
-  const AddPlaceScreen({super.key, required this.familyId});
+  const AddPlaceScreen({super.key, required this.familyId, this.initialLocation});
   final String familyId;
+
+  /// Start op deze plek (bv. waar een gezinslid nu staat) i.p.v. op je eigen
+  /// locatie.
+  final LatLng? initialLocation;
   @override
   ConsumerState<AddPlaceScreen> createState() => _AddPlaceScreenState();
 }
@@ -43,6 +47,12 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     super.initState();
     // Meteen starten op de locatie die de app al kent (via de tracker), zodat
     // de kaart direct bij de gebruiker staat â€” ook binnenshuis zonder verse fix.
+    final initial = widget.initialLocation;
+    if (initial != null) {
+      _selection.move(initial, userGesture: false);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _controller.move(initial, 17));
+      return;
+    }
     final myId = ref.read(currentUserIdProvider);
     final locations = ref.read(familyLocationsProvider(widget.familyId)).value ?? const [];
     for (final location in locations) {
