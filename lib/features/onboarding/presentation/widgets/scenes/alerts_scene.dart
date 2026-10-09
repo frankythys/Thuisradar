@@ -3,46 +3,52 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import 'scene_bits.dart';
 
-/// Drie meldingen bij aankomst en vertrek, licht gestapeld.
-class AlertsScene extends StatelessWidget {
-  const AlertsScene({super.key});
+/// Drie meldingen die na elkaar binnenschuiven, zoals op het vergrendelscherm.
+class AlertsScene extends AnimatedScene {
+  const AlertsScene({super.key, required super.progress});
 
   @override
   Widget build(BuildContext context) {
-    final home = AppColors.forMemberIndex(0);
-    final work = AppColors.forMemberIndex(4);
+    final notes = [
+      const _Note(
+        icon: Icons.school_rounded,
+        color: AppColors.primary,
+        time: '08:12',
+        message: 'Liam is op School',
+      ),
+      _Note(
+        icon: Icons.work_rounded,
+        color: AppColors.forMemberIndex(4),
+        time: '17:04',
+        message: 'Mama vertrekt van Werk',
+      ),
+      _Note(
+        icon: Icons.home_rounded,
+        color: AppColors.forMemberIndex(0),
+        time: '17:31',
+        message: 'Papa is thuis',
+      ),
+    ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const _Note(
-            icon: Icons.school_rounded,
-            color: AppColors.primary,
-            time: '08:12',
-            message: 'Liam is op School',
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Opacity(
-              opacity: .92,
-              child: _Note(
-                icon: Icons.work_rounded,
-                color: work,
-                time: '17:04',
-                message: 'Mama vertrekt van Werk',
-              ),
+          for (final (i, note) in notes.indexed) ...[
+            if (i > 0) const SizedBox(height: 10),
+            Builder(
+              builder: (context) {
+                final v = phase(t, i * .25, .35 + i * .25, Curves.easeOutBack);
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: i * 9.0),
+                  child: Opacity(
+                    opacity: v.clamp(0.0, 1.0) * (1 - i * .1),
+                    child: Transform.translate(offset: Offset(0, -24 * (1 - v)), child: note),
+                  ),
+                );
+              },
             ),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Opacity(
-              opacity: .8,
-              child: _Note(icon: Icons.home_rounded, color: home, time: '17:31', message: 'Papa is thuis'),
-            ),
-          ),
+          ],
         ],
       ),
     );

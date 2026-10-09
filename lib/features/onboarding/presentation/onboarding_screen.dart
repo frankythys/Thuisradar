@@ -54,7 +54,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _controller,
                 itemCount: onboardingSlides.length,
                 onPageChanged: (i) => setState(() => _index = i),
-                itemBuilder: (context, i) => _SlidePage(slide: onboardingSlides[i]),
+                itemBuilder: (context, i) => _SlidePage(slide: onboardingSlides[i], active: i == _index),
               ),
             ),
             OnboardingFooter(
@@ -71,9 +71,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 }
 
 class _SlidePage extends StatelessWidget {
-  const _SlidePage({required this.slide});
+  const _SlidePage({required this.slide, required this.active});
 
   final OnboardingSlide slide;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +89,7 @@ class _SlidePage extends StatelessWidget {
             child: Center(
               child: AspectRatio(
                 aspectRatio: sceneAspectRatio,
-                child: OnboardingStage(scene: slide.scene),
+                child: OnboardingStage(scene: slide.scene, active: active),
               ),
             ),
           ),

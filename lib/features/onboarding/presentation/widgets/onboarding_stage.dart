@@ -6,14 +6,55 @@ import '../../domain/onboarding_slide.dart';
 import 'scenes/alerts_scene.dart';
 import 'scenes/map_scene.dart';
 import 'scenes/privacy_scene.dart';
-import 'scenes/sos_scene.dart';
 import 'scenes/scene_bits.dart';
+import 'scenes/sos_scene.dart';
 
-/// Afgeronde illustratievlak bovenaan een slide; schaalt mee met het scherm.
-class OnboardingStage extends StatelessWidget {
-  const OnboardingStage({super.key, required this.scene});
+/// Afgeronde illustratievlak bovenaan een slide. De scène speelt één keer af
+/// zodra de slide in beeld komt ([active]) en blijft dan op het eindbeeld staan.
+class OnboardingStage extends StatefulWidget {
+  const OnboardingStage({super.key, required this.scene, required this.active});
 
   final OnboardingScene scene;
+  final bool active;
+
+  @override
+  State<OnboardingStage> createState() => _OnboardingStageState();
+}
+
+class _OnboardingStageState extends State<OnboardingStage> with SingleTickerProviderStateMixin {
+  late final _controller = AnimationController(
+    vsync: this,
+    duration: widget.scene == OnboardingScene.map
+        ? const Duration(milliseconds: 5200)
+        : const Duration(milliseconds: 2600),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.active && _controller.isDismissed) _play();
+  }
+
+  @override
+  void didUpdateWidget(OnboardingStage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) _play();
+  }
+
+  void _play() {
+    // Animaties uit in de toegankelijkheidsinstellingen: meteen het eindbeeld.
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.value = 1;
+    } else {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,14 +72,14 @@ class OnboardingStage extends StatelessWidget {
         borderRadius: radius,
         child: FittedBox(
           // De kaart vult het vlak; de andere scènes blijven volledig zichtbaar.
-          fit: scene == OnboardingScene.map ? BoxFit.cover : BoxFit.contain,
+          fit: widget.scene == OnboardingScene.map ? BoxFit.cover : BoxFit.contain,
           child: SizedBox.fromSize(
             size: sceneSize,
-            child: switch (scene) {
-              OnboardingScene.map => const MapScene(),
-              OnboardingScene.privacy => const PrivacyScene(),
-              OnboardingScene.alerts => const AlertsScene(),
-              OnboardingScene.sos => const SosScene(),
+            child: switch (widget.scene) {
+              OnboardingScene.map => MapScene(progress: _controller),
+              OnboardingScene.privacy => PrivacyScene(progress: _controller),
+              OnboardingScene.alerts => AlertsScene(progress: _controller),
+              OnboardingScene.sos => SosScene(progress: _controller),
             },
           ),
         ),

@@ -8,6 +8,17 @@ const sceneSize = Size(280, 260);
 /// Breedte gedeeld door hoogte van [sceneSize].
 const sceneAspectRatio = 280 / 260;
 
+/// Voortgang van een deel van de animatie: 0 vóór [start], 1 na [end].
+double phase(double t, double start, double end, [Curve curve = Curves.easeOutCubic]) =>
+    curve.transform(((t - start) / (end - start)).clamp(0.0, 1.0));
+
+/// Basis voor een scène die op een animatiewaarde 0..1 tekent.
+abstract class AnimatedScene extends AnimatedWidget {
+  const AnimatedScene({super.key, required Animation<double> progress}) : super(listenable: progress);
+
+  double get t => (listenable as Animation<double>).value;
+}
+
 /// Zachte schaduw voor zwevende elementen in een scène.
 const sceneShadow = [
   BoxShadow(color: Color(0x2E0F1E24), blurRadius: 18, spreadRadius: -8, offset: Offset(0, 8)),
