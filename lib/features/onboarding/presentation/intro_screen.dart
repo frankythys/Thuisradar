@@ -26,10 +26,11 @@ class _IntroScreenState extends State<IntroScreen> {
   @override
   void initState() {
     super.initState();
-    _controller =
-        widget.controller ??
-        VideoPlayerController.asset('assets/Intro/Intro_vertical.mp4');
+    _controller = widget.controller ?? VideoPlayerController.asset('assets/Intro/Intro_vertical.mp4');
     _controller.addListener(_checkPlayback);
+    // Android-knoppen onderaan (en statusbalk) weg tijdens de video. Een veeg
+    // vanaf de rand toont ze even; daarna verdwijnen ze vanzelf weer.
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky));
     unawaited(_play());
   }
 
@@ -53,6 +54,7 @@ class _IntroScreenState extends State<IntroScreen> {
   void _finish() {
     if (!mounted || _finished) return;
     _finished = true;
+    _restoreSystemUi();
     // De gate vervangt dit scherm; dispose stopt ook het geluid.
     widget.onFinished();
   }
@@ -67,8 +69,14 @@ class _IntroScreenState extends State<IntroScreen> {
     }
   }
 
+  /// Zet de gewone Android-balken terug (ook als het scherm anders sluit).
+  void _restoreSystemUi() {
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values));
+  }
+
   @override
   void dispose() {
+    _restoreSystemUi();
     _controller.removeListener(_checkPlayback);
     unawaited(_controller.dispose());
     super.dispose();
@@ -91,10 +99,7 @@ class _IntroScreenState extends State<IntroScreen> {
                 aspectRatio: 9 / 16,
                 child: _controller.value.isInitialized
                     ? VideoPlayer(_controller)
-                    : Image.asset(
-                        'assets/Intro/intro_poster.jpg',
-                        fit: BoxFit.contain,
-                      ),
+                    : Image.asset('assets/Intro/intro_poster.jpg', fit: BoxFit.contain),
               ),
             ),
             SafeArea(
@@ -107,10 +112,7 @@ class _IntroScreenState extends State<IntroScreen> {
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.white,
                       backgroundColor: Colors.black.withValues(alpha: 0.35),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
                     child: const Text('Overslaan'),
                   ),
@@ -129,11 +131,7 @@ class _IntroScreenState extends State<IntroScreen> {
                       backgroundColor: Colors.black.withValues(alpha: 0.35),
                       foregroundColor: Colors.white,
                     ),
-                    icon: Icon(
-                      _muted
-                          ? Icons.volume_off_rounded
-                          : Icons.volume_up_rounded,
-                    ),
+                    icon: Icon(_muted ? Icons.volume_off_rounded : Icons.volume_up_rounded),
                   ),
                 ),
               ),
