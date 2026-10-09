@@ -44,11 +44,18 @@ class GroupPin extends StatelessWidget {
   /// Tik op één avatar in de groep: toon de info van dat lid.
   final ValueChanged<MemberOnMap>? onMemberTap;
 
+  /// Breedte van de rij cirkels voor [count] leden (max 3 + "+N").
+  static double clusterWidth(int count) {
+    final shown = count.clamp(1, _maxShown);
+    final extra = count - shown;
+    return (shown - 1) * _step + _avatar + (extra > 0 ? _step : 0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final shown = members.take(_maxShown).toList();
     final extra = members.length - shown.length;
-    final clusterWidth = (shown.length - 1) * _step + _avatar + (extra > 0 ? _step : 0);
+    final clusterWidth = GroupPin.clusterWidth(members.length);
 
     return Column(
       mainAxisSize: MainAxisSize.min,

@@ -7,6 +7,7 @@ import '../../../location/domain/trip_status.dart';
 import '../../domain/bubble_side.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/marker_motion.dart';
+import '../../domain/marker_spread.dart';
 import '../../domain/marker_clearance.dart';
 import '../../domain/member_on_map.dart';
 import 'group_pin.dart';
@@ -52,6 +53,9 @@ class ClusteredMarkerLayer extends StatefulWidget {
 
 class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     with SingleTickerProviderStateMixin {
+  /// Binnen deze schermafstand van het huis-icoon telt iemand als "bij huis".
+  static const _nearPlacePx = 48.0;
+
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: markerMotionMin,
@@ -206,32 +210,66 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       for (final place in widget.reservedPlaces)
         camera.latLngToScreenOffset(place),
     ];
+    bool isDriving(List<String> group) =>
+        group.length == 1 &&
+        TripStatus.at(byId[group.single]!.location, widget.now).state ==
+            TripState.moving;
+    Offset screenOf(String id) =>
+        camera.latLngToScreenOffset(LatLng(coords[id]!.lat, coords[id]!.lng));
+
+    // Vrijhouden van het huis-icoon: enkel voor wie echt bij dat icoon staat.
+    // Wie verder weg is, mag niet over het huis heen naar boven geduwd worden
+    // (anders komen mensen op aparte locaties toch op één hoop).
+    final clearance = <String, Offset>{};
+    for (final group in groups) {
+      if (isDriving(group)) {
+        clearance[group.first] = Offset.zero;
+        continue;
+      }
+      final single = group.length == 1;
+      final screenPoint = screenOf(group.first);
+      final width = single ? MemberMarker.width : GroupPin.width;
+      final height = single ? MemberMarker.height : GroupPin.height;
+      clearance[group.first] = markerClearance(
+        Rect.fromLTWH(
+          screenPoint.dx - width / 2,
+          single ? screenPoint.dy - height : screenPoint.dy,
+          width,
+          height,
+        ),
+        [
+          for (final place in placePoints)
+            if ((place - screenPoint).distance <= _nearPlacePx) place,
+        ],
+      );
+    }
+
+    // Losse markers op aparte locaties die op het scherm over elkaar zouden
+    // vallen, schuiven naast elkaar (auto's blijven op hun exacte positie).
+    final spread = spreadHorizontally([
+      for (final group in groups)
+        if (!isDriving(group))
+          SpreadItem(
+            group.first,
+            screenOf(group.first) + Offset(0, clearance[group.first]!.dy),
+            group.length == 1
+                ? MemberMarker.avatarSize / 2
+                : GroupPin.clusterWidth(group.length) / 2,
+          ),
+    ]);
     final offsets = <String, Offset>{};
     for (final group in groups) {
       final groupMembers = [for (final id in group) byId[id]!];
       final anchor = coords[groupMembers.first.member.userId]!;
       final point = LatLng(anchor.lat, anchor.lng);
-      final screenPoint = camera.latLngToScreenOffset(point);
       final single = groupMembers.length == 1;
-      final driving =
-          single &&
-          TripStatus.at(groupMembers.single.location, widget.now).state ==
-              TripState.moving;
+      final driving = isDriving(group);
       final width = single ? MemberMarker.width : GroupPin.width;
       final height = single ? MemberMarker.height : GroupPin.height;
-      final offset = driving
-          ? Offset.zero
-          : markerClearance(
-              Rect.fromLTWH(
-                screenPoint.dx - width / 2,
-                single ? screenPoint.dy - height : screenPoint.dy,
-                width,
-                height,
-              ),
-              placePoints,
-            );
+      final offset = clearance[group.first]!;
+      final shiftX = spread[group.first] ?? 0;
       for (final member in groupMembers) {
-        offsets[member.member.userId] = offset;
+        offsets[member.member.userId] = Offset(shiftX, offset.dy);
       }
 
       if (groupMembers.length == 1) {
@@ -243,7 +281,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
             height: MemberMarker.height,
             alignment: driving
                 ? Alignment.center
-                : Alignment(0, -1 + 2 * offset.dy / height),
+                : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
             child: GestureDetector(
               onTap: () => widget.onMemberTap(member),
               child: MemberMarker(
@@ -261,7 +299,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
             point: point,
             width: GroupPin.width,
             height: GroupPin.height,
-            alignment: Alignment(0, 1 + 2 * offset.dy / height),
+            alignment: Alignment(2 * shiftX / width, 1 + 2 * offset.dy / height),
             child: GestureDetector(
               onTap: () => widget.onGroupTap(point),
               child: GroupPin(
@@ -289,9 +327,11 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           ];
     final screenById = {
       for (final m in located)
-        m.member.userId: camera.latLngToScreenOffset(
-          LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
-        ),
+        m.member.userId:
+            camera.latLngToScreenOffset(
+              LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
+            ) +
+            Offset(offsets[m.member.userId]?.dx ?? 0, 0),
     };
     for (final selected in bubbleMembers) {
       final id = selected.member.userId;
@@ -313,7 +353,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           width: 142,
           height: 48,
           alignment: Alignment(
-            onRight ? 1 : -1,
+            (onRight ? 1 : -1) + 2 * (offsets[id]?.dx ?? 0) / 142,
             -1 + 2 * (offsets[id]?.dy ?? 0) / 48,
           ),
           child: Transform.translate(
