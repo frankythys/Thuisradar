@@ -47,10 +47,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Wekelijks rijveiligheidsoverzicht'), findsOneWidget);
+    expect(find.text('Rijden'), findsOneWidget);
+    expect(find.text('Deze week'), findsOneWidget);
+    expect(find.text('PER GEZINSLID'), findsOneWidget);
     expect(find.byIcon(Icons.lock), findsNothing);
     expect(find.textContaining('abonnement'), findsNothing);
-    await tester.tap(find.text('Vorige week'));
+    await tester.tap(find.byTooltip('Week ervoor'));
     await tester.pumpAndSettle();
     expect(
       queries.last.week,

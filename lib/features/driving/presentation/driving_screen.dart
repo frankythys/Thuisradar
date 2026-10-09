@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
@@ -11,7 +12,10 @@ import '../application/driving_providers.dart';
 import '../domain/driving_report.dart';
 import 'driving_member_screen.dart';
 import 'driving_summary.dart';
+import 'driving_week_picker.dart';
 
+/// Weekoverzicht van de ritten: week kiezen, drie kerncijfers en per
+/// gezinslid een rij die naar de ritten van die persoon leidt.
 class DrivingScreen extends ConsumerStatefulWidget {
   const DrivingScreen({super.key, required this.family});
   final Family family;
@@ -26,39 +30,19 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final text = Theme.of(context).textTheme;
     final query = (familyId: widget.family.id, week: _week);
     final reports = ref.watch(drivingReportsProvider(query));
-    final current = drivingWeekStart(DateTime.now());
     return Scaffold(
-      appBar: BrandedAppBar(title: widget.family.name),
+      appBar: const BrandedAppBar(title: 'Rijden'),
       body: Column(
         children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.all(tokens.spaceMd),
-            child: Row(
-              children: [
-                for (var index = 0; index < 12; index++) ...[
-                  Builder(
-                    builder: (context) {
-                      final start = DateTime(current.year, current.month, current.day - index * 7);
-                      final end = DateTime(start.year, start.month, start.day + 6);
-                      return ChoiceChip(
-                        label: Text(
-                          index == 0
-                              ? 'Deze week'
-                              : index == 1
-                              ? 'Vorige week'
-                              : '${drivingDate(start)} – ${drivingDate(end)}',
-                        ),
-                        selected: _week == start,
-                        onSelected: (_) => setState(() => _week = start),
-                      );
-                    },
-                  ),
-                  SizedBox(width: tokens.spaceSm),
-                ],
-              ],
+          Padding(
+            padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceMd, 0),
+            child: DrivingWeekPicker(
+              week: _week,
+              currentWeek: drivingWeekStart(DateTime.now()),
+              onChanged: (week) => setState(() => _week = week),
             ),
           ),
           Expanded(
@@ -82,58 +66,96 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                   children: [
                     DrivingSummary(reports: data),
                     SizedBox(height: tokens.spaceLg),
-                    if (data.isEmpty) const Text('Er zijn nog geen gezinsleden.'),
-                    for (final item in data) ...[
+                    Text('PER GEZINSLID', style: text.labelSmall?.copyWith(color: AppColors.muted)),
+                    SizedBox(height: tokens.spaceSm),
+                    if (data.isEmpty)
+                      const Text('Er zijn nog geen gezinsleden.')
+                    else
                       AppCard(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => DrivingMemberScreen(
-                              member: item.member,
-                              familyId: widget.family.id,
-                              week: _week,
-                            ),
-                          ),
-                        ),
-                        child: Row(
+                        padding: EdgeInsets.zero,
+                        child: Column(
                           children: [
-                            MemberAvatar(member: item.member),
-                            SizedBox(width: tokens.spaceMd),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.member.displayName,
-                                    style: Theme.of(context).textTheme.titleLarge,
+                            for (final (index, item) in data.indexed) ...[
+                              if (index > 0) const Divider(height: 1),
+                              _MemberRow(
+                                item: item,
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => DrivingMemberScreen(
+                                      member: item.member,
+                                      familyId: widget.family.id,
+                                      week: _week,
+                                    ),
                                   ),
-                                  SizedBox(height: tokens.spaceXs),
-                                  Text(
-                                    !item.report.hasHistory
-                                        ? 'Geen locatiegeschiedenis'
-                                        : item.report.trips.isEmpty
-                                        ? 'Nog geen ritten'
-                                        : '${item.report.trips.length} ${item.report.trips.length == 1 ? 'rit' : 'ritten'} · ${drivingNumber(item.report.kilometers)} kilometer',
-                                  ),
-                                  SizedBox(height: tokens.spaceSm),
-                                  Text(
-                                    'Rijincidenten: niet gemeten',
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                            const Icon(Icons.chevron_right),
+                            ],
                           ],
                         ),
                       ),
-                      SizedBox(height: tokens.spaceMd),
-                    ],
+                    SizedBox(height: tokens.spaceMd),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline, size: 18, color: AppColors.muted),
+                        SizedBox(width: tokens.spaceSm),
+                        Expanded(
+                          child: Text(
+                            'Schatting op basis van GPS. Fietsen, openbaar vervoer of meerijden kan ook als '
+                            'rit tellen. Rijgedrag (remmen, gsm) wordt nog niet gemeten.',
+                            style: text.bodySmall?.copyWith(color: AppColors.muted),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MemberRow extends StatelessWidget {
+  const _MemberRow({required this.item, required this.onTap});
+
+  final MemberDrivingReport item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final tokens = context.tokens;
+    final report = item.report;
+    final count = report.trips.length;
+    final subtitle = !report.hasHistory
+        ? 'Geen locatiegeschiedenis'
+        : count == 0
+        ? 'Geen ritten'
+        : '$count ${count == 1 ? 'rit' : 'ritten'} · ${drivingNumber(report.kilometers)} km';
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: tokens.spaceMd, vertical: tokens.spaceSm + tokens.spaceXs),
+        child: Row(
+          children: [
+            MemberAvatar(member: item.member, size: 40),
+            SizedBox(width: tokens.spaceMd),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.member.displayName, style: text.titleMedium),
+                  Text(subtitle, style: text.bodySmall?.copyWith(color: AppColors.muted)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.muted),
+          ],
+        ),
       ),
     );
   }
