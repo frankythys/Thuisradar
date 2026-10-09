@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import 'radar_logo.dart';
-import 'privacy_action.dart';
 import 'notifications_action.dart';
 import 'profile_action.dart';
 
-/// App-balk met de Thuisradar-logotegel, een kleine merknaam-overline en een
-/// titel, plus optionele acties rechts. Hergebruikt op bijna elk hoofdscherm.
+/// Rustige app-balk: logotegel en titel, rechts het belletje, eventuele
+/// eigen acties en anders je eigen avatar. Hergebruikt op bijna elk scherm.
 class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
   const BrandedAppBar({super.key, required this.title, this.actions = const [], this.leading});
 
@@ -43,22 +41,14 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: effectiveLeading == null ? tokens.spaceMd : 0,
       title: Row(
         children: [
-          const RadarLogo(),
+          const RadarLogo(size: 32),
           SizedBox(width: tokens.spaceSm + tokens.spaceXs),
           Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('CIRCLEBEACON', style: text.labelSmall?.copyWith(color: AppColors.muted)),
-                Text(title, style: text.titleLarge),
-              ],
-            ),
+            child: Text(title, style: text.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),
       actions: [
-        const PrivacyAction(),
         const NotificationsAction(),
         ...actions,
         if (actions.isEmpty && title != 'Profiel') const ProfileAction(),

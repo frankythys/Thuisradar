@@ -21,7 +21,6 @@ import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
 import '../../places/presentation/add_place_screen.dart';
 import '../../places/presentation/places_screen.dart';
-import '../../profile/presentation/profile_screen.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/sos_screen.dart';
@@ -138,7 +137,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // Het paneel blijft (of gaat) beneden: de persoon zie je op de kaart,
       // de details schuif je zelf omhoog.
       if (_sheetMinimum case final minimum?) {
-        _sheetController.animateTo(minimum, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+        _sheetController.animateTo(
+          minimum,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
       }
     }
     setState(() => _selected = entry);
@@ -186,10 +189,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _lastFollowedUserId = selected.member.userId;
     _lastFollowedUpdate = location.updatedAt;
     _mapController.move(LatLng(location.latitude, location.longitude), _drivingFollowZoom);
-  }
-
-  void _openProfile() {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)));
   }
 
   void _openDetail(MemberOnMap entry) {
@@ -306,16 +305,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
 
     return Scaffold(
-      appBar: BrandedAppBar(
-        title: 'Kaart',
-        actions: [
-          IconButton(
-            tooltip: 'Profiel',
-            onPressed: _openProfile,
-            icon: const Icon(Icons.account_circle, color: AppColors.primary),
-          ),
-        ],
-      ),
+      appBar: const BrandedAppBar(title: 'Kaart'),
       body: Stack(
         children: [
           FamilyMap(

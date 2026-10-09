@@ -101,10 +101,12 @@ void main() {
     expect(tab, AppTab.chat);
   });
 
-  testWidgets('BrandedAppBar toont merknaam en titel', (tester) async {
+  testWidgets('BrandedAppBar is rustig: titel zonder merkwoord of privacy-schild', (tester) async {
     await pumpThemed(tester, const SizedBox(), appBar: const BrandedAppBar(title: 'Kaart'));
-    expect(find.text('CIRCLEBEACON'), findsOneWidget);
     expect(find.text('Kaart'), findsOneWidget);
+    expect(find.text('CIRCLEBEACON'), findsNothing);
+    expect(find.byIcon(Icons.shield_outlined), findsNothing);
+    expect(find.byTooltip('Profiel'), findsOneWidget);
   });
 
   testWidgets('BrandedAppBar toont geen terugknop op een root-scherm', (tester) async {
