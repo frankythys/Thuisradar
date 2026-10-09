@@ -45,7 +45,7 @@ class _BackdropPainter extends CustomPainter {
   final List<BoxShadow> shadows;
 
   /// Hoogte van de verbinding tussen twee cirkels, als deel van de diameter.
-  static const _neck = 0.9;
+  static const _neck = 0.72;
 
   Path _shape() {
     final radius = diameter / 2;
