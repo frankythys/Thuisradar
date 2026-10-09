@@ -132,7 +132,12 @@ void main() {
   testWidgets('start laag en laat geen lege ruimte onder de gezinsnaam', (tester) async {
     final controller = DraggableScrollableController();
     addTearDown(controller.dispose);
-    await pumpSheet(tester, [], controller: controller, open: false);
+    await pumpSheet(
+      tester,
+      [_member(id: 'u1', name: 'Liam')],
+      controller: controller,
+      open: false,
+    );
     final minimum = tester
         .widget<DraggableScrollableSheet>(find.byType(DraggableScrollableSheet))
         .minChildSize;
@@ -154,7 +159,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('toont uitnodigingskaart, familienaam en de leden', (tester) async {
+  testWidgets('bij een actief gezin geen uitnodigingskaart, wel familienaam en leden', (tester) async {
     await pumpSheet(tester, [
       _member(
         id: 'u1',
@@ -171,8 +176,9 @@ void main() {
       _member(id: 'u2', name: 'Frankie', colorIndex: 1),
     ]);
 
-    expect(find.text('Nodig anderen uit, blijf samen veiliger'), findsOneWidget);
-    expect(find.text('Dierbaren toevoegen'), findsOneWidget);
+    expect(find.text('Nodig anderen uit, blijf samen veiliger'), findsNothing);
+    expect(find.text('Dierbaren toevoegen'), findsNothing);
+    expect(find.text('Voeg een persoon toe'), findsOneWidget);
     expect(find.text('Creve Family'), findsOneWidget);
     expect(find.bySemanticsLabel('Personen'), findsOneWidget);
     expect(find.text('Liam (jij)'), findsOneWidget);
@@ -201,6 +207,26 @@ void main() {
     expect(top('Nodig anderen uit, blijf samen veiliger'), lessThan(top('Creve Family')));
     expect(top('Creve Family'), lessThan(chips));
     expect(chips, lessThan(top('Liam (jij)')));
+  });
+
+  testWidgets('ingeklapt bij een actief gezin: familienaam en knoppen in beeld', (tester) async {
+    final controller = DraggableScrollableController();
+    addTearDown(controller.dispose);
+    await pumpSheet(
+      tester,
+      [_member(id: 'u1', name: 'Liam'), _member(id: 'u2', name: 'Frankie', colorIndex: 1)],
+      controller: controller,
+      open: false,
+    );
+    final minimum = tester
+        .widget<DraggableScrollableSheet>(find.byType(DraggableScrollableSheet))
+        .minChildSize;
+    expect(controller.size, minimum);
+    expect(find.text('Nodig anderen uit, blijf samen veiliger'), findsNothing);
+    expect(find.text('Creve Family').hitTestable(), findsOneWidget);
+    expect(find.bySemanticsLabel('Personen').hitTestable(), findsOneWidget);
+    expect(find.bySemanticsLabel('Plaatsen').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('lid zonder signaal krijgt de rode offline-staat', (tester) async {
@@ -255,8 +281,6 @@ void main() {
       find.descendant(of: list, matching: find.byType(Scrollable)).first,
     );
     final before = scroll.position.pixels;
-    final banner = find.text('Nodig anderen uit, blijf samen veiliger');
-    final bannerTop = tester.getTopLeft(banner);
     final familyTop = tester.getTopLeft(find.text('Creve Family'));
     final chips = find.bySemanticsLabel('Personen');
     final chipsTop = tester.getTopLeft(chips);
@@ -264,8 +288,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.size, closeTo(0.94, 0.01));
     expect(scroll.position.pixels, greaterThan(before));
-    expect(banner, findsOneWidget);
-    expect(tester.getTopLeft(banner), bannerTop);
     expect(tester.getTopLeft(find.text('Creve Family')), familyTop);
     // De keuzeknoppen blijven onder de familienaam staan tijdens het scrollen.
     expect(tester.getTopLeft(chips), chipsTop);
@@ -278,7 +300,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.size, closeTo(minimum, 0.01));
     expect(scroll.position.pixels, 0);
-    expect(find.text('Nodig anderen uit, blijf samen veiliger').hitTestable(), findsOneWidget);
+    expect(find.text('Creve Family').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

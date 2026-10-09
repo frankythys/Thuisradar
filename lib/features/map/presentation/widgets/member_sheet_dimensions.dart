@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../shared/widgets/icon_filter_chips.dart';
 
 /// Hoogtes volgen de beschikbare breedte en de tekstgrootte van het toestel.
 abstract final class MemberSheetDimensions {
@@ -26,6 +27,49 @@ abstract final class MemberSheetDimensions {
     return labels.clamp(48.0, double.infinity) + 2 * tokens.spaceMd;
   }
 
-  static double collapsedHeight(BuildContext context, double width) =>
-      (2 * context.tokens.spaceSm + 16 + inviteHeight(context, width)).ceilToDouble();
+  /// De uitnodigingskaart staat enkel bovenaan zolang je nog alleen in het
+  /// gezin zit; bij een actief gezin begint het paneel met de gezinsnaam.
+  /// Een lege lijst betekent "nog aan het laden" (je bent zelf altijd lid).
+  static bool showsInvite({required bool canInvite, required int memberCount}) =>
+      canInvite && memberCount == 1;
+
+  /// Vaste kop: greep, eventueel de uitnodigingskaart, gezinsnaam en knoppen.
+  static double headerHeight(
+    BuildContext context,
+    double width, {
+    required String familyName,
+    required bool showInvite,
+  }) {
+    final tokens = context.tokens;
+    final painter = TextPainter(
+      text: TextSpan(text: familyName, style: Theme.of(context).textTheme.headlineMedium),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout(maxWidth: (width - 2 * tokens.spaceMd).clamp(1.0, double.infinity));
+    final name = painter.height;
+    painter.dispose();
+    var result =
+        2 * tokens.spaceSm + _handle + tokens.spaceMd + name + tokens.spaceMd + IconFilterChips.chipHeight;
+    if (showInvite) result += inviteHeight(context, width) + tokens.spaceLg;
+    return result.ceilToDouble();
+  }
+
+  /// Ingeklapte hoogte. Alleen in het gezin: greep + uitnodigingskaart. Bij een
+  /// actief gezin: gezinsnaam, knoppen en een stukje van de eerste persoon.
+  static double collapsedHeight(
+    BuildContext context,
+    double width, {
+    required String familyName,
+    required bool showInvite,
+  }) {
+    final tokens = context.tokens;
+    if (showInvite) return (2 * tokens.spaceSm + _handle + inviteHeight(context, width)).ceilToDouble();
+    final header = headerHeight(context, width, familyName: familyName, showInvite: false);
+    return (header + tokens.spaceMd + _peek).ceilToDouble();
+  }
+
+  static const _handle = 16.0;
+
+  /// Zichtbaar stukje van de eerste persoon onder de knoppen.
+  static const _peek = 56.0;
 }

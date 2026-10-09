@@ -34,6 +34,7 @@ import 'widgets/member_list_sheet.dart';
 import 'widgets/member_sheet_dimensions.dart';
 import 'widgets/tracking_banner.dart';
 import 'widgets/no_locations_card.dart';
+import 'widgets/sheet_scrim.dart';
 
 part 'map_screen_recenter_button.dart';
 part 'map_screen_own_sos_banner.dart';
@@ -278,7 +279,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     final size = MediaQuery.sizeOf(context);
-    final sheetTop = MemberSheetDimensions.collapsedHeight(context, size.width);
+    final sheetTop = MemberSheetDimensions.collapsedHeight(
+      context,
+      size.width,
+      familyName: widget.family.name,
+      showInvite: MemberSheetDimensions.showsInvite(canInvite: true, memberCount: members.length),
+    );
 
     return Scaffold(
       appBar: BrandedAppBar(
@@ -343,9 +349,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         ),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size(90, 44),
-                          backgroundColor: const Color(0xFFA04700),
+                          backgroundColor: AppColors.alert,
                         ),
-                        icon: const Icon(Icons.shield_outlined, size: 18),
+                        icon: const Icon(Icons.warning_amber_rounded, size: 20),
                         label: const Text('SOS'),
                       ),
                     ],
@@ -386,15 +392,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final minimum = (sheetTop / constraints.maxHeight).clamp(0.0, 0.94);
-                    return ListenableBuilder(
-                      listenable: _sheetController,
-                      builder: (context, _) {
-                        final extent = _sheetController.isAttached ? _sheetController.size : minimum;
-                        final opacity =
-                            ((extent - minimum) / (0.94 - minimum).clamp(0.001, 1.0)).clamp(0.0, 1.0) * 0.68;
-                        return ColoredBox(color: Colors.black.withValues(alpha: opacity));
-                      },
-                    );
+                    return SheetScrim(controller: _sheetController, minimum: minimum);
                   },
                 ),
               ),

@@ -21,8 +21,9 @@ import 'member_tile.dart';
 import 'member_places_prompt.dart';
 import 'create_circle_card.dart';
 
-/// Uitschuifbaar paneel onder de kaart: uitnodigingskaart, familienaam, een
-/// keuzerij Personen/Plaatsen, de ledenkaart en het plaatsenblok.
+/// Uitschuifbaar paneel onder de kaart: familienaam, een keuzerij
+/// Personen/Plaatsen, de ledenkaart en het plaatsenblok. De uitnodigingskaart
+/// staat bovenaan zolang je nog alleen in het gezin zit.
 class MemberListSheet extends ConsumerStatefulWidget {
   const MemberListSheet({
     super.key,
@@ -92,13 +93,20 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
     final places = ref.watch(familyPlacesProvider(familyId)).value ?? const [];
     final presence = ref.watch(familyPresenceProvider(familyId)).value ?? const <PlacePresence>[];
     final events = ref.watch(familyEventsProvider(familyId)).value ?? const [];
+    final showInvite = MemberSheetDimensions.showsInvite(
+      canInvite: widget.onInvite != null,
+      memberCount: widget.members.length,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final minimum = widget.onInvite == null
-            ? 0.14
-            : (MemberSheetDimensions.collapsedHeight(context, constraints.maxWidth) / constraints.maxHeight)
-                  .clamp(0.0, 0.94);
+        final collapsed = MemberSheetDimensions.collapsedHeight(
+          context,
+          constraints.maxWidth,
+          familyName: widget.family.name,
+          showInvite: showInvite,
+        );
+        final minimum = (collapsed / constraints.maxHeight).clamp(0.0, 0.94);
         return DraggableScrollableSheet(
           controller: widget.controller,
           initialChildSize: minimum,
@@ -130,7 +138,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                     : LayoutBuilder(
                         builder: (context, constraints) => Column(
                           children: [
-                            _headerArea(context, constraints, scrollController),
+                            _headerArea(context, constraints, scrollController, showInvite: showInvite),
                             Expanded(
                               child: ListView(
                                 controller: scrollController,
@@ -161,10 +169,21 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
 
   /// Vaste kop: greep, uitnodigingskaart, familienaam en de keuzeknoppen.
   /// Blijft staan tijdens het scrollen van de ledenlijst of de persoonsdetail.
-  Widget _headerArea(BuildContext context, BoxConstraints constraints, ScrollController scrollController) {
+  Widget _headerArea(
+    BuildContext context,
+    BoxConstraints constraints,
+    ScrollController scrollController, {
+    required bool showInvite,
+  }) {
     final tokens = context.tokens;
+    final height = MemberSheetDimensions.headerHeight(
+      context,
+      constraints.maxWidth,
+      familyName: widget.family.name,
+      showInvite: showInvite,
+    );
     return SizedBox(
-      height: constraints.maxHeight.clamp(0.0, _headerHeight(context, constraints.maxWidth)),
+      height: constraints.maxHeight.clamp(0.0, height),
       child: ClipRect(
         child: OverflowBox(
           alignment: Alignment.topCenter,
@@ -185,7 +204,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 16, child: Center(child: _Handle())),
-                  if (widget.onInvite case final invite?) ...[
+                  if (widget.onInvite case final invite? when showInvite) ...[
                     _InviteBanner(onTap: invite),
                     SizedBox(height: tokens.spaceLg),
                   ],
@@ -213,34 +232,6 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
   /// Een chip kiezen tijdens de persoonsdetail gaat terug naar de lijst.
   void _selectFilter(int index) {
     setState(() => _filter = index);
-  }
-
-  double _headerHeight(BuildContext context, double width) {
-    final tokens = context.tokens;
-    final text = Theme.of(context).textTheme;
-    double height(String value, TextStyle? style, double availableWidth) {
-      final painter = TextPainter(
-        text: TextSpan(text: value, style: style),
-        textDirection: Directionality.of(context),
-        textScaler: MediaQuery.textScalerOf(context),
-      )..layout(maxWidth: availableWidth.clamp(1.0, double.infinity));
-      final result = painter.height;
-      painter.dispose();
-      return result;
-    }
-
-    final innerWidth = width - 2 * tokens.spaceMd;
-    var result =
-        2 * tokens.spaceSm +
-        16 +
-        tokens.spaceMd +
-        height(widget.family.name, text.headlineMedium, innerWidth) +
-        tokens.spaceMd +
-        IconFilterChips.chipHeight;
-    if (widget.onInvite != null) {
-      result += MemberSheetDimensions.inviteHeight(context, width) + tokens.spaceLg;
-    }
-    return result.ceilToDouble();
   }
 
   List<Widget> _membersCard(BuildContext context) => [
