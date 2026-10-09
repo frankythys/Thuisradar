@@ -103,7 +103,7 @@ void main() {
 
   testWidgets('BrandedAppBar toont merknaam en titel', (tester) async {
     await pumpThemed(tester, const SizedBox(), appBar: const BrandedAppBar(title: 'Kaart'));
-    expect(find.text('THUISRADAR'), findsOneWidget);
+    expect(find.text('CIRCLEBEACON'), findsOneWidget);
     expect(find.text('Kaart'), findsOneWidget);
   });
 
