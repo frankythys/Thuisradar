@@ -24,6 +24,8 @@ import '../../places/presentation/places_screen.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/sos_screen.dart';
+import '../../sos/presentation/widgets/sos_app_bar_button.dart';
+import '../../../shared/widgets/profile_action.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../application/map_providers.dart';
 import '../domain/auto_fit.dart';
@@ -305,7 +307,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Kaart'),
+      appBar: BrandedAppBar(
+        title: 'Kaart',
+        // SOS naast je avatar: altijd bereikbaar, zonder de kaart te bedekken.
+        actions: [
+          SosAppBarButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SosScreen(familyId: familyId, onActivate: _raiseSos),
+              ),
+            ),
+          ),
+          const ProfileAction(),
+        ],
+      ),
       body: Stack(
         children: [
           FamilyMap(
@@ -347,25 +362,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         onOpenSettings: () => ref.read(deviceLocationSourceProvider).openSettings(),
                       ),
                     ),
-                  Row(
-                    children: [
-                      const Spacer(),
-                      FilledButton.icon(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => SosScreen(familyId: familyId, onActivate: _raiseSos),
-                          ),
-                        ),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(90, 44),
-                          backgroundColor: AppColors.alert,
-                        ),
-                        icon: const Icon(Icons.warning_amber_rounded, size: 20),
-                        label: const Text('SOS'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                   if (!offline)
                     TrackingBanner(
                       status: trackingStatus,
