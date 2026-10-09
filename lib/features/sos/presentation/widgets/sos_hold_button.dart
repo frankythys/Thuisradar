@@ -1,19 +1,23 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/sos_alert.dart';
 
-/// Burnt-orange noodknop die je [kSosHoldDuration] moet vasthouden om af te gaan.
+/// Ronde noodknop in de alarmkleur die je [kSosHoldDuration] moet vasthouden
+/// om af te gaan.
 ///
-/// Gebruikt een [Listener] met opaque hit-test, zodat de kaart eronder de touch
-/// niet overneemt. Kleine vingerbewegingen (tot [_moveTolerance]) breken het
+/// Gebruikt een [Listener] met opaque hit-test, zodat niets eronder de touch
+/// overneemt. Kleine vingerbewegingen (tot [_moveTolerance]) breken het
 /// vasthouden niet af. Korte tril bij start, sterke tril bij activatie.
 class SosHoldButton extends StatefulWidget {
-  const SosHoldButton({super.key, required this.onActivate, this.large = false});
+  const SosHoldButton({super.key, required this.onActivate, this.size = 160});
 
   final Future<void> Function() onActivate;
-  final bool large;
+
+  /// Doorsnede van de knop.
+  final double size;
 
   @override
   State<SosHoldButton> createState() => _SosHoldButtonState();
@@ -21,7 +25,6 @@ class SosHoldButton extends StatefulWidget {
 
 class _SosHoldButtonState extends State<SosHoldButton> with SingleTickerProviderStateMixin {
   static const _moveTolerance = 20.0;
-  static const _size = 56.0;
 
   late final AnimationController _controller = AnimationController(vsync: this, duration: kSosHoldDuration)
     ..addStatusListener(_onStatus);
@@ -43,7 +46,8 @@ class _SosHoldButtonState extends State<SosHoldButton> with SingleTickerProvider
   }
 
   Future<void> _activate() async {
-    await HapticFeedback.heavyImpact();
+    // Niet op de tril wachten: het alarm gaat meteen weg.
+    unawaited(HapticFeedback.heavyImpact());
     await widget.onActivate();
     if (mounted) _controller.reverse();
     _fired = false;
@@ -71,84 +75,56 @@ class _SosHoldButtonState extends State<SosHoldButton> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final size = widget.size;
+    final onAlert = scheme.onError;
 
-    return Listener(
-      behavior: HitTestBehavior.opaque,
-      onPointerDown: _onDown,
-      onPointerMove: _onMove,
-      onPointerUp: _cancel,
-      onPointerCancel: _cancel,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          final holding = _controller.value > 0;
-          if (widget.large) {
+    return Semantics(
+      button: true,
+      label: 'SOS, houd ingedrukt',
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _onDown,
+        onPointerMove: _onMove,
+        onPointerUp: _cancel,
+        onPointerCancel: _cancel,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            final holding = _controller.value > 0;
             return Container(
-              width: 160,
-              height: 160,
-              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF7B3500)),
+              width: size,
+              height: size,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.error),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   if (holding)
                     SizedBox(
-                      width: 154,
-                      height: 154,
+                      width: size - 8,
+                      height: size - 8,
                       child: CircularProgressIndicator(
                         value: _controller.value,
                         strokeWidth: 5,
-                        color: Colors.white,
-                        backgroundColor: Colors.white24,
+                        color: onAlert,
+                        backgroundColor: onAlert.withValues(alpha: .25),
                       ),
                     ),
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 34),
-                      Text('SOS', style: text.headlineLarge?.copyWith(color: Colors.white, letterSpacing: 3)),
+                      Text('SOS', style: text.displayLarge?.copyWith(color: onAlert, letterSpacing: 4)),
                       Text(
-                        holding ? 'BLIJF VASTHOUDEN' : 'HOUD INGEDRUKT',
-                        style: const TextStyle(fontSize: 10, color: Colors.white),
+                        holding ? 'Blijf vasthouden' : 'Houd ingedrukt',
+                        style: text.labelMedium?.copyWith(color: onAlert),
                       ),
                     ],
                   ),
                 ],
               ),
             );
-          }
-          return Container(
-            height: _size,
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            decoration: const ShapeDecoration(color: AppColors.alert, shape: StadiumBorder()),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      if (holding)
-                        CircularProgressIndicator(
-                          value: _controller.value,
-                          strokeWidth: 3,
-                          color: Colors.white,
-                          backgroundColor: Colors.white30,
-                        ),
-                      const Icon(Icons.shield_outlined, size: 18, color: Colors.white),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  holding ? 'Blijf vasthouden…' : 'SOS',
-                  style: text.labelLarge?.copyWith(color: Colors.white),
-                ),
-              ],
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
