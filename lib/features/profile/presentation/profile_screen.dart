@@ -11,6 +11,7 @@ import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../family/domain/family_member.dart';
 import '../../family/presentation/invite_screen.dart';
+import '../../geofencing/application/geofencing_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../onboarding/presentation/replay_onboarding_button.dart';
 import '../application/profile_providers.dart';
@@ -83,6 +84,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _signOut() async {
     ref.read(locationTrackerProvider.notifier).stop();
+    // Vóór het afmelden: de toestelsleutel afmelden vraagt nog een sessie.
+    await ref.read(geofenceSyncProvider.notifier).stop();
     await ref.read(authRepositoryProvider).signOut();
     if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
   }
@@ -109,6 +112,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (myId == null) return;
     await ref.read(familyRepositoryProvider).leaveFamily(myId, widget.family.id);
     ref.read(locationTrackerProvider.notifier).stop();
+    await ref.read(geofenceSyncProvider.notifier).stop();
     ref.invalidate(myFamilyProvider);
     if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -120,10 +124,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (!mounted) return;
     setState(() => _sharing = enabled);
     final tracker = ref.read(locationTrackerProvider.notifier);
+    final zones = ref.read(geofenceSyncProvider.notifier);
     if (enabled) {
       await tracker.start(userId: userId, familyId: widget.family.id);
+      await zones.start(userId: userId, familyId: widget.family.id);
     } else {
       tracker.stop();
+      await zones.stop();
     }
   }
 

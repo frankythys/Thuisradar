@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../location/application/tracking_status.dart';
 import 'widgets/offline_members.dart';
 
@@ -12,6 +14,7 @@ import '../../../shared/widgets/error_view.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
+import '../../geofencing/application/geofencing_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../location/domain/trip_status.dart';
 import '../../family/presentation/invite_screen.dart';
@@ -86,6 +89,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
     ref.read(locationTrackerProvider.notifier).start(userId: userId, familyId: widget.family.id);
+    unawaited(ref.read(geofenceSyncProvider.notifier).start(userId: userId, familyId: widget.family.id));
   }
 
   /// Maakt de kaart passend. Automatisch hoogstens één keer en nooit meer nadat
