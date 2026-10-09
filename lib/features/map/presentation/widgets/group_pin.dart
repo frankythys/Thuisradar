@@ -8,6 +8,7 @@ import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/member_on_map.dart';
+import 'group_pin_backdrop.dart';
 
 /// Groepspin voor leden die op het scherm dicht bij elkaar staan: overlappende
 /// avatars (max 3 + "+N"), een statusballon met de meest recente status, en een
@@ -29,6 +30,9 @@ class GroupPin extends StatelessWidget {
   static const _avatar = 72.0;
   static const _step = 58.0;
   static const _maxShown = 3;
+
+  /// Breedte van de gezamenlijke witte rand rond de groep.
+  static const _inset = 1.0;
 
   /// Leden in deze groep; de eerste is "ik" (indien aanwezig), die bovenop ligt.
   final List<MemberOnMap> members;
@@ -57,10 +61,19 @@ class GroupPin extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              if (extra > 0) Positioned(left: shown.length * _step, child: _plus(extra)),
+              // Eén witte vorm achter alle cirkels: de randen vloeien in elkaar.
+              GroupPinBackdrop(
+                count: shown.length + (extra > 0 ? 1 : 0),
+                diameter: _avatar,
+                step: _step,
+                color: Colors.white,
+                shadows: context.tokens.shadowMarker,
+              ),
+              if (extra > 0)
+                Positioned(left: shown.length * _step + _inset, top: _inset, child: _plus(extra)),
               // Achterste eerst tekenen; "ik" (index 0) komt zo bovenop.
               for (final (index, member) in shown.indexed.toList().reversed)
-                Positioned(left: index * _step, child: _avatarFor(context, member)),
+                Positioned(left: index * _step + _inset, top: _inset, child: _avatarFor(context, member)),
             ],
           ),
         ),
@@ -79,18 +92,20 @@ class GroupPin extends StatelessWidget {
 
   Widget _avatarFor(BuildContext context, MemberOnMap member) {
     final isSelected = member.member.userId == selectedUserId;
-    final avatar = MemberAvatar(member: member.member, size: _avatar, ring: !isSelected);
-    final child = isSelected
-        ? Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.mapSelection,
-              boxShadow: [...context.tokens.glowSelection, ...context.tokens.shadowMarker],
-            ),
-            child: avatar,
-          )
-        : avatar;
+    const inner = _avatar - 2 * _inset;
+    // Binnen de witte vorm: een dun wit lijntje scheidt overlappende cirkels;
+    // de gekozen persoon krijgt de paarse rand met gloed.
+    final child = Container(
+      width: inner,
+      height: inner,
+      padding: EdgeInsets.all(isSelected ? 4 : 2),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isSelected ? AppColors.mapSelection : Colors.white,
+        boxShadow: isSelected ? context.tokens.glowSelection : null,
+      ),
+      child: MemberAvatar(member: member.member, size: inner - (isSelected ? 8 : 4)),
+    );
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onMemberTap == null ? null : () => onMemberTap!(member),
@@ -100,8 +115,8 @@ class GroupPin extends StatelessWidget {
 
   Widget _plus(int extra) {
     return Container(
-      width: _avatar,
-      height: _avatar,
+      width: _avatar - 2 * _inset,
+      height: _avatar - 2 * _inset,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AppColors.primary,

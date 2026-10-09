@@ -65,6 +65,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   DateTime? _lastFollowedUpdate;
   MemberOnMap? _selected;
 
+  /// Ingeklapte hoogte van het paneel als fractie; bijgewerkt bij elke layout.
+  double? _sheetMinimum;
+
   @override
   void initState() {
     super.initState();
@@ -147,7 +150,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _followSelected = false;
     _lastFollowedUserId = null;
     _lastFollowedUpdate = null;
-    if (_selected != null) setState(() => _selected = null);
+    if (_selected == null) return;
+    setState(() => _selected = null);
+    _collapseSheet();
+  }
+
+  /// Terug naar de personen: het paneel zakt weer naar onder en de lijst
+  /// begint bovenaan, zodat de kaart opnieuw zo groot mogelijk is.
+  void _collapseSheet() {
+    final minimum = _sheetMinimum;
+    if (minimum == null || !_sheetController.isAttached) return;
+    if (_sheetScrollController?.hasClients == true) _sheetScrollController!.jumpTo(0);
+    _sheetController.animateTo(minimum, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
   }
 
   void _onUserGesture() {
@@ -392,6 +406,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final minimum = (sheetTop / constraints.maxHeight).clamp(0.0, 0.94);
+                    _sheetMinimum = minimum;
                     return SheetScrim(controller: _sheetController, minimum: minimum);
                   },
                 ),
