@@ -9,6 +9,7 @@ import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/group_pin.dart';
+import 'package:thuisradar/features/map/presentation/widgets/group_pin_backdrop.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_marker.dart';
 import 'package:thuisradar/shared/widgets/member_avatar.dart';
 
@@ -281,10 +282,11 @@ void main() {
       ),
     );
     expect(find.text('+1'), findsOneWidget);
+    // De gezamenlijke witte vorm houdt de grote maat (72); de gezichten zelf
+    // liggen erbinnen met een dun wit scheidingslijntje of de paarse rand.
+    expect(tester.widget<GroupPinBackdrop>(find.byType(GroupPinBackdrop)).diameter, 72);
     expect(
-      tester
-          .widgetList<MemberAvatar>(find.byType(MemberAvatar))
-          .every((avatar) => avatar.size == 72),
+      tester.widgetList<MemberAvatar>(find.byType(MemberAvatar)).every((avatar) => avatar.size >= 60),
       isTrue,
     );
     expect(tester.takeException(), isNull);
