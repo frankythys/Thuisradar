@@ -130,23 +130,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _lastFollowedUserId = entry.member.userId;
     _lastFollowedUpdate = location.updatedAt;
     _mapController.move(LatLng(location.latitude, location.longitude), _focusZoom);
-    if (_sheetController.isAttached) {
-      // Reset ook de interne lijstpositie: anders blijft bij inklappen
-      // bijvoorbeeld de onderkant van de Circle-kaart in beeld staan.
-      if (_sheetScrollController?.hasClients == true) {
-        _sheetScrollController!.jumpTo(0);
-      }
-      // Het paneel blijft (of gaat) beneden: de persoon zie je op de kaart,
-      // de details schuif je zelf omhoog.
-      if (_sheetMinimum case final minimum?) {
-        _sheetController.animateTo(
-          minimum,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      }
-    }
     setState(() => _selected = entry);
+    // Het paneel gaat altijd beneden staan: de persoon zie je op de kaart,
+    // de details schuif je zelf omhoog.
+    _collapseSheet();
   }
 
   /// Tik op een groepspin: zoom in zodat de leden uit elkaar gaan.
@@ -167,11 +154,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Terug naar de personen: het paneel zakt weer naar onder en de lijst
   /// begint bovenaan, zodat de kaart opnieuw zo groot mogelijk is.
+  ///
+  /// Pas ná de volgende frame: dan is de inhoud al gewisseld (lijst ↔
+  /// persoon). Een animatie die tijdens die wissel start, wordt stil
+  /// afgebroken en het paneel bleef dan hoog staan.
   void _collapseSheet() {
-    final minimum = _sheetMinimum;
-    if (minimum == null || !_sheetController.isAttached) return;
-    if (_sheetScrollController?.hasClients == true) _sheetScrollController!.jumpTo(0);
-    _sheetController.animateTo(minimum, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final minimum = _sheetMinimum;
+      if (!mounted || minimum == null || !_sheetController.isAttached) return;
+      // Reset ook de interne lijstpositie, zodat de inhoud bovenaan begint.
+      if (_sheetScrollController?.hasClients == true) _sheetScrollController!.jumpTo(0);
+      _sheetController.animateTo(minimum, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+    });
   }
 
   void _onUserGesture() {
