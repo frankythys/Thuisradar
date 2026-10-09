@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import '../../auth/application/auth_providers.dart';
 import '../../chat/presentation/chat_screen.dart';
+import '../../../core/utils/resync_signal.dart';
 import '../../family/application/family_providers.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../../shared/widgets/contact_actions.dart';
@@ -102,6 +106,20 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     return widget.location;
   }
 
+  /// Verversen haalt écht alles vers op: de laatste locatie van de server
+  /// (realtime-kanaal opnieuw geopend), de dagtijdlijn, en — op je eigen
+  /// toestel — meteen een nieuwe GPS-meting die geüpload wordt.
+  void _refresh(HistoryQuery query) {
+    ref.read(resyncSignalProvider).notify();
+    if (widget.member.userId == ref.read(currentUserIdProvider)) {
+      unawaited(ref.read(locationTrackerProvider.notifier).refreshNow());
+    }
+    ref.invalidate(dayHistoryProvider(query));
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(const SnackBar(content: Text('Locatie wordt ververst…'), duration: Duration(seconds: 2)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -125,7 +143,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           entries: timeline.value ?? const [],
           places: places,
           now: now,
-          onRefresh: () => ref.invalidate(dayHistoryProvider(query)),
+          onRefresh: () => _refresh(query),
           onSaveAsPlace: canSaveAsPlace(location, places, now)
               ? () => Navigator.of(context).push(
                   MaterialPageRoute<void>(

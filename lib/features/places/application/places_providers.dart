@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
+import '../../../core/utils/resilient_stream.dart';
+import '../../../core/utils/resync_signal.dart';
 import '../../location/application/location_providers.dart';
 import '../data/places_repository.dart';
 import '../domain/confirmed_presence.dart';
@@ -16,9 +19,16 @@ final familyPlacesProvider = StreamProvider.family<List<Place>, String>(
   (ref, familyId) => ref.watch(placesRepositoryProvider).watchPlaces(familyId),
 );
 
-final familyPresenceProvider = StreamProvider.family<List<PlacePresence>, String>(
-  (ref, familyId) => ref.watch(placesRepositoryProvider).watchPresence(familyId),
-);
+/// Realtime aanwezigheid; herstelt zichzelf net als de locatiestroom, zodat
+/// "Thuis" niet blijft hangen op een oude stand.
+final familyPresenceProvider = StreamProvider.family<List<PlacePresence>, String>((ref, familyId) {
+  final repository = ref.watch(placesRepositoryProvider);
+  return resilientStream(
+    () => repository.watchPresence(familyId),
+    resync: ref.watch(resyncSignalProvider).stream,
+    onError: (error) => debugPrint('Aanwezigheidsstroom (realtime) fout: $error'),
+  );
+});
 
 /// Per gebruiker: waar die nu is (plaatsnaam + sinds), voor de ledenlijst.
 final currentPlaceByUserProvider = Provider.family<Map<String, PlaceStatus>, String>((ref, familyId) {

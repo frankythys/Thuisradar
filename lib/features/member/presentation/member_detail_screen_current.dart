@@ -26,7 +26,10 @@ class _CurrentStayCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
-    final moving = TripStatus.at(location, now).speedKmh != null;
+    final status = TripStatus.at(location, now);
+    final moving = status.speedKmh != null;
+    // Al even geen nieuwe locatie: nooit doen alsof de oude plek "nu" is.
+    final stale = status.state == TripState.stale;
 
     Place? here;
     for (final place in places) {
@@ -42,7 +45,7 @@ class _CurrentStayCard extends ConsumerWidget {
     for (final entry in entries) {
       if (entry.kind == TimelineKind.stop) since = entry.start;
     }
-    final ongoing = !moving && since != null;
+    final ongoing = !moving && !stale && since != null;
 
     final String title;
     final IconData icon;
@@ -60,9 +63,11 @@ class _CurrentStayCard extends ConsumerWidget {
       icon = Icons.location_on;
     }
 
-    final subtitle = ongoing
+    final subtitle = stale
+        ? 'Laatst gezien om ${formatClock(location.updatedAt.toLocal())} · locatie niet actueel'
+        : ongoing
         ? '${formatClock(since)} – ${formatClock(now)}'
-        : TripStatus.at(location, now).description(location, now);
+        : status.description(location, now);
 
     return Container(
       decoration: BoxDecoration(

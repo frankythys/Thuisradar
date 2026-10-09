@@ -8,7 +8,13 @@ import '../domain/device_reading.dart';
 /// blijft werken.
 class DeviceLocationSource {
   static const _distanceFilterMeters = 0;
-  static const defaultInterval = Duration(seconds: 15);
+
+  /// Vast meetinterval van de GPS-stroom. Bewust één vaste waarde: de stroom
+  /// mag nooit herstart worden om het tempo te wisselen, want op Android stopt
+  /// dat de voorgronddienst en mag die vanuit de achtergrond (zakje, scherm
+  /// uit) niet opnieuw starten — dan valt het delen stil tot de app herstart.
+  /// Hoe vaak er geüpload wordt, regelt de tracker zelf.
+  static const streamInterval = Duration(seconds: 5);
 
   Future<LocationAccess> ensureAccess() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
@@ -55,8 +61,8 @@ class DeviceLocationSource {
     speedMps: p.speed < 0 ? null : p.speed,
   );
 
-  Stream<DevicePosition> positions({Duration interval = defaultInterval}) {
-    return Geolocator.getPositionStream(locationSettings: _settings(interval)).map(
+  Stream<DevicePosition> positions() {
+    return Geolocator.getPositionStream(locationSettings: _settings(streamInterval)).map(
       (p) => DevicePosition(
         latitude: p.latitude,
         longitude: p.longitude,
