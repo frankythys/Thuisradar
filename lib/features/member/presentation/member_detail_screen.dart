@@ -34,6 +34,7 @@ import '../../location/domain/place_address.dart';
 import '../../location/domain/member_location.dart';
 import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
+import '../../location/domain/track_segments.dart';
 import '../../location/domain/trip_status.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
@@ -143,9 +144,12 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         ? ref.watch(recentTimelineProvider(widget.member.userId))
         : dayHistory!.whenData((history) => history.entries);
     final routePoints = dayHistory?.value?.points ?? const <TrackPoint>[];
+    // Enkel de ritten (geen rondlopen in de winkel of thuis), en per rit enkel
+    // betrouwbare stukken: geen sprongen en geen lijnen over meetgaten.
     final routeSegments = [
-      for (final segment in routeMapSegments(routePoints))
-        [for (final point in segment) LatLng(point.latitude, point.longitude)],
+      for (final trip in dayRoutes(dayHistory?.value?.entries ?? const [], routePoints))
+        for (final segment in routeMapSegments(trip))
+          [for (final point in segment) LatLng(point.latitude, point.longitude)],
     ];
 
     final places =
@@ -213,10 +217,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 height: 170,
                 // Het echte GPS-spoor, geknipt bij meetgaten — nooit een rechte
                 // lijn dwars door de stad.
-                segments: [
-                  for (final segment in splitTrackGaps(routePoints))
-                    [for (final point in segment) LatLng(point.latitude, point.longitude)],
-                ],
+                segments: routeSegments,
               ),
               const SizedBox(height: 10),
               Row(
