@@ -17,6 +17,7 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
+import '../../onboarding/presentation/replay_onboarding_button.dart';
 
 /// Scherm 19: profiel en familie-instellingen.
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -366,6 +367,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               icon: const Icon(Icons.fingerprint),
               label: const Text('Opgeslagen inloggegevens verwijderen'),
             ),
+            const ReplayOnboardingButton(),
             OutlinedButton.icon(
               onPressed: () async {
                 ref.read(locationTrackerProvider.notifier).stop();

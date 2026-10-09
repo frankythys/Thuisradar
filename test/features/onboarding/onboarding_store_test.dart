@@ -20,4 +20,11 @@ void main() {
     expect(await store.hasSeen(), isFalse);
     expect(await OnboardingStore().hasSeen(), isFalse);
   });
+
+  test('reset zet de onboarding terug op niet gezien', () async {
+    SharedPreferences.setMockInitialValues({'onboarding_seen': true});
+    final store = OnboardingStore();
+    await store.reset();
+    expect(await store.hasSeen(), isFalse);
+  });
 }

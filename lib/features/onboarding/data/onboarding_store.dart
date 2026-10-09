@@ -13,4 +13,10 @@ class OnboardingStore {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_seenKey, true);
   }
+
+  /// Toont de intro en onboarding opnieuw bij de volgende keer; login blijft.
+  Future<void> reset() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_seenKey);
+  }
 }
