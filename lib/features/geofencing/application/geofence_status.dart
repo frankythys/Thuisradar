@@ -9,6 +9,9 @@ enum GeofenceStatus {
   /// Locatie staat niet op "Altijd toestaan".
   permissionMissing,
 
+  /// Android weigert zones: Google-locatienauwkeurigheid staat uit.
+  unavailable,
+
   /// Migratie 014 is nog niet gedraaid in Supabase.
   notConfigured,
 

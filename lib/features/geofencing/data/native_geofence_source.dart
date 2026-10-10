@@ -12,6 +12,23 @@ class GeofencePermissionMissing implements Exception {
   const GeofencePermissionMissing();
 }
 
+/// Android weigert zones met code 1000 (GEOFENCE_NOT_AVAILABLE): meestal staat
+/// "Google-locatienauwkeurigheid" uit in de locatie-instellingen.
+class GeofenceUnavailable implements Exception {
+  const GeofenceUnavailable();
+}
+
+/// Vertaalt een fout van de plugin naar wat de app kan uitleggen. De plugin
+/// geeft de Android-fout als tekst door, bv. "ApiException: 1000: ".
+Exception geofenceFailure(NativeGeofenceException error) {
+  if (error.code == NativeGeofenceErrorCode.missingLocationPermission ||
+      error.code == NativeGeofenceErrorCode.missingBackgroundLocationPermission) {
+    return const GeofencePermissionMissing();
+  }
+  if (RegExp(r'\b1000:').hasMatch(error.message ?? '')) return const GeofenceUnavailable();
+  return error;
+}
+
 /// Dunne laag rond `native_geofence`, zodat de rest testbaar blijft.
 class NativeGeofenceSource {
   NativeGeofenceManager get _manager => NativeGeofenceManager.instance;
@@ -46,11 +63,9 @@ class NativeGeofenceSource {
     try {
       return await action();
     } on NativeGeofenceException catch (error) {
-      if (error.code == NativeGeofenceErrorCode.missingLocationPermission ||
-          error.code == NativeGeofenceErrorCode.missingBackgroundLocationPermission) {
-        throw const GeofencePermissionMissing();
-      }
-      rethrow;
+      final failure = geofenceFailure(error);
+      if (identical(failure, error)) rethrow;
+      throw failure;
     }
   }
 }

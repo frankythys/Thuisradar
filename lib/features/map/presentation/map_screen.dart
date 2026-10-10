@@ -16,6 +16,7 @@ import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../../core/config/feature_flags.dart';
 import '../../geofencing/application/geofencing_providers.dart';
+import '../../geofencing/presentation/geofence_banner.dart';
 import '../application/map_style_provider.dart';
 import 'widgets/map_style_button.dart';
 import '../../location/application/location_providers.dart';
@@ -381,6 +382,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       onRetry: _startTracking,
                       onOpenSettings: () => ref.read(locationTrackerProvider.notifier).openSettings(),
                     ),
+                  if (GeofenceBanner.messageFor(ref.watch(geofenceSyncProvider)) != null) ...[
+                    const SizedBox(height: 12),
+                    GeofenceBanner(
+                      status: ref.watch(geofenceSyncProvider),
+                      onRetry: () => unawaited(ref.read(geofenceSyncProvider.notifier).retry()),
+                    ),
+                  ],
                   if (myAlert case final alert?) ...[
                     const SizedBox(height: 12),
                     _OwnSosBanner(

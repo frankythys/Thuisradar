@@ -23,6 +23,11 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
   String? _userId;
   String? _familyId;
   int _generation = 0;
+
+  /// Heeft Android de zones sinds deze start echt aanvaard? De lijst van de
+  /// plugin onthoudt enkel wat ooit lukte; [NativeGeofenceSource.recreateAll]
+  /// meldt geen weigering. Daarom bij de eerste sync alles opnieuw aanmelden.
+  bool _confirmed = false;
   ProviderSubscription<AsyncValue<List<Place>>>? _places;
   Future<void> _work = Future<void>.value();
 
@@ -38,6 +43,7 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
     if (_places != null && _userId == userId && _familyId == familyId) return;
     _detach();
     final generation = ++_generation;
+    _confirmed = false;
     _userId = userId;
     _familyId = familyId;
 
@@ -115,12 +121,18 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
       for (final id in plan.toRemove) {
         await _native.remove(id);
       }
-      for (final zone in plan.toAdd) {
+      final toAdd = _confirmed ? plan.toAdd : [for (final place in places) GeofenceZone.fromPlace(place)];
+      for (final zone in toAdd) {
         await _native.add(zone, onGeofenceTriggered);
       }
-      if (ref.mounted && generation == _generation) state = GeofenceStatus.active;
+      if (ref.mounted && generation == _generation) {
+        _confirmed = true;
+        state = GeofenceStatus.active;
+      }
     } on GeofencePermissionMissing {
       if (ref.mounted && generation == _generation) state = GeofenceStatus.permissionMissing;
+    } on GeofenceUnavailable {
+      if (ref.mounted && generation == _generation) state = GeofenceStatus.unavailable;
     } on Object catch (error) {
       debugPrint('Zones bijwerken mislukt: $error');
       if (ref.mounted && generation == _generation) state = GeofenceStatus.error;

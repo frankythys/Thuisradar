@@ -27,6 +27,9 @@ class _FakeNative implements NativeGeofenceSource {
   final removed = <String>[];
   bool permission = true;
 
+  /// Wat Android antwoordt op een aanmelding (bv. locatienauwkeurigheid uit).
+  Exception? addFailure;
+
   @override
   Future<void> initialize() async {}
 
@@ -39,7 +42,8 @@ class _FakeNative implements NativeGeofenceSource {
   @override
   Future<void> add(GeofenceZone zone, GeofenceHandler callback) async {
     if (!permission) throw const GeofencePermissionMissing();
-    registered.add(zone.id);
+    if (addFailure case final failure?) throw failure;
+    if (!registered.contains(zone.id)) registered.add(zone.id);
     added.add(zone.id);
   }
 
@@ -156,6 +160,36 @@ void main() {
 
     expect(status(), GeofenceStatus.active);
     expect(native.registered.map(GeofenceZone.placeIdOf), ['thuis']);
+  });
+
+  test('zone staat nog in de lijst van de plugin, maar Android weigert ze nu: niet "actief"', () async {
+    // Gisteren aangemeld (de plugin onthoudt de id), vandaag weigert Android.
+    native.registered.add('tr1|thuis|51.00000|4.00000|150');
+    native.addFailure = Exception('ApiException: 1000: ');
+
+    await start();
+    await emit([_place('thuis')]);
+
+    expect(status(), GeofenceStatus.error);
+  });
+
+  test('bij elke start worden alle zones opnieuw bij Android aangemeld en bevestigd', () async {
+    native.registered.add('tr1|thuis|51.00000|4.00000|150');
+
+    await start();
+    await emit([_place('thuis')]);
+
+    expect(native.added, ['tr1|thuis|51.00000|4.00000|150']);
+    expect(status(), GeofenceStatus.active);
+  });
+
+  test('Google-locatienauwkeurigheid uit: status unavailable', () async {
+    native.addFailure = const GeofenceUnavailable();
+
+    await start();
+    await emit([_place('thuis')]);
+
+    expect(status(), GeofenceStatus.unavailable);
   });
 
   test('alles in orde: terugkeren naar de app doet niets extra', () async {
