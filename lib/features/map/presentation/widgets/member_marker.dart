@@ -7,6 +7,7 @@ import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
 import '../../domain/pulse_circle.dart';
+import 'location_pointer.dart';
 
 class MemberMarker extends StatelessWidget {
   const MemberMarker({
@@ -44,9 +45,38 @@ class MemberMarker extends StatelessWidget {
 
     final marker = _Avatar(entry: entry, selected: selected, pulse: pulse);
     // Tijdens rijden blijft het midden van de persoonscirkel op de wegpositie.
-    return driving
-        ? Center(child: marker)
-        : Column(mainAxisSize: MainAxisSize.min, children: [marker]);
+    if (driving) return Center(child: marker);
+
+    // Stilstaand: het rondje hangt boven de locatie, met een puntje dat naar
+    // een stip op de exacte plek wijst (onderaan midden van dit vak).
+    final memberColor = context.tokens.memberColor(entry.member.colorIndex);
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: -LocationDot.haloSize / 2,
+          child: Center(child: LocationDot(color: memberColor)),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            marker,
+            MarkerTail(
+              color: selected ? AppColors.mapSelection : Colors.white,
+              // Van onder het rondje tot in de halo rond de stip.
+              height:
+                  MemberMarker.height -
+                  (selected ? 2 * MemberMarker.selectedRadius : MemberMarker.avatarSize) -
+                  LocationDot.haloSize / 2 +
+                  MarkerTail.overlap,
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
