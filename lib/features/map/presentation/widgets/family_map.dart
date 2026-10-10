@@ -40,6 +40,9 @@ class FamilyMap extends StatelessWidget {
   static const fallbackCenter = LatLng(50.85, 4.35); // België
   static const userAgent = 'be.thuisradar.thuisradar';
 
+  /// OpenStreetMap-tegels stoppen bij 18; Google gaat tot op straatniveau.
+  static double maxZoomFor({required bool google}) => google ? 21 : 18;
+
   final MapController controller;
   final List<MemberOnMap> members;
   final List<Place> places;
@@ -81,7 +84,7 @@ class FamilyMap extends StatelessWidget {
         // Met Google Maps eronder: doorzichtig, zodat die ondergrond zichtbaar is.
         backgroundColor: useGoogleMaps ? Colors.transparent : const MapOptions().backgroundColor,
         minZoom: 3,
-        maxZoom: 18,
+        maxZoom: maxZoomFor(google: useGoogleMaps),
         // Horizontaal doorlopen; alleen de boven- en onderrand begrenzen.
         cameraConstraint: const CameraConstraint.containLatitude(),
         onMapReady: onMapReady,

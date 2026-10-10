@@ -45,6 +45,7 @@ void main() {
     expect(map.children.whereType<AppMapTiles>(), hasLength(1));
     expect(map.children.whereType<CircleLayer>(), hasLength(1));
     expect(map.options.backgroundColor, const MapOptions().backgroundColor);
+    expect(map.options.maxZoom, 18);
   });
 
   test('vlag aan: Google eronder, doorzichtige kaart met markers erboven', () {
@@ -58,6 +59,8 @@ void main() {
     expect(google.initialZoom, map.options.initialZoom);
     expect(map.options.initialCenter, const LatLng(50.85, 4.35));
     expect(map.options.backgroundColor, Colors.transparent);
+    // Zoals in Google Maps zelf: verder inzoomen dan 18 kan.
+    expect(map.options.maxZoom, 21);
     expect(map.children.whereType<AppMapTiles>(), isEmpty);
   });
 

@@ -146,7 +146,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Tik op een groepspin: zoom in zodat de leden uit elkaar gaan.
   void _onGroupTap(LatLng center) {
     _autoFit.lock();
-    final zoom = (_mapController.camera.zoom + 2).clamp(1.0, 18.0);
+    final maxZoom = FamilyMap.maxZoomFor(google: FeatureFlags.useGoogleMaps);
+    final zoom = (_mapController.camera.zoom + 2).clamp(1.0, maxZoom);
     _mapController.move(center, zoom);
   }
 
