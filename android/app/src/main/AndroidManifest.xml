@@ -23,10 +23,13 @@
         android:name="${applicationName}"
         android:icon="@mipmap/thuisradar_launcher"
         android:enableOnBackInvokedCallback="true">
+        <!-- singleTask: altijd één exemplaar. Een tik op het icoon of een melding
+             (locatie delen, push) brengt de open app terug i.p.v. een nieuwe te
+             starten; met singleTop + lege taskAffinity startte de app opnieuw. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
