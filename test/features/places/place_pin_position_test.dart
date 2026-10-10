@@ -9,6 +9,7 @@ import 'package:thuisradar/features/places/application/places_providers.dart';
 import 'package:thuisradar/features/places/data/places_repository.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
 import 'package:thuisradar/features/places/presentation/add_place_screen.dart';
+import 'package:thuisradar/features/places/presentation/place_crosshair.dart';
 
 class _MockPlacesRepository extends Mock implements PlacesRepository {}
 
@@ -24,7 +25,9 @@ const _thuis = Place(
 );
 
 void main() {
-  testWidgets('Thuis bewerken: het huisje staat precies op het punt dat bewaard wordt', (tester) async {
+  testWidgets('Thuis bewerken: het stipje van het kruis staat precies op het bewaarde punt, ingezoomd', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.625;
     addTearDown(tester.view.reset);
@@ -43,13 +46,17 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Het bewaarde punt is het midden van de kaart; het grote huisje moet daar
-    // staan, niet erboven (vroeger 18 punten hoger = ~2 huizen verschil).
+    // Het bewaarde punt is het midden van de kaart; het stipje van het kruis
+    // moet daar staan (vroeger stond het huisje 18 punten hoger = ~2 huizen).
     final saved = tester.getCenter(find.byType(FlutterMap));
-    final house = tester.getCenter(
-      find.byWidgetPredicate((w) => w is Icon && w.icon == Icons.home_rounded && w.size == 40),
-    );
-    expect(house.dx, closeTo(saved.dx, 0.5));
-    expect(house.dy, closeTo(saved.dy, 0.5));
+    final cross = tester.getCenter(find.byType(PlaceCrosshair));
+    expect(cross.dx, closeTo(saved.dx, 0.5));
+    expect(cross.dy, closeTo(saved.dy, 0.5));
+
+    // Nauwkeurig plaatsen: opent dicht ingezoomd en mag tot 19.
+    final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
+    expect(map.options.maxZoom, 19);
+    final camera = MapCamera.of(tester.element(find.byType(CircleLayer)));
+    expect(camera.zoom, 18);
   });
 }

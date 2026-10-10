@@ -13,6 +13,7 @@ import '../../auth/application/auth_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../map/presentation/widgets/family_map.dart';
 import '../application/places_providers.dart';
+import 'place_crosshair.dart';
 import 'place_icons.dart';
 import '../domain/place.dart';
 import '../domain/selected_place_location.dart';
@@ -63,7 +64,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       _owner = place.personUserId;
       _selection.resolve(_selection.beginSearch(), at, place.address ?? '');
       if (place.address case final address?) _search.text = address;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _controller.move(at, 16));
+      WidgetsBinding.instance.addPostFrameCallback((_) => _controller.move(at, 18));
       return;
     }
     _owner = ref.read(currentUserIdProvider);
@@ -292,7 +293,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     initialCenter: _center,
                     initialZoom: 16,
                     minZoom: 3,
-                    maxZoom: 18,
+                    // 19 = dichtst beschikbare OpenStreetMap-zoom: nauwkeurig plaatsen.
+                    maxZoom: 19,
                     cameraConstraint: CameraConstraint.contain(
                       bounds: LatLngBounds(const LatLng(-85, -180), const LatLng(85, 180)),
                     ),
@@ -351,10 +353,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     ),
                   ),
                 ),
-                // Vast icoon precies in het midden: dat punt wordt bewaard, en de
-                // hoofdkaart tekent het icoon ook gecentreerd op dat punt. Wat je
-                // hier op je huis zet, staat daar dus ook op je huis.
-                Icon(placeIcon(_icon), color: AppColors.primary, size: 40),
+                // Kruis precies in het midden: het stipje is het punt dat bewaard
+                // wordt (de hoofdkaart tekent het huisje gecentreerd op dat punt).
+                const PlaceCrosshair(),
                 Positioned(
                   right: 16,
                   bottom: 16,
