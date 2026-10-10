@@ -273,6 +273,13 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
         continue;
       }
       final single = group.length == 1;
+      // Een los rondje wijst met zijn puntje naar de stip op de plek; dat moet
+      // op het huis staan, dus niet wegduwen. Enkel de groepspin houdt het
+      // huis-icoon vrij.
+      if (single) {
+        clearance[group.first] = Offset.zero;
+        continue;
+      }
       final screenPoint = screenOf(group.first);
       final width = single ? MemberMarker.width : GroupPin.width;
       final height = single ? MemberMarker.height : GroupPin.height;
