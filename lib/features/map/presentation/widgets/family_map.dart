@@ -93,7 +93,8 @@ class FamilyMap extends StatelessWidget {
       ),
       children: [
         if (!useGoogleMaps) const AppMapTiles(),
-        if (places.isNotEmpty) ...[
+        // Met Google Maps tekent Google de plaatsen zelf (zie GoogleBaseMap).
+        if (places.isNotEmpty && !useGoogleMaps) ...[
           CircleLayer(
             circles: [
               for (final place in places)
@@ -147,6 +148,7 @@ class FamilyMap extends StatelessWidget {
             initialZoom: zoom,
             satellite: satellite,
             bottomPadding: bottomInset,
+            places: places,
           ),
         ),
         map,
