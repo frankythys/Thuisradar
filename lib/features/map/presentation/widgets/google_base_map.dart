@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
@@ -9,7 +11,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/google_camera.dart';
+import 'google_member_markers.dart';
 import 'google_place_overlays.dart';
+import 'map_marker_spec.dart';
+import 'widget_bitmap.dart';
 
 /// Google Maps als achtergrond onder de bestaande kaart.
 ///
@@ -17,8 +22,9 @@ import 'google_place_overlays.dart';
 /// groepspin, auto-fit); deze kaart tekent de ondergrond en de plaatsen en
 /// volgt de camera via [controller]. Zelf reageert ze niet op aanraking.
 ///
-/// Plaatsen tekent Google zelf: die zitten zo vast aan de kaart en glijden niet
-/// mee terwijl de camera even achterloopt tijdens het scrollen.
+/// Plaatsen en gezinsleden tekent Google zelf (als afbeeldingen): die zitten
+/// zo vast aan de kaart en glijden niet mee terwijl de camera even achterloopt
+/// tijdens het scrollen. De kaart erboven levert de markers via [markers].
 class GoogleBaseMap extends StatefulWidget {
   const GoogleBaseMap({
     super.key,
@@ -28,6 +34,7 @@ class GoogleBaseMap extends StatefulWidget {
     this.satellite = false,
     this.bottomPadding = 0,
     this.places = const [],
+    this.markers,
   });
 
   final MapController controller;
@@ -35,6 +42,9 @@ class GoogleBaseMap extends StatefulWidget {
   final double initialZoom;
   final bool satellite;
   final List<Place> places;
+
+  /// Leden, groepspinnen en ballonnen zoals de kaart erboven ze berekent.
+  final ValueListenable<List<MapMarkerSpec>>? markers;
 
   /// Hoogte van het onderpaneel: het Google-logo blijft erboven zichtbaar.
   final double bottomPadding;
@@ -51,6 +61,13 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   bool _moving = false;
   final _icons = <String, gm.BitmapDescriptor>{};
   double? _iconPixelRatio;
+  late final _members = GoogleMemberMarkers(
+    onChanged: (markers) {
+      if (mounted) setState(() => _memberMarkers = markers);
+    },
+  );
+  Set<gm.Marker> _memberMarkers = const {};
+  Future<void> _assetsReady = Future<void>.value();
 
   @override
   void initState() {
@@ -60,6 +77,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       longitude: widget.initialCenter.longitude,
       zoom: widget.initialZoom,
     );
+    widget.markers?.addListener(_onMarkers);
     _events = widget.controller.mapEventStream.listen((event) {
       final camera = event.camera;
       _wanted = (latitude: camera.center.latitude, longitude: camera.center.longitude, zoom: camera.zoom);
@@ -71,6 +89,23 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _loadIcons();
+    // Afbeeldingen in de markers moeten klaar zijn vóór we ze tekenen.
+    _assetsReady = Future.wait([
+      precacheImage(const AssetImage('assets/markers/huis.png'), context),
+      precacheImage(const AssetImage('assets/icon/Rijdende auto.png'), context),
+    ]);
+    _onMarkers();
+  }
+
+  void _onMarkers() {
+    final markers = widget.markers;
+    if (markers == null || !mounted) return;
+    _members.update(
+      markers.value,
+      wrap: wrapForBitmap(context),
+      pixelRatio: MediaQuery.devicePixelRatioOf(context),
+      ready: _assetsReady,
+    );
   }
 
   /// Tekent elk gebruikt plaats-icoon één keer als bitmap.
@@ -97,6 +132,10 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   void didUpdateWidget(covariant GoogleBaseMap oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.places != widget.places) _loadIcons();
+    if (oldWidget.markers != widget.markers) {
+      oldWidget.markers?.removeListener(_onMarkers);
+      widget.markers?.addListener(_onMarkers);
+    }
     if (oldWidget.bottomPadding != widget.bottomPadding) {
       _shown = null; // middelpunt verschuift mee met de padding
       unawaited(_sync());
@@ -105,6 +144,8 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
 
   @override
   void dispose() {
+    widget.markers?.removeListener(_onMarkers);
+    _members.dispose();
     unawaited(_events?.cancel());
     super.dispose();
   }
@@ -159,7 +200,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
         color: AppColors.primary,
         pixelRatio: MediaQuery.devicePixelRatioOf(context),
       ),
-      markers: placeMarkers(widget.places, _icons),
+      markers: {...placeMarkers(widget.places, _icons), ..._memberMarkers},
       padding: EdgeInsets.only(bottom: widget.bottomPadding),
       // Alle bediening zit in de kaart erboven.
       zoomGesturesEnabled: false,

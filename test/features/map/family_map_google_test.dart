@@ -4,7 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:thuisradar/features/map/presentation/widgets/family_map.dart';
+import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/google_base_map.dart';
+import 'package:thuisradar/features/map/presentation/widgets/google_map_stack.dart';
+import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
 import 'package:thuisradar/shared/widgets/app_map_tiles.dart';
 
@@ -48,15 +51,22 @@ void main() {
     expect(map.options.maxZoom, 18);
   });
 
-  test('vlag aan: Google eronder, doorzichtige kaart met markers erboven', () {
-    final stack = familyMap(google: true, satellite: true).build(_Context()) as Stack;
-    final google = (stack.children.first as Positioned).child as GoogleBaseMap;
-    final map = stack.children.last as FlutterMap;
+  ({GoogleBaseMap google, FlutterMap map}) googleParts({bool satellite = false}) {
+    final stack = familyMap(google: true, satellite: satellite).build(_Context()) as GoogleMapStack;
+    return (
+      google: stack.base(ValueNotifier<List<MapMarkerSpec>>(const [])) as GoogleBaseMap,
+      map: stack.overlay((_) {}) as FlutterMap,
+    );
+  }
+
+  test('vlag aan: Google eronder, doorzichtige kaart met tikvlakken erboven', () {
+    final (:google, :map) = googleParts(satellite: true);
 
     expect(google.satellite, isTrue);
     expect(google.bottomPadding, 280);
     expect(google.initialCenter, FamilyMap.fallbackCenter);
     expect(google.initialZoom, map.options.initialZoom);
+    expect(google.markers, isNotNull);
     expect(map.options.initialCenter, const LatLng(50.85, 4.35));
     expect(map.options.backgroundColor, Colors.transparent);
     // Zoals in Google Maps zelf: verder inzoomen dan 18 kan.
@@ -64,13 +74,12 @@ void main() {
     expect(map.children.whereType<AppMapTiles>(), isEmpty);
   });
 
-  test('vlag aan: Thuis wordt door Google getekend en glijdt dus niet mee bij scrollen', () {
-    final stack = familyMap(google: true).build(_Context()) as Stack;
-    final google = (stack.children.first as Positioned).child as GoogleBaseMap;
-    final map = stack.children.last as FlutterMap;
+  test('vlag aan: Thuis en de gezinsleden tekent Google, dus niets glijdt mee bij scrollen', () {
+    final (:google, :map) = googleParts();
 
     expect(google.places.single.id, 'thuis');
     expect(map.children.whereType<CircleLayer>(), isEmpty);
     expect(map.children.whereType<MarkerLayer>(), isEmpty);
+    expect(map.children.whereType<ClusteredMarkerLayer>().single.onNativeMarkers, isNotNull);
   });
 }

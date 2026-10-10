@@ -14,6 +14,7 @@ import '../../domain/marker_spread.dart';
 import '../../domain/marker_clearance.dart';
 import '../../domain/member_on_map.dart';
 import 'group_pin.dart';
+import 'map_marker_spec.dart';
 import 'member_marker.dart';
 import 'member_history_bubble.dart';
 
@@ -37,6 +38,7 @@ class ClusteredMarkerLayer extends StatefulWidget {
     this.myUserId,
     this.onHistory,
     this.reservedPlaces = const [],
+    this.onNativeMarkers,
   });
 
   final List<MemberOnMap> members;
@@ -50,18 +52,27 @@ class ClusteredMarkerLayer extends StatefulWidget {
   final ValueChanged<MemberOnMap>? onHistory;
   final List<LatLng> reservedPlaces;
 
+  /// Met Google Maps: de markers gaan als afbeelding naar Google (die ze vast
+  /// aan de kaart tekent); deze laag toont dan enkel onzichtbare tikvlakken.
+  final ValueChanged<List<MapMarkerSpec>>? onNativeMarkers;
+
   @override
   State<ClusteredMarkerLayer> createState() => _ClusteredMarkerLayerState();
 }
 
 class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   /// Binnen deze echte afstand van het huis telt iemand als "bij huis".
   static const _nearPlaceMeters = 200.0;
 
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: markerMotionMin,
+  );
+  /// Lichtkring rond het geselecteerde lid: loopt enkel zolang iemand gekozen is.
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
   );
   final Map<String, _Coord> _from = {};
   final Map<String, _Coord> _to = {};
@@ -77,10 +88,29 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
   void didUpdateWidget(covariant ClusteredMarkerLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     _syncTargets();
+    _syncPulse();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncPulse();
+  }
+
+  /// Pulseren enkel met een selectie, en niet als het toestel minder
+  /// animaties vraagt.
+  void _syncPulse() {
+    final wanted = widget.selectedUserId != null && !MediaQuery.disableAnimationsOf(context);
+    if (wanted && !_pulse.isAnimating) {
+      _pulse.repeat();
+    } else if (!wanted && _pulse.isAnimating) {
+      _pulse.stop();
+    }
   }
 
   @override
   void dispose() {
+    _pulse.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -208,7 +238,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       return (aSel ? 1 : 0) - (bSel ? 1 : 0);
     });
 
-    final markers = <Marker>[];
+    final markers = <MapMarkerSpec>[];
     final placePoints = [
       for (final place in widget.reservedPlaces)
         camera.latLngToScreenOffset(place),
@@ -284,28 +314,41 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
 
       if (groupMembers.length == 1) {
         final member = groupMembers.single;
+        final selected = member.member.userId == widget.selectedUserId;
+        final pulsing = selected && _pulse.isAnimating;
+        Widget memberMarker(double? phase) => MemberMarker(
+          entry: member,
+          now: widget.now,
+          placeStatus: widget.placeByUser[member.member.userId],
+          selected: selected,
+          pulse: phase,
+        );
         markers.add(
-          Marker(
+          MapMarkerSpec(
+            id: 'member_${member.member.userId}',
             point: point,
             width: MemberMarker.width,
             height: MemberMarker.height,
             alignment: driving
                 ? Alignment.center
                 : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
+            onTap: () => widget.onMemberTap(member),
+            animated: pulsing ? (phase) => memberMarker(phase) : null,
             child: GestureDetector(
               onTap: () => widget.onMemberTap(member),
-              child: MemberMarker(
-                entry: member,
-                now: widget.now,
-                placeStatus: widget.placeByUser[member.member.userId],
-                selected: member.member.userId == widget.selectedUserId,
-              ),
+              child: pulsing
+                  ? AnimatedBuilder(
+                      animation: _pulse,
+                      builder: (context, _) => memberMarker(_pulse.value),
+                    )
+                  : memberMarker(null),
             ),
           ),
         );
       } else {
         markers.add(
-          Marker(
+          MapMarkerSpec(
+            id: 'group_${groupMembers.first.member.userId}',
             point: point,
             width: GroupPin.width,
             height: GroupPin.height,
@@ -313,6 +356,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
               2 * shiftX / width,
               1 + 2 * offset.dy / height,
             ),
+            onTap: () => widget.onGroupTap(point),
             child: GestureDetector(
               onTap: () => widget.onGroupTap(point),
               child: GroupPin(
@@ -391,8 +435,10 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       final point = LatLng(coordinate.lat, coordinate.lng);
       final placement = placements[id];
       final onRight = placement == null || placement.side == BubbleSide.right;
+      void onBubbleTap() => (widget.onHistory ?? widget.onMemberTap)(selected);
       markers.add(
-        Marker(
+        MapMarkerSpec(
+          id: 'bubble_$id',
           point: point,
           width: kBubbleWidth,
           height: kBubbleHeight,
@@ -400,24 +446,44 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
             (onRight ? 1 : -1) + 2 * (offsets[id]?.dx ?? 0) / 142,
             -1 + 2 * (offsets[id]?.dy ?? 0) / 48,
           ),
-          child: Transform.translate(
-            // Zoals de referentie: hoger en verder over de bovenhoek.
-            offset: Offset(
-              onRight ? kBubbleInset : -kBubbleInset,
-              baseDyOf(selected) + (placement?.shiftY ?? 0),
-            ),
-            child: MemberHistoryBubble(
-              entry: selected,
-              now: widget.now,
-              placeStatus: widget.placeByUser[id],
-              stationarySince: widget.stationarySinceByUser[id],
-              tailLeft: onRight,
-              onTap: () => (widget.onHistory ?? widget.onMemberTap)(selected),
-            ),
+          // Zoals de referentie: hoger en verder over de bovenhoek.
+          offset: Offset(
+            onRight ? kBubbleInset : -kBubbleInset,
+            baseDyOf(selected) + (placement?.shiftY ?? 0),
+          ),
+          onTap: onBubbleTap,
+          child: MemberHistoryBubble(
+            entry: selected,
+            now: widget.now,
+            placeStatus: widget.placeByUser[id],
+            stationarySince: widget.stationarySinceByUser[id],
+            tailLeft: onRight,
+            onTap: onBubbleTap,
           ),
         ),
       );
     }
-    return MarkerLayer(markers: markers);
+
+    final native = widget.onNativeMarkers;
+    if (native == null) {
+      return MarkerLayer(markers: [for (final spec in markers) spec.toMarker()]);
+    }
+    // Google tekent de markers; na deze frame doorgeven (niet tijdens build).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) native(markers);
+    });
+    return MarkerLayer(
+      markers: [
+        for (final spec in markers)
+          if (spec.onTap case final onTap?)
+            spec.toMarker(
+              replaceChild: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onTap,
+                child: const SizedBox.expand(),
+              ),
+            ),
+      ],
+    );
   }
 }

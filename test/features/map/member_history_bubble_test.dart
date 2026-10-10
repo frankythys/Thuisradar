@@ -86,7 +86,8 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      // Geselecteerd lid pulseert altijd: vaste tijd i.p.v. pumpAndSettle.
+      await tester.pump(const Duration(seconds: 3));
       expect(find.text('Thuis'), findsOneWidget);
       expect(
         find.byWidgetPredicate(
@@ -118,7 +119,8 @@ void main() {
       final offset = checkPosition();
       for (final center in [const LatLng(51, 3.001), const LatLng(51, 2.999)]) {
         controller.move(center, 17);
-        await tester.pumpAndSettle();
+        // Geselecteerd lid pulseert altijd: vaste tijd i.p.v. pumpAndSettle.
+        await tester.pump(const Duration(seconds: 3));
         final movedOffset = checkPosition();
         expect(movedOffset.dx, closeTo(offset.dx, 0.01));
         expect(movedOffset.dy, closeTo(offset.dy, 0.01));

@@ -12,6 +12,8 @@ import '../../domain/map_focus.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
 import 'google_base_map.dart';
+import 'google_map_stack.dart';
+import 'map_marker_spec.dart';
 
 /// Kaart met een marker (of groepspin) per gezinslid met locatie. Ondergrond:
 /// OpenStreetMap, of Google Maps als [useGoogleMaps] aanstaat.
@@ -76,7 +78,24 @@ class FamilyMap extends StatelessWidget {
     final ownLocation = members.where((entry) => entry.member.userId == myUserId).firstOrNull?.location;
     final center = ownLocation == null ? fallbackCenter : LatLng(ownLocation.latitude, ownLocation.longitude);
     final zoom = ownLocation == null ? 8.0 : 12.0;
-    final map = FlutterMap(
+    if (!useGoogleMaps) return _map(center, zoom, null);
+    return GoogleMapStack(
+      base: (markers) => GoogleBaseMap(
+        controller: controller,
+        initialCenter: center,
+        initialZoom: zoom,
+        satellite: satellite,
+        bottomPadding: bottomInset,
+        places: places,
+        markers: markers,
+      ),
+      overlay: (onMarkers) => _map(center, zoom, onMarkers),
+    );
+  }
+
+  /// [onNativeMarkers] gezet = Google tekent de markers (zie ClusteredMarkerLayer).
+  Widget _map(LatLng center, double zoom, ValueChanged<List<MapMarkerSpec>>? onNativeMarkers) {
+    return FlutterMap(
       mapController: controller,
       options: MapOptions(
         initialCenter: center,
@@ -137,24 +156,9 @@ class FamilyMap extends StatelessWidget {
           onGroupTap: onGroupTap,
           selectedUserId: selectedUserId,
           myUserId: myUserId,
+          onNativeMarkers: onNativeMarkers,
         ),
         if (!useGoogleMaps) const SimpleAttributionWidget(source: Text('OpenStreetMap-bijdragers')),
-      ],
-    );
-    if (!useGoogleMaps) return map;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GoogleBaseMap(
-            controller: controller,
-            initialCenter: center,
-            initialZoom: zoom,
-            satellite: satellite,
-            bottomPadding: bottomInset,
-            places: places,
-          ),
-        ),
-        map,
       ],
     );
   }

@@ -132,7 +132,8 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      // Geselecteerd lid pulseert altijd: vaste tijd i.p.v. pumpAndSettle.
+      await tester.pump(const Duration(seconds: 3));
       final oldCarImages = find.byWidgetPredicate(
         (widget) =>
             widget is Image &&
@@ -145,7 +146,8 @@ void main() {
       expect(find.byType(GroupPin), findsNothing);
       for (final zoom in [16.0, 18.0]) {
         controller.move(point, zoom);
-        await tester.pumpAndSettle();
+        // Geselecteerd lid pulseert altijd: vaste tijd i.p.v. pumpAndSettle.
+        await tester.pump(const Duration(seconds: 3));
         for (var i = 0; i < 2; i++) {
           expect(
             (tester.getCenter(circles.at(i)) -
