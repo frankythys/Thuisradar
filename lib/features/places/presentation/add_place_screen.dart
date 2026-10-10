@@ -351,12 +351,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     ),
                   ),
                 ),
-                // Vaste pin in het midden.
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 36),
-                  child: Icon(placeIcon(_icon), color: AppColors.primary, size: 40),
-                ),
-                const Icon(Icons.circle, size: 8, color: AppColors.primary),
+                // Vast icoon precies in het midden: dat punt wordt bewaard, en de
+                // hoofdkaart tekent het icoon ook gecentreerd op dat punt. Wat je
+                // hier op je huis zet, staat daar dus ook op je huis.
+                Icon(placeIcon(_icon), color: AppColors.primary, size: 40),
                 Positioned(
                   right: 16,
                   bottom: 16,
