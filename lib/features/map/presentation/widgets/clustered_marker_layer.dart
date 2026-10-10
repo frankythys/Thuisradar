@@ -8,6 +8,7 @@ import '../../../places/domain/place_status.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../domain/bubble_layout.dart';
 import '../../domain/bubble_side.dart';
+import '../../domain/colocated_anchor.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/marker_motion.dart';
 import '../../domain/marker_spread.dart';
@@ -232,6 +233,15 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       groups.removeWhere((group) => group.isEmpty);
       groups.add([selectedId]);
     }
+    // Samen thuis maar ingezoomd (geen groepspin meer): één gezamenlijk punt,
+    // zodat ze hieronder vlak naast elkaar boven het huis komen te staan.
+    final together = colocatedAnchors([
+      for (final group in groups)
+        if (group.length == 1 &&
+            TripStatus.at(byId[group.single]!.location, widget.now).state != TripState.moving)
+          GeoClusterPoint(group.single, coords[group.single]!.lat, coords[group.single]!.lng),
+    ]);
+    coords.addAll(together);
     // Groep met de selectie als laatste tekenen (bovenop).
     groups.sort((a, b) {
       final aSel =

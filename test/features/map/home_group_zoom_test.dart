@@ -7,11 +7,14 @@ import 'package:latlong2/latlong.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
+import 'package:thuisradar/features/map/domain/bubble_layout.dart';
 import 'package:thuisradar/features/map/domain/marker_cluster.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/group_pin.dart';
+import 'package:thuisradar/features/map/presentation/widgets/member_history_bubble.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_marker.dart';
+import 'package:thuisradar/shared/widgets/member_avatar.dart';
 
 const _home = LatLng(51.0, 4.0);
 
@@ -103,5 +106,64 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(GroupPin), findsNothing);
     expect(find.byType(MemberMarker), findsNWidgets(3));
+  });
+
+  testWidgets('Franky en Liam thuis, ver ingezoomd: apart maar vlak naast elkaar boven het huis', (
+    tester,
+  ) async {
+    final now = DateTime(2026, 10, 10, 12, 56);
+    final controller = MapController();
+    final pair = [for (var i = 0; i < 2; i++) _fanned(i, 2)];
+    final members = [
+      for (var i = 0; i < 2; i++)
+        MemberOnMap(
+          member: FamilyMember(userId: names[i], displayName: names[i], isOwner: i == 0, colorIndex: i),
+          location: MemberLocation(
+            userId: names[i],
+            familyId: 'gezin',
+            latitude: pair[i].latitude,
+            longitude: pair[i].longitude,
+            updatedAt: now,
+            speedMps: 0,
+          ),
+        ),
+    ];
+    tester.view.physicalSize = const Size(900, 2000);
+    tester.view.devicePixelRatio = 2.5;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: FlutterMap(
+            mapController: controller,
+            options: const MapOptions(initialCenter: _home, initialZoom: 20, maxZoom: 21),
+            children: [
+              ClusteredMarkerLayer(members: members, now: now, onMemberTap: (_) {}, onGroupTap: (_) {}),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final home = tester.getCenter(find.byType(FlutterMap));
+    final avatars = [
+      for (final e in find.byType(MemberAvatar).evaluate()) tester.getRect(find.byWidget(e.widget)),
+    ]..sort((a, b) => a.left.compareTo(b.left));
+
+    // Twee aparte rondjes, geen groepspin.
+    expect(find.byType(GroupPin), findsNothing);
+    expect(avatars, hasLength(2));
+    // Vlak naast elkaar (rondje + 6 punten tussenruimte), samen boven het huis.
+    expect(avatars[1].center.dx - avatars[0].center.dx, closeTo(MemberMarker.avatarSize + 6, 1));
+    expect((avatars[0].center.dx + avatars[1].center.dx) / 2, closeTo(home.dx, 1));
+    // Beide ballonnen blijven op het scherm (de ballon heeft opzij een
+    // doorzichtige rand van kBubbleInset die erbuiten mag vallen).
+    final screen = tester.getRect(find.byType(FlutterMap));
+    for (final e in find.byType(MemberHistoryBubble).evaluate()) {
+      final bubble = tester.getRect(find.byWidget(e.widget));
+      expect(bubble.left, greaterThanOrEqualTo(screen.left - kBubbleInset));
+      expect(bubble.right, lessThanOrEqualTo(screen.right + kBubbleInset));
+    }
   });
 }
