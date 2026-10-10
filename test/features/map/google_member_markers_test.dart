@@ -68,4 +68,49 @@ void main() {
     });
     expect(updates.last.firstWhere((m) => m.markerId.value == 'member_Liam'), same(liam));
   });
+
+  testWidgets('rijden: het rondje schuift meteen mee, zonder opnieuw te tekenen', (tester) async {
+    late Widget Function(Widget) wrap;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            wrap = wrapForBitmap(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final updates = <Set<gm.Marker>>[];
+    final markers = GoogleMemberMarkers(onChanged: updates.add);
+    addTearDown(markers.dispose);
+    MapMarkerSpec franky(double lng) => MapMarkerSpec(
+      id: 'member_Franky',
+      point: LatLng(51.2, lng),
+      width: 40,
+      height: 40,
+      child: const DecoratedBox(
+        decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+      ),
+    );
+
+    await tester.runAsync(() async {
+      markers.update([franky(4.30)], wrap: wrap, pixelRatio: 2, ready: Future<void>.value());
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+    });
+    final drawn = updates.last.single;
+
+    // Franky rijdt verder over de E17: elke nieuwe plaats komt meteen door
+    // (binnen ~33 ms), met dezelfde afbeelding.
+    final positions = <double>[];
+    await tester.runAsync(() async {
+      for (final lng in [4.301, 4.302, 4.303]) {
+        markers.update([franky(lng)], wrap: wrap, pixelRatio: 2, ready: Future<void>.value());
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        positions.add(updates.last.single.position.longitude);
+        expect(updates.last.single.icon, same(drawn.icon));
+      }
+    });
+    expect(positions, [4.301, 4.302, 4.303]);
+  });
 }
