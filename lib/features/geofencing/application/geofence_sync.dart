@@ -68,6 +68,17 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
     }, fireImmediately: true);
   }
 
+  /// Terug in de app (bv. na "Altijd toestaan" in de instellingen): liep het
+  /// eerder mis, dan opnieuw proberen. Zo hoeft de app niet herstart te worden.
+  Future<void> retry() async {
+    final userId = _userId;
+    final familyId = _familyId;
+    if (userId == null || familyId == null) return;
+    if (state == GeofenceStatus.active || state == GeofenceStatus.idle) return;
+    _detach();
+    await start(userId: userId, familyId: familyId);
+  }
+
   /// Delen uit, afmelden of gezin verlaten: alle zones weg en de sleutel
   /// ongeldig, zodat dit toestel niets meer meldt.
   Future<void> stop() async {

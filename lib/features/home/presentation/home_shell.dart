@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import '../../../core/utils/resync_signal.dart';
+import '../../geofencing/application/geofencing_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../profile/presentation/profile_screen.dart';
 
@@ -53,6 +56,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   void _onResume() {
     ref.read(resyncSignalProvider).notify();
     ref.read(locationTrackerProvider.notifier).resume();
+    unawaited(ref.read(geofenceSyncProvider.notifier).retry());
   }
 
   @override

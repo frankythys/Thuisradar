@@ -141,6 +141,35 @@ void main() {
     expect(status(), GeofenceStatus.permissionMissing);
   });
 
+  test('"Altijd toestaan" aangezet en terug naar de app: zones alsnog geregistreerd', () async {
+    native.permission = false;
+    await start();
+    await emit([_place('thuis')]);
+    expect(status(), GeofenceStatus.permissionMissing);
+
+    // Papa zet in de instellingen "Altijd toestaan" aan en keert terug.
+    native.permission = true;
+    final retry = container.read(geofenceSyncProvider.notifier).retry();
+    await pumpEventQueue();
+    await emit([_place('thuis')]);
+    await retry;
+
+    expect(status(), GeofenceStatus.active);
+    expect(native.registered.map(GeofenceZone.placeIdOf), ['thuis']);
+  });
+
+  test('alles in orde: terugkeren naar de app doet niets extra', () async {
+    await start();
+    await emit([_place('thuis')]);
+    native.added.clear();
+
+    await container.read(geofenceSyncProvider.notifier).retry();
+    await pumpEventQueue();
+
+    expect(native.added, isEmpty);
+    verify(() => devices.register(any())).called(1);
+  });
+
   test('migratie 014 nog niet gedraaid: geen zones, status notConfigured', () async {
     when(() => devices.register(any()))
         .thenThrow(const PostgrestException(message: 'not found', code: 'PGRST202'));
