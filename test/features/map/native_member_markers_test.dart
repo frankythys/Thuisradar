@@ -76,21 +76,4 @@ void main() {
 
     expect(tapped?.member.userId, 'Franky');
   });
-
-  testWidgets('geselecteerd: Google krijgt de plek voor de lichtkring rond het rondje', (tester) async {
-    final specs = await pumpNative(tester, selected: 'Franky');
-    final pulse = specs.firstWhere((s) => s.id == 'member_Franky').pulse;
-
-    expect(pulse, isNotNull);
-    // Stilstaand: het rondje staat bovenaan in het vak, horizontaal in het midden.
-    expect(pulse!.center, const Offset(MemberMarker.width / 2, MemberMarker.selectedRadius));
-    expect(pulse.radius, MemberMarker.selectedRadius);
-
-    // De afbeelding zelf heeft geen bewegende kring: die tekent Google.
-    final marker = specs.firstWhere((s) => s.id == 'member_Franky').child as GestureDetector;
-    expect((marker.child! as MemberMarker).pulse, isNull);
-
-    final unselected = await pumpNative(tester);
-    expect(unselected.firstWhere((s) => s.id == 'member_Franky').pulse, isNull);
-  });
 }

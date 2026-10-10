@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 
-import 'package:latlong2/latlong.dart';
-
 import '../../domain/native_marker_frame.dart';
 import 'map_marker_spec.dart';
 import 'widget_bitmap.dart';
@@ -14,14 +12,12 @@ import 'widget_bitmap.dart';
 /// Google-markers, zodat Google ze vast aan de kaart tekent.
 ///
 /// Tekenen gebeurt pas als de kaartlaag even stil is (na scrollen of een
-/// update), want elke marker is een afbeelding. De lichtkring rond het
-/// geselecteerde lid is geen afbeelding: [GooglePulse] zegt waar Google een
-/// eigen, vloeiend pulserende cirkel moet tekenen.
+/// update), want elke marker is een afbeelding.
 class GoogleMemberMarkers {
   GoogleMemberMarkers({required this.onChanged});
 
-  /// Nieuwe markers om te tonen, en waar de lichtkring hoort (of null).
-  final void Function(Set<gm.Marker> markers, GooglePulse? pulse) onChanged;
+  /// Nieuwe markers om te tonen.
+  final ValueChanged<Set<gm.Marker>> onChanged;
 
   static const _settle = Duration(milliseconds: 150);
 
@@ -55,12 +51,10 @@ class GoogleMemberMarkers {
     final specs = _pending;
     await ready;
     final markers = <gm.Marker>{};
-    GooglePulse? pulse;
     try {
       for (final (index, spec) in specs.indexed) {
         if (generation != _generation) return;
         markers.add(await _marker(spec, index, wrap, pixelRatio));
-        pulse ??= GooglePulse.of(spec);
       }
     } on Object catch (error) {
       debugPrint('Markers tekenen voor Google mislukt: $error');
@@ -68,7 +62,7 @@ class GoogleMemberMarkers {
     }
     if (generation != _generation) return;
     _cache.removeWhere((id, _) => !specs.any((s) => s.id == id));
-    onChanged(markers, pulse);
+    onChanged(markers);
   }
 
   /// Eén marker als afbeelding. Is het beeld identiek aan het vorige, dan
@@ -114,30 +108,4 @@ class GoogleMemberMarkers {
     _cache[spec.id] = (png: png, marker: marker);
     return marker;
   }
-}
-
-/// Waar de lichtkring hoort: het kaartpunt van de marker en het midden van het
-/// rondje daar tegenover, in schermpunten.
-class GooglePulse {
-  const GooglePulse({required this.point, required this.dx, required this.dy, required this.radius});
-
-  /// Uit een marker met lichtkring, anders null.
-  static GooglePulse? of(MapMarkerSpec spec) {
-    final spot = spec.pulse;
-    if (spot == null) return null;
-    // Linkerbovenhoek van het vak t.o.v. het kaartpunt, zoals flutter_map.
-    final left = spec.alignment.x * spec.width / 2 + spec.offset.dx - spec.width / 2;
-    final top = spec.alignment.y * spec.height / 2 + spec.offset.dy - spec.height / 2;
-    return GooglePulse(
-      point: spec.point,
-      dx: left + spot.center.dx,
-      dy: top + spot.center.dy,
-      radius: spot.radius,
-    );
-  }
-
-  final LatLng point;
-  final double dx;
-  final double dy;
-  final double radius;
 }

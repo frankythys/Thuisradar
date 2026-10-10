@@ -62,18 +62,13 @@ class ClusteredMarkerLayer extends StatefulWidget {
 }
 
 class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   /// Binnen deze echte afstand van het huis telt iemand als "bij huis".
   static const _nearPlaceMeters = 200.0;
 
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: markerMotionMin,
-  );
-  /// Lichtkring rond het geselecteerde lid: loopt enkel zolang iemand gekozen is.
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1600),
   );
   final Map<String, _Coord> _from = {};
   final Map<String, _Coord> _to = {};
@@ -89,29 +84,10 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
   void didUpdateWidget(covariant ClusteredMarkerLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     _syncTargets();
-    _syncPulse();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _syncPulse();
-  }
-
-  /// Pulseren enkel met een selectie, en niet als het toestel minder
-  /// animaties vraagt.
-  void _syncPulse() {
-    final wanted = widget.selectedUserId != null && !MediaQuery.disableAnimationsOf(context);
-    if (wanted && !_pulse.isAnimating) {
-      _pulse.repeat();
-    } else if (!wanted && _pulse.isAnimating) {
-      _pulse.stop();
-    }
   }
 
   @override
   void dispose() {
-    _pulse.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -335,13 +311,11 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       if (groupMembers.length == 1) {
         final member = groupMembers.single;
         final selected = member.member.userId == widget.selectedUserId;
-        final pulsing = selected && _pulse.isAnimating;
-        Widget memberMarker(double? phase) => MemberMarker(
+        Widget memberMarker() => MemberMarker(
           entry: member,
           now: widget.now,
           placeStatus: widget.placeByUser[member.member.userId],
           selected: selected,
-          pulse: phase,
         );
         markers.add(
           MapMarkerSpec(
@@ -353,25 +327,9 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
                 ? Alignment.center
                 : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
             onTap: () => widget.onMemberTap(member),
-            // Midden van het rondje: in het vak bij rijden, anders bovenaan.
-            pulse: pulsing
-                ? PulseSpot(
-                    center: Offset(
-                      MemberMarker.width / 2,
-                      driving ? MemberMarker.height / 2 : MemberMarker.selectedRadius,
-                    ),
-                    radius: MemberMarker.selectedRadius,
-                  )
-                : null,
             child: GestureDetector(
               onTap: () => widget.onMemberTap(member),
-              // Met Google tekent Google de lichtkring zelf (zie pulse hierboven).
-              child: pulsing && widget.onNativeMarkers == null
-                  ? AnimatedBuilder(
-                      animation: _pulse,
-                      builder: (context, _) => memberMarker(_pulse.value),
-                    )
-                  : memberMarker(null),
+              child: memberMarker(),
             ),
           ),
         );

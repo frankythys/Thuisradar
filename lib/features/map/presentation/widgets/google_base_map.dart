@@ -11,7 +11,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/google_camera.dart';
-import '../../domain/pulse_circle.dart';
 import 'google_member_markers.dart';
 import 'google_place_overlays.dart';
 import 'map_marker_spec.dart';
@@ -54,7 +53,7 @@ class GoogleBaseMap extends StatefulWidget {
   State<GoogleBaseMap> createState() => _GoogleBaseMapState();
 }
 
-class _GoogleBaseMapState extends State<GoogleBaseMap> with SingleTickerProviderStateMixin {
+class _GoogleBaseMapState extends State<GoogleBaseMap> {
   gm.GoogleMapController? _google;
   StreamSubscription<MapEvent>? _events;
   ({double latitude, double longitude, double zoom})? _wanted;
@@ -63,25 +62,11 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> with SingleTickerProvider
   final _icons = <String, gm.BitmapDescriptor>{};
   double? _iconPixelRatio;
   late final _members = GoogleMemberMarkers(
-    onChanged: (markers, pulse) {
-      if (!mounted) return;
-      setState(() {
-        _memberMarkers = markers;
-        _pulse = pulse;
-      });
-      _syncPulse();
+    onChanged: (markers) {
+      if (mounted) setState(() => _memberMarkers = markers);
     },
   );
   Set<gm.Marker> _memberMarkers = const {};
-
-  /// Lichtkring rond het geselecteerde lid: een echte Google-cirkel, zodat
-  /// enkel straal en doorzichtigheid veranderen (vloeiend, geen afbeeldingen).
-  GooglePulse? _pulse;
-  late final AnimationController _pulseAnimation = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1600),
-  )..addListener(_onPulseTick);
-  double _shownPhase = -1;
   Future<void> _assetsReady = Future<void>.value();
 
   @override
@@ -110,47 +95,6 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> with SingleTickerProvider
       precacheImage(const AssetImage('assets/icon/Rijdende auto.png'), context),
     ]);
     _onMarkers();
-  }
-
-  void _syncPulse() {
-    final wanted = _pulse != null && !MediaQuery.disableAnimationsOf(context);
-    if (wanted && !_pulseAnimation.isAnimating) {
-      unawaited(_pulseAnimation.repeat());
-    } else if (!wanted && _pulseAnimation.isAnimating) {
-      _pulseAnimation.stop();
-    }
-  }
-
-  /// Hoogstens ~30 keer per seconde de cirkel aanpassen: vloeiend genoeg en
-  /// licht voor de verbinding met Google.
-  void _onPulseTick() {
-    final phase = _pulseAnimation.value;
-    if ((phase - _shownPhase).abs() < 1 / 48 && phase > _shownPhase) return;
-    setState(() => _shownPhase = phase);
-  }
-
-  Set<gm.Circle> _pulseCircles() {
-    final pulse = _pulse;
-    if (pulse == null || !_pulseAnimation.isAnimating) return const {};
-    final look = pulseLook(_shownPhase.clamp(0, 1));
-    final circle = pulseCircle(
-      latitude: pulse.point.latitude,
-      longitude: pulse.point.longitude,
-      dxPx: pulse.dx,
-      dyPx: pulse.dy,
-      radiusPx: pulse.radius + look.growPx,
-      zoom: _wanted?.zoom ?? widget.initialZoom,
-    );
-    return {
-      gm.Circle(
-        circleId: const gm.CircleId('selection_pulse'),
-        center: gm.LatLng(circle.latitude, circle.longitude),
-        radius: circle.radiusMeters,
-        fillColor: AppColors.mapSelection.withValues(alpha: look.opacity),
-        strokeWidth: 0,
-        zIndex: 5,
-      ),
-    };
   }
 
   void _onMarkers() {
@@ -202,7 +146,6 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> with SingleTickerProvider
   void dispose() {
     widget.markers?.removeListener(_onMarkers);
     _members.dispose();
-    _pulseAnimation.dispose();
     unawaited(_events?.cancel());
     super.dispose();
   }
@@ -252,14 +195,11 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> with SingleTickerProvider
         zoom: widget.initialZoom,
       ),
       mapType: widget.satellite ? gm.MapType.hybrid : gm.MapType.normal,
-      circles: {
-        ...placeCircles(
-          widget.places,
-          color: AppColors.primary,
-          pixelRatio: MediaQuery.devicePixelRatioOf(context),
-        ),
-        ..._pulseCircles(),
-      },
+      circles: placeCircles(
+        widget.places,
+        color: AppColors.primary,
+        pixelRatio: MediaQuery.devicePixelRatioOf(context),
+      ),
       markers: {...placeMarkers(widget.places, _icons), ..._memberMarkers},
       padding: EdgeInsets.only(bottom: widget.bottomPadding),
       // Alle bediening zit in de kaart erboven.

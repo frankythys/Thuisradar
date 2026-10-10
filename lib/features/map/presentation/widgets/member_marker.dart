@@ -6,7 +6,6 @@ import '../../../../shared/widgets/member_avatar.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
-import '../../domain/pulse_circle.dart';
 import 'location_pointer.dart';
 
 class MemberMarker extends StatelessWidget {
@@ -16,7 +15,6 @@ class MemberMarker extends StatelessWidget {
     required this.now,
     this.placeStatus,
     this.selected = false,
-    this.pulse,
   });
 
   static const width = 120.0;
@@ -35,15 +33,12 @@ class MemberMarker extends StatelessWidget {
   /// Geselecteerd lid: accent-selectiering en iets groter.
   final bool selected;
 
-  /// Fase (0..1) van de lichtkring rond een geselecteerd lid; null = geen.
-  final double? pulse;
-
   @override
   Widget build(BuildContext context) {
     final driving =
         TripStatus.at(entry.location, now).state == TripState.moving;
 
-    final marker = _Avatar(entry: entry, selected: selected, pulse: pulse);
+    final marker = _Avatar(entry: entry, selected: selected);
     // Tijdens rijden blijft het midden van de persoonscirkel op de wegpositie.
     if (driving) return Center(child: marker);
 
@@ -81,11 +76,10 @@ class MemberMarker extends StatelessWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.entry, required this.selected, this.pulse});
+  const _Avatar({required this.entry, required this.selected});
 
   final MemberOnMap entry;
   final bool selected;
-  final double? pulse;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +91,7 @@ class _Avatar extends StatelessWidget {
     if (!selected) return avatar;
 
     // Paars is gereserveerd voor selectie en vervangt de witte rand volledig.
-    final ring = Container(
+    return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -108,31 +102,6 @@ class _Avatar extends StatelessWidget {
         ],
       ),
       child: avatar,
-    );
-    final phase = pulse;
-    if (phase == null) return ring;
-
-    // Zachte lichtkring die uitdijt en vervaagt. Buiten het vak getekend, zodat
-    // de marker zelf niet verschuift.
-    final look = pulseLook(phase);
-    final grow = look.growPx;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned(
-          left: -grow,
-          top: -grow,
-          right: -grow,
-          bottom: -grow,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.mapSelection.withValues(alpha: look.opacity),
-            ),
-          ),
-        ),
-        ring,
-      ],
     );
   }
 }
