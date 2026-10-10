@@ -14,7 +14,7 @@ class MapMarkerSpec {
     this.alignment = Alignment.center,
     this.offset = Offset.zero,
     this.onTap,
-    this.animated,
+    this.pulse,
   });
 
   /// Vaste sleutel per marker (lid, groep of ballon).
@@ -34,9 +34,9 @@ class MapMarkerSpec {
   /// Google Maps.
   final VoidCallback? onTap;
 
-  /// Voor een geanimeerde marker (lichtkring): tekent de inhoud bij fase 0..1.
-  /// Google Maps krijgt daarvan een reeks beelden die elkaar afwisselen.
-  final Widget Function(double phase)? animated;
+  /// Lichtkring rond het geselecteerde rondje. Google Maps tekent die als
+  /// eigen cirkel onder de marker, zodat ze vloeiend kan pulseren.
+  final PulseSpot? pulse;
 
   /// Als flutter_map-marker, met [child] of een vervangende inhoud.
   Marker toMarker({Widget? replaceChild}) {
@@ -49,4 +49,15 @@ class MapMarkerSpec {
       child: offset == Offset.zero ? content : Transform.translate(offset: offset, child: content),
     );
   }
+}
+
+/// Waar het rondje met lichtkring in het markervak staat.
+class PulseSpot {
+  const PulseSpot({required this.center, required this.radius});
+
+  /// Midden van het rondje, vanaf de linkerbovenhoek van het vak.
+  final Offset center;
+
+  /// Straal van het rondje (met selectierand) in punten.
+  final double radius;
 }

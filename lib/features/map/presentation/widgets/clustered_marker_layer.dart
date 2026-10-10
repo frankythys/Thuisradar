@@ -196,14 +196,17 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     final coords = {
       for (final m in located) m.member.userId: _displayed(m.member.userId),
     };
-    // Groeperen op echte afstand: enkel wie op dezelfde plek staat, komt
-    // samen in één groepspin, ongeacht de zoom.
-    final groups = clusterByMeters([
+    // Enkel wie op dezelfde plek staat én op het scherm overlapt, komt samen
+    // in één groepspin: thuis uitgezoomd één groep, ingezoomd elk apart.
+    final groups = clusterByMetersAndScreen([
       for (final m in located)
-        GeoClusterPoint(
+        GeoScreenClusterPoint(
           m.member.userId,
           coords[m.member.userId]!.lat,
           coords[m.member.userId]!.lng,
+          camera.latLngToScreenOffset(
+            LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
+          ),
         ),
     ]);
     // Rijdende auto's houden ieder hun eigen exacte wegpositie.
@@ -333,10 +336,20 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
                 ? Alignment.center
                 : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
             onTap: () => widget.onMemberTap(member),
-            animated: pulsing ? (phase) => memberMarker(phase) : null,
+            // Midden van het rondje: in het vak bij rijden, anders bovenaan.
+            pulse: pulsing
+                ? PulseSpot(
+                    center: Offset(
+                      MemberMarker.width / 2,
+                      driving ? MemberMarker.height / 2 : MemberMarker.selectedRadius,
+                    ),
+                    radius: MemberMarker.selectedRadius,
+                  )
+                : null,
             child: GestureDetector(
               onTap: () => widget.onMemberTap(member),
-              child: pulsing
+              // Met Google tekent Google de lichtkring zelf (zie pulse hierboven).
+              child: pulsing && widget.onNativeMarkers == null
                   ? AnimatedBuilder(
                       animation: _pulse,
                       builder: (context, _) => memberMarker(_pulse.value),

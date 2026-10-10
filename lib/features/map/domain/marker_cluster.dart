@@ -72,3 +72,47 @@ List<List<String>> clusterByMeters(List<GeoClusterPoint> points, {double thresho
 
   return groups;
 }
+
+/// Eén lid met zijn echte positie én zijn plek op het scherm.
+class GeoScreenClusterPoint {
+  const GeoScreenClusterPoint(this.id, this.latitude, this.longitude, this.screen);
+
+  final String id;
+  final double latitude;
+  final double longitude;
+  final Offset screen;
+}
+
+/// Samen in één groepspin enkel als leden echt op dezelfde plek zijn
+/// (binnen [thresholdMeters]) én op het scherm over elkaar zouden vallen
+/// (binnen [thresholdPx]). Zo staat het gezin thuis uitgezoomd als één
+/// groep, maar ingezoomd gaat elk rondje apart staan (zoals Life360). Wie
+/// ergens anders is, blijft altijd apart. Het eerste punt is het anker.
+List<List<String>> clusterByMetersAndScreen(
+  List<GeoScreenClusterPoint> points, {
+  double thresholdMeters = 60,
+  double thresholdPx = 48,
+}) {
+  final anchors = <GeoScreenClusterPoint>[];
+  final groups = <List<String>>[];
+
+  for (final point in points) {
+    var placed = false;
+    for (var i = 0; i < anchors.length; i++) {
+      final anchor = anchors[i];
+      if ((anchor.screen - point.screen).distance <= thresholdPx &&
+          distanceMeters(anchor.latitude, anchor.longitude, point.latitude, point.longitude) <=
+              thresholdMeters) {
+        groups[i].add(point.id);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      anchors.add(point);
+      groups.add([point.id]);
+    }
+  }
+
+  return groups;
+}

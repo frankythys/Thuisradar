@@ -6,6 +6,7 @@ import '../../../../shared/widgets/member_avatar.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
+import '../../domain/pulse_circle.dart';
 
 class MemberMarker extends StatelessWidget {
   const MemberMarker({
@@ -20,6 +21,9 @@ class MemberMarker extends StatelessWidget {
   static const width = 120.0;
   static const height = 96.0;
   static const avatarSize = 64.0;
+
+  /// Straal van een geselecteerd rondje inclusief de paarse rand.
+  static const selectedRadius = avatarSize / 2 + 6;
 
   final MemberOnMap entry;
   final DateTime now;
@@ -80,7 +84,8 @@ class _Avatar extends StatelessWidget {
 
     // Zachte lichtkring die uitdijt en vervaagt. Buiten het vak getekend, zodat
     // de marker zelf niet verschuift.
-    final grow = 4 + 14 * phase;
+    final look = pulseLook(phase);
+    final grow = look.growPx;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -92,7 +97,7 @@ class _Avatar extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.mapSelection.withValues(alpha: 0.35 * (1 - phase)),
+              color: AppColors.mapSelection.withValues(alpha: look.opacity),
             ),
           ),
         ),
