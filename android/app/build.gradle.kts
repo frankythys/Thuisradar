@@ -5,6 +5,13 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Google Maps-sleutel uit android/local.properties (staat niet in git):
+//   MAPS_API_KEY=AIza...
+val localProperties = java.util.Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
 android {
     namespace = "be.thuisradar.thuisradar"
     compileSdk = flutter.compileSdkVersion
@@ -30,6 +37,7 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 
     buildTypes {

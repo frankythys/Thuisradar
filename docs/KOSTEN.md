@@ -15,7 +15,7 @@ Thuisradar draait op **gratis** diensten. Alles wat geld kan kosten staat
 | **Supabase** (free tier) | Auth, database, realtime, Edge Functions | Ja, binnen de free-limieten |
 | **Firebase Cloud Messaging (FCM)** | Push-meldingen (SOS, later aankomst/vertrek) | Ja, gratis |
 | **OpenStreetMap-tegels** (via flutter_map) | De kaart op dit moment | Ja (fair-use; eigen `User-Agent` ingesteld) |
-| **Google Maps SDK for Android** | *Later*: kaart + satelliet in de app | Ja, de **on-device Maps SDK** heeft geen kaart-laadkosten |
+| **Google Maps SDK for Android** | Kaart + satelliet, achter de vlag `USE_GOOGLE_MAPS` (standaard uit). Sleutel enkel beperkt tot *Maps SDK for Android* + package/SHA-1, budgetalarm €1 | Ja, de **on-device Maps SDK** heeft geen kaart-laadkosten |
 
 ## Niet gebruiken (betalend)
 

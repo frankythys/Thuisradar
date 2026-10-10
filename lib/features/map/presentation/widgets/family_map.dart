@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/config/feature_flags.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_map_tiles.dart';
 import '../../../places/domain/place.dart';
@@ -10,8 +11,10 @@ import '../../../places/presentation/place_icons.dart';
 import '../../domain/map_focus.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
+import 'google_base_map.dart';
 
-/// OpenStreetMap-kaart met een marker (of groepspin) per gezinslid met locatie.
+/// Kaart met een marker (of groepspin) per gezinslid met locatie. Ondergrond:
+/// OpenStreetMap, of Google Maps als [useGoogleMaps] aanstaat.
 class FamilyMap extends StatelessWidget {
   const FamilyMap({
     super.key,
@@ -29,6 +32,9 @@ class FamilyMap extends StatelessWidget {
     this.onUserGesture,
     this.onMapTap,
     this.onHistory,
+    this.useGoogleMaps = FeatureFlags.useGoogleMaps,
+    this.satellite = false,
+    this.bottomInset = 0,
   });
 
   static const fallbackCenter = LatLng(50.85, 4.35); // België
@@ -53,16 +59,27 @@ class FamilyMap extends StatelessWidget {
   final VoidCallback? onMapTap;
   final ValueChanged<MemberOnMap>? onHistory;
 
+  /// Google Maps als ondergrond; de markers en gebaren blijven van flutter_map.
+  final bool useGoogleMaps;
+
+  /// Satellietbeeld (enkel met Google Maps).
+  final bool satellite;
+
+  /// Hoogte van het onderpaneel, zodat het Google-logo zichtbaar blijft.
+  final double bottomInset;
+
   @override
   Widget build(BuildContext context) {
     final ownLocation = members.where((entry) => entry.member.userId == myUserId).firstOrNull?.location;
-    return FlutterMap(
+    final center = ownLocation == null ? fallbackCenter : LatLng(ownLocation.latitude, ownLocation.longitude);
+    final zoom = ownLocation == null ? 8.0 : 12.0;
+    final map = FlutterMap(
       mapController: controller,
       options: MapOptions(
-        initialCenter: ownLocation == null
-            ? fallbackCenter
-            : LatLng(ownLocation.latitude, ownLocation.longitude),
-        initialZoom: ownLocation == null ? 8 : 12,
+        initialCenter: center,
+        initialZoom: zoom,
+        // Met Google Maps eronder: doorzichtig, zodat die ondergrond zichtbaar is.
+        backgroundColor: useGoogleMaps ? Colors.transparent : const MapOptions().backgroundColor,
         minZoom: 3,
         maxZoom: 18,
         // Horizontaal doorlopen; alleen de boven- en onderrand begrenzen.
@@ -75,7 +92,7 @@ class FamilyMap extends StatelessWidget {
         interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
       ),
       children: [
-        const AppMapTiles(),
+        if (!useGoogleMaps) const AppMapTiles(),
         if (places.isNotEmpty) ...[
           CircleLayer(
             circles: [
@@ -117,7 +134,22 @@ class FamilyMap extends StatelessWidget {
           selectedUserId: selectedUserId,
           myUserId: myUserId,
         ),
-        const SimpleAttributionWidget(source: Text('OpenStreetMap-bijdragers')),
+        if (!useGoogleMaps) const SimpleAttributionWidget(source: Text('OpenStreetMap-bijdragers')),
+      ],
+    );
+    if (!useGoogleMaps) return map;
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GoogleBaseMap(
+            controller: controller,
+            initialCenter: center,
+            initialZoom: zoom,
+            satellite: satellite,
+            bottomPadding: bottomInset,
+          ),
+        ),
+        map,
       ],
     );
   }

@@ -14,7 +14,10 @@ import '../../../shared/widgets/error_view.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
+import '../../../core/config/feature_flags.dart';
 import '../../geofencing/application/geofencing_providers.dart';
+import '../application/map_style_provider.dart';
+import 'widgets/map_style_button.dart';
 import '../../location/application/location_providers.dart';
 import '../../location/domain/trip_status.dart';
 import '../../family/presentation/invite_screen.dart';
@@ -339,12 +342,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               _mapReady = true;
               _fit(members);
             },
+            satellite: ref.watch(mapSatelliteProvider),
+            bottomInset: sheetTop,
           ),
           Positioned(
             right: 16,
             bottom: sheetTop + 16,
             child: _RecenterButton(onPressed: () => _fit(members, deliberate: true)),
           ),
+          if (FeatureFlags.useGoogleMaps)
+            Positioned(
+              right: 16,
+              bottom: sheetTop + 16 + 48 + 12,
+              child: MapStyleButton(
+                satellite: ref.watch(mapSatelliteProvider),
+                onPressed: () => unawaited(ref.read(mapSatelliteProvider.notifier).toggle()),
+              ),
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),

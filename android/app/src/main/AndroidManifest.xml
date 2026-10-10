@@ -50,6 +50,9 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Google Maps (vlag USE_GOOGLE_MAPS): sleutel komt uit android/local.properties -->
+        <meta-data android:name="com.google.android.geo.API_KEY"
+                   android:value="${MAPS_API_KEY}"/>
         <!-- Zonebewaking (native_geofence): Android wekt de app bij aankomst/vertrek -->
         <receiver android:name="com.chunkytofustudios.native_geofence.receivers.NativeGeofenceBroadcastReceiver"
                   android:exported="true"/>
