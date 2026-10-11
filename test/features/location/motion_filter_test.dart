@@ -33,6 +33,25 @@ void main() {
     expect(filter.wantsFastUpdates, isTrue);
   });
 
+  test('GPS-snelheid van 6 km/u zonder verplaatsing meldt geen beweging', () {
+    final filter = MotionFilter();
+    for (var i = 0; i < 12; i++) {
+      final at = base.add(Duration(seconds: i * 5));
+      final accepted = filter.accept(pos(51, 3, at, accuracy: 10, speed: 1.67), at);
+      expect(accepted!.speedMps ?? 0, lessThan(1.5));
+    }
+  });
+
+  test('wandelsnelheid wordt bevestigd zodra verplaatsing buiten GPS-ruis valt', () {
+    final filter = MotionFilter();
+    DevicePosition? accepted;
+    for (var i = 0; i < 5; i++) {
+      final at = base.add(Duration(seconds: i * 5));
+      accepted = filter.accept(pos(51 + i * 0.000075, 3, at, accuracy: 10, speed: 1.67), at);
+    }
+    expect(accepted!.speedMps, 1.67);
+  });
+
   test('een grove fix (binnenshuis) wordt bewaard maar meldt geen beweging', () {
     final accepted = MotionFilter().accept(pos(51, 3, base, accuracy: 80), base);
 

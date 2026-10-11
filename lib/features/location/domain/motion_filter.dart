@@ -38,6 +38,7 @@ class MotionFilter {
   static const _reliableAccuracyMeters = 50.0;
 
   DevicePosition? _previous;
+  DevicePosition? _motionOrigin;
   int _movingSamples = 0;
   int _stillSamples = 0;
   bool? _moving;
@@ -83,6 +84,7 @@ class MotionFilter {
     }
     if (seconds != null && seconds > 90) {
       previous = null;
+      _motionOrigin = null;
       _moving = null;
       _movingSamples = _stillSamples = 0;
     }
@@ -98,11 +100,16 @@ class MotionFilter {
     final coarse = accuracy != null && accuracy > _reliableAccuracyMeters;
     var speed = point.speedMps;
     if (speed != null && (!speed.isFinite || speed < 0 || speed > 70)) speed = null;
-    // Een betrouwbare GPS-snelheid (nauwkeurige fix) is onmiddellijk bewijs,
-    // maar niet op de eerste fix na (her)start: die draagt vaak nog een oude of
-    // valse snelheid mee, waardoor iemand bij het openen even "rijdt".
-    // Een uit afstand afgeleide snelheid telt pas na twee metingen.
-    var fromGps = speed != null && !coarse && previous != null;
+    // GPS-snelheid alleen bewijst geen verplaatsing. Bewaar een beginpunt zodat
+    // ook kleine wandelstappen samen buiten de onzekerheid kunnen komen.
+    final origin = _motionOrigin ??= point;
+    final movedFromOrigin = distanceMeters(
+      origin.latitude,
+      origin.longitude,
+      point.latitude,
+      point.longitude,
+    );
+    final originUncertainty = (origin.accuracyMeters ?? 50) + (accuracy ?? 50);
     if (coarse) {
       // Te grof om beweging te bewijzen: enkel een aanwezigheidspunt.
       speed = null;
@@ -118,21 +125,24 @@ class MotionFilter {
           seconds! >= 2 &&
           distance + uncertainty < speed * seconds * 0.3) {
         speed = null;
-        fromGps = false;
       }
     }
     if (speed == null) {
       _movingSamples = _stillSamples = 0;
       _moving = null;
+      _motionOrigin = point;
     } else if (speed >= 1.5) {
       _movingSamples++;
       _stillSamples = 0;
-      // GPS bewijst meteen; afgeleide snelheid pas bij de tweede meting.
-      if (_movingSamples >= 2 || fromGps) _moving = true;
+      // Twee metingen én echte verplaatsing, ook bij een GPS-snelheid.
+      if (_movingSamples >= 2 && movedFromOrigin > originUncertainty) _moving = true;
     } else if (speed <= 0.8) {
       _stillSamples++;
       _movingSamples = 0;
-      if (_stillSamples >= 2) _moving = false;
+      if (_stillSamples >= 2) {
+        _moving = false;
+        _motionOrigin = point;
+      }
     } else {
       _movingSamples = _stillSamples = 0;
     }
