@@ -12,6 +12,20 @@ double distanceMeters(double lat1, double lon1, double lat2, double lon2) {
   return 6371000 * 2 * math.asin(math.sqrt(a.clamp(0, 1)));
 }
 
+/// Waarom [MotionFilter.accept] een meting weigerde; voor de locatiediagnose.
+enum RejectReason {
+  invalid('ongeldig'),
+  inaccurate('onnauwkeurig'),
+  stale('te oud'),
+  future('in de toekomst'),
+  notNewer('niet nieuwer'),
+  jump('onmogelijke sprong');
+
+  const RejectReason(this.label);
+
+  final String label;
+}
+
 /// Alleen echte, recente metingen. Twee opeenvolgende bewijzen zijn nodig
 /// voor een statuswissel; GPS-snelheid bewijst nooit een vervoermiddel.
 class MotionFilter {
@@ -30,24 +44,43 @@ class MotionFilter {
 
   bool get wantsFastUpdates => _moving == true || _movingSamples > 0;
 
+  /// Reden van de laatste weigering; null als de laatste meting aanvaard werd.
+  RejectReason? get lastRejection => _lastRejection;
+  RejectReason? _lastRejection;
+
   DevicePosition? accept(DevicePosition point, DateTime now) {
+    _lastRejection = _reject(point, now);
+    if (_lastRejection != null) return null;
+    return _accept(point);
+  }
+
+  RejectReason? _reject(DevicePosition point, DateTime now) {
     final accuracy = point.accuracyMeters;
     final age = now.difference(point.timestamp);
     if (!point.latitude.isFinite ||
         !point.longitude.isFinite ||
         point.latitude.abs() > 90 ||
         point.longitude.abs() > 180 ||
-        (accuracy != null && (!accuracy.isFinite || accuracy < 0 || accuracy > _maxAccuracyMeters)) ||
-        age > const Duration(seconds: 90) ||
-        age < const Duration(seconds: -10)) {
-      return null;
+        (accuracy != null && (!accuracy.isFinite || accuracy < 0))) {
+      return RejectReason.invalid;
     }
+    if (accuracy != null && accuracy > _maxAccuracyMeters) return RejectReason.inaccurate;
+    if (age > const Duration(seconds: 90)) return RejectReason.stale;
+    if (age < const Duration(seconds: -10)) return RejectReason.future;
+    return null;
+  }
+
+  DevicePosition? _accept(DevicePosition point) {
+    final accuracy = point.accuracyMeters;
 
     var previous = _previous;
     final seconds = previous == null
         ? null
         : point.timestamp.difference(previous.timestamp).inMilliseconds / 1000;
-    if (seconds != null && seconds <= 0) return null;
+    if (seconds != null && seconds <= 0) {
+      _lastRejection = RejectReason.notNewer;
+      return null;
+    }
     if (seconds != null && seconds > 90) {
       previous = null;
       _moving = null;
@@ -57,7 +90,10 @@ class MotionFilter {
         ? null
         : distanceMeters(previous.latitude, previous.longitude, point.latitude, point.longitude);
     final uncertainty = (accuracy ?? 50) + (previous?.accuracyMeters ?? 50);
-    if (distance != null && (distance - uncertainty) / seconds! > 70) return null;
+    if (distance != null && (distance - uncertainty) / seconds! > 70) {
+      _lastRejection = RejectReason.jump;
+      return null;
+    }
 
     final coarse = accuracy != null && accuracy > _reliableAccuracyMeters;
     var speed = point.speedMps;

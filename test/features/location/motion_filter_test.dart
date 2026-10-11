@@ -58,4 +58,38 @@ void main() {
     expect(last!.speedMps, isNull);
     expect(filter.wantsFastUpdates, isFalse);
   });
+
+  group('weigerreden voor de locatiediagnose', () {
+    test('te onnauwkeurig (>100 m)', () {
+      final filter = MotionFilter();
+      expect(filter.accept(pos(51, 3, base, accuracy: 140), base), isNull);
+      expect(filter.lastRejection, RejectReason.inaccurate);
+    });
+
+    test('te oud', () {
+      final filter = MotionFilter();
+      final now = base.add(const Duration(minutes: 3));
+      expect(filter.accept(pos(51, 3, base, accuracy: 10), now), isNull);
+      expect(filter.lastRejection, RejectReason.stale);
+    });
+
+    test('niet nieuwer dan de vorige', () {
+      final filter = MotionFilter()..accept(pos(51, 3, base, accuracy: 10), base);
+      expect(filter.accept(pos(51, 3, base, accuracy: 10), base), isNull);
+      expect(filter.lastRejection, RejectReason.notNewer);
+    });
+
+    test('onmogelijke sprong', () {
+      final filter = MotionFilter()..accept(pos(51, 3, base, accuracy: 10), base);
+      final at = base.add(const Duration(seconds: 5));
+      expect(filter.accept(pos(51.1, 3, at, accuracy: 10), at), isNull);
+      expect(filter.lastRejection, RejectReason.jump);
+    });
+
+    test('aanvaard wist de vorige reden', () {
+      final filter = MotionFilter()..accept(pos(51, 3, base, accuracy: 140), base);
+      expect(filter.accept(pos(51, 3, base, accuracy: 10), base), isNotNull);
+      expect(filter.lastRejection, isNull);
+    });
+  });
 }
