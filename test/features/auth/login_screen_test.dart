@@ -34,7 +34,8 @@ void main() {
     expect(find.text('Account aanmaken'), findsOneWidget);
   });
 
-  testWidgets('onthouden login wordt ingevuld met verborgen wachtwoord', (tester) async {
+  testWidgets('onthouden vult enkel het e-mailadres in, nooit het wachtwoord', (tester) async {
+    // Een oudere versie bewaarde ook het wachtwoord.
     FlutterSecureStorage.setMockInitialValues({
       'thuisradar_remembered_login': '{"email":"test@example.com","password":"test-password"}',
     });
@@ -42,8 +43,10 @@ void main() {
     await tester.pumpAndSettle();
     final fields = tester.widgetList<TextFormField>(find.byType(TextFormField)).toList();
     expect(fields[0].controller!.text, 'test@example.com');
-    expect(fields[1].controller!.text, 'test-password');
-    expect(tester.widgetList<EditableText>(find.byType(EditableText)).last.obscureText, isTrue);
+    expect(fields[1].controller!.text, isEmpty);
+    // Het oude wachtwoord is meteen uit de opslag gewist.
+    final stored = await const FlutterSecureStorage().read(key: 'thuisradar_remembered_login');
+    expect(stored, isNot(contains('test-password')));
   });
 
   testWidgets('past op een telefoonscherm zonder te scrollen', (tester) async {

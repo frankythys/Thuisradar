@@ -75,10 +75,42 @@ void main() {
       password: 'new-password',
       remember: true,
     );
-    for (final key in ['thuisradar_biometric_login', 'thuisradar_remembered_login']) {
-      verify(() => storage.write(key: key, value: '{"email":"test@example.com","password":"new-password"}'))
-          .called(1);
-    }
+    // De vingerafdruk-login (opt-in) krijgt het nieuwe wachtwoord; "Onthouden"
+    // bewaart enkel het e-mailadres.
+    verify(
+      () => storage.write(
+        key: 'thuisradar_biometric_login',
+        value: '{"email":"test@example.com","password":"new-password"}',
+      ),
+    ).called(1);
+    verify(() => storage.write(key: 'thuisradar_remembered_login', value: '{"email":"test@example.com"}'))
+        .called(1);
+  });
+
+  test('onthouden bewaart nooit het wachtwoord', () async {
+    await service.rememberSuccessfulLogin(email: 'test@example.com', password: 'geheim', remember: true);
+    final written = verify(
+      () => storage.write(
+        key: 'thuisradar_remembered_login',
+        value: captureAny(named: 'value'),
+      ),
+    ).captured;
+    expect(written.single, isNot(contains('geheim')));
+  });
+
+  test('een door een oudere versie bewaard wachtwoord wordt bij het lezen gewist', () async {
+    when(() => storage.read(key: 'thuisradar_remembered_login'))
+        .thenAnswer((_) async => '{"email":"test@example.com","password":"oud-wachtwoord"}');
+
+    expect(await service.rememberedEmail(), 'test@example.com');
+    verify(() => storage.write(key: 'thuisradar_remembered_login', value: '{"email":"test@example.com"}'))
+        .called(1);
+  });
+
+  test('uitloggen wist het wachtwoord van de vingerafdruk-login, niet het e-mailadres', () async {
+    await service.forgetOnSignOut();
+    verify(() => storage.delete(key: 'thuisradar_biometric_login')).called(1);
+    verifyNever(() => storage.delete(key: 'thuisradar_remembered_login'));
   });
 
   test('ander account verwijdert de oude biometrische login', () async {

@@ -15,7 +15,7 @@ class _RememberRow extends StatelessWidget {
       child: Row(
         children: [
           Tooltip(
-            message: 'E-mailadres en wachtwoord versleuteld bewaren op dit toestel',
+            message: 'Je e-mailadres onthouden op dit toestel (nooit je wachtwoord)',
             child: InkWell(
               borderRadius: BorderRadius.circular(context.tokens.radiusSm),
               onTap: onChanged == null ? null : () => onChanged!(!value),

@@ -45,13 +45,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _restoreLogin() async {
     try {
-      final saved = await ref.read(biometricLoginProvider).rememberedLogin();
+      final email = await ref.read(biometricLoginProvider).rememberedEmail();
       if (!mounted) return;
       // A late storage response must not overwrite the user's typing.
-      if (saved != null && _email.text.isEmpty && _password.text.isEmpty) {
-        _email.text = saved['email']!;
-        _password.text = saved['password']!;
-      }
+      // Enkel het e-mailadres: het wachtwoord wordt nooit meer ingevuld.
+      if (email != null && _email.text.isEmpty) _email.text = email;
     } catch (_) {
       if (mounted) {
         setState(() => _message = 'Opgeslagen inloggegevens konden niet worden geladen. Vul ze opnieuw in.');

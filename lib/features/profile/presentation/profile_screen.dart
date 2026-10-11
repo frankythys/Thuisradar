@@ -91,6 +91,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     await ref.read(geofenceSyncProvider.notifier).stop();
     await ref.read(pushServiceProvider).forgetServerToken();
     try {
+      // Na uitloggen staat het wachtwoord nergens meer op het toestel.
+      await ref.read(biometricLoginProvider).forgetOnSignOut();
+    } on Exception catch (error) {
+      debugPrint('Opgeslagen wachtwoord wissen mislukt: $error');
+    }
+    try {
       await ref.read(authRepositoryProvider).signOut();
     } on Exception catch (error) {
       // Offline: de lokale sessie is al weg, enkel de serveraanroep faalde.

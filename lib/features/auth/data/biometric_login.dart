@@ -8,7 +8,10 @@ import 'auth_repository.dart';
 
 final biometricLoginProvider = Provider((ref) => BiometricLogin());
 
-/// Opt-in credentials, encrypted by the device; never stored in preferences.
+/// "Onthouden" bewaart enkel het e-mailadres. Het wachtwoord staat alleen op
+/// het toestel zolang de vingerafdruk-login aan staat én je ingelogd bent:
+/// uitloggen wist het ([forgetOnSignOut]). Versleuteld door het toestel, nooit
+/// in gewone voorkeuren.
 class BiometricLogin {
   BiometricLogin({LocalAuthentication? local, FlutterSecureStorage? storage})
     : _local = local ?? LocalAuthentication(),
@@ -18,12 +21,22 @@ class BiometricLogin {
   static const _key = 'thuisradar_biometric_login';
   static const _rememberKey = 'thuisradar_remembered_login';
 
-  Future<Map<String, String>?> rememberedLogin() async {
+  /// Het onthouden e-mailadres. Een wachtwoord dat een oudere versie hier
+  /// bewaarde, wordt meteen gewist.
+  Future<String?> rememberedEmail() async {
     final stored = await _storage.read(key: _rememberKey);
     if (stored == null) return null;
     final data = jsonDecode(stored) as Map<String, dynamic>;
-    return {'email': data['email'] as String, 'password': data['password'] as String};
+    final email = data['email'] as String;
+    if (data.containsKey('password')) {
+      await _storage.write(key: _rememberKey, value: jsonEncode({'email': email}));
+    }
+    return email;
   }
+
+  /// Bij uitloggen: geen wachtwoord meer op het toestel. Het e-mailadres
+  /// blijft (als "Onthouden" aan stond).
+  Future<void> forgetOnSignOut() => disable();
 
   Future<void> forgetRememberedLogin() => _storage.delete(key: _rememberKey);
 
@@ -45,7 +58,7 @@ class BiometricLogin {
       }
     }
     if (remember) {
-      await _storage.write(key: _rememberKey, value: value);
+      await _storage.write(key: _rememberKey, value: jsonEncode({'email': email}));
     } else {
       await forgetRememberedLogin();
     }
