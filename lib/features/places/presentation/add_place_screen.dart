@@ -8,12 +8,12 @@ import '../../family/application/family_providers.dart';
 import '../../family/domain/family_member.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
-import '../../../shared/widgets/app_map_tiles.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../map/presentation/widgets/family_map.dart';
 import '../application/places_providers.dart';
 import 'place_crosshair.dart';
+import 'place_edit_map.dart';
 import 'place_icons.dart';
 import '../domain/place.dart';
 import '../domain/selected_place_location.dart';
@@ -287,40 +287,14 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                FlutterMap(
-                  mapController: _controller,
-                  options: MapOptions(
-                    initialCenter: _center,
-                    initialZoom: 16,
-                    minZoom: 3,
-                    // 19 = dichtst beschikbare OpenStreetMap-zoom: nauwkeurig plaatsen.
-                    maxZoom: 19,
-                    cameraConstraint: CameraConstraint.contain(
-                      bounds: LatLngBounds(const LatLng(-85, -180), const LatLng(85, 180)),
-                    ),
-                    onPositionChanged: (camera, gesture) => setState(() {
-                      _selection.move(camera.center, userGesture: gesture);
-                      if (gesture) _search.clear();
-                    }),
-                    interactionOptions: const InteractionOptions(
-                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                    ),
-                  ),
-                  children: [
-                    const AppMapTiles(),
-                    CircleLayer(
-                      circles: [
-                        CircleMarker(
-                          point: _center,
-                          radius: _radius,
-                          useRadiusInMeter: true,
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          borderColor: AppColors.primary,
-                          borderStrokeWidth: 2,
-                        ),
-                      ],
-                    ),
-                  ],
+                PlaceEditMap(
+                  controller: _controller,
+                  center: _center,
+                  radiusMeters: _radius,
+                  onPositionChanged: (camera, gesture) => setState(() {
+                    _selection.move(camera.center, userGesture: gesture);
+                    if (gesture) _search.clear();
+                  }),
                 ),
                 Positioned(
                   top: 12,
