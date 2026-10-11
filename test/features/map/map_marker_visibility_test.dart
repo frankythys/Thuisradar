@@ -16,12 +16,7 @@ import 'package:thuisradar/shared/widgets/member_avatar.dart';
 void main() {
   final now = DateTime(2026, 10, 5, 12);
   MemberOnMap member(String id) => MemberOnMap(
-    member: FamilyMember(
-      userId: id,
-      displayName: id,
-      isOwner: false,
-      colorIndex: 0,
-    ),
+    member: FamilyMember(userId: id, displayName: id, isOwner: false, colorIndex: 0),
     location: MemberLocation(
       userId: id,
       familyId: 'family',
@@ -75,175 +70,147 @@ void main() {
         expect(find.byType(MemberMarker), findsNWidgets(2));
         continue;
       }
-      expect(
-        tester
-            .getRect(find.byType(GroupPin))
-            .overlaps(tester.getRect(find.byKey(homeKey))),
-        isFalse,
-      );
+      expect(tester.getRect(find.byType(GroupPin)).overlaps(tester.getRect(find.byKey(homeKey))), isFalse);
     }
     await tester.pumpWidget(const SizedBox());
     controller.dispose();
   });
 
-  testWidgets(
-    'rijdende persoonscirkel staat op wegpunt met aansluitende tekstballon',
-    (tester) async {
-      final controller = MapController();
-      const point = LatLng(51, 3);
-      const pointKey = ValueKey('exact-coordinate');
-      final cars = [
-        for (final id in ['Franky', 'Liam'])
-          MemberOnMap(
-            member: member(id).member,
-            location: MemberLocation(
-              userId: id,
-              familyId: 'family',
-              latitude: 51,
-              longitude: 3,
-              updatedAt: now,
-              speedMps: 10,
-            ),
-          ),
-      ];
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(
-            body: FlutterMap(
-              mapController: controller,
-              options: const MapOptions(initialCenter: point, initialZoom: 16),
-              children: [
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: point,
-                      width: 2,
-                      height: 2,
-                      child: const SizedBox(key: pointKey),
-                    ),
-                  ],
-                ),
-                ClusteredMarkerLayer(
-                  members: cars,
-                  now: now,
-                  selectedUserId: 'Franky',
-                  reservedPlaces: const [point],
-                  onMemberTap: (_) {},
-                  onGroupTap: (_) {},
-                ),
-              ],
-            ),
+  testWidgets('rijdende persoonscirkel staat op wegpunt met aansluitende tekstballon', (tester) async {
+    final controller = MapController();
+    const point = LatLng(51, 3);
+    const pointKey = ValueKey('exact-coordinate');
+    final cars = [
+      for (final id in ['Franky', 'Liam'])
+        MemberOnMap(
+          member: member(id).member,
+          location: MemberLocation(
+            userId: id,
+            familyId: 'family',
+            latitude: 51,
+            longitude: 3,
+            updatedAt: now,
+            speedMps: 10,
           ),
         ),
-      );
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: FlutterMap(
+            mapController: controller,
+            options: const MapOptions(initialCenter: point, initialZoom: 16),
+            children: [
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: point,
+                    width: 2,
+                    height: 2,
+                    child: const SizedBox(key: pointKey),
+                  ),
+                ],
+              ),
+              ClusteredMarkerLayer(
+                members: cars,
+                now: now,
+                selectedUserId: 'Franky',
+                reservedPlaces: const [point],
+                onMemberTap: (_) {},
+                onGroupTap: (_) {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final oldCarImages = find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName == 'assets/markers/auto.png',
+    );
+    expect(oldCarImages, findsNothing);
+    final circles = find.byType(MemberAvatar);
+    expect(circles, findsNWidgets(2));
+    expect(find.byType(GroupPin), findsNothing);
+    for (final zoom in [16.0, 18.0]) {
+      controller.move(point, zoom);
       await tester.pumpAndSettle();
-      final oldCarImages = find.byWidgetPredicate(
-        (widget) =>
-            widget is Image &&
-            widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName == 'assets/markers/auto.png',
-      );
-      expect(oldCarImages, findsNothing);
-      final circles = find.byType(MemberAvatar);
-      expect(circles, findsNWidgets(2));
-      expect(find.byType(GroupPin), findsNothing);
-      for (final zoom in [16.0, 18.0]) {
-        controller.move(point, zoom);
-        await tester.pumpAndSettle();
-        for (var i = 0; i < 2; i++) {
-          expect(
-            (tester.getCenter(circles.at(i)) -
-                    tester.getCenter(find.byKey(pointKey)))
-                .distance,
-            lessThan(0.1),
-          );
-        }
-        final franky = find.byWidgetPredicate(
-          (widget) =>
-              widget is MemberAvatar && widget.member.userId == 'Franky',
-        );
+      for (var i = 0; i < 2; i++) {
         expect(
-          tester.getRect(find.text('Rijden')).top,
-          lessThan(tester.getRect(franky).top),
+          (tester.getCenter(circles.at(i)) - tester.getCenter(find.byKey(pointKey))).distance,
+          lessThan(0.1),
         );
       }
-      await tester.pumpWidget(const SizedBox());
-      controller.dispose();
-    },
-  );
+      final franky = find.byWidgetPredicate(
+        (widget) => widget is MemberAvatar && widget.member.userId == 'Franky',
+      );
+      expect(tester.getRect(find.text('Rijden')).top, lessThan(tester.getRect(franky).top));
+    }
+    await tester.pumpWidget(const SizedBox());
+    controller.dispose();
+  });
 
-  testWidgets(
-    'stilstaand lid houdt infolabel zonder selectie of geschiedeniscallback',
-    (tester) async {
-      var opened = false;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(
-            body: FlutterMap(
-              options: const MapOptions(
-                initialCenter: LatLng(51, 3),
-                initialZoom: 16,
+  testWidgets('stilstaand lid houdt infolabel zonder selectie of geschiedeniscallback', (tester) async {
+    var opened = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: FlutterMap(
+            options: const MapOptions(initialCenter: LatLng(51, 3), initialZoom: 16),
+            children: [
+              ClusteredMarkerLayer(
+                members: [member('Franky')],
+                now: now,
+                onMemberTap: (_) => opened = true,
+                onGroupTap: (_) {},
               ),
-              children: [
-                ClusteredMarkerLayer(
-                  members: [member('Franky')],
-                  now: now,
-                  onMemberTap: (_) => opened = true,
-                  onGroupTap: (_) {},
-                ),
-              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Stilstaand'), findsOneWidget);
+    await tester.tap(find.text('Stilstaand'));
+    expect(opened, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('grote geselecteerde avatar gebruikt gereserveerde rand zonder wit', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: MemberMarker.width,
+              height: MemberMarker.height,
+              child: MemberMarker(entry: member('Franky'), now: now, selected: true),
             ),
           ),
         ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Stilstaand'), findsOneWidget);
-      await tester.tap(find.text('Stilstaand'));
-      expect(opened, isTrue);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'grote geselecteerde avatar gebruikt gereserveerde rand zonder wit',
-    (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: MemberMarker.width,
-                height: MemberMarker.height,
-                child: MemberMarker(
-                  entry: member('Franky'),
-                  now: now,
-                  selected: true,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      final avatar = tester.widget<MemberAvatar>(find.byType(MemberAvatar));
-      expect(avatar.size, MemberMarker.avatarSize);
-      expect(avatar.ring, isFalse);
-      expect(AppColors.members, isNot(contains(AppColors.mapSelection)));
-      expect(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is Container &&
-              widget.decoration is BoxDecoration &&
-              (widget.decoration! as BoxDecoration).color ==
-                  AppColors.mapSelection,
-        ),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+      ),
+    );
+    final avatar = tester.widget<MemberAvatar>(find.byType(MemberAvatar));
+    expect(avatar.size, MemberMarker.avatarSize);
+    expect(avatar.ring, isFalse);
+    expect(AppColors.members, isNot(contains(AppColors.mapSelection)));
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Container &&
+            widget.decoration is BoxDecoration &&
+            (widget.decoration! as BoxDecoration).color == AppColors.mapSelection,
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('tik op een avatar in de groep toont dat lid', (tester) async {
     MemberOnMap? tapped;
@@ -271,9 +238,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('groepspin met grote avatars en extra leden past in marker', (
-    tester,
-  ) async {
+  testWidgets('groepspin met grote avatars en extra leden past in marker', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -283,12 +248,7 @@ void main() {
               width: GroupPin.width,
               height: GroupPin.height,
               child: GroupPin(
-                members: [
-                  member('Franky'),
-                  member('Liam'),
-                  member('Hedwig'),
-                  member('F'),
-                ],
+                members: [member('Franky'), member('Liam'), member('Hedwig'), member('F')],
                 now: now,
                 selectedUserId: 'Franky',
               ),
@@ -300,14 +260,9 @@ void main() {
     expect(find.text('+1'), findsOneWidget);
     // De gezamenlijke witte vorm houdt de grote maat (72); de gezichten zelf
     // liggen erbinnen met een dun wit scheidingslijntje of de paarse rand.
+    expect(tester.widget<GroupPinBackdrop>(find.byType(GroupPinBackdrop)).diameter, 72);
     expect(
-      tester.widget<GroupPinBackdrop>(find.byType(GroupPinBackdrop)).diameter,
-      72,
-    );
-    expect(
-      tester
-          .widgetList<MemberAvatar>(find.byType(MemberAvatar))
-          .every((avatar) => avatar.size >= 60),
+      tester.widgetList<MemberAvatar>(find.byType(MemberAvatar)).every((avatar) => avatar.size >= 60),
       isTrue,
     );
     expect(tester.takeException(), isNull);

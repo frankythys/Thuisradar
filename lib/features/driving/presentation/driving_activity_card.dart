@@ -48,8 +48,7 @@ class DrivingActivityCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (activity.kind == DrivingActivityKind.trip &&
-              segments.isNotEmpty) ...[
+          if (activity.kind == DrivingActivityKind.trip && segments.isNotEmpty) ...[
             LocationPreview(
               latitude: route.last.latitude,
               longitude: route.last.longitude,
@@ -70,9 +69,7 @@ class DrivingActivityCard extends StatelessWidget {
             DrivingActivityKind.stay => _StayBody(
               activity: activity,
               places: places,
-              onSaveAsPlace:
-                  placeNameAt(places, activity.latitude, activity.longitude) ==
-                      null
+              onSaveAsPlace: placeNameAt(places, activity.latitude, activity.longitude) == null
                   ? onSaveAsPlace
                   : null,
             ),
@@ -84,11 +81,7 @@ class DrivingActivityCard extends StatelessWidget {
 }
 
 class _TripBody extends StatelessWidget {
-  const _TripBody({
-    required this.activity,
-    required this.places,
-    this.topSpeed,
-  });
+  const _TripBody({required this.activity, required this.places, this.topSpeed});
 
   final DrivingActivity activity;
   final List<Place> places;
@@ -117,17 +110,9 @@ class _TripBody extends StatelessWidget {
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 6),
-                    child: Icon(
-                      Icons.arrow_forward,
-                      size: 16,
-                      color: AppColors.muted,
-                    ),
+                    child: Icon(Icons.arrow_forward, size: 16, color: AppColors.muted),
                   ),
-                  _PlaceLabel(
-                    places: places,
-                    latitude: activity.latitude,
-                    longitude: activity.longitude,
-                  ),
+                  _PlaceLabel(places: places, latitude: activity.latitude, longitude: activity.longitude),
                 ],
               ),
             ),
@@ -159,11 +144,7 @@ class _TripBody extends StatelessWidget {
 }
 
 class _StayBody extends StatelessWidget {
-  const _StayBody({
-    required this.activity,
-    required this.places,
-    this.onSaveAsPlace,
-  });
+  const _StayBody({required this.activity, required this.places, this.onSaveAsPlace});
 
   final DrivingActivity activity;
   final List<Place> places;
@@ -243,9 +224,7 @@ class _PlaceLabel extends ConsumerWidget {
     final known = placeNameAt(places, lat, lng);
     if (known != null) return Text(known, style: style);
 
-    final address = ref
-        .watch(placeAddressProvider(snapToAddressGrid(lat, lng)))
-        .value;
+    final address = ref.watch(placeAddressProvider(snapToAddressGrid(lat, lng))).value;
     final label = address == null || address.isEmpty ? fallback : address.label;
     return Text(label, style: style);
   }

@@ -11,15 +11,11 @@ const kMaxTrackGap = Duration(minutes: 5);
 /// nooit met een rechte lijn verbonden — een auto rijdt over de weg, niet
 /// dwars door de stad. Een stuk met één punt levert niets op: daar valt geen
 /// route mee te tekenen.
-List<List<TrackPoint>> splitTrackGaps(
-  List<TrackPoint> points, {
-  Duration maxGap = kMaxTrackGap,
-}) {
+List<List<TrackPoint>> splitTrackGaps(List<TrackPoint> points, {Duration maxGap = kMaxTrackGap}) {
   final segments = <List<TrackPoint>>[];
   var current = <TrackPoint>[];
   for (final point in points) {
-    if (current.isNotEmpty &&
-        point.recordedAt.difference(current.last.recordedAt) > maxGap) {
+    if (current.isNotEmpty && point.recordedAt.difference(current.last.recordedAt) > maxGap) {
       _addSegment(segments, current);
       current = <TrackPoint>[];
     }
@@ -36,8 +32,7 @@ void _addSegment(List<List<TrackPoint>> segments, List<TrackPoint> segment) {
 /// Kaartweergave is strenger dan ritgroepering: een meetgat van minuten kan
 /// bij een rit horen, maar bevat geen betrouwbare geometrie om te tekenen.
 List<List<TrackPoint>> routeMapSegments(List<TrackPoint> points) {
-  final ordered = List<TrackPoint>.of(points)
-    ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+  final ordered = List<TrackPoint>.of(points)..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
   final segments = <List<TrackPoint>>[];
   var current = <TrackPoint>[];
   void close() {
@@ -56,16 +51,9 @@ List<List<TrackPoint>> routeMapSegments(List<TrackPoint> points) {
     }
     if (current.isNotEmpty) {
       final previous = current.last;
-      final seconds =
-          point.recordedAt.difference(previous.recordedAt).inMilliseconds /
-          1000;
+      final seconds = point.recordedAt.difference(previous.recordedAt).inMilliseconds / 1000;
       if (seconds <= 0) continue;
-      final distance = distanceMeters(
-        previous.latitude,
-        previous.longitude,
-        point.latitude,
-        point.longitude,
-      );
+      final distance = distanceMeters(previous.latitude, previous.longitude, point.latitude, point.longitude);
       if (seconds > 60 || distance / seconds > 70) {
         close();
       }

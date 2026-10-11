@@ -61,15 +61,11 @@ class ClusteredMarkerLayer extends StatefulWidget {
   State<ClusteredMarkerLayer> createState() => _ClusteredMarkerLayerState();
 }
 
-class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
-    with SingleTickerProviderStateMixin {
+class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with SingleTickerProviderStateMixin {
   /// Binnen deze echte afstand van het huis telt iemand als "bij huis".
   static const _nearPlaceMeters = 200.0;
 
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: markerMotionMin,
-  );
+  late final AnimationController _controller = AnimationController(vsync: this, duration: markerMotionMin);
   final Map<String, _Coord> _from = {};
   final Map<String, _Coord> _to = {};
   final Map<String, DateTime> _lastAt = {};
@@ -113,10 +109,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
       } else if (current.lat != target.lat || current.lng != target.lng) {
         // Een rechte animatie tussen twee wegpunten kan dwars door een bocht
         // snijden. Auto's staan op de ontvangen (eventueel gematchte) positie.
-        _from[id] =
-            TripStatus.at(location, widget.now).state == TripState.moving
-            ? target
-            : _displayed(id);
+        _from[id] = TripStatus.at(location, widget.now).state == TripState.moving ? target : _displayed(id);
         _to[id] = target;
         final previousAt = _lastAt[id];
         final gap = previousAt == null
@@ -149,10 +142,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) => _buildLayer(context),
-    );
+    return AnimatedBuilder(animation: _controller, builder: (context, _) => _buildLayer(context));
   }
 
   Widget _buildLayer(BuildContext context) {
@@ -170,9 +160,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
         });
 
     final byId = {for (final m in located) m.member.userId: m};
-    final coords = {
-      for (final m in located) m.member.userId: _displayed(m.member.userId),
-    };
+    final coords = {for (final m in located) m.member.userId: _displayed(m.member.userId)};
     // Enkel wie op dezelfde plek staat én op het scherm overlapt, komt samen
     // in één groepspin: thuis uitgezoomd één groep, ingezoomd elk apart.
     final groups = clusterByMetersAndScreen([
@@ -181,9 +169,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           m.member.userId,
           coords[m.member.userId]!.lat,
           coords[m.member.userId]!.lng,
-          camera.latLngToScreenOffset(
-            LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng),
-          ),
+          camera.latLngToScreenOffset(LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng)),
         ),
     ]);
     // Op huisniveau scheiden alleen de avatars. Hun geografische ankers
@@ -199,8 +185,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     }
     // Rijdende auto's houden ieder hun eigen exacte wegpositie.
     for (final member in located) {
-      if (TripStatus.at(member.location, widget.now).state !=
-          TripState.moving) {
+      if (TripStatus.at(member.location, widget.now).state != TripState.moving) {
         continue;
       }
       final id = member.member.userId;
@@ -231,24 +216,17 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     coords.addAll(together);
     // Groep met de selectie als laatste tekenen (bovenop).
     groups.sort((a, b) {
-      final aSel =
-          widget.selectedUserId != null && a.contains(widget.selectedUserId);
-      final bSel =
-          widget.selectedUserId != null && b.contains(widget.selectedUserId);
+      final aSel = widget.selectedUserId != null && a.contains(widget.selectedUserId);
+      final bSel = widget.selectedUserId != null && b.contains(widget.selectedUserId);
       return (aSel ? 1 : 0) - (bSel ? 1 : 0);
     });
 
     final markers = <MapMarkerSpec>[];
-    final placePoints = [
-      for (final place in widget.reservedPlaces)
-        camera.latLngToScreenOffset(place),
-    ];
+    final placePoints = [for (final place in widget.reservedPlaces) camera.latLngToScreenOffset(place)];
     bool isDriving(List<String> group) =>
         group.length == 1 &&
-        TripStatus.at(byId[group.single]!.location, widget.now).state ==
-            TripState.moving;
-    Offset screenOf(String id) =>
-        camera.latLngToScreenOffset(LatLng(coords[id]!.lat, coords[id]!.lng));
+        TripStatus.at(byId[group.single]!.location, widget.now).state == TripState.moving;
+    Offset screenOf(String id) => camera.latLngToScreenOffset(LatLng(coords[id]!.lat, coords[id]!.lng));
 
     // Vrijhouden van het huis-icoon: voor wie echt bij huis is (op echte
     // afstand, zodat het ook bij inzoomen blijft gelden). Wie verder weg is,
@@ -299,9 +277,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           SpreadItem(
             group.first,
             screenOf(group.first) + Offset(0, clearance[group.first]!.dy),
-            group.length == 1
-                ? MemberMarker.avatarSize / 2
-                : GroupPin.clusterWidth(group.length) / 2,
+            group.length == 1 ? MemberMarker.avatarSize / 2 : GroupPin.clusterWidth(group.length) / 2,
           ),
     ]);
     final offsets = <String, Offset>{};
@@ -338,10 +314,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
                 ? Alignment.center
                 : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
             onTap: () => widget.onMemberTap(member),
-            child: GestureDetector(
-              onTap: () => widget.onMemberTap(member),
-              child: memberMarker(),
-            ),
+            child: GestureDetector(onTap: () => widget.onMemberTap(member), child: memberMarker()),
           ),
         );
       } else {
@@ -351,10 +324,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
             point: point,
             width: GroupPin.width,
             height: GroupPin.height,
-            alignment: Alignment(
-              2 * shiftX / width,
-              1 + 2 * offset.dy / height,
-            ),
+            alignment: Alignment(2 * shiftX / width, 1 + 2 * offset.dy / height),
             onTap: () => widget.onGroupTap(point),
             child: GestureDetector(
               onTap: () => widget.onGroupTap(point),
@@ -384,50 +354,47 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
     final screenById = {
       for (final m in located)
         m.member.userId:
-            camera.latLngToScreenOffset(
-              LatLng(
-                coords[m.member.userId]!.lat,
-                coords[m.member.userId]!.lng,
-              ),
-            ) +
+            camera.latLngToScreenOffset(LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng)) +
             Offset(offsets[m.member.userId]?.dx ?? 0, 0),
     };
     double baseDyOf(MemberOnMap member) =>
         TripStatus.at(member.location, widget.now).state == TripState.moving ? -18 : -78;
     // Alle ballonnen samen plaatsen, zodat ze nooit over elkaar vallen; per lid
     // eerst de kant die vrij is van andere leden.
-    final placements = layoutBubbles([
-      for (final member in bubbleMembers)
-        if (screenById[member.member.userId] case final self?)
-          (
-            id: member.member.userId,
-            anchor: self + Offset(0, offsets[member.member.userId]?.dy ?? 0),
-            preferred: chooseBubbleSide(self, [
-              for (final entry in screenById.entries)
-                if (entry.key != member.member.userId) entry.value,
-            ]),
-            baseDy: baseDyOf(member),
+    final placements = layoutBubbles(
+      [
+        for (final member in bubbleMembers)
+          if (screenById[member.member.userId] case final self?)
+            (
+              id: member.member.userId,
+              anchor: self + Offset(0, offsets[member.member.userId]?.dy ?? 0),
+              preferred: chooseBubbleSide(self, [
+                for (final entry in screenById.entries)
+                  if (entry.key != member.member.userId) entry.value,
+              ]),
+              baseDy: baseDyOf(member),
+            ),
+      ],
+      avatars: {
+        // Het gezicht van elk los lid, in dezelfde coördinaten als de ballon
+        // (die hangt een ballonhoogte hoger dan zijn ankerpunt).
+        // Een rijdend lid staat gecentreerd op zijn punt, een stilstaand lid
+        // als pin erboven.
+        for (final entry in screenById.entries)
+          entry.key: Rect.fromCenter(
+            center:
+                entry.value +
+                Offset(
+                  0,
+                  (offsets[entry.key]?.dy ?? 0) +
+                      (isDriving([entry.key]) ? 0 : MemberMarker.avatarSize / 2 - MemberMarker.height) +
+                      kBubbleHeight,
+                ),
+            width: MemberMarker.avatarSize,
+            height: MemberMarker.avatarSize,
           ),
-    ], avatars: {
-      // Het gezicht van elk los lid, in dezelfde coördinaten als de ballon
-      // (die hangt een ballonhoogte hoger dan zijn ankerpunt).
-      // Een rijdend lid staat gecentreerd op zijn punt, een stilstaand lid
-      // als pin erboven.
-      for (final entry in screenById.entries)
-        entry.key: Rect.fromCenter(
-          center: entry.value +
-              Offset(
-                0,
-                (offsets[entry.key]?.dy ?? 0) +
-                    (isDriving([entry.key])
-                        ? 0
-                        : MemberMarker.avatarSize / 2 - MemberMarker.height) +
-                    kBubbleHeight,
-              ),
-          width: MemberMarker.avatarSize,
-          height: MemberMarker.avatarSize,
-        ),
-    });
+      },
+    );
     for (final selected in bubbleMembers) {
       final id = selected.member.userId;
       final coordinate = coords[id]!;

@@ -33,8 +33,7 @@ class _OnboardingGateState extends ConsumerState<OnboardingGate> {
             if (_introFinished) return const OnboardingScreen();
             return IntroScreen(onFinished: _finishIntro);
           },
-          loading: () =>
-              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
           // Bij twijfel de app gewoon tonen; onboarding is niet kritiek.
           error: (_, _) => widget.child,
         );

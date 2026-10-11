@@ -16,10 +16,7 @@ Future<void> main() async {
   final diagnostics = StartupDiagnostics();
   Env.assertConfigured();
 
-  await Supabase.initialize(
-    url: Env.supabaseUrl,
-    publishableKey: Env.supabaseKey,
-  );
+  await Supabase.initialize(url: Env.supabaseUrl, publishableKey: Env.supabaseKey);
   diagnostics.checkpoint('Supabase gereed');
 
   // Firebase is nodig voor push (SOS). Faalt dit, dan draait de app zonder push.

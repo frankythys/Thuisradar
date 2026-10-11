@@ -11,9 +11,7 @@ class StartupDiagnostics {
 
   void watchFirstFrame() {
     if (kReleaseMode) return;
-    SchedulerBinding.instance.addPostFrameCallback(
-      (_) => checkpoint('eerste Flutter-frame'),
-    );
+    SchedulerBinding.instance.addPostFrameCallback((_) => checkpoint('eerste Flutter-frame'));
   }
 
   final _watch = Stopwatch();
@@ -23,9 +21,7 @@ class StartupDiagnostics {
   void checkpoint(String stage) {
     if (kReleaseMode) return;
     final elapsed = _watch.elapsedMilliseconds;
-    debugPrint(
-      '[Performance] $stage: ${elapsed - _previousStage} ms sinds vorige stap; totaal $elapsed ms',
-    );
+    debugPrint('[Performance] $stage: ${elapsed - _previousStage} ms sinds vorige stap; totaal $elapsed ms');
     _previousStage = elapsed;
   }
 

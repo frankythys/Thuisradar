@@ -46,23 +46,16 @@ class RoadNetworkSource {
     final file = File('${directory.path}/$key.json.gz');
     if (await file.exists()) {
       try {
-        if (now.difference((await file.stat()).modified) <
-            const Duration(days: 30)) {
+        if (now.difference((await file.stat()).modified) < const Duration(days: 30)) {
           final bytes = await file.readAsBytes();
-          final network = await compute(
-            _decodeCachedRoads,
-            bytes,
-            debugLabel: 'roads-cache-decode',
-          );
+          final network = await compute(_decodeCachedRoads, bytes, debugLabel: 'roads-cache-decode');
           return _remember(key, network);
         }
       } catch (_) {
         /* Beschadigde cache wordt vervangen zodra netwerk beschikbaar is. */
       }
     }
-    if (_fetching ||
-        (_lastRequest != null &&
-            now.difference(_lastRequest!) < const Duration(minutes: 1))) {
+    if (_fetching || (_lastRequest != null && now.difference(_lastRequest!) < const Duration(minutes: 1))) {
       return null;
     }
     _fetching = true;
@@ -82,21 +75,15 @@ class RoadNetworkSource {
       final west = math.max(-180, column * 0.08 - 0.005);
       final east = math.min(180, (column + 1) * 0.08 + 0.005);
       final types = carHighways.join('|');
-      final query =
-          '[out:json][timeout:8];way[highway~"^($types)\$"]($south,$west,$north,$east);out geom;';
+      final query = '[out:json][timeout:8];way[highway~"^($types)\$"]($south,$west,$north,$east);out geom;';
       final response = await client
           .post(
             Uri.parse(endpoint),
-            headers: {
-              'User-Agent': 'CircleBeacon/1.0 (personal family location app)',
-            },
+            headers: {'User-Agent': 'CircleBeacon/1.0 (personal family location app)'},
             body: {'data': query},
           )
           .timeout(const Duration(seconds: 12));
-      await prefs.setInt(
-        'roads_budget_bytes',
-        bytes + response.bodyBytes.length,
-      );
+      await prefs.setInt('roads_budget_bytes', bytes + response.bodyBytes.length);
       if (response.statusCode != 200 || response.bodyBytes.length > 2000000) {
         return null;
       }
@@ -114,10 +101,8 @@ class RoadNetworkSource {
           .cast<File>()
           .toList();
       if (files.length > 16) {
-        final dated = [
-          for (final cached in files)
-            (file: cached, at: (await cached.stat()).modified),
-        ]..sort((a, b) => a.at.compareTo(b.at));
+        final dated = [for (final cached in files) (file: cached, at: (await cached.stat()).modified)]
+          ..sort((a, b) => a.at.compareTo(b.at));
         for (final old in dated.take(files.length - 16)) {
           await old.file.delete();
         }
@@ -137,17 +122,11 @@ class RoadNetworkSource {
   }
 }
 
-RoadNetwork _decodeCachedRoads(List<int> bytes) => RoadNetwork.fromOverpass(
-  jsonDecode(utf8.decode(gzip.decode(bytes))) as Map<String, dynamic>,
-);
+RoadNetwork _decodeCachedRoads(List<int> bytes) =>
+    RoadNetwork.fromOverpass(jsonDecode(utf8.decode(gzip.decode(bytes))) as Map<String, dynamic>);
 
-({RoadNetwork network, List<int> compressed})? _decodeDownloadedRoads(
-  List<int> bytes,
-) {
+({RoadNetwork network, List<int> compressed})? _decodeDownloadedRoads(List<int> bytes) {
   final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
   if (json['elements'] is! List || json.containsKey('remark')) return null;
-  return (
-    network: RoadNetwork.fromOverpass(json),
-    compressed: gzip.encode(bytes),
-  );
+  return (network: RoadNetwork.fromOverpass(json), compressed: gzip.encode(bytes));
 }

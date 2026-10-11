@@ -35,8 +35,7 @@ class MemberMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final driving =
-        TripStatus.at(entry.location, now).state == TripState.moving;
+    final driving = TripStatus.at(entry.location, now).state == TripState.moving;
 
     final marker = _Avatar(entry: entry, selected: selected);
     // Tijdens rijden blijft het midden van de persoonscirkel op de wegpositie.
@@ -83,11 +82,7 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avatar = MemberAvatar(
-      member: entry.member,
-      size: MemberMarker.avatarSize,
-      ring: !selected,
-    );
+    final avatar = MemberAvatar(member: entry.member, size: MemberMarker.avatarSize, ring: !selected);
     if (!selected) return avatar;
 
     // Paars is gereserveerd voor selectie en vervangt de witte rand volledig.
@@ -96,10 +91,7 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.mapSelection,
-        boxShadow: [
-          ...context.tokens.glowSelection,
-          ...context.tokens.shadowMarker,
-        ],
+        boxShadow: [...context.tokens.glowSelection, ...context.tokens.shadowMarker],
       ),
       child: avatar,
     );

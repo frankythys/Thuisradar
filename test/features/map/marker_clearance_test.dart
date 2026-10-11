@@ -8,20 +8,12 @@ void main() {
     for (final point in [const Offset(100, 100), const Offset(400, 600)]) {
       final bounds = Rect.fromLTWH(point.dx - 130, point.dy - 160, 260, 160);
       final shifted = bounds.shift(markerClearance(bounds, [point]));
-      expect(
-        shifted.overlaps(Rect.fromCircle(center: point, radius: 16)),
-        isFalse,
-      );
+      expect(shifted.overlaps(Rect.fromCircle(center: point, radius: 16)), isFalse);
       expect(shifted.bottom, lessThanOrEqualTo(point.dy - 24));
     }
   });
   test('geen overlap behoudt de oorspronkelijke positie', () {
-    expect(
-      markerClearance(const Rect.fromLTWH(0, 0, 120, 96), [
-        const Offset(300, 300),
-      ]),
-      Offset.zero,
-    );
+    expect(markerClearance(const Rect.fromLTWH(0, 0, 120, 96), [const Offset(300, 300)]), Offset.zero);
   });
   test('een losse avatar blijft vrij van het huis', () {
     const bounds = Rect.fromLTWH(40, 100, 120, 96);

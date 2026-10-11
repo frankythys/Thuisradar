@@ -25,18 +25,13 @@ class RoadNetwork {
       if (element is! Map || element['type'] != 'way') continue;
       final tags = element['tags'] as Map? ?? const {};
       if (!carHighways.contains(tags['highway']) ||
-          ['no', 'private'].contains(
-            tags['motor_vehicle'] ?? tags['vehicle'] ?? tags['access'],
-          )) {
+          ['no', 'private'].contains(tags['motor_vehicle'] ?? tags['vehicle'] ?? tags['access'])) {
         continue;
       }
       final id = element['id'];
       final geometry = element['geometry'];
       final nodes = element['nodes'];
-      if (id is! int ||
-          geometry is! List ||
-          nodes is! List ||
-          geometry.length != nodes.length) {
+      if (id is! int || geometry is! List || nodes is! List || geometry.length != nodes.length) {
         continue;
       }
       final points = <RoadPoint>[];
@@ -45,10 +40,7 @@ class RoadNetwork {
         if (point is! Map || point['lat'] is! num || point['lon'] is! num) {
           continue;
         }
-        points.add((
-          lat: (point['lat'] as num).toDouble(),
-          lng: (point['lon'] as num).toDouble(),
-        ));
+        points.add((lat: (point['lat'] as num).toDouble(), lng: (point['lon'] as num).toDouble()));
         if (nodes[i] is int) {
           nodeWays.putIfAbsent(nodes[i] as int, () => {}).add(id);
         }
@@ -58,13 +50,9 @@ class RoadNetwork {
       final reversed = tags['oneway'] == '-1';
       final ordered = reversed ? points.reversed.toList() : points;
       final oneWay =
-          reversed ||
-          ['yes', '1', 'true'].contains(tags['oneway']) ||
-          tags['junction'] == 'roundabout';
+          reversed || ['yes', '1', 'true'].contains(tags['oneway']) || tags['junction'] == 'roundabout';
       for (var i = 1; i < ordered.length; i++) {
-        segments.add(
-          RoadSegment(id, ordered[i - 1], ordered[i], oneWay: oneWay),
-        );
+        segments.add(RoadSegment(id, ordered[i - 1], ordered[i], oneWay: oneWay));
       }
     }
     final connections = <int, Set<int>>{};
@@ -112,10 +100,7 @@ RoadPoint? matchRoadTrace(List<MemberLocation> trace, RoadNetwork roads) {
   for (var i = 0; i < trace.length; i++) {
     final fix = trace[i];
     final accuracy = fix.accuracyMeters;
-    if (accuracy == null ||
-        !accuracy.isFinite ||
-        accuracy <= 0 ||
-        accuracy > 50) {
+    if (accuracy == null || !accuracy.isFinite || accuracy <= 0 || accuracy > 50) {
       return null;
     }
     final sigma = accuracy.clamp(5.0, 25.0);
@@ -145,11 +130,7 @@ RoadPoint? matchRoadTrace(List<MemberLocation> trace, RoadNetwork roads) {
         cost += 3 * (1 - (road.oneWay ? cosine : cosine.abs()));
       }
       candidates.add(
-        _Candidate(
-          (lat: fix.latitude + y / scaleY, lng: fix.longitude + x / scaleX),
-          road.wayId,
-          cost,
-        ),
+        _Candidate((lat: fix.latitude + y / scaleY, lng: fix.longitude + x / scaleX), road.wayId, cost),
       );
     }
     candidates.sort((a, b) => a.cost.compareTo(b.cost));
@@ -174,11 +155,8 @@ RoadPoint? matchRoadTrace(List<MemberLocation> trace, RoadNetwork roads) {
           candidate.point.lng,
         );
         final connected =
-            prior.way == candidate.way ||
-            (roads.connections[prior.way]?.contains(candidate.way) ?? false);
-        final transition =
-            (matchedDistance - movement).abs() / math.max(10, sigma) +
-            (connected ? 0 : 4);
+            prior.way == candidate.way || (roads.connections[prior.way]?.contains(candidate.way) ?? false);
+        final transition = (matchedDistance - movement).abs() / math.max(10, sigma) + (connected ? 0 : 4);
         best = math.min(best, costs[j] + transition);
       }
       nextCosts.add(best + candidate.cost);
@@ -187,8 +165,7 @@ RoadPoint? matchRoadTrace(List<MemberLocation> trace, RoadNetwork roads) {
     costs = nextCosts.map((cost) => cost - minimum).toList();
     previous = unique;
   }
-  final ranking = List.generate(previous.length, (i) => i)
-    ..sort((a, b) => costs[a].compareTo(costs[b]));
+  final ranking = List.generate(previous.length, (i) => i)..sort((a, b) => costs[a].compareTo(costs[b]));
   if (ranking.length > 1 && costs[ranking[1]] - costs[ranking.first] < 2) {
     return null;
   }

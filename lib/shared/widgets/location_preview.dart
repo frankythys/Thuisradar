@@ -47,9 +47,8 @@ class _LocationPreviewState extends State<LocationPreview> {
   bool _ready = false;
   bool _fitScheduled = false;
 
-  List<List<LatLng>> get _lines => widget.segments.isNotEmpty
-      ? widget.segments
-      : [if (widget.route.length > 1) widget.route];
+  List<List<LatLng>> get _lines =>
+      widget.segments.isNotEmpty ? widget.segments : [if (widget.route.length > 1) widget.route];
 
   List<LatLng> get _points => [for (final line in _lines) ...line];
 
@@ -57,19 +56,12 @@ class _LocationPreviewState extends State<LocationPreview> {
   void didUpdateWidget(covariant LocationPreview oldWidget) {
     super.didUpdateWidget(oldWidget);
     final oldPoints = [
-      for (final line
-          in oldWidget.segments.isNotEmpty
-              ? oldWidget.segments
-              : [oldWidget.route])
-        ...line,
+      for (final line in oldWidget.segments.isNotEmpty ? oldWidget.segments : [oldWidget.route]) ...line,
     ];
     final points = _points;
     final changed =
         oldPoints.length != points.length ||
-        List.generate(
-          points.length,
-          (i) => i,
-        ).any((i) => oldPoints[i] != points[i]);
+        List.generate(points.length, (i) => i).any((i) => oldPoints[i] != points[i]);
     if (changed ||
         widget.fitBounds != oldWidget.fitBounds ||
         widget.latitude != oldWidget.latitude ||
@@ -87,17 +79,11 @@ class _LocationPreviewState extends State<LocationPreview> {
       final points = _points;
       if (widget.fitBounds && points.length > 1) {
         _controller.fitCamera(
-          CameraFit.coordinates(
-            coordinates: points,
-            padding: const EdgeInsets.all(28),
-            maxZoom: 17,
-          ),
+          CameraFit.coordinates(coordinates: points, padding: const EdgeInsets.all(28), maxZoom: 17),
         );
       } else {
         _controller.move(
-          widget.fitBounds && points.isNotEmpty
-              ? points.first
-              : LatLng(widget.latitude, widget.longitude),
+          widget.fitBounds && points.isNotEmpty ? points.first : LatLng(widget.latitude, widget.longitude),
           14,
         );
       }
@@ -149,11 +135,7 @@ class _LocationPreviewState extends State<LocationPreview> {
             initialCenter: LatLng(widget.latitude, widget.longitude),
             initialZoom: 14,
             initialCameraFit: widget.fitBounds && points.length > 1
-                ? CameraFit.coordinates(
-                    coordinates: points,
-                    padding: const EdgeInsets.all(28),
-                    maxZoom: 17,
-                  )
+                ? CameraFit.coordinates(coordinates: points, padding: const EdgeInsets.all(28), maxZoom: 17)
                 : null,
             onMapReady: () {
               _ready = true;
@@ -171,23 +153,14 @@ class _LocationPreviewState extends State<LocationPreview> {
               PolylineLayer(
                 polylines: [
                   for (final line in lines.where((line) => line.length > 1))
-                    Polyline(
-                      points: line,
-                      color: AppColors.primary,
-                      strokeWidth: 4,
-                    ),
+                    Polyline(points: line, color: AppColors.primary, strokeWidth: 4),
                 ],
               ),
             if (!widget.showMarker && lines.any((line) => line.length == 1))
               MarkerLayer(
                 markers: [
                   for (final line in lines)
-                    if (line.length == 1)
-                      _routePoint(
-                        point: line.single,
-                        color: AppColors.muted,
-                        size: 10,
-                      ),
+                    if (line.length == 1) _routePoint(point: line.single, color: AppColors.muted, size: 10),
                 ],
               ),
             if (widget.showMarker)
@@ -219,16 +192,8 @@ class _LocationPreviewState extends State<LocationPreview> {
             else if (points.length > 1)
               MarkerLayer(
                 markers: [
-                  _routePoint(
-                    point: points.first,
-                    color: AppColors.muted,
-                    size: 14,
-                  ),
-                  _routePoint(
-                    point: points.last,
-                    color: AppColors.primary,
-                    size: 18,
-                  ),
+                  _routePoint(point: points.first, color: AppColors.muted, size: 14),
+                  _routePoint(point: points.last, color: AppColors.primary, size: 18),
                 ],
               ),
             // Verplichte naamsvermelding van de gratis OpenStreetMap-tegels.
@@ -237,8 +202,7 @@ class _LocationPreviewState extends State<LocationPreview> {
               alignment: Alignment.bottomRight,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () =>
-                    launchUrl(Uri.https('www.openstreetmap.org', '/copyright')),
+                onTap: () => launchUrl(Uri.https('www.openstreetmap.org', '/copyright')),
                 child: const Padding(
                   padding: EdgeInsets.fromLTRB(8, 4, 6, 4),
                   child: Text(
@@ -260,10 +224,7 @@ class _LocationPreviewState extends State<LocationPreview> {
                     child: IconButton(
                       tooltip: 'Ritkaart vergroten',
                       onPressed: _fullscreen,
-                      icon: const Icon(
-                        Icons.fullscreen,
-                        color: AppColors.primary,
-                      ),
+                      icon: const Icon(Icons.fullscreen, color: AppColors.primary),
                     ),
                   ),
                 ),
@@ -276,11 +237,7 @@ class _LocationPreviewState extends State<LocationPreview> {
 }
 
 /// Begin- en eindpunt van een route: klein rondje met witte rand.
-Marker _routePoint({
-  required LatLng point,
-  required Color color,
-  required double size,
-}) => Marker(
+Marker _routePoint({required LatLng point, required Color color, required double size}) => Marker(
   point: point,
   width: size,
   height: size,
@@ -293,25 +250,15 @@ Marker _routePoint({
   ),
 );
 
-Future<void> openDirections(
-  BuildContext context,
-  double latitude,
-  double longitude,
-) async {
-  final uri = Uri.https('www.google.com', '/maps/dir/', {
-    'api': '1',
-    'destination': '$latitude,$longitude',
-  });
+Future<void> openDirections(BuildContext context, double latitude, double longitude) async {
+  final uri = Uri.https('www.google.com', '/maps/dir/', {'api': '1', 'destination': '$latitude,$longitude'});
   try {
     if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
   } on Exception {
     /* Toon een herstelbare fout in de app. */
   }
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Route-app openen mislukt. Probeer opnieuw.'),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Route-app openen mislukt. Probeer opnieuw.')));
   }
 }

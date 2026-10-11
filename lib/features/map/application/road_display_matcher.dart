@@ -34,10 +34,7 @@ class RoadDisplayMatcher {
     }
     return MemberOnMap(
       member: member.member,
-      location: fix.copyWith(
-        latitude: match.point.lat,
-        longitude: match.point.lng,
-      ),
+      location: fix.copyWith(latitude: match.point.lat, longitude: match.point.lng),
     );
   }
 
@@ -63,21 +60,15 @@ class RoadDisplayMatcher {
       final trace = _traces.putIfAbsent(id, () => []);
       if (trace.isNotEmpty) {
         if (!fix.updatedAt.isAfter(trace.last.updatedAt)) continue;
-        if (fix.updatedAt.difference(trace.last.updatedAt) >
-            const Duration(seconds: 30)) {
+        if (fix.updatedAt.difference(trace.last.updatedAt) > const Duration(seconds: 30)) {
           trace.clear();
         }
       }
       trace.add(fix);
-      trace.removeWhere(
-        (point) =>
-            fix.updatedAt.difference(point.updatedAt) >
-            const Duration(seconds: 60),
-      );
+      trace.removeWhere((point) => fix.updatedAt.difference(point.updatedAt) > const Duration(seconds: 60));
       if (trace.length > 8) trace.removeRange(0, trace.length - 8);
       _matches.remove(id);
-      if (trace.length < 3 ||
-          !trace.any((point) => (point.speedMps ?? 0) >= 5)) {
+      if (trace.length < 3 || !trace.any((point) => (point.speedMps ?? 0) >= 5)) {
         continue;
       }
       final snapshot = List<MemberLocation>.of(trace);
@@ -93,9 +84,7 @@ class RoadDisplayMatcher {
         roads: roads,
       ), debugLabel: 'roads-map-matching');
       // Tijdens de berekening kan een stop of nieuw GPS-punt binnenkomen.
-      if (_disposed ||
-          !identical(_traces[id], trace) ||
-          trace.last.updatedAt != fix.updatedAt) {
+      if (_disposed || !identical(_traces[id], trace) || trace.last.updatedAt != fix.updatedAt) {
         continue;
       }
       if (point != null) _matches[id] = (raw: fix, point: point);
@@ -103,6 +92,5 @@ class RoadDisplayMatcher {
   }
 }
 
-RoadPoint? _matchTrace(
-  ({List<MemberLocation> trace, RoadNetwork roads}) input,
-) => matchRoadTrace(input.trace, input.roads);
+RoadPoint? _matchTrace(({List<MemberLocation> trace, RoadNetwork roads}) input) =>
+    matchRoadTrace(input.trace, input.roads);

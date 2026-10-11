@@ -2,11 +2,7 @@ import 'package:flutter/widgets.dart';
 
 /// Bouwt een tab pas bij het eerste bezoek en behoudt daarna zijn toestand.
 class LazyIndexedStack extends StatefulWidget {
-  const LazyIndexedStack({
-    super.key,
-    required this.index,
-    required this.builders,
-  });
+  const LazyIndexedStack({super.key, required this.index, required this.builders});
   final int index;
   final List<WidgetBuilder> builders;
 
@@ -26,9 +22,7 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
         for (var i = 0; i < widget.builders.length; i++)
           TickerMode(
             enabled: i == widget.index,
-            child: _visited.contains(i)
-                ? widget.builders[i](context)
-                : const SizedBox.shrink(),
+            child: _visited.contains(i) ? widget.builders[i](context) : const SizedBox.shrink(),
           ),
       ],
     );

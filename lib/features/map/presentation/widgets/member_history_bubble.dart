@@ -32,19 +32,14 @@ class MemberHistoryBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = TripStatus.at(entry.location, now);
-    final isMoving =
-        status.state == TripState.moving && status.speedKmh != null;
+    final isMoving = status.state == TripState.moving && status.speedKmh != null;
     final placeSince = placeStatus?.since;
     final atPlace =
-        placeSince != null &&
-        !placeSince.isAfter(now) &&
-        status.state != TripState.stale &&
-        !isMoving;
+        placeSince != null && !placeSince.isAfter(now) && status.state != TripState.stale && !isMoving;
     // Buiten een opgeslagen plek: toon hoelang het lid hier al stilstaat.
     final stopped =
         !isMoving &&
-        (status.state == TripState.stationary ||
-            status.state == TripState.unknown) &&
+        (status.state == TripState.stationary || status.state == TripState.unknown) &&
         stationarySince != null &&
         !stationarySince!.isAfter(now);
     final sinceTime = atPlace ? placeSince : (stopped ? stationarySince : null);
@@ -93,12 +88,7 @@ class MemberHistoryBubble extends StatelessWidget {
                     fit: BoxFit.contain,
                   )
                 else if (atPlace && placeStatus!.icon == 'home')
-                  Image.asset(
-                    'assets/markers/huis.png',
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.contain,
-                  )
+                  Image.asset('assets/markers/huis.png', width: 32, height: 32, fit: BoxFit.contain)
                 else
                   Icon(icon, color: AppColors.primary, size: 23),
                 const SizedBox(width: 5),
@@ -122,11 +112,8 @@ class MemberHistoryBubble extends StatelessWidget {
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 12,
-                          height: 1.15,
-                          color: AppColors.muted,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
                       ),
                     ],
                   ),
@@ -149,7 +136,5 @@ String _formatSince(Duration duration) => duration.inHours > 0
 String _formatUpdated(DateTime? updatedAt, DateTime now) {
   if (updatedAt == null) return '';
   final seconds = now.difference(updatedAt).inSeconds.clamp(0, 99999999);
-  return seconds < 60
-      ? 'bijgewerkt $seconds s geleden'
-      : 'bijgewerkt ${seconds ~/ 60} min geleden';
+  return seconds < 60 ? 'bijgewerkt $seconds s geleden' : 'bijgewerkt ${seconds ~/ 60} min geleden';
 }

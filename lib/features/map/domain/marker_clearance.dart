@@ -6,9 +6,7 @@ Offset markerClearance(Rect marker, List<Offset> places) {
   for (var pass = 0; pass < places.length; pass++) {
     final bounds = marker.shift(Offset(0, shift));
     final collisions = places.where(
-      (point) => bounds.overlaps(
-        Rect.fromCircle(center: point, radius: 16).inflate(8),
-      ),
+      (point) => bounds.overlaps(Rect.fromCircle(center: point, radius: 16).inflate(8)),
     );
     if (collisions.isEmpty) break;
     var next = shift;
