@@ -102,8 +102,10 @@ final anchoredMembersOnMapProvider = Provider.family<AsyncValue<List<MemberOnMap
   });
 });
 
-/// Onthoudt per familie de stop-ankers tussen herberekeningen door; opgeruimd
-/// zodra de provider niet meer gebruikt wordt.
+/// Onthoudt per familie de stop-ankers tussen herberekeningen door. Bewust
+/// zonder `onDispose`: Riverpod roept dat ook vóór elke herberekening aan,
+/// waardoor "stilstaand sinds" bij elke upload (elke 15 s) op nul sprong.
+/// Eén klein kaartje per familie; de provider leeft zo lang als de app.
 final _stationaryAnchors = <String, Map<String, StationaryAnchor>>{};
 
 /// Per lid sinds wanneer het op dezelfde plek staat, zodat de kaart "hier sinds
@@ -113,6 +115,5 @@ final stationarySinceProvider = Provider.family<Map<String, DateTime>, String>((
   final locations = ref.watch(familyLocationsProvider(familyId)).value ?? const <MemberLocation>[];
   final next = updateStationaryAnchors(_stationaryAnchors[familyId] ?? const {}, locations);
   _stationaryAnchors[familyId] = next;
-  ref.onDispose(() => _stationaryAnchors.remove(familyId));
   return {for (final entry in next.entries) entry.key: entry.value.since};
 });

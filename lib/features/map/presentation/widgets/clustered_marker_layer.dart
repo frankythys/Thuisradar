@@ -251,7 +251,9 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       clearance[group.first] = markerClearance(
         Rect.fromLTWH(
           screenPoint.dx - width / 2,
-          single ? screenPoint.dy - height : screenPoint.dy,
+          // Ook de groepspin staat bóven zijn punt: het puntje onderaan wijst
+          // naar de plek (voorheen hing hij eronder, ±140 px te zuidelijk).
+          screenPoint.dy - height,
           width,
           height,
         ),
@@ -324,17 +326,20 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             point: point,
             width: GroupPin.width,
             height: GroupPin.height,
-            alignment: Alignment(2 * shiftX / width, 1 + 2 * offset.dy / height),
+            alignment: Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
             onTap: () => widget.onGroupTap(point),
             child: GestureDetector(
               onTap: () => widget.onGroupTap(point),
-              child: GroupPin(
-                members: groupMembers,
-                now: widget.now,
-                placeByUser: widget.placeByUser,
-                myUserId: widget.myUserId,
-                selectedUserId: widget.selectedUserId,
-                onMemberTap: widget.onMemberTap,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: GroupPin(
+                  members: groupMembers,
+                  now: widget.now,
+                  placeByUser: widget.placeByUser,
+                  myUserId: widget.myUserId,
+                  selectedUserId: widget.selectedUserId,
+                  onMemberTap: widget.onMemberTap,
+                ),
               ),
             ),
           ),

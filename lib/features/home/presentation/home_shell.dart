@@ -84,7 +84,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ),
           bottomNavigationBar: AppBottomNav(
             offline:
-                _tab == AppTab.kaart && ref.watch(familyLocationsProvider(familyId)).value?.isEmpty == true,
+                _tab == AppTab.kaart &&
+                // Enkel de leeg/niet-leeg-vlag: anders herbouwde elke
+                // locatie-update de hele shell met alle tabs.
+                ref.watch(familyLocationsProvider(familyId).select((a) => a.value?.isEmpty == true)),
             onFamily: () => Navigator.push(
               context,
               MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)),
