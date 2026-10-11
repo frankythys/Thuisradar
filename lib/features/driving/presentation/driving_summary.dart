@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../application/driving_providers.dart';
+import '../../../core/utils/calendar.dart';
 
 String drivingNumber(double value) => value.toStringAsFixed(1).replaceAll('.', ',');
 String drivingDate(DateTime date) => '${date.day}/${date.month}';
@@ -31,7 +32,7 @@ const _weekdayNames = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 String drivingDayLabel(DateTime day, {required DateTime now}) {
   final today = DateTime(now.year, now.month, now.day);
   final target = DateTime(day.year, day.month, day.day);
-  final difference = today.difference(target).inDays;
+  final difference = calendarDaysBetween(target, today);
   if (difference == 0) return 'Vandaag';
   if (difference == 1) return 'Gisteren';
   return '${_weekdayNames[target.weekday - 1]} ${target.day}/${target.month}';

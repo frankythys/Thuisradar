@@ -17,7 +17,7 @@ class DayDriving {
     final activities = buildDayActivities(entries, clean);
     return DayDriving._(activities, [
       for (final activity in activities)
-        activity.kind == DrivingActivityKind.trip ? _window(clean, activity.start, activity.end) : const [],
+        activity.kind == DrivingActivityKind.trip ? _tripTrack(clean, activity) : const [],
     ]);
   }
 
@@ -33,6 +33,18 @@ class DayDriving {
     for (var i = 0; i < activities.length; i++)
       if (activities[i].kind == DrivingActivityKind.trip) ...splitTrackGaps(_tracks[i]),
   ];
+}
+
+/// Het spoor van een rit. Werd de aankomst over een meetgat overbrugd
+/// (tunnel, parkeergarage), dan eindigt het spoor op de bestemming zelf: zo
+/// staat het eindpunt op de kaart waar de rit echt eindigde, niet op de
+/// laatste straat met GPS. De routekaart tekent over dat gat geen lijn.
+List<TrackPoint> _tripTrack(List<TrackPoint> clean, DrivingActivity trip) {
+  final track = _window(clean, trip.start, trip.end);
+  if (track.isEmpty || !trip.end.isAfter(track.last.recordedAt)) return track;
+  final last = track.last;
+  if (last.latitude == trip.latitude && last.longitude == trip.longitude) return track;
+  return [...track, TrackPoint(latitude: trip.latitude, longitude: trip.longitude, recordedAt: trip.end)];
 }
 
 /// De punten met tijdstip in [start, end]; [sorted] is oudste eerst.

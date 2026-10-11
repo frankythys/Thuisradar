@@ -1,3 +1,5 @@
+import 'calendar.dart';
+
 /// Korte, Nederlandstalige tijdsaanduiding: "zonet", "5 min geleden",
 /// "2 u geleden" of een datum.
 String formatRelative(DateTime moment, {required DateTime now}) {
@@ -23,7 +25,7 @@ String formatClock(DateTime moment) {
 String formatSince(DateTime moment, {required DateTime now}) {
   final day = DateTime(moment.year, moment.month, moment.day);
   final today = DateTime(now.year, now.month, now.day);
-  final days = today.difference(day).inDays;
+  final days = calendarDaysBetween(day, today);
   final clock = formatClock(moment);
   if (days <= 0) return clock;
   if (days == 1) return '$clock gisteren';
@@ -54,7 +56,7 @@ const _weekdays = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 String formatDayLabel(DateTime day, {required DateTime now}) {
   final today = DateTime(now.year, now.month, now.day);
   final target = DateTime(day.year, day.month, day.day);
-  final difference = today.difference(target).inDays;
+  final difference = calendarDaysBetween(target, today);
   if (difference == 0) return 'Vandaag';
   if (difference == 1) return 'Gisteren';
   return '${_weekdays[target.weekday - 1]} ${target.day}/${target.month}';

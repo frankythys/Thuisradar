@@ -96,7 +96,8 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   /// provider-sleutel stabiel blijft tussen rebuilds (anders: oneindig laden).
   DateTime get _selectedDay {
     final now = ref.read(clockProvider).value ?? DateTime.now();
-    return DateTime(now.year, now.month, now.day).subtract(Duration(days: _dayOffset));
+    // Kalenderdag terug, niet 24 uur: rond de zomertijd is een dag 23 of 25 uur.
+    return DateTime(now.year, now.month, now.day - _dayOffset);
   }
 
   /// De live locatie uit de realtime-stroom; valt terug op de meegegeven
@@ -227,6 +228,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                 // Het echte GPS-spoor, geknipt bij meetgaten — nooit een rechte
                 // lijn dwars door de stad.
                 segments: routeSegments,
+                // Gisteren: inzoomen op die route, zonder de huidige positie
+                // van vandaag erbovenop.
+                fitBounds: _dayOffset == 1 && routeSegments.isNotEmpty,
+                showMarker: _dayOffset != 1 || routeSegments.isEmpty,
               ),
               const SizedBox(height: 10),
               Row(

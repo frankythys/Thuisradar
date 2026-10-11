@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
 import 'driving_summary.dart';
+import '../../../core/utils/calendar.dart';
 
 /// Week kiezen met pijltjes: ‹ Deze week ›. Hoogstens [maxWeeksBack] terug,
 /// nooit verder dan de huidige week.
@@ -21,7 +22,7 @@ class DrivingWeekPicker extends StatelessWidget {
   final ValueChanged<DateTime> onChanged;
   final int maxWeeksBack;
 
-  int get _weeksBack => currentWeek.difference(week).inDays ~/ 7;
+  int get _weeksBack => calendarDaysBetween(week, currentWeek) ~/ 7;
 
   DateTime _shift(int weeks) => DateTime(week.year, week.month, week.day + 7 * weeks);
 
@@ -29,7 +30,7 @@ class DrivingWeekPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
-    final end = _shift(1).subtract(const Duration(days: 1));
+    final end = DateTime(week.year, week.month, week.day + 6);
     final title = switch (_weeksBack) {
       0 => 'Deze week',
       1 => 'Vorige week',

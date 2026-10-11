@@ -56,6 +56,10 @@ List<List<TrackPoint>> buildTripTracks(
   final trips = <List<TrackPoint>>[];
   var current = <TrackPoint>[];
   TrackPoint? still;
+  // Eerste meting buiten de stilstandstraal. Pas een tweede meting op rij
+  // buiten de straal bewijst vertrek: één binnenshuis-uitschieter mag de
+  // stilstand niet resetten, anders werd een avond thuis een "rit".
+  TrackPoint? leaving;
 
   void close() {
     if (current.length > 1) trips.add(current);
@@ -66,16 +70,25 @@ List<List<TrackPoint>> buildTripTracks(
     if (current.isNotEmpty && point.recordedAt.difference(current.last.recordedAt) > maxGap) {
       close();
       still = null;
+      leaving = null;
     }
     if (still == null) {
       still = point;
-    } else if (_legMeters(still, point) > stillRadiusMeters) {
-      // Hij rijdt weer: de stilte begint opnieuw te tellen.
-      still = point;
-    } else if (point.recordedAt.difference(still.recordedAt) >= stillAfter) {
-      // Lang genoeg op dezelfde plek: de rit is afgelopen.
-      close();
-      still = point;
+    } else if (_legMeters(still, point) > stillRadiusMeters && leaving == null) {
+      leaving = point;
+    } else {
+      if (leaving != null && _legMeters(still, point) > stillRadiusMeters) {
+        // Hij rijdt echt: de stilte begint opnieuw te tellen vanaf het vertrek.
+        still = leaving;
+      }
+      leaving = null;
+      if (_legMeters(still, point) > stillRadiusMeters) {
+        leaving = point;
+      } else if (point.recordedAt.difference(still.recordedAt) >= stillAfter) {
+        // Lang genoeg op dezelfde plek: de rit is afgelopen.
+        close();
+        still = point;
+      }
     }
     current.add(point);
   }
@@ -114,7 +127,8 @@ List<DrivingActivity> buildDayActivities(
       ),
     );
   }
-  for (final raw in buildTripTracks(withoutSpikes(points))) {
+  final clean = withoutSpikes(points);
+  for (final raw in buildTripTracks(clean)) {
     // Enkel het stuk waarin echt gereden wordt: zonder de minuten stilstaan
     // ervoor (nog thuis) en erna (al aangekomen). Een spoor dat alleen uit
     // stilstaan bestaat, is geen rit.
@@ -127,27 +141,15 @@ List<DrivingActivity> buildDayActivities(
     )) {
       continue;
     }
+    final arrival = _arrivalStop(track.last, stops, clean);
     final last = track.last;
-    // De bestemming: het eerstvolgende verblijf dat binnen [kArrivalGap] na de
-    // laatste meting begint. Zo eindigt de rit op de plek waar hij stopte, ook
-    // als de GPS de laatste meters (tunnel) miste.
-    TimelineEntry? arrival;
-    for (final stop in stops) {
-      if (stop.start.isBefore(last.recordedAt)) continue;
-      if (stop.start.difference(last.recordedAt) > kArrivalGap) continue;
-      final seconds = stop.start.difference(last.recordedAt).inMilliseconds / 1000;
-      final meters = distanceMeters(last.latitude, last.longitude, stop.latitude, stop.longitude);
-      if (meters > kStopRadiusMeters && (seconds <= 0 || meters / seconds > kMaxPlausibleSpeedMps)) {
-        continue;
-      }
-      if (arrival == null || stop.start.isBefore(arrival.start)) arrival = stop;
-    }
+    final bridged = arrival != null && arrival.start.isAfter(last.recordedAt);
     final endLatitude = arrival?.latitude ?? last.latitude;
     final endLongitude = arrival?.longitude ?? last.longitude;
-    final endTime = arrival?.start ?? last.recordedAt;
+    final endTime = bridged ? arrival.start : last.recordedAt;
 
     var meters = trackMeters(track);
-    if (arrival != null) {
+    if (bridged) {
       meters += distanceMeters(last.latitude, last.longitude, endLatitude, endLongitude);
     }
     if (meters < minTripMeters) continue;
@@ -165,6 +167,52 @@ List<DrivingActivity> buildDayActivities(
     );
   }
   return activities..sort((a, b) => a.start.compareTo(b.start));
+}
+
+/// De bestemming van een rit die eindigt op [last]:
+/// - een verblijf dat al loopt op het moment van de laatste meting (de
+///   tijdlijn zag de stop iets vroeger beginnen dan het getrimde ritspoor), of
+/// - het eerste verblijf binnen [kArrivalGap] erna, maar enkel over een echt
+///   meetgat (tunnel, parkeergarage): ligt er tussendoor een meting die niet
+///   bij dat verblijf hoort, dan was er nog een andere verplaatsing of stop en
+///   is dat verblijf niet de bestemming van deze rit.
+TimelineEntry? _arrivalStop(TrackPoint last, List<TimelineEntry> stops, List<TrackPoint> clean) {
+  TimelineEntry? arrival;
+  for (final stop in stops) {
+    final meters = distanceMeters(last.latitude, last.longitude, stop.latitude, stop.longitude);
+    if (!stop.start.isAfter(last.recordedAt)) {
+      if (!stop.end.isBefore(last.recordedAt) && meters <= kStopRadiusMeters) return stop;
+      continue;
+    }
+    if (stop.start.difference(last.recordedAt) > kArrivalGap) continue;
+    final seconds = stop.start.difference(last.recordedAt).inMilliseconds / 1000;
+    if (meters > kStopRadiusMeters && meters / seconds > kMaxPlausibleSpeedMps) continue;
+    if (_measuredElsewhere(clean, last.recordedAt, stop)) continue;
+    if (arrival == null || stop.start.isBefore(arrival.start)) arrival = stop;
+  }
+  return arrival;
+}
+
+/// Ligt er tussen [after] en het begin van [stop] een meting buiten de
+/// stopstraal van [stop]? [clean] is oudste eerst.
+bool _measuredElsewhere(List<TrackPoint> clean, DateTime after, TimelineEntry stop) {
+  var low = 0;
+  var high = clean.length;
+  while (low < high) {
+    final mid = (low + high) >> 1;
+    if (clean[mid].recordedAt.isAfter(after)) {
+      high = mid;
+    } else {
+      low = mid + 1;
+    }
+  }
+  for (var i = low; i < clean.length && clean[i].recordedAt.isBefore(stop.start); i++) {
+    final point = clean[i];
+    if (distanceMeters(point.latitude, point.longitude, stop.latitude, stop.longitude) > kStopRadiusMeters) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// Knipt het stilstaan aan begin en einde van een spoor weg: vertrek is de
@@ -215,44 +263,96 @@ List<List<TrackPoint>> dayRoutes(List<TimelineEntry> entries, List<TrackPoint> p
     if (activity.kind == DrivingActivityKind.trip) ...splitTrackGaps(activityTrack(activity, points)),
 ];
 
-/// Hoger dan dit (≈ 160 km/u) tussen twee metingen is geen rijden maar een
-/// GPS-sprong (bv. even een zendmastpositie).
-const kMaxPlausibleSpeedMps = 45.0;
+/// Hoger dan dit (≈ 250 km/u) tussen twee metingen is geen rijden maar een
+/// GPS-sprong (bv. even een zendmastpositie). Dezelfde grens als de
+/// bewegingsfilter en de routekaart: met 45 m/s viel snel snelwegrijden plus
+/// wat GPS-ruis al weg.
+const kMaxPlausibleSpeedMps = 70.0;
 
 /// Laat metingen weg die onmogelijk snel van de vorige wegspringen. Een sprong
 /// heen en terug wordt zo één weggelaten punt i.p.v. twee lange lijnen.
+/// Is de sprong juist de eerste meting (van de dag of na een meetgat), dan is
+/// het anker zelf fout: past de volgende meting wel bij de huidige, dan valt
+/// het anker weg in plaats van alle echte metingen erna.
 List<TrackPoint> withoutSpikes(List<TrackPoint> track, {double maxSpeedMps = kMaxPlausibleSpeedMps}) {
+  bool implausible(TrackPoint from, TrackPoint to) {
+    final seconds = to.recordedAt.difference(from.recordedAt).inMilliseconds / 1000;
+    if (seconds <= 0 || seconds > kMaxTrackGap.inSeconds) return false;
+    final meters = _legMeters(from, to);
+    return meters / seconds > maxSpeedMps && meters > kStopRadiusMeters;
+  }
+
   final kept = <TrackPoint>[];
-  final sorted = [...track]..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
-  for (final point in sorted) {
-    if (!point.latitude.isFinite ||
-        !point.longitude.isFinite ||
-        point.latitude.abs() > 90 ||
-        point.longitude.abs() > 180) {
-      continue;
-    }
+  final sorted = [
+    for (final point in track)
+      if (point.latitude.isFinite &&
+          point.longitude.isFinite &&
+          point.latitude.abs() <= 90 &&
+          point.longitude.abs() <= 180)
+        point,
+  ]..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+  for (var index = 0; index < sorted.length; index++) {
+    final point = sorted[index];
     if (kept.isNotEmpty) {
       final previous = kept.last;
-      final seconds = point.recordedAt.difference(previous.recordedAt).inMilliseconds / 1000;
-      if (seconds <= 0) continue;
-      final meters = _legMeters(previous, point);
-      if (seconds <= kMaxTrackGap.inSeconds && meters / seconds > maxSpeedMps && meters > kStopRadiusMeters) {
+      if (!point.recordedAt.isAfter(previous.recordedAt)) continue;
+      if (implausible(previous, point)) {
+        final anchorStartsRun =
+            kept.length == 1 ||
+            previous.recordedAt.difference(kept[kept.length - 2].recordedAt) > kMaxTrackGap;
+        final next = index + 1 < sorted.length ? sorted[index + 1] : null;
+        if (anchorStartsRun &&
+            next != null &&
+            next.recordedAt.isAfter(point.recordedAt) &&
+            !implausible(point, next)) {
+          kept
+            ..removeLast()
+            ..add(point);
+        }
         continue;
       }
     }
     kept.add(point);
   }
-  return kept;
+  return _withoutLoneOutliers(kept);
+}
+
+/// Binnenshuis springt de GPS soms één meting 100-200 m weg en meteen terug.
+/// Dat is te traag voor de snelheidsgrens, maar het is geen beweging: de
+/// buren liggen vlak bij elkaar en kort na elkaar. Zulke losse punten braken
+/// een avond thuis op in stukjes (geen verblijf meer) en in spookritten.
+/// Enkel binnen 45 s: rijdend meet het toestel elke 5 s, dus een echte
+/// keerbeweging heeft altijd meerdere metingen ver weg, nooit één.
+List<TrackPoint> _withoutLoneOutliers(List<TrackPoint> points) {
+  const window = Duration(seconds: 45);
+  return [
+    for (var i = 0; i < points.length; i++)
+      if (i == 0 ||
+          i == points.length - 1 ||
+          points[i + 1].recordedAt.difference(points[i - 1].recordedAt) > window ||
+          _legMeters(points[i - 1], points[i + 1]) > kStopRadiusMeters ||
+          _legMeters(points[i - 1], points[i]) <= kStopRadiusMeters ||
+          _legMeters(points[i], points[i + 1]) <= kStopRadiusMeters)
+        points[i],
+  ];
 }
 
 /// Hoogste gemeten snelheid in km/u langs [track], of null zonder bruikbare
 /// GPS-snelheid. Onzinwaarden (negatief, boven 70 m/s ≈ 250 km/u) tellen niet.
 int? topSpeedKmh(List<TrackPoint> track) {
+  bool usable(double? speed) => speed != null && speed.isFinite && speed >= 0 && speed <= 70;
   double? top;
-  for (final point in track) {
-    final speed = point.speedMps;
-    if (speed == null || !speed.isFinite || speed < 0 || speed > 70) continue;
-    if (top == null || speed > top) top = speed;
+  for (var index = 0; index < track.length; index++) {
+    final speed = track[index].speedMps;
+    if (!usable(speed)) continue;
+    // Eén losse Doppler-piek ("max 216 km/u" tussen 50 en 60) telt niet: een
+    // bruikbare buur moet minstens 60% van die snelheid halen.
+    final neighbours = [
+      if (index > 0 && usable(track[index - 1].speedMps)) track[index - 1].speedMps!,
+      if (index + 1 < track.length && usable(track[index + 1].speedMps)) track[index + 1].speedMps!,
+    ];
+    if (neighbours.isNotEmpty && neighbours.every((other) => other < speed! * 0.6)) continue;
+    if (top == null || speed! > top) top = speed;
   }
   return top == null ? null : (top * 3.6).round();
 }
