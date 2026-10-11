@@ -18,6 +18,7 @@ Beslissingen en werkregels staan in `../CLAUDE.md`; kosten in `KOSTEN.md`.
   - Tik op naam → kaart naar die persoon + info-kaartje met "Geschiedenis"; pijltje › opent het detail; marker-tik → zelfde kaartje.
   - Selectie-ring rond geselecteerd lid (op kaart én in lijst).
   - Overlappende leden groeperen in één groepspin met statusballon (pure Dart, getest).
+- **Onderweg: wandelen en fietsen** — tab Rijden heet Onderweg met filter Alles / Auto / Fiets / Wandelen. Elke verplaatsing krijgt een geschat vervoermiddel (GPS-snelheid + gemiddeld tempo); wandelen telt vanaf 3,6 km/u als onderweg en wordt elke 5 s gelogd. Wandelingen tonen route, afstand, duur, gemiddeld tempo en stappen (stappenteller, migratie `019_steps.sql`).
 
 ## ⏳ Nu / volgende
 

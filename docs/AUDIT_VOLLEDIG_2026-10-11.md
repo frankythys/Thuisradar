@@ -187,8 +187,7 @@ De volgende oorzaken volgen uit de code en het gedrag van de plugins. Ze zijn mo
 ### 4.3 Middel: ritten (functioneel)
 
 1. ~~**Ritten over middernacht** worden gesplitst.~~ **Opgelost** in `a35e12d` (zie §2.7). Nog open: een nachtrit die langer dan 3 uur na middernacht doorloopt, wordt na die 3 uur afgekapt, en het weekrapport splitst nog op de grens zondag → maandag.
-2. **Het weekoverzicht en de dagkaarten** gebruiken verschillende algoritmes. Het rapport vereist 25 km/u of meer; de dagkaart toont elke verplaatsing vanaf 100 m (ook wandelen) met het auto-icoon.
-   - *Fix:* één bron (`DayDriving`) met een classificatie op snelheid, en wandelen apart tonen.
+2. ~~**Het weekoverzicht en de dagkaarten** gebruiken verschillende algoritmes. Het rapport vereist 25 km/u of meer; de dagkaart toont elke verplaatsing vanaf 100 m (ook wandelen) met het auto-icoon.~~ **Opgelost** in `1c513fb` en `39871ef`: het weekrapport bouwt op `buildDayActivities`, elke verplaatsing krijgt een vervoermiddel (`classifyTravel`), en wandelen en fietsen staan apart in de tab Onderweg.
 3. **De 30-dagenweergave** haalt ±45.000 ruwe punten op (±45 pagina's na elkaar) om enkel verblijven te tonen.
    - *Fix:* aggregatie op de server (RPC of view per dag), of decoderen en `buildTimeline` in een isolate.
 4. **Eén mislukte dag** in de weekweergave verdwijnt zonder melding.
