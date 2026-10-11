@@ -35,11 +35,14 @@ Future<void> _sheet(BuildContext context, String title, Widget child) {
 }
 
 /// Gezin: uitnodigingscode (kopiëren), de leden en "iemand uitnodigen".
+/// Met [onRemove] (enkel voor de beheerder) krijgt elk ander lid een knop om
+/// het uit het gezin te verwijderen.
 Future<void> showFamilySheet(
   BuildContext context, {
   required Family family,
   required List<FamilyMember> members,
   required VoidCallback onInvite,
+  void Function(FamilyMember member)? onRemove,
 }) {
   final tokens = context.tokens;
   final text = Theme.of(context).textTheme;
@@ -87,6 +90,16 @@ Future<void> showFamilySheet(
             leading: MemberAvatar(member: member, size: 36),
             title: Text(member.displayName),
             subtitle: Text(member.isOwner ? 'Beheerder' : 'Gezinslid'),
+            trailing: onRemove == null || member.isOwner
+                ? null
+                : IconButton(
+                    tooltip: '${member.displayName} verwijderen',
+                    icon: const Icon(Icons.person_remove_outlined, color: AppColors.alert),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onRemove(member);
+                    },
+                  ),
           ),
         SizedBox(height: tokens.spaceSm),
         FilledButton.icon(

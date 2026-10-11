@@ -24,3 +24,17 @@ final myFamilyProvider = FutureProvider<Family?>((ref) async {
 final familyMembersProvider = StreamProvider.family<List<FamilyMember>, String>(
   (ref, familyId) => ref.watch(familyRepositoryProvider).watchMembers(familyId),
 );
+
+/// De actuele uitnodigingscode van het gezin met haar vervaldatum. Niet
+/// automatisch opnieuw proberen: het scherm valt terug op de bekende code.
+final familyInviteProvider = FutureProvider.autoDispose.family<Family, String>(
+  (ref, familyId) => ref.watch(familyRepositoryProvider).fetchInvite(familyId),
+  retry: (_, _) => null,
+);
+
+/// Is de ingelogde gebruiker de beheerder van dit gezin?
+final isFamilyOwnerProvider = Provider.autoDispose.family<bool, String>((ref, familyId) {
+  final userId = ref.watch(currentUserIdProvider);
+  final members = ref.watch(familyMembersProvider(familyId)).value ?? const <FamilyMember>[];
+  return members.any((member) => member.userId == userId && member.isOwner);
+});

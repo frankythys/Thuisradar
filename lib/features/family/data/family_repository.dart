@@ -32,6 +32,35 @@ class FamilyRepository {
     return Family.fromJson(row as Map<String, dynamic>);
   }
 
+  /// De actuele uitnodigingscode en haar vervaldatum. Zonder migratie 017
+  /// bestaat `invite_expires_at` nog niet: dan enkel de code.
+  Future<Family> fetchInvite(String familyId) async {
+    try {
+      final row = await _client
+          .from('families')
+          .select('id, name, invite_code, invite_expires_at')
+          .eq('id', familyId)
+          .single();
+      return Family.fromJson(row);
+    } on PostgrestException catch (error) {
+      if (error.code != '42703') rethrow;
+      final row = await _client.from('families').select('id, name, invite_code').eq('id', familyId).single();
+      return Family.fromJson(row);
+    }
+  }
+
+  /// Nieuwe code, weer 7 dagen geldig (enkel de beheerder; migratie 017).
+  Future<Family> rotateInviteCode(String familyId) async {
+    final row = await _client.rpc('rotate_invite_code', params: {'fid': familyId});
+    return Family.fromJson(row as Map<String, dynamic>);
+  }
+
+  /// Haalt [userId] uit het gezin en van de kaart, en vernieuwt de code
+  /// (enkel de beheerder; migratie 017).
+  Future<void> removeMember(String familyId, String userId) async {
+    await _client.rpc('remove_member', params: {'fid': familyId, 'member': userId});
+  }
+
   /// De ingelogde gebruiker verlaat de familie.
   Future<void> leaveFamily(String userId, String familyId) {
     return _client.from('family_members').delete().eq('user_id', userId).eq('family_id', familyId);

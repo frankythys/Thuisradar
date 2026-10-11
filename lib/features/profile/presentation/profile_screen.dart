@@ -99,6 +99,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
   }
 
+  /// Beheerder: iemand uit het gezin halen. Op de server verdwijnt die ook
+  /// van de kaart en krijgt het gezin een nieuwe code (migratie 017).
+  Future<void> _removeMember(FamilyMember member) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${member.displayName} verwijderen?'),
+        content: Text(
+          '${member.displayName} ziet jullie dan niet meer en verdwijnt van de kaart. '
+          'De uitnodigingscode wordt vernieuwd, zodat de oude code niet meer werkt.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.alert),
+            child: const Text('Verwijderen'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await ref.read(familyRepositoryProvider).removeMember(widget.family.id, member.userId);
+      ref.invalidate(familyInviteProvider(widget.family.id));
+      if (mounted) _snack('${member.displayName} is uit het gezin verwijderd.');
+    } on Exception catch (error) {
+      debugPrint('Lid verwijderen mislukt: $error');
+      if (mounted) _snack('Verwijderen is niet gelukt. Probeer opnieuw.');
+    }
+  }
+
   Future<void> _leaveFamily() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -163,6 +195,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final members = ref.watch(familyMembersProvider(widget.family.id)).value ?? const <FamilyMember>[];
     final userId = ref.watch(currentUserIdProvider);
     final me = members.where((m) => m.userId == userId).firstOrNull;
+    final invite = ref.watch(familyInviteProvider(widget.family.id)).value ?? widget.family;
     Widget group(List<Widget> rows) => AppCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -197,11 +230,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.groups_outlined,
                 title: widget.family.name,
                 subtitle:
-                    '${members.length} ${members.length == 1 ? 'lid' : 'leden'} · code ${widget.family.inviteCode}',
+                    '${members.length} ${members.length == 1 ? 'lid' : 'leden'} · code ${invite.inviteCode}',
                 onTap: () => showFamilySheet(
                   context,
-                  family: widget.family,
+                  family: invite,
                   members: members,
+                  onRemove: me?.isOwner == true ? _removeMember : null,
                   onInvite: () =>
                       Navigator.of(context)
                           .push(MaterialPageRoute<void>(builder: (_) => InviteScreen(family: widget.family))),
