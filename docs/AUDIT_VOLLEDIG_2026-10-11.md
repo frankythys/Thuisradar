@@ -94,6 +94,14 @@ Audit van A tot Z: ritten en ritkaarten, tracking en geofencing, kaart en perfor
 | D3 | Laag | `cron.job_run_details` krijgt elke minuut een rij (±525.000 per jaar). Dat is het uitvoeringslogboek van pg_cron, met alleen de jobstatus en geen gebruikersgegevens. | pg_cron ruimt rijen ouder dan 7 dagen op. De locatiegeschiedenis wordt **niet** aangeraakt; zie §4.0. |
 | D4 | Laag | 3 functies zonder vaste `search_path` (advisor). | Vastgezet. |
 
+### 2.7 Vervolgronde (na de audit)
+
+| # | Ernst | Probleem | Fix | Test |
+|---|---|---|---|---|
+| V1 | Hoog | Een uitnodigingscode vervalt nooit en is niet in te trekken; de beheerder kan niemand verwijderen. | Migratie 017: een code is 7 dagen geldig, `join_family` weigert een verlopen code, `rotate_invite_code` en `remove_member` alleen voor de beheerder. Verwijderen haalt het lid ook van de kaart en vernieuwt de code. In de app: vervaldatum, "Nieuwe code maken" en een verwijderknop in het gezinsblad. | SQL `017_invite_expiry_test.sql` (15 checks), `invite_renew_test.dart`, `remove_member_test.dart` |
+| V2 | Hoog | Het wachtwoord werd bij "Onthouden" bewaard en na uitloggen opnieuw ingevuld. | Alleen het e-mailadres wordt nog onthouden. Een oud bewaard wachtwoord wordt bij het eerste lezen gewist. Uitloggen wist ook het wachtwoord van de vingerafdruk-login. | `biometric_login_test.dart`, `login_screen_test.dart` |
+| V3 | Middel | Een rit over middernacht viel in twee stukken (23:50–00:20). | Per dag wordt 3 u marge opgehaald. Een rit telt op zijn vertrekdag en blijft heel; verblijven worden op de dag afgeknipt. | `midnight_trip_test.dart` |
+
 ---
 
 ## 3. Gecontroleerd en in orde
@@ -169,10 +177,8 @@ De volgende oorzaken volgen uit de code en het gedrag van de plugins. Ze zijn mo
 
 ### 4.2 Hoog: security en privacy
 
-1. **De uitnodigingscode** (8 hex-tekens) vervalt nooit, is niet te roteren, en de eigenaar kan een lid niet verwijderen. Een gelekte code (screenshot, groepschat) geeft dus voorgoed toegang tot live locaties.
-   - *Fix:* een migratie met `rotate_invite_code` (48 bit, 7 dagen geldig) en `remove_member` voor de eigenaar, plus UI.
-2. **Het wachtwoord wordt standaard bewaard** ("Onthouden" staat aan), na uitloggen weer ingevuld, en is leesbaar met het oogje.
-   - *Fix:* nooit het wachtwoord bewaren, alleen het e-mailadres (standaard uit). Biometrie als app-ontgrendeling.
+1. ~~**De uitnodigingscode** vervalt nooit, is niet te roteren, en de eigenaar kan een lid niet verwijderen.~~ **Opgelost** in `e451824` + migratie 017 (zie §2.7). Nog open: de code blijft 8 hex-tekens (32 bit, compatibel met het invoerveld) en er is geen limiet op het aantal join-pogingen. De locatiegeschiedenis van een verwijderd lid blijft zichtbaar voor het gezin (zie §4.0).
+2. ~~**Het wachtwoord wordt standaard bewaard** en na uitloggen weer ingevuld.~~ **Opgelost** in `f1fae7b` (zie §2.7). Nog open: zolang de vingerafdruk-login aan staat en je ingelogd bent, staat het wachtwoord versleuteld op het toestel. De biometrie is een controle in de app, niet cryptografisch aan de sleutel gebonden.
 3. **Als Firebase niet initialiseert, crasht de app** (grijs scherm), terwijl `main.dart` "zonder push" belooft. Dat is relevant voor een latere iOS-build zonder plist.
    - *Fix:* `PushGate` alleen actief als `Firebase.apps.isNotEmpty`.
 4. **Een lid dat het gezin verlaat, blijft met zijn laatste locatie en historiek zichtbaar.** Er is ook geen DELETE-policy op de eigen historiek, wat relevant is voor de AVG.
@@ -180,8 +186,7 @@ De volgende oorzaken volgen uit de code en het gedrag van de plugins. Ze zijn mo
 
 ### 4.3 Middel: ritten (functioneel)
 
-1. **Ritten over middernacht** worden gesplitst: 23:50–00:20 geeft twee ritten zonder vertrek- of aankomstplaats.
-   - *Fix:* ±2 u marge ophalen en een rit toekennen aan zijn startdag.
+1. ~~**Ritten over middernacht** worden gesplitst.~~ **Opgelost** in de commit na `f1fae7b` (zie §2.7). Nog open: een nachtrit die langer dan 3 uur na middernacht doorloopt, wordt na die 3 uur afgekapt, en het weekrapport splitst nog op de grens zondag → maandag.
 2. **Het weekoverzicht en de dagkaarten** gebruiken verschillende algoritmes. Het rapport vereist 25 km/u of meer; de dagkaart toont elke verplaatsing vanaf 100 m (ook wandelen) met het auto-icoon.
    - *Fix:* één bron (`DayDriving`) met een classificatie op snelheid, en wandelen apart tonen.
 3. **De 30-dagenweergave** haalt ±45.000 ruwe punten op (±45 pagina's na elkaar) om enkel verblijven te tonen.
