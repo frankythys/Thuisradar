@@ -1,11 +1,11 @@
 # Volledige audit Thuisradar — 11 oktober 2026
 
-Audit van A tot Z: ritten en ritkaarten, tracking en geofencing, kaart en performantie, Supabase-backend, en de overige features (auth, push, chat, SOS, gezin). Uitgevoerd op branch `claude/sharp-edison-3ekw7g`, vertrekkend van `8047477` (de GPS-ritten-audit van vandaag, zie `GPS_RITTEN_AUDIT_2026-10-11.md`).
+Audit van A tot Z: ritten en ritkaarten, tracking en geofencing, kaart en performantie, Supabase-backend, en de overige features (auth, push, chat, SOS, gezin). Uitgevoerd op branch `claude/sharp-edison-3ekw7g`, vertrekkend van `8047477` (de GPS-ritten-audit van vandaag, zie `GPS_RITTEN_AUDIT_2026-10-11.md`). Daarna is `origin/main` (`5183f95`: A52-rendercrash en bewegingsfilter, zie `A52_HERSTART_DIAGNOSE.md`) in de branch gemerged, zodat die fixes mee in deze build zitten.
 
-**Werkwijze.** Elke bevinding is getraceerd tot een concreet scenario. De belangrijkste zijn eerst met een falende test bewezen en daarna hersteld. Supabase is uitsluitend alleen-lezen bevraagd: SELECT, catalogus, advisors, logs en EXPLAIN zonder ANALYZE. Er is niets aan de live database gewijzigd en geen migratie uitgevoerd. In dit rapport staan geen namen, coördinaten of keys, alleen geaggregeerde tellingen.
+**Werkwijze.** Elke bevinding is getraceerd tot een concreet scenario. De belangrijkste zijn eerst met een falende test bewezen en daarna hersteld. Supabase is uitsluitend alleen-lezen bevraagd: SELECT, catalogus, advisors, logs en EXPLAIN zonder ANALYZE. Er is niets aan de live database gewijzigd en geen migratie uitgevoerd. In dit rapport staan geen coördinaten of keys, alleen geaggregeerde tellingen.
 
-**Resultaat.** 25 problemen zijn hersteld, verdeeld over 7 fixcommits, 1 stijlcommit en dit rapport. Daarbij zit 1 nieuwe migratie (016), die de eigenaar zelf moet uitvoeren.
-- **Flutter:** 418 tests groen, `flutter analyze` 0 issues.
+**Resultaat.** 25 problemen zijn hersteld, verdeeld over 8 fixcommits, 1 stijlcommit, 1 merge en dit rapport. Daarbij zit 1 nieuwe migratie (016), die de eigenaar zelf moet uitvoeren.
+- **Flutter:** 421 tests groen na de merge met `5183f95`, `flutter analyze` 0 issues.
 - **SQL:** de tests van 014, 015 en 016 slagen op een lokale PostgreSQL 16.
 - **Nog niet getest op een fysiek toestel.** Zie het testplan onderaan.
 
@@ -21,15 +21,19 @@ Audit van A tot Z: ritten en ritkaarten, tracking en geofencing, kaart en perfor
 | Kaart | Groepspin ±160 px te zuidelijk, "stilstaand sinds" altijd 0 min | Hersteld |
 | Tracking | Eén `Error` stopte stil alle uploads tot een herstart, ontbrekende snelheid werd "stilstaand" | Hersteld |
 | Uitloggen | Pushtoken bleef aan de vorige gebruiker hangen (SOS naar de verkeerde persoon mogelijk) | Hersteld |
-| Backend | Geen opruiming (gratis plan vol in ±1 jaar), SOS-alarm kon naar een ander gezin verplaatst worden, oud punt kon de kaart terugzetten | Migratie 016 (handmatig uitvoeren) |
-| **Achtergrond-tracking** | Stopt bij wegvegen, kill of herstart, geen offline buffer | **Open, grootste resterende risico voor volledige ritten** (§4.1) |
+| Backend | SOS-alarm kon naar een ander gezin verplaatst worden, oud punt kon de kaart terugzetten, cron-logboek groeide onbeperkt | Migratie 016 (handmatig uitvoeren) |
+| A52 | Native crash van de renderer (Impeller/OpenGLES) bij terugkeren, drie keer vastgesteld op 11/10 | Omzeild in `5183f95` (Skia); nog te bevestigen op een nieuwe APK |
+| Bewaartermijn locatiegeschiedenis | Geen: alles blijft bewaard (gratis plan vol in ±1 jaar met 4 leden) | **Beslispunt voor de eigenaar** (§4.0), niet automatisch ingevoerd |
+| **GPS-gaten** | 102 gaten van meer dan 5 min in de historiek van één toestel; oorzaak **niet bewezen** | **Open** (§4.1): A52-crashes (vastgesteld), achtergrondtracking en offline opslag zijn kandidaat-oorzaken |
 
 ### Wat jij nog moet doen
 
-1. **Migratie 016 uitvoeren.** Open in Supabase › SQL Editor `supabase/migrations/016_audit_hardening.sql` en voer het uit. Het bestand is idempotent en werkt met de huidige app, ervoor of erna. Controle achteraf: `select jobname from cron.job;` moet `thuisradar-history-cleanup` en `thuisradar-cron-log-cleanup` tonen.
-2. **Leaked Password Protection aanzetten** in Supabase › Authentication › Policies. Dit staat nu uit (advisor).
-3. **Edge function `send-place-push` opnieuw deployen** vanuit de repo. De live versie (v8) gebruikt nog kanaal `places` en het standaardgeluid, de repo gebruikt `places_v2` en `thuisradar_arrival`.
-4. **Het testplan** (§6) doorlopen op de Samsung A52 en de emulator.
+1. **Nieuwe APK bouwen en installeren** vanaf deze branch. De renderer-instelling uit `5183f95` werkt pas in een nieuwe build, hot reload volstaat niet. Controleer daarna op de A52 de stappen uit `A52_HERSTART_DIAGNOSE.md`: geen nieuwe native crash in de crashbuffer.
+2. **Migratie 016 uitvoeren.** Open in Supabase › SQL Editor `supabase/migrations/016_audit_hardening.sql` en voer het uit. Het bestand is idempotent en werkt met de huidige app, ervoor of erna. Controle achteraf: `select jobname from cron.job;` moet `thuisradar-cron-log-cleanup` tonen, en `select tgname from pg_trigger where tgname in ('sos_alerts_guard','member_locations_order_guard');` beide triggers.
+3. **Beslissen over een bewaartermijn** voor de locatiegeschiedenis (§4.0). Er wordt niets automatisch gewist zolang je niet beslist.
+4. **Leaked Password Protection aanzetten** in Supabase › Authentication › Policies. Dit staat nu uit (advisor).
+5. **Edge function `send-place-push` opnieuw deployen** vanuit de repo. De live versie (v8) gebruikt nog kanaal `places` en het standaardgeluid, de repo gebruikt `places_v2` en `thuisradar_arrival`.
+6. **Het testplan** (§6) doorlopen op de Samsung A52 en de emulator.
 
 ---
 
@@ -45,7 +49,7 @@ Audit van A tot Z: ritten en ritkaarten, tracking en geofencing, kaart en perfor
 | R4 | Middel | Topsnelheid uit één Doppler-piek ("max 216 km/u"). | Een piek telt alleen als een buurmeting minstens 60% haalt. | Doppler-piek |
 | R5 | Middel | De ritkaart eindigde op de laatste straat met GPS, niet op de bestemming. De routekaart van "gisteren" was gecentreerd op de huidige positie van vandaag. | Het spoor eindigt op de bestemming, zonder lijn over het meetgat. De kaart van gisteren zoomt op de route. | `day_driving_test.dart` |
 | R6 | Middel | Op zondag 25/10 (wintertijd, 25 uur) ontbrak het laatste uur van de dag: middernacht + 24 u = 23:00. Op 29/3 en 30/3 stond "Vandaag" bij gisteren, rekende de weekkiezer verkeerd en haalde de chip "Gisteren" eergisteren op. | Dagvensters lopen tot de volgende lokale middernacht. Datumverschillen worden in kalenderdagen berekend (`core/utils/calendar.dart`). | `calendar_test.dart`, `day_driving_test.dart`, ook uitgevoerd met `TZ=Europe/Brussels` |
-| R7 | Middel | De 30-dagenweergave filterde geen GPS-sprongen. Liams opgeslagen sprong van 8.868 km verscheen dus als "Onderweg · 8868 km". | `withoutSpikes` ook daar. | — |
+| R7 | Middel | De 30-dagenweergave filterde geen GPS-sprongen. Een opgeslagen sprong van 8.868 km (één gezinslid, 7/10) verscheen dus als "Onderweg · 8868 km". | `withoutSpikes` ook daar. | — |
 | P1 | Hoog (vlotheid) | De ritschermen volgen een klok die elke 5 s tikt. Bij elke tik werden de ritten van 7 dagen herberekend, en per rit werden alle punten van de dag opnieuw gefilterd en gesorteerd. Alle ritkaarten van een week werden tegelijk opgebouwd. | Nieuwe `DayDriving` (domain) + `dayDrivingProvider`: activiteiten en het spoor per rit worden één keer berekend, alleen als de geschiedenis of de plaatsen veranderen. De lijsten zijn lui, dus alleen zichtbare kaarten worden opgebouwd. Toekomstige dagen worden niet opgehaald. | `day_driving_test.dart` |
 | P2 | Hoog (data/batterij) | `dayHistoryProvider` was niet `autoDispose`. Wie ooit een gezinslid opende, liet de app de hele dag van dat lid elke minuut opnieuw downloaden, tot een herstart. | `autoDispose`. Vandaag ververst alleen zolang iemand kijkt, afgelopen dagen blijven nog 5 min bewaard. | Bestaande provider-tests |
 | P3 | Middel | De time-out van 10 s gold voor alle pagina's samen. Een drukke dag (±1.500–4.600 punten) of week kon daardoor "Laden mislukt" geven. | De time-out geldt per pagina van 1000 punten. | — |
@@ -81,13 +85,13 @@ Audit van A tot Z: ritten en ritkaarten, tracking en geofencing, kaart en perfor
 |---|---|---|---|
 | S1 | Hoog | `order('created_at')` op een Supabase-stream staat standaard op **aflopend**, terwijl het chatscherm oplopend verwacht. Meldingen en SOS hadden geen volgorde en geen grens. Boven 1000 rijen (meldingen: ±6 weken tot 4 maanden) kwamen willekeurige oude rijen terug en ontbraken de nieuwste. | Expliciet de nieuwste ophalen en client-side sorteren, met een grens: chat 500, meldingen 300, SOS 100. |
 
-### 2.6 Backend — migratie 016 (`08d9a03`)
+### 2.6 Backend — migratie 016 (`08d9a03`, aangevuld in de laatste commit)
 
 | # | Ernst | Probleem | Fix |
 |---|---|---|---|
 | D1 | Middel | Een upload-time-out annuleert de request niet. Een ouder punt dat ná een nieuwer binnenkwam, zette de kaart terug in de tijd en liet de zones op een oude plek evalueren (valse aankomst of vertrek). Live zijn er 10 dubbele `(user_id, recorded_at)`. | BEFORE UPDATE-trigger: een ouder punt gaat alleen naar de geschiedenis, een dubbel punt wordt genegeerd. Een toestelklok die voorliep bevriest de kaart niet. |
-| D2 | Middel | De SOS-update-policy controleerde alleen `user_id`. Een (ex-)lid kon een eigen alarm naar een ander gezin verplaatsen of stil heractiveren. | `is_family_member` + alleen `status = 'resolved'`. |
-| D3 | Middel | `location_history` werd nooit opgeruimd: 16.063 rijen in 8,5 dagen (±1.500 per actief lid per dag), en `cron.job_run_details` +1.440 rijen per dag. Met 4 leden zit het gratis plan van 500 MB vol in ±1 jaar. | pg_cron: geschiedenis ouder dan 90 dagen en cron-logs ouder dan 7 dagen worden opgeruimd. De app toont hooguit 12 weken. |
+| D2 | Middel | De SOS-update-policy controleerde alleen `user_id`. Een (ex-)lid kon een eigen alarm naar een ander gezin verplaatsen of stil heractiveren. | Twee lagen. **Policy:** alleen het eigen alarm, alleen als lid van het huidige gezin, en alleen naar `status = 'resolved'`. Een policy kan de oude rij echter niet met de nieuwe vergelijken; ze verbiedt dus niet zelf dat `family_id` naar een ander gezin waarvan je ook lid bent verandert. **Trigger `sos_alerts_guard`:** weigert expliciet elke wijziging van `family_id`, `user_id`, `lat`/`lng`, `created_at` en `id`, en het heropenen van een opgelost alarm. Dat geldt voor iedereen, ook via het dashboard. Alleen `status` → `resolved` en `resolved_at` mogen veranderen. SQL-test `016_audit_hardening_test.sql`: verplaatsen, locatie of afzender wijzigen en heropenen worden geweigerd, (opnieuw) oplossen mag. De test draait als superuser, dus hij bewijst de trigger maar niet de RLS-policy (zie §4.7). |
+| D3 | Laag | `cron.job_run_details` krijgt elke minuut een rij (±525.000 per jaar). Dat is het uitvoeringslogboek van pg_cron, met alleen de jobstatus en geen gebruikersgegevens. | pg_cron ruimt rijen ouder dan 7 dagen op. De locatiegeschiedenis wordt **niet** aangeraakt; zie §4.0. |
 | D4 | Laag | 3 functies zonder vaste `search_path` (advisor). | Vastgezet. |
 
 ---
@@ -111,14 +115,39 @@ Audit van A tot Z: ritten en ritkaarten, tracking en geofencing, kaart en perfor
 
 Niet in deze audit hersteld. Deze punten zijn groter, vragen een productkeuze, of vragen een test op een toestel.
 
-### 4.1 Hoog: volledigheid van ritten (tracking op de achtergrond)
+### 4.0 Beslispunt: bewaartermijn locatiegeschiedenis
 
-Dit is de grootste resterende oorzaak van ontbrekende of gesplitste ritten. De historiek bevat 102 meetgaten van meer dan 5 minuten (Franky).
+Dit is een keuze over persoonsgegevens, geen technische reparatie. Daarom zit het niet in migratie 016.
+
+- **Feiten:** `location_history` telde 16.063 rijen in ±8,5 dagen (±1.500 per actief lid per dag, ±205 bytes per rij inclusief index). Met 4 actieve leden is dat ±450 MB per jaar; het gratis plan heeft 500 MB. Nu wordt niets opgeruimd.
+- **Wat de app nodig heeft:** de weekkiezer gaat 12 weken terug (±84 dagen), de detailweergave 30 dagen.
+- **Afwegingen:**
+  - Een kortere termijn betekent minder gevoelige gegevens en minder opslag, maar oudere ritten zijn dan weg.
+  - Een termijn korter dan 84 dagen maakt oudere weken in de weekkiezer leeg.
+  - Wordt het een termijn, vermeld die dan aan de gezinsleden (AVG: transparantie).
+- **Uitvoeren na een beslissing** (vervang `N` door het gekozen aantal dagen, in de SQL Editor):
+
+```sql
+select cron.schedule('thuisradar-history-cleanup', '17 3 * * *',
+  $$delete from public.location_history where recorded_at < now() - interval 'N days'$$);
+```
+
+Ongedaan maken: `select cron.unschedule('thuisradar-history-cleanup');` Al gewiste rijen komen daarmee niet terug.
+
+### 4.1 Hoog: volledigheid van ritten (GPS-gaten)
+
+De historiek van één toestel bevat 102 meetgaten van meer dan 5 minuten (3–11 oktober). **De oorzaak daarvan is niet bewezen.** De tellingen tonen dat er gaten zijn, niet waarom. Hieronder staan de kandidaat-oorzaken, van vastgesteld naar vermoed.
+
+0. **Vastgesteld: native crashes op de A52.** Op 11/10 om 10:00:32, 11:50:39 en 12:51:35 crashte de app met `SIGSEGV` in de Impeller/OpenGLES-renderer (`A52_HERSTART_DIAGNOSE.md`). Een crash beëindigt het proces en daarmee de GPS-stroom; tot de app weer opent wordt er niets gemeten. Of deze crashes samenvallen met gaten in de historiek is **nog niet nagegaan**.
+   - *Omzeild in `5183f95`* (Skia in plaats van Impeller), nog te bevestigen op een nieuwe APK.
+   - *Na te gaan:* de crashtijden en de crashbuffer (`adb logcat -b crash`) naast de gaten in `location_history` leggen, en de locatiediagnose-export van dezelfde dag erbij nemen.
+
+De volgende oorzaken volgen uit de code en het gedrag van de plugins. Ze zijn mogelijk, maar niet aangetoond op een toestel:
 
 1. **Tracking stopt bij wegvegen uit recents, een proceskill (Samsung "slapende apps") of een reboot.** De GPS-dienst van geolocator is gebonden aan de Activity-engine en herstart niet. Alleen de zones komen terug na een reboot.
    - *Op korte termijn:* een onboarding-stap "niet wegvegen", met Samsung-instructies ("Nooit slapende apps") en een melding als er lang niets geüpload is.
    - *Structureel:* een *gestarte* voorgronddienst (`stopWithTask=false`), los van de Activity, met boot-start.
-2. **Geen offline buffer.** Een mislukte upsert gooit het punt weg, dus 12 minuten zonder data betekent 12 minuten zonder spoor.
+2. **Geen offline buffer.** Een mislukte upsert gooit het punt weg, dus 12 minuten zonder data zou 12 minuten zonder spoor betekenen.
    - *Fix:* een lokale persistente wachtrij, en de achterstand in batch naar `location_history` via een RPC (nieuwe migratie), met ontdubbeling op `(user_id, recorded_at)`.
 3. **Koude start zonder netwerk: tracking start nooit.** De tracker start pas in `MapScreen`, en dat scherm komt pas na een online `myFamilyProvider`.
    - *Fix:* `familyId` lokaal cachen en de tracker starten vanuit een listener op het hoogste niveau.
@@ -186,7 +215,7 @@ Dit is de grootste resterende oorzaak van ontbrekende of gesplitste ritten. De h
 
 - Advisors: 15 policies met `auth.uid()` zonder `(select …)`, en 11 foreign keys zonder index. Op deze schaal nog geen probleem.
 - `families.created_by` en `places.created_by` met `ON DELETE NO ACTION` blokkeren het verwijderen van een account.
-- `supabase/tests` draait als superuser, dus RLS wordt nooit getest. `run.sh` gooit de foutoutput van het laden weg.
+- `supabase/tests` draait als superuser, dus RLS-policies (ook die van 016) worden niet getest; de triggers wel. `run.sh` gooit de foutoutput van het laden weg.
 - `flutter_svg` en `cupertino_icons` worden niet gebruikt.
 - Assets: ±5 MB aan splash-bronnen en een auto-afbeelding van 1254² voor een weergave van 38×32.
 - Lint: `discarded_futures` toevoegen; `unawaited_futures` mist futures in synchrone callbacks.
@@ -205,6 +234,8 @@ Dit is de grootste resterende oorzaak van ontbrekende of gesplitste ritten. De h
 | `164d50e` | Groepspin, stilstaand sinds, HomeShell-rebuilds |
 | `bf8abf4` | Volgorde en grens van chat, meldingen en SOS |
 | `08d9a03` | Migratie 016 + SQL-test |
+| `02d2847` | Merge van `origin/main` (`5183f95`): A52-rendercrash, bewegingsfilter, eerste kaartbeeld |
+| (laatste) | 016: SOS-trigger tegen verplaatsen en heropenen, bewaartermijn eruit (beslispunt), rapport bijgewerkt |
 
 ## 6. Testplan op een toestel (Samsung A52 "Papa" + emulator "Liam")
 
@@ -220,3 +251,5 @@ Dit is de grootste resterende oorzaak van ontbrekende of gesplitste ritten. De h
 7. **Chat.** Het nieuwste bericht staat onderaan.
 8. **Wintertijd.** Op zondag 25/10 laat 's avonds een rit maken. De rit moet op 25/10 staan.
 9. **Na migratie 016.** Rij een stuk met slechte 4G. De kaart mag niet terugspringen naar een oudere positie.
+10. **A52-renderer (nieuwe APK).** Kaart openen, zoomen, een persoon selecteren, naar het startscherm en de app heropenen. Zoom en selectie moeten blijven staan, en de crashbuffer mag geen nieuwe native crash tonen.
+11. **Gaten na de crashfix.** Na een paar dagen met de nieuwe APK: tel opnieuw de gaten van meer dan 5 minuten. Zijn ze sterk gedaald, dan waren de crashes een hoofdoorzaak. Blijven ze, dan is §4.1 (achtergrond en offline) de volgende stap.

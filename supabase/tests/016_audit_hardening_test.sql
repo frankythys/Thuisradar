@@ -52,6 +52,41 @@ update member_locations set updated_at = now() + interval '1 hour'
 select pg_temp.upload(51.30, now());
 select pg_temp.check(pg_temp.current_lat() = 51.30, 'na een voorlopende klok bevriest de kaart niet');
 
+-- ─── SOS: niet verplaatsen, niet heropenen ──────────────────────────────────
+
+create function pg_temp.refused(statement text) returns boolean language plpgsql as $$
+begin
+  execute statement;
+  return false;
+exception when insufficient_privilege then
+  return true;
+end;
+$$;
+
+insert into families (id, name, invite_code, created_by)
+  values ('00000000-0000-0000-0000-0000000016f2', 'Ander gezin', 'AUD162', '00000000-0000-0000-0000-0000000016a1');
+insert into sos_alerts (id, family_id, user_id, lat, lng)
+  values ('00000000-0000-0000-0000-0000000016e1', '00000000-0000-0000-0000-0000000016f1',
+          '00000000-0000-0000-0000-0000000016a1', 51.0, 4.0);
+
+select pg_temp.check(pg_temp.refused($q$update sos_alerts set family_id = '00000000-0000-0000-0000-0000000016f2'
+  where id = '00000000-0000-0000-0000-0000000016e1'$q$), 'SOS kan niet naar een ander gezin');
+select pg_temp.check(pg_temp.refused($q$update sos_alerts set lat = 52.0
+  where id = '00000000-0000-0000-0000-0000000016e1'$q$), 'SOS-locatie kan niet gewijzigd worden');
+select pg_temp.check(pg_temp.refused($q$update sos_alerts set user_id = '00000000-0000-0000-0000-0000000000a5'
+  where id = '00000000-0000-0000-0000-0000000016e1'$q$), 'SOS-afzender kan niet gewijzigd worden');
+select pg_temp.check(not pg_temp.refused($q$update sos_alerts set status = 'resolved', resolved_at = now()
+  where id = '00000000-0000-0000-0000-0000000016e1'$q$), 'oplossen mag');
+select pg_temp.check(not pg_temp.refused($q$update sos_alerts set status = 'resolved', resolved_at = now()
+  where id = '00000000-0000-0000-0000-0000000016e1'$q$), 'nogmaals oplossen mag (app herhaalt)');
+select pg_temp.check(pg_temp.refused($q$update sos_alerts set status = 'active'
+  where id = '00000000-0000-0000-0000-0000000016e1'$q$), 'opgelost alarm kan niet heropend worden');
+select pg_temp.check(
+  (select family_id = '00000000-0000-0000-0000-0000000016f1' and status = 'resolved' from sos_alerts
+   where id = '00000000-0000-0000-0000-0000000016e1'),
+  'alarm staat nog in het eigen gezin, opgelost'
+);
+
 -- ─── SOS-policy en functies ─────────────────────────────────────────────────
 
 select pg_temp.check(
