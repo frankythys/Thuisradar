@@ -73,15 +73,21 @@ final roadMembersOnMapProvider = StreamProvider.autoDispose
 final anchoredMembersOnMapProvider =
     Provider.family<AsyncValue<List<MemberOnMap>>, String>((ref, familyId) {
       final members = ref.watch(membersOnMapProvider(familyId));
-      final places =
-          ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
+      final placesState = ref.watch(familyPlacesProvider(familyId));
+      final presenceState = ref.watch(familyPresenceProvider(familyId));
+      // Toon bij opstart meteen de juiste huisankers. Bij verversen behouden
+      // de streams hun vorige waarde, zodat de bestaande kaart blijft staan.
+      if ((placesState.isLoading && !placesState.hasValue) ||
+          (presenceState.isLoading && !presenceState.hasValue)) {
+        return const AsyncLoading();
+      }
+      final places = placesState.value ?? const <Place>[];
       final locations =
           ref.watch(familyLocationsProvider(familyId)).value ??
           const <MemberLocation>[];
       // Een achterlopende aanwezigheid mag niemand die weg is op Thuis zetten.
       final presence = confirmedPresence(
-        ref.watch(familyPresenceProvider(familyId)).value ??
-            const <PlacePresence>[],
+        presenceState.value ?? const <PlacePresence>[],
         places,
         locations,
       );
