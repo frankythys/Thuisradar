@@ -120,11 +120,8 @@ class _TripBody extends StatelessWidget {
               ),
             ),
             SizedBox(width: tokens.spaceSm),
-            if (activity.mode == TravelMode.car)
-              // De 3D-auto, zoals Life360 een rit aanduidt.
-              Image.asset('assets/markers/auto.png', width: 56, height: 52, fit: BoxFit.contain)
-            else
-              Icon(travelModeIcon(activity.mode), size: 36, color: AppColors.primary),
+            // De 3D-auto, -fiets of -sneakers, zoals Life360 een rit aanduidt.
+            Image.asset(travelModeImage(activity.mode), width: 56, height: 52, fit: BoxFit.contain),
           ],
         ),
         SizedBox(height: tokens.spaceSm),

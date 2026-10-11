@@ -10,6 +10,13 @@ IconData travelModeIcon(TravelMode mode) => switch (mode) {
   TravelMode.car => Icons.directions_car,
 };
 
+/// 3D-afbeelding per vervoermiddel voor de kaartjes, zoals Life360.
+String travelModeImage(TravelMode mode) => switch (mode) {
+  TravelMode.walk => 'assets/markers/wandelen.png',
+  TravelMode.bike => 'assets/markers/fiets.png',
+  TravelMode.car => 'assets/markers/auto.png',
+};
+
 /// De keuzes van de filter, in volgorde; null is "alles".
 const travelModeFilters = <TravelMode?>[null, TravelMode.car, TravelMode.bike, TravelMode.walk];
 

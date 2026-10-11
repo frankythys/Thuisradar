@@ -203,10 +203,10 @@ void main() {
     );
     final walker = tester.widget<Image>(find.byType(Image));
     expect((walker.image as AssetImage).assetName, walkingGifAsset);
-    // Zonder het GIF-bestand (zoals in deze test) valt hij terug op het icoon.
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    // De GIF bestaat: geen terugval op het wandelicoon.
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
     await tester.pump();
-    expect(find.byIcon(Icons.directions_walk), findsOneWidget);
+    expect(find.byIcon(Icons.directions_walk), findsNothing);
     expect(find.text('Wandelen'), findsOneWidget);
     expect(find.text('5 km/u'), findsOneWidget);
     expect(tester.takeException(), isNull);

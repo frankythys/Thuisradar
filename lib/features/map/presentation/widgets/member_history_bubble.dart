@@ -6,7 +6,8 @@ import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/member_on_map.dart';
 
-/// Geanimeerde wandelaar in de ballon tijdens een wandeling.
+/// Geanimeerde sneakers in de ballon tijdens een wandeling (144×96, witte
+/// achtergrond zoals de ballon).
 const walkingGifAsset = 'assets/gif/wandelen.gif';
 
 class MemberHistoryBubble extends StatelessWidget {
@@ -94,7 +95,7 @@ class MemberHistoryBubble extends StatelessWidget {
                   // Wandelende figuur; ontbreekt de GIF, dan het wandelicoon.
                   Image.asset(
                     walkingGifAsset,
-                    width: 32,
+                    width: 40,
                     height: 32,
                     fit: BoxFit.contain,
                     gaplessPlayback: true,

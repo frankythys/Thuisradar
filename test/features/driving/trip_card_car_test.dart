@@ -59,7 +59,15 @@ void main() {
   testWidgets('een wandeling toont de wandelaar, duur en gemiddeld tempo', (tester) async {
     await pump(tester, DrivingActivityKind.trip, mode: TravelMode.walk);
     expect(find.byWidgetPredicate(isCar), findsNothing);
-    expect(find.byIcon(Icons.directions_walk), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Image &&
+            w.image is AssetImage &&
+            (w.image as AssetImage).assetName == 'assets/markers/wandelen.png',
+      ),
+      findsOneWidget,
+    );
     // 1,8 km in 4 minuten.
     expect(find.text('4 min · gem. 27,0 km/u'), findsOneWidget);
   });
