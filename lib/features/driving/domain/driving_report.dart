@@ -43,21 +43,28 @@ class DrivingReport {
     for (final mode in TravelMode.values) mode: List.unmodifiable(all.where((trip) => trip.mode == mode)),
   };
 
-  List<DrivingTrip> of(TravelMode mode) => _byMode[mode]!;
+  /// De verplaatsingen met [mode]; zonder [mode] allemaal.
+  List<DrivingTrip> of(TravelMode? mode) => mode == null ? all : _byMode[mode]!;
 
   /// Kilometers met de auto.
   double get kilometers => kilometersOf(TravelMode.car);
 
-  double kilometersOf(TravelMode mode) => of(mode).fold(0, (sum, trip) => sum + trip.kilometers);
+  double kilometersOf(TravelMode? mode) => of(mode).fold(0, (sum, trip) => sum + trip.kilometers);
 
-  Duration durationOf(TravelMode mode) => of(mode).fold(Duration.zero, (sum, trip) => sum + trip.duration);
+  Duration durationOf(TravelMode? mode) => of(mode).fold(Duration.zero, (sum, trip) => sum + trip.duration);
 
   /// Hoogste snelheid met de auto.
   double? get topSpeed => topSpeedOf(TravelMode.car);
 
-  double? topSpeedOf(TravelMode mode) {
+  double? topSpeedOf(TravelMode? mode) {
     final trips = of(mode);
     return trips.isEmpty ? null : trips.map((trip) => trip.topSpeed).reduce((a, b) => a > b ? a : b);
+  }
+
+  /// Gemiddelde snelheid in km/u over alle verplaatsingen met [mode].
+  double? averageKmhOf(TravelMode? mode) {
+    final hours = durationOf(mode).inSeconds / 3600;
+    return hours <= 0 ? null : kilometersOf(mode) / hours;
   }
 }
 

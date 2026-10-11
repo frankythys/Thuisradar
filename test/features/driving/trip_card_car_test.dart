@@ -7,6 +7,7 @@ import 'package:thuisradar/features/driving/presentation/driving_activity_card.d
 import 'package:thuisradar/features/location/application/address_providers.dart';
 import 'package:thuisradar/features/location/data/geocoding_source.dart';
 import 'package:thuisradar/features/location/domain/place_address.dart';
+import 'package:thuisradar/features/location/domain/travel_mode.dart';
 
 class _NoGeocoding extends GeocodingSource {
   @override
@@ -19,29 +20,31 @@ void main() {
       widget.image is AssetImage &&
       (widget.image as AssetImage).assetName == 'assets/markers/auto.png';
 
-  Future<void> pump(WidgetTester tester, DrivingActivityKind kind) => tester.pumpWidget(
-    ProviderScope(
-      overrides: [geocodingSourceProvider.overrideWithValue(_NoGeocoding())],
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        home: Scaffold(
-          body: DrivingActivityCard(
-            activity: DrivingActivity(
-              kind: kind,
-              start: DateTime(2026, 10, 9, 17, 11),
-              end: DateTime(2026, 10, 9, 17, 15),
-              latitude: 51.18,
-              longitude: 4.38,
-              distanceMeters: 1800,
-              fromLatitude: 51.17,
-              fromLongitude: 4.395,
+  Future<void> pump(WidgetTester tester, DrivingActivityKind kind, {TravelMode mode = TravelMode.car}) =>
+      tester.pumpWidget(
+        ProviderScope(
+          overrides: [geocodingSourceProvider.overrideWithValue(_NoGeocoding())],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            home: Scaffold(
+              body: DrivingActivityCard(
+                activity: DrivingActivity(
+                  kind: kind,
+                  start: DateTime(2026, 10, 9, 17, 11),
+                  end: DateTime(2026, 10, 9, 17, 15),
+                  latitude: 51.18,
+                  longitude: 4.38,
+                  distanceMeters: 1800,
+                  fromLatitude: 51.17,
+                  fromLongitude: 4.395,
+                  mode: mode,
+                ),
+                places: const [],
+              ),
             ),
-            places: const [],
           ),
         ),
-      ),
-    ),
-  );
+      );
 
   testWidgets('een ritkaartje toont de 3D-auto', (tester) async {
     await pump(tester, DrivingActivityKind.trip);
@@ -51,5 +54,13 @@ void main() {
   testWidgets('een verblijf toont geen auto', (tester) async {
     await pump(tester, DrivingActivityKind.stay);
     expect(find.byWidgetPredicate(isCar), findsNothing);
+  });
+
+  testWidgets('een wandeling toont de wandelaar, duur en gemiddeld tempo', (tester) async {
+    await pump(tester, DrivingActivityKind.trip, mode: TravelMode.walk);
+    expect(find.byWidgetPredicate(isCar), findsNothing);
+    expect(find.byIcon(Icons.directions_walk), findsOneWidget);
+    // 1,8 km in 4 minuten.
+    expect(find.text('4 min · gem. 27,0 km/u'), findsOneWidget);
   });
 }

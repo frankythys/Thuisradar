@@ -7,22 +7,34 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../family/domain/family_member.dart';
 import '../../location/application/location_history_providers.dart';
+import '../../location/domain/travel_mode.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
 import '../application/driving_providers.dart';
+import '../domain/driving_activity.dart';
 import 'driving_activity_card.dart';
 import 'driving_summary.dart';
 
-/// Dagoverzicht van één gezinslid: per dag één kaart met de ritten van die dag
-/// erin getekend, gevolgd door de activiteiten (ritten en verblijven).
+/// Dagoverzicht van één gezinslid: per dag de activiteiten (verplaatsingen
+/// met hun route en verblijven), nieuwste eerst.
 class DrivingMemberScreen extends ConsumerWidget {
-  const DrivingMemberScreen({super.key, required this.member, required this.familyId, required this.week});
+  const DrivingMemberScreen({
+    super.key,
+    required this.member,
+    required this.familyId,
+    required this.week,
+    this.mode,
+  });
 
   final FamilyMember member;
   final String familyId;
 
   /// Maandag van de getoonde week.
   final DateTime week;
+
+  /// Enkel verplaatsingen met dit vervoermiddel (zonder verblijven); null
+  /// toont alles.
+  final TravelMode? mode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,14 +59,19 @@ class DrivingMemberScreen extends ConsumerWidget {
       loading = loading || async.isLoading;
       failed = failed || async.hasError;
       final driving = async.value;
-      if (driving == null || driving.activities.isEmpty) continue;
+      if (driving == null) continue;
+      final shown = [
+        for (var index = driving.activities.length - 1; index >= 0; index--)
+          if (_shows(driving.activities[index])) index,
+      ];
+      if (shown.isEmpty) continue;
       items.add(
         Padding(
           padding: EdgeInsets.only(top: items.isEmpty ? 0 : tokens.spaceMd, bottom: tokens.spaceSm),
           child: Text(drivingDayLabel(day, now: now), style: Theme.of(context).textTheme.titleLarge),
         ),
       );
-      for (var index = driving.activities.length - 1; index >= 0; index--) {
+      for (final index in shown) {
         items.add(
           Padding(
             padding: EdgeInsets.only(bottom: tokens.spaceSm),
@@ -94,7 +111,9 @@ class DrivingMemberScreen extends ConsumerWidget {
         },
       );
     } else {
-      body = const Center(child: Text('Geen locatiegeschiedenis deze week.'));
+      body = Center(
+        child: Text(mode == null ? 'Geen locatiegeschiedenis deze week.' : 'Geen ${mode!.plural} deze week.'),
+      );
     }
 
     return Scaffold(
@@ -102,4 +121,7 @@ class DrivingMemberScreen extends ConsumerWidget {
       body: body,
     );
   }
+
+  bool _shows(DrivingActivity activity) =>
+      mode == null || (activity.kind == DrivingActivityKind.trip && activity.mode == mode);
 }

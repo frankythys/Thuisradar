@@ -8,14 +8,16 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/member_avatar.dart';
 import '../../family/domain/family.dart';
+import '../../location/domain/travel_mode.dart';
 import '../application/driving_providers.dart';
 import '../domain/driving_report.dart';
 import 'driving_member_screen.dart';
 import 'driving_summary.dart';
 import 'driving_week_picker.dart';
+import 'travel_mode_filter.dart';
 
-/// Weekoverzicht van de ritten: week kiezen, drie kerncijfers en per
-/// gezinslid een rij die naar de ritten van die persoon leidt.
+/// Weekoverzicht van de verplaatsingen: week en vervoermiddel kiezen, drie
+/// kerncijfers en per gezinslid een rij die naar diens dagen leidt.
 class DrivingScreen extends ConsumerStatefulWidget {
   const DrivingScreen({super.key, required this.family});
   final Family family;
@@ -27,6 +29,9 @@ class DrivingScreen extends ConsumerStatefulWidget {
 class _DrivingScreenState extends ConsumerState<DrivingScreen> {
   late DateTime _week = drivingWeekStart(DateTime.now());
 
+  /// Null: alles (auto, fiets en te voet).
+  TravelMode? _mode;
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -34,7 +39,7 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
     final query = (familyId: widget.family.id, week: _week);
     final reports = ref.watch(drivingReportsProvider(query));
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Rijden'),
+      appBar: const BrandedAppBar(title: 'Onderweg'),
       body: Column(
         children: [
           Padding(
@@ -44,6 +49,10 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
               currentWeek: drivingWeekStart(DateTime.now()),
               onChanged: (week) => setState(() => _week = week),
             ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceMd, 0),
+            child: TravelModeFilter(mode: _mode, onChanged: (mode) => setState(() => _mode = mode)),
           ),
           Expanded(
             child: reports.when(
@@ -64,7 +73,7 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(tokens.spaceMd),
                   children: [
-                    DrivingSummary(reports: data),
+                    DrivingSummary(reports: data, mode: _mode),
                     SizedBox(height: tokens.spaceLg),
                     Text('PER GEZINSLID', style: text.labelSmall?.copyWith(color: AppColors.muted)),
                     SizedBox(height: tokens.spaceSm),
@@ -79,12 +88,14 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                               if (index > 0) const Divider(height: 1),
                               _MemberRow(
                                 item: item,
+                                mode: _mode,
                                 onTap: () => Navigator.of(context).push(
                                   MaterialPageRoute<void>(
                                     builder: (_) => DrivingMemberScreen(
                                       member: item.member,
                                       familyId: widget.family.id,
                                       week: _week,
+                                      mode: _mode,
                                     ),
                                   ),
                                 ),
@@ -101,8 +112,9 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                         SizedBox(width: tokens.spaceSm),
                         Expanded(
                           child: Text(
-                            'Schatting op basis van GPS. Fietsen, openbaar vervoer of meerijden kan ook als '
-                            'rit tellen. Rijgedrag (remmen, gsm) wordt nog niet gemeten.',
+                            'Schatting op basis van de GPS-snelheid. Een trage rit in de file kan als fietsen '
+                            'tellen, openbaar vervoer of meerijden als rit. Rijgedrag (remmen, gsm) wordt nog '
+                            'niet gemeten.',
                             style: text.bodySmall?.copyWith(color: AppColors.muted),
                           ),
                         ),
@@ -120,9 +132,10 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
 }
 
 class _MemberRow extends StatelessWidget {
-  const _MemberRow({required this.item, required this.onTap});
+  const _MemberRow({required this.item, required this.mode, required this.onTap});
 
   final MemberDrivingReport item;
+  final TravelMode? mode;
   final VoidCallback onTap;
 
   @override
@@ -130,12 +143,16 @@ class _MemberRow extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
     final report = item.report;
-    final count = report.trips.length;
+    final count = report.of(mode).length;
+    final noun = switch (mode) {
+      final mode? => count == 1 ? mode.singular : mode.plural,
+      null => count == 1 ? 'verplaatsing' : 'verplaatsingen',
+    };
     final subtitle = !report.hasHistory
         ? 'Geen locatiegeschiedenis'
         : count == 0
-        ? 'Geen ritten'
-        : '$count ${count == 1 ? 'rit' : 'ritten'} · ${drivingNumber(report.kilometers)} km';
+        ? 'Geen $noun'
+        : '$count $noun · ${drivingNumber(report.kilometersOf(mode))} km';
     return InkWell(
       onTap: onTap,
       child: Padding(

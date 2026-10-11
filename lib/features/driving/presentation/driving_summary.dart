@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../location/domain/travel_mode.dart';
 import '../application/driving_providers.dart';
 import '../../../core/utils/calendar.dart';
 
@@ -38,26 +39,40 @@ String drivingDayLabel(DateTime day, {required DateTime now}) {
   return '${_weekdayNames[target.weekday - 1]} ${target.day}/${target.month}';
 }
 
-/// Weekoverzicht in drie tegels: ritten, kilometers en hoogste snelheid.
+/// Weekoverzicht in drie tegels: aantal, kilometers en een derde cijfer dat
+/// past bij het vervoermiddel (hoogste snelheid met de auto, gemiddelde met
+/// de fiets, tijd te voet of in totaal).
 class DrivingSummary extends StatelessWidget {
-  const DrivingSummary({super.key, required this.reports});
+  const DrivingSummary({super.key, required this.reports, this.mode = TravelMode.car});
   final List<MemberDrivingReport> reports;
+
+  /// Null: alle verplaatsingen samen.
+  final TravelMode? mode;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final trips = reports.fold(0, (sum, r) => sum + r.report.trips.length);
-    final km = reports.fold(0.0, (sum, r) => sum + r.report.kilometers);
-    final ranked = reports.where((r) => r.report.topSpeed != null).toList()
-      ..sort((a, b) => b.report.topSpeed!.compareTo(a.report.topSpeed!));
-    final fastest = ranked.firstOrNull;
+    final count = reports.fold(0, (sum, r) => sum + r.report.of(mode).length);
+    final km = reports.fold(0.0, (sum, r) => sum + r.report.kilometersOf(mode));
+    final duration = reports.fold(Duration.zero, (sum, r) => sum + r.report.durationOf(mode));
+    final hours = duration.inSeconds / 3600;
+    final (String, String) third = switch (mode) {
+      TravelMode.car => _fastest(),
+      TravelMode.bike => (hours <= 0 ? '—' : '${(km / hours).round()}', 'km/u gemiddeld'),
+      TravelMode.walk => (_hours(duration), 'gewandeld'),
+      null => (_hours(duration), 'onderweg'),
+    };
+    final countLabel = switch (mode) {
+      final mode? => count == 1 ? mode.singular : mode.plural,
+      null => count == 1 ? 'verplaatsing' : 'verplaatsingen',
+    };
     // Even hoge tegels, ook als de naam bij de snelheid op twee regels valt.
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: _Tile(value: '$trips', label: trips == 1 ? 'rit' : 'ritten'),
+            child: _Tile(value: '$count', label: countLabel),
           ),
           SizedBox(width: tokens.spaceSm),
           Expanded(
@@ -65,15 +80,26 @@ class DrivingSummary extends StatelessWidget {
           ),
           SizedBox(width: tokens.spaceSm),
           Expanded(
-            child: _Tile(
-              value: fastest == null ? '—' : '${fastest.report.topSpeed!.round()}',
-              label: fastest == null ? 'km/u max' : 'km/u max · ${fastest.member.displayName}',
-            ),
+            child: _Tile(value: third.$1, label: third.$2),
           ),
         ],
       ),
     );
   }
+
+  (String, String) _fastest() {
+    final ranked = reports.where((r) => r.report.topSpeed != null).toList()
+      ..sort((a, b) => b.report.topSpeed!.compareTo(a.report.topSpeed!));
+    final fastest = ranked.firstOrNull;
+    return (
+      fastest == null ? '—' : '${fastest.report.topSpeed!.round()}',
+      fastest == null ? 'km/u max' : 'km/u max · ${fastest.member.displayName}',
+    );
+  }
+
+  /// "2u05" (uren en minuten) voor een tegel.
+  static String _hours(Duration duration) =>
+      '${duration.inHours}u${duration.inMinutes.remainder(60).toString().padLeft(2, '0')}';
 }
 
 class _Tile extends StatelessWidget {

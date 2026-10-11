@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 
-/// De hoofdtabs: Kaart, Rijden, Plaatsen, Chat. Meldingen zit als belletje in
+/// De hoofdtabs: Kaart, Onderweg (rijden, fietsen, wandelen), Plaatsen, Chat. Meldingen zit als belletje in
 /// de app-balk bovenaan.
 enum AppTab { kaart, rijden, plaatsen, chat }
 
@@ -81,9 +81,9 @@ class AppBottomNav extends StatelessWidget {
                   label: 'Kaart',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.directions_car_outlined),
-                  selectedIcon: Icon(Icons.directions_car),
-                  label: 'Rijden',
+                  icon: Icon(Icons.route_outlined),
+                  selectedIcon: Icon(Icons.route),
+                  label: 'Onderweg',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.place_outlined),

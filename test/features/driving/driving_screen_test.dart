@@ -10,6 +10,7 @@ import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/application/location_history_providers.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
 import 'package:thuisradar/features/location/domain/track_point.dart';
+import 'package:thuisradar/features/location/domain/travel_mode.dart';
 import 'package:thuisradar/features/places/application/places_providers.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
 
@@ -47,7 +48,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Rijden'), findsOneWidget);
+    expect(find.text('Onderweg'), findsOneWidget);
     expect(find.text('Deze week'), findsOneWidget);
     expect(find.text('PER GEZINSLID'), findsOneWidget);
     expect(find.byIcon(Icons.lock), findsNothing);
@@ -91,5 +92,66 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     expect(find.text('Er zijn nog geen gezinsleden.'), findsOneWidget);
+  });
+
+  testWidgets('de filter toont enkel de wandelingen met hun cijfers', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final walk = DrivingTrip(
+      start: DateTime(2026, 10, 6, 14),
+      end: DateTime(2026, 10, 6, 14, 45),
+      kilometers: 3.6,
+      topSpeed: 5,
+      mode: TravelMode.walk,
+    );
+    final drive = DrivingTrip(
+      start: DateTime(2026, 10, 6, 17),
+      end: DateTime(2026, 10, 6, 17, 20),
+      kilometers: 18,
+      topSpeed: 90,
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          drivingReportsProvider.overrideWith(
+            (ref, query) async => [
+              (
+                member: const FamilyMember(userId: '1', displayName: 'Liam', isOwner: false, colorIndex: 0),
+                report: DrivingReport([walk, drive], hasHistory: true),
+              ),
+            ],
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const DrivingScreen(
+            family: Family(id: 'family', name: 'Ons gezin', inviteCode: 'abc'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // Standaard alles samen.
+    expect(find.text('verplaatsingen'), findsOneWidget);
+    expect(find.text('2 verplaatsingen · 21,6 km'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Wandelen'));
+    await tester.pumpAndSettle();
+    expect(find.text('wandeling'), findsOneWidget);
+    expect(find.text('3,6'), findsOneWidget);
+    expect(find.text('0u45'), findsOneWidget);
+    expect(find.text('1 wandeling · 3,6 km'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Rijden'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 rit · 18,0 km'), findsOneWidget);
+    expect(find.text('90'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Fietsen'));
+    await tester.pumpAndSettle();
+    expect(find.text('Geen fietstochten'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

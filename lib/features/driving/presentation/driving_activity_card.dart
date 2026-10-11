@@ -10,13 +10,16 @@ import '../../location/application/address_providers.dart';
 import '../../location/domain/place_address.dart';
 import '../../location/domain/track_point.dart';
 import '../../location/domain/track_segments.dart';
+import '../../location/domain/travel_mode.dart';
 import '../../places/domain/place.dart';
 import '../../places/domain/place_timeline.dart';
 import '../domain/driving_activity.dart';
 import 'driving_summary.dart';
+import 'travel_mode_filter.dart';
 
-/// Eén activiteit als kaart: een rit (met de route op een kaart, van → naar,
-/// tijd en afstand) of een verblijf (plek, tijd en duur).
+/// Eén activiteit als kaart: een verplaatsing (met de route op een kaart, van
+/// → naar, tijd en afstand; bij een rit de topsnelheid, te voet of met de
+/// fiets duur en gemiddeld tempo) of een verblijf (plek, tijd en duur).
 class DrivingActivityCard extends StatelessWidget {
   const DrivingActivityCard({
     super.key,
@@ -117,8 +120,11 @@ class _TripBody extends StatelessWidget {
               ),
             ),
             SizedBox(width: tokens.spaceSm),
-            // De 3D-auto, zoals Life360 een rit aanduidt.
-            Image.asset('assets/markers/auto.png', width: 56, height: 52, fit: BoxFit.contain),
+            if (activity.mode == TravelMode.car)
+              // De 3D-auto, zoals Life360 een rit aanduidt.
+              Image.asset('assets/markers/auto.png', width: 56, height: 52, fit: BoxFit.contain)
+            else
+              Icon(travelModeIcon(activity.mode), size: 36, color: AppColors.primary),
           ],
         ),
         SizedBox(height: tokens.spaceSm),
@@ -127,7 +133,16 @@ class _TripBody extends StatelessWidget {
           ' · ${drivingDistance(activity.distanceMeters)}',
           style: text.bodyMedium?.copyWith(color: AppColors.muted),
         ),
-        if (topSpeed case final speed?) ...[
+        if (activity.mode != TravelMode.car) ...[
+          SizedBox(height: tokens.spaceXs),
+          _Detail(
+            icon: Icons.schedule,
+            text: [
+              drivingDuration(activity.duration),
+              if (activity.averageKmh case final kmh?) 'gem. ${drivingNumber(kmh)} km/u',
+            ].join(' · '),
+          ),
+        ] else if (topSpeed case final speed?) ...[
           SizedBox(height: tokens.spaceXs),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -141,6 +156,23 @@ class _TripBody extends StatelessWidget {
       ],
     );
   }
+}
+
+class _Detail extends StatelessWidget {
+  const _Detail({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon, size: 16, color: AppColors.muted),
+      const SizedBox(width: 6),
+      Flexible(child: Text(text, style: Theme.of(context).textTheme.labelLarge)),
+    ],
+  );
 }
 
 class _StayBody extends StatelessWidget {
