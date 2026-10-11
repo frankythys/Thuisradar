@@ -53,24 +53,19 @@ class DeviceLocationSource {
     }
   }
 
+  /// Android laat snelheid en nauwkeurigheid weg als het ze niet mat;
+  /// geolocator maakt daar dan 0,0 van. Zonder de `has*`-vlag werd een
+  /// rijdende auto met een wifi-fix zo "stilstaand" en een grove fix "exact".
   DevicePosition _toDevice(Position p) => DevicePosition(
     latitude: p.latitude,
     longitude: p.longitude,
     timestamp: p.timestamp,
-    accuracyMeters: p.accuracy,
-    speedMps: p.speed < 0 ? null : p.speed,
+    accuracyMeters: p.hasAccuracy ? p.accuracy : null,
+    speedMps: p.hasSpeed && p.speed >= 0 ? p.speed : null,
   );
 
   Stream<DevicePosition> positions() {
-    return Geolocator.getPositionStream(locationSettings: _settings(streamInterval)).map(
-      (p) => DevicePosition(
-        latitude: p.latitude,
-        longitude: p.longitude,
-        timestamp: p.timestamp,
-        accuracyMeters: p.accuracy,
-        speedMps: p.speed < 0 ? null : p.speed,
-      ),
-    );
+    return Geolocator.getPositionStream(locationSettings: _settings(streamInterval)).map(_toDevice);
   }
 
   LocationSettings _settings(Duration interval) {

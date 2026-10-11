@@ -86,6 +86,40 @@ void main() {
     });
   });
 
+  test('een onverwachte Error bij uploaden breekt de keten niet', () {
+    fakeAsync((async) {
+      final device = _MockDevice();
+      final battery = _MockBattery();
+      final repository = _MockRepository();
+      final stream = StreamController<DevicePosition>();
+      addTearDown(() => unawaited(stream.close()));
+
+      when(() => device.positions()).thenAnswer((_) => stream.stream);
+      var uploads = 0;
+      when(() => repository.upload(any())).thenAnswer((_) {
+        uploads++;
+        // Geen Exception maar een Error (bv. een gesloten http-client).
+        if (uploads == 1) throw StateError('client gesloten');
+        return Future<void>.value();
+      });
+
+      final container = containerWith(device, battery, repository);
+      addTearDown(container.dispose);
+
+      container.read(locationTrackerProvider.notifier).start(userId: 'u1', familyId: 'f1');
+      async.flushMicrotasks();
+
+      final base = DateTime.now();
+      stream.add(posAt(base.subtract(const Duration(seconds: 40))));
+      async.elapse(const Duration(seconds: 1));
+      stream.add(posAt(base.subtract(const Duration(seconds: 10)), lat: 50.8505));
+      async.elapse(const Duration(seconds: 1));
+
+      expect(uploads, 2);
+      expect(container.read(locationTrackerProvider), TrackingStatus.active);
+    });
+  });
+
   test('een onderbroken locatiestroom herstelt zichzelf zonder herstart', () {
     fakeAsync((async) {
       final device = _MockDevice();

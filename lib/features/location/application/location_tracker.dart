@@ -145,10 +145,20 @@ class LocationTracker extends Notifier<TrackingStatus> {
   }
 
   void _queue(DevicePosition position, int generation, {bool force = false}) {
-    _uploads = _uploads.then((_) async {
-      if (!ref.mounted || generation != _generation) return;
-      await _onPosition(position, force: force);
-    });
+    // De leeftijd telt vanaf ontvangst: wacht een meting achter een trage
+    // upload, dan is ze daarom nog niet "te oud".
+    final receivedAt = DateTime.now();
+    _uploads = _uploads
+        .then((_) async {
+          if (!ref.mounted || generation != _generation) return;
+          await _onPosition(position, receivedAt: receivedAt, force: force);
+        })
+        // Eén onverwachte Error mag de keten niet breken: anders werd elke
+        // volgende meting stil overgeslagen tot de app herstartte.
+        .catchError((Object error, StackTrace stackTrace) {
+          debugPrint('Locatie verwerken mislukt: $error');
+          debugPrintStack(stackTrace: stackTrace);
+        });
   }
 
   /// Herstelt de locatiestroom nadat Android hem onderweg stopzette of een fout
@@ -171,13 +181,17 @@ class LocationTracker extends Notifier<TrackingStatus> {
     state = TrackingStatus.idle;
   }
 
-  Future<void> _onPosition(DevicePosition position, {required bool force}) async {
+  Future<void> _onPosition(
+    DevicePosition position, {
+    required DateTime receivedAt,
+    required bool force,
+  }) async {
     final userId = _userId;
     final familyId = _familyId;
     final generation = _generation;
     if (userId == null || familyId == null) return;
 
-    final now = DateTime.now();
+    final now = receivedAt;
     final accepted = _motion.accept(position, now);
     final diagnostics = _diagnostics;
     if (accepted == null) {
