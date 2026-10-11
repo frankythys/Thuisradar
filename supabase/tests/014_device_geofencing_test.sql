@@ -84,8 +84,8 @@ select pg_temp.check(
 
 select pg_temp.check(
   record_geofence_event('papa-toestel-sleutel-0123456789abcdef', '00000000-0000-0000-0000-0000000000c1',
-    'departure', 51.003, 4.0, now()) = 'recorded',
-  'toestel meldt vertrek'
+    'departure', 51.003, 4.0, now()) = 'pending',
+  'toestel meldt vertrek (wacht op bevestiging, migratie 015)'
 );
 select pg_temp.upload('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000f1',
   51.01, 4.0, now() + interval '37 minutes');
