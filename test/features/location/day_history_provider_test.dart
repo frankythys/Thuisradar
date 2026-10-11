@@ -25,10 +25,10 @@ class _FakeHistory implements LocationHistoryRepository {
 void main() {
   final day = DateTime(2026, 1, 2);
 
-  // Elke meting een kilometer verder: zo wordt het een verplaatsing en geen
-  // verblijf op één plek.
+  // Elke minuut ruim een kilometer verder (autotempo): zo wordt het een
+  // verplaatsing en geen verblijf op één plek.
   TrackPoint point(int minutes) => TrackPoint(
-    latitude: 51 + minutes / 1000,
+    latitude: 51 + minutes / 100,
     longitude: 3,
     recordedAt: day.add(Duration(minutes: minutes)),
   );

@@ -28,7 +28,7 @@ void main() {
             return [
               (
                 member: const FamilyMember(userId: '1', displayName: 'Liam', isOwner: false, colorIndex: 0),
-                report: const DrivingReport([], hasHistory: true),
+                report: DrivingReport(const [], hasHistory: true),
               ),
             ];
           }),

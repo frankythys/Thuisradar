@@ -2,6 +2,7 @@ import '../../location/domain/motion_filter.dart';
 import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
 import '../../location/domain/track_segments.dart';
+import 'travel_mode.dart';
 
 /// Soort activiteit in de dagtijdlijn van een gezinslid.
 enum DrivingActivityKind { trip, stay }
@@ -19,6 +20,7 @@ class DrivingActivity {
     this.fromLatitude,
     this.fromLongitude,
     this.placeName,
+    this.mode = TravelMode.car,
   });
 
   final DrivingActivityKind kind;
@@ -39,7 +41,14 @@ class DrivingActivity {
   /// Naam van een eigen plaats bij een verblijf, indien binnen een zone.
   final String? placeName;
 
+  /// Geschat vervoermiddel van een rit; zonder betekenis bij een verblijf.
+  final TravelMode mode;
+
   Duration get duration => end.difference(start);
+
+  /// Gemiddelde snelheid in km/u (enkel bij een rit met gekende afstand).
+  double? get averageKmh =>
+      kind == DrivingActivityKind.trip ? averageSpeedKmh(distanceMeters, duration) : null;
 }
 
 /// Een rit is een aaneengesloten reeks metingen waarin de wagen rijdt. De reeks
@@ -103,9 +112,10 @@ List<List<TrackPoint>> buildTripTracks(
 /// uit) overbruggen we niet — dan blijven het losse ritten.
 const kArrivalGap = Duration(minutes: 20);
 
-/// De activiteiten van één dag: verblijven uit de tijdlijn en ritten uit de
-/// echte metingen, chronologisch (oudste eerst). Een "rit" met minder dan
-/// [minTripMeters] beweging is ruis en valt weg.
+/// De activiteiten van één dag: verblijven uit de tijdlijn en verplaatsingen
+/// (te voet, met de fiets of de auto) uit de echte metingen, chronologisch
+/// (oudste eerst). Een verplaatsing met minder dan [minTripMeters] beweging is
+/// ruis en valt weg; een wandeling moet minstens [kMinWalkMeters] lang zijn.
 List<DrivingActivity> buildDayActivities(
   List<TimelineEntry> entries,
   List<TrackPoint> points, {
@@ -153,6 +163,13 @@ List<DrivingActivity> buildDayActivities(
       meters += distanceMeters(last.latitude, last.longitude, endLatitude, endLongitude);
     }
     if (meters < minTripMeters) continue;
+    final mode = classifyTravel(
+      meters: meters,
+      duration: endTime.difference(track.first.recordedAt),
+      speedsMps: track.map((point) => point.speedMps),
+    );
+    // Rondlopen in huis of het stukje naar de auto is geen wandeling.
+    if (mode == TravelMode.walk && meters < kMinWalkMeters) continue;
     activities.add(
       DrivingActivity(
         kind: DrivingActivityKind.trip,
@@ -163,6 +180,7 @@ List<DrivingActivity> buildDayActivities(
         distanceMeters: meters,
         fromLatitude: track.first.latitude,
         fromLongitude: track.first.longitude,
+        mode: mode,
       ),
     );
   }
@@ -218,6 +236,11 @@ bool _measuredElsewhere(List<TrackPoint> clean, DateTime after, TimelineEntry st
 /// Knipt het stilstaan aan begin en einde van een spoor weg: vertrek is de
 /// laatste meting nog binnen [radiusMeters] van het beginpunt, aankomst de
 /// eerste meting al binnen [radiusMeters] van het eindpunt.
+///
+/// Binnen die straal kan wel al bewogen zijn: te voet duurt 100 m ruim een
+/// minuut. Metingen die gestaag van het beginpunt weg (of naar het eindpunt
+/// toe) gaan, horen dus nog bij de verplaatsing; anders miste elke wandeling
+/// 200 m en begon ze te laat.
 List<TrackPoint> trimStill(List<TrackPoint> track, {double radiusMeters = kStopRadiusMeters}) {
   if (track.length < 2) return track;
   var first = 0;
@@ -228,7 +251,24 @@ List<TrackPoint> trimStill(List<TrackPoint> track, {double radiusMeters = kStopR
   while (last - 1 > first && _legMeters(track.last, track[last - 1]) <= radiusMeters) {
     last--;
   }
+  if (last > first) {
+    while (first > 0 && _steadyStep(track.first, track[first - 1], track[first])) {
+      first--;
+    }
+    while (last < track.length - 1 && _steadyStep(track.last, track[last + 1], track[last])) {
+      last++;
+    }
+  }
   return track.sublist(first, last + 1);
+}
+
+/// Ligt [far] gestaag verder van [anchor] dan [near], kort na elkaar gemeten
+/// en minstens wandeltempo? Dan is het tussenstuk beweging, geen GPS-ruis.
+bool _steadyStep(TrackPoint anchor, TrackPoint near, TrackPoint far) {
+  final seconds = (far.recordedAt.difference(near.recordedAt).inMilliseconds / 1000).abs();
+  if (seconds <= 0 || seconds > 30) return false;
+  final gained = _legMeters(anchor, far) - _legMeters(anchor, near);
+  return gained >= 3 && gained / seconds >= 0.5;
 }
 
 /// Afgelegde afstand langs een reeks metingen (haversine per been).

@@ -1,6 +1,7 @@
 import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
-import 'driving_activity.dart' show withoutSpikes;
+import 'driving_activity.dart';
+import 'travel_mode.dart';
 
 DateTime drivingWeekStart(DateTime date) => DateTime(date.year, date.month, date.day - date.weekday + 1);
 
@@ -12,27 +13,57 @@ class DrivingTrip {
     required this.end,
     required this.kilometers,
     required this.topSpeed,
+    this.mode = TravelMode.car,
   });
 
   final DateTime start;
   final DateTime end;
   final double kilometers;
+
+  /// Hoogste gemeten snelheid in km/u (bij wandelen: het gemiddelde als de
+  /// GPS geen snelheid gaf).
   final double topSpeed;
+  final TravelMode mode;
+
+  Duration get duration => end.difference(start);
 }
 
+/// Alle verplaatsingen van één gezinslid in een week, per vervoermiddel.
 class DrivingReport {
-  const DrivingReport(this.trips, {required this.hasHistory});
+  DrivingReport(this.all, {required this.hasHistory});
 
-  final List<DrivingTrip> trips;
+  /// Alle verplaatsingen, chronologisch: ritten, fietstochten en wandelingen.
+  final List<DrivingTrip> all;
   final bool hasHistory;
-  double get kilometers => trips.fold(0, (sum, trip) => sum + trip.kilometers);
-  double? get topSpeed =>
-      trips.isEmpty ? null : trips.map((trip) => trip.topSpeed).reduce((a, b) => a > b ? a : b);
+
+  /// Enkel de autoritten.
+  List<DrivingTrip> get trips => of(TravelMode.car);
+
+  late final Map<TravelMode, List<DrivingTrip>> _byMode = {
+    for (final mode in TravelMode.values) mode: List.unmodifiable(all.where((trip) => trip.mode == mode)),
+  };
+
+  List<DrivingTrip> of(TravelMode mode) => _byMode[mode]!;
+
+  /// Kilometers met de auto.
+  double get kilometers => kilometersOf(TravelMode.car);
+
+  double kilometersOf(TravelMode mode) => of(mode).fold(0, (sum, trip) => sum + trip.kilometers);
+
+  Duration durationOf(TravelMode mode) => of(mode).fold(Duration.zero, (sum, trip) => sum + trip.duration);
+
+  /// Hoogste snelheid met de auto.
+  double? get topSpeed => topSpeedOf(TravelMode.car);
+
+  double? topSpeedOf(TravelMode mode) {
+    final trips = of(mode);
+    return trips.isEmpty ? null : trips.map((trip) => trip.topSpeed).reduce((a, b) => a > b ? a : b);
+  }
 }
 
-/// Geschatte ritten: minstens twee snelheidsmetingen vanaf 25 km/u in een
-/// verplaatsing. GPS bepaalt niet of iemand bestuurder of passagier is.
-/// Gaten van meer dan vijf minuten worden nooit als gereden afstand opgeteld.
+/// Geschatte verplaatsingen, elk met een vervoermiddel volgens
+/// [classifyTravel]. GPS bepaalt niet of iemand bestuurder of passagier is.
+/// Gaten van meer dan vijf minuten worden nooit als afstand opgeteld.
 DrivingReport buildDrivingReport(List<TrackPoint> points, DateTime week) {
   final start = drivingWeekStart(week);
   final end = drivingWeekEnd(start);
@@ -56,25 +87,32 @@ DrivingReport buildDrivingReport(List<TrackPoint> points, DateTime week) {
   }
   final trips = <DrivingTrip>[];
   for (final segment in segments) {
-    for (final entry in buildTimeline(segment).where((e) => e.kind == TimelineKind.move)) {
+    // Dezelfde verplaatsingen als op de dagkaarten, zodat week en dag kloppen.
+    final moves = buildDayActivities(
+      buildTimeline(segment),
+      segment,
+    ).where((activity) => activity.kind == DrivingActivityKind.trip);
+    for (final move in moves) {
       final speeds = segment
-          .where((p) => !p.recordedAt.isBefore(entry.start) && !p.recordedAt.isAfter(entry.end))
+          .where((p) => !p.recordedAt.isBefore(move.start) && !p.recordedAt.isAfter(move.end))
           .map((p) => p.speedMps)
           .whereType<double>()
           .where((s) => s.isFinite && s >= 0 && s <= 70)
           .map((s) => s * 3.6)
           .toList();
-      final meters = entry.distanceMeters ?? 0;
-      final seconds = entry.duration.inSeconds;
-      if (speeds.where((s) => s >= 25).length < 2 || meters < 100 || seconds <= 0 || meters / seconds > 70) {
-        continue;
-      }
+      final meters = move.distanceMeters ?? 0;
+      final seconds = move.duration.inSeconds;
+      if (seconds <= 0 || meters / seconds > 70) continue;
+      // Een autorit telt pas in het weekrapport met gemeten snelheid: snel
+      // gemiddeld zonder één snelheidsmeting kan ook een meetgat zijn.
+      if (move.mode == TravelMode.car && speeds.where((s) => s >= kCarSpeedKmh).length < 2) continue;
       trips.add(
         DrivingTrip(
-          start: entry.start,
-          end: entry.end,
+          start: move.start,
+          end: move.end,
           kilometers: meters / 1000,
-          topSpeed: speeds.reduce((a, b) => a > b ? a : b),
+          topSpeed: speeds.isEmpty ? meters / seconds * 3.6 : speeds.reduce((a, b) => a > b ? a : b),
+          mode: move.mode,
         ),
       );
     }
