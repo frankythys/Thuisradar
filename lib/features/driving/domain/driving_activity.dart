@@ -1,4 +1,5 @@
 import '../../location/domain/motion_filter.dart';
+import '../../location/domain/step_count.dart';
 import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
 import '../../location/domain/track_segments.dart';
@@ -21,6 +22,7 @@ class DrivingActivity {
     this.fromLongitude,
     this.placeName,
     this.mode = TravelMode.car,
+    this.steps,
   });
 
   final DrivingActivityKind kind;
@@ -43,6 +45,9 @@ class DrivingActivity {
 
   /// Geschat vervoermiddel van een rit; zonder betekenis bij een verblijf.
   final TravelMode mode;
+
+  /// Gezette stappen tijdens een wandeling, als het toestel ze meegaf.
+  final int? steps;
 
   Duration get duration => end.difference(start);
 
@@ -181,6 +186,7 @@ List<DrivingActivity> buildDayActivities(
         fromLatitude: track.first.latitude,
         fromLongitude: track.first.longitude,
         mode: mode,
+        steps: mode == TravelMode.walk ? stepsAlong(track) : null,
       ),
     );
   }

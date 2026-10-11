@@ -6,6 +6,7 @@ class TrackPoint {
     required this.recordedAt,
     this.battery,
     this.speedMps,
+    this.steps,
   });
 
   factory TrackPoint.fromJson(Map<String, dynamic> json) => TrackPoint(
@@ -13,6 +14,7 @@ class TrackPoint {
     longitude: (json['lng'] as num).toDouble(),
     battery: json['battery'] as int?,
     speedMps: (json['speed_mps'] as num?)?.toDouble(),
+    steps: (json['steps'] as num?)?.toInt(),
     recordedAt: DateTime.parse(json['recorded_at'] as String).toLocal(),
   );
 
@@ -21,4 +23,8 @@ class TrackPoint {
   final DateTime recordedAt;
   final int? battery;
   final double? speedMps;
+
+  /// Stand van de stappenteller van het toestel (een totaal, geen stappen per
+  /// meting); null als het toestel geen stappen meegaf. Zie `stepsAlong`.
+  final int? steps;
 }

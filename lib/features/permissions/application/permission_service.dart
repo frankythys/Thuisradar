@@ -1,14 +1,16 @@
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../location/data/device_location_source.dart';
+import '../../location/data/step_source.dart';
 import '../../location/domain/device_reading.dart';
 
 /// Vraagt de rechten die Thuisradar nodig heeft. Locatie loopt via dezelfde
 /// geolocator-bron als de tracker; meldingen en batterij via permission_handler.
 class PermissionService {
-  PermissionService(this._location);
+  PermissionService(this._location, this._steps);
 
   final DeviceLocationSource _location;
+  final StepSource _steps;
 
   Future<bool> requestLocation() async {
     final access = await _location.ensureAccess();
@@ -31,6 +33,9 @@ class PermissionService {
     final status = await Permission.ignoreBatteryOptimizations.request();
     return status.isGranted;
   }
+
+  /// Stappenteller voor de stappen per wandeling; weigeren mag.
+  Future<bool> requestSteps() => _steps.requestAccess();
 
   Future<void> openSettings() => openAppSettings();
 }

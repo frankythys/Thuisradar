@@ -4,5 +4,5 @@ import '../../location/application/location_providers.dart';
 import 'permission_service.dart';
 
 final permissionServiceProvider = Provider<PermissionService>(
-  (ref) => PermissionService(ref.watch(deviceLocationSourceProvider)),
+  (ref) => PermissionService(ref.watch(deviceLocationSourceProvider), ref.watch(stepSourceProvider)),
 );

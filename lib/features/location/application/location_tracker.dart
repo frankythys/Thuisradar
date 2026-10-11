@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/battery_source.dart';
 import '../data/device_location_source.dart';
 import '../data/location_repository.dart';
+import '../data/step_source.dart';
 import '../domain/device_reading.dart';
 import '../domain/member_location.dart';
 import '../domain/motion_filter.dart';
@@ -42,11 +43,14 @@ class LocationTracker extends Notifier<TrackingStatus> {
   UploadThrottle _throttle = UploadThrottle();
   DateTime? _lastFixAt;
   Future<void> _uploads = Future<void>.value();
+  StreamSubscription<int>? _steps;
+  int? _latestSteps;
 
   DeviceLocationSource get _device => ref.read(deviceLocationSourceProvider);
   BatterySource get _battery => ref.read(batterySourceProvider);
   LocationRepository get _repository => ref.read(locationRepositoryProvider);
   LocationDiagnostics get _diagnostics => ref.read(locationDiagnosticsProvider);
+  StepSource get _stepSource => ref.read(stepSourceProvider);
 
   @override
   TrackingStatus build() {
@@ -78,6 +82,37 @@ class LocationTracker extends Notifier<TrackingStatus> {
     _granted = true;
     _diagnostics.event('delen gestart');
     _attach();
+    unawaited(_attachSteps());
+  }
+
+  /// Vraagt toestemming voor de stappenteller en telt meteen mee als die er
+  /// is. Geeft terug of het gelukt is.
+  Future<bool> enableSteps() async {
+    if (!await _stepSource.requestAccess()) return false;
+    if (ref.mounted) await _attachSteps();
+    return true;
+  }
+
+  /// Luistert naar de stappenteller als er toestemming is. Zonder toestemming
+  /// of stappenteller blijven de stappen gewoon leeg; het delen gaat door.
+  Future<void> _attachSteps() async {
+    if (_steps != null || !_granted) return;
+    final generation = _generation;
+    if (!await _stepSource.hasAccess()) return;
+    if (!ref.mounted || generation != _generation || _steps != null) return;
+    _steps = _stepSource.counts().listen(
+      (steps) {
+        if (generation == _generation) _latestSteps = steps;
+      },
+      onError: (Object error) {
+        debugPrint('Stappenteller fout: $error');
+        if (generation != _generation) return;
+        unawaited(_steps?.cancel());
+        _steps = null;
+        _latestSteps = null;
+      },
+      cancelOnError: true,
+    );
   }
 
   Future<void> openSettings() => _device.openSettings();
@@ -98,6 +133,8 @@ class LocationTracker extends Notifier<TrackingStatus> {
       _diagnostics.event('stroom stil bij hervatten', 'laatste GPS ${lastFix ?? 'nooit'}');
       _attach();
     }
+    // Intussen misschien toestemming gegeven voor de stappenteller.
+    unawaited(_attachSteps());
     unawaited(refreshNow());
   }
 
@@ -215,6 +252,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
         speedMps: accepted.speedMps,
         battery: battery.level,
         isCharging: battery.isCharging,
+        steps: _latestSteps,
         updatedAt: accepted.timestamp,
       );
 
@@ -244,5 +282,8 @@ class LocationTracker extends Notifier<TrackingStatus> {
     _reattachTimer = null;
     _subscription?.cancel();
     _subscription = null;
+    _steps?.cancel();
+    _steps = null;
+    _latestSteps = null;
   }
 }

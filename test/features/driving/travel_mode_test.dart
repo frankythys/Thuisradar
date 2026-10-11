@@ -126,4 +126,27 @@ void main() {
     expect(report.durationOf(TravelMode.walk).inMinutes, inInclusiveRange(13, 16));
     expect(report.topSpeed, isNull);
   });
+
+  test('een wandeling krijgt de stappen van de teller', () {
+    var counter = 30000;
+    final points = [
+      for (final point in walkDay())
+        TrackPoint(
+          latitude: point.latitude,
+          longitude: point.longitude,
+          recordedAt: point.recordedAt,
+          speedMps: point.speedMps,
+          // 8 stappen per meting van 5 s tijdens het wandelen (±1.380 in totaal).
+          steps: (point.speedMps ?? 0) > 0 ? counter += 8 : counter,
+        ),
+    ];
+    final walk = buildDayActivities(
+      buildTimeline(points),
+      points,
+    ).singleWhere((a) => a.kind == DrivingActivityKind.trip);
+    expect(walk.steps, inInclusiveRange(1300, 1400));
+    final report = buildDrivingReport(points, DateTime(2026, 10, 5));
+    expect(report.stepsOf(TravelMode.walk), walk.steps);
+    expect(report.stepsOf(TravelMode.car), isNull);
+  });
 }

@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/track_point.dart';
+import 'location_repository.dart' show isMissingStepsColumn;
 
 class LocationHistoryRepository {
   LocationHistoryRepository(this._client, {this.pageTimeout = const Duration(seconds: 10)});
@@ -12,6 +13,12 @@ class LocationHistoryRepository {
   /// langer duren zonder dat één trage aanvraag eindeloos blijft hangen.
   final Duration pageTimeout;
 
+  static const _columns = 'lat, lng, speed_mps, battery, steps, recorded_at';
+  static const _columnsWithoutSteps = 'lat, lng, speed_mps, battery, recorded_at';
+
+  /// Zonder migratie 019 bestaat `steps` niet; dan zonder stappen ophalen.
+  bool _withoutSteps = false;
+
   /// Alle geschiedenispunten van [userId] op de kalenderdag van [day].
   Future<List<TrackPoint>> fetchDay(String userId, DateTime day) async {
     final (start, end) = dayBounds(day);
@@ -19,12 +26,23 @@ class LocationHistoryRepository {
   }
 
   Future<List<TrackPoint>> fetchRange(String userId, DateTime start, DateTime end) async {
+    if (_withoutSteps) return _fetchRange(userId, start, end, _columnsWithoutSteps);
+    try {
+      return await _fetchRange(userId, start, end, _columns);
+    } on PostgrestException catch (error) {
+      if (!isMissingStepsColumn(error)) rethrow;
+      _withoutSteps = true;
+      return _fetchRange(userId, start, end, _columnsWithoutSteps);
+    }
+  }
+
+  Future<List<TrackPoint>> _fetchRange(String userId, DateTime start, DateTime end, String columns) async {
     final points = <TrackPoint>[];
     const pageSize = 1000;
     for (var offset = 0; ; offset += pageSize) {
       final rows = await _client
           .from('location_history')
-          .select('lat, lng, speed_mps, battery, recorded_at')
+          .select(columns)
           .eq('user_id', userId)
           .gte('recorded_at', start.toUtc().toIso8601String())
           .lt('recorded_at', end.toUtc().toIso8601String())

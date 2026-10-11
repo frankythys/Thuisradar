@@ -9,6 +9,7 @@ import 'package:thuisradar/features/location/application/tracking_status.dart';
 import 'package:thuisradar/features/location/data/battery_source.dart';
 import 'package:thuisradar/features/location/data/device_location_source.dart';
 import 'package:thuisradar/features/location/data/location_repository.dart';
+import 'package:thuisradar/features/location/data/step_source.dart';
 import 'package:thuisradar/features/location/domain/device_reading.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 
@@ -17,6 +18,8 @@ class _MockDevice extends Mock implements DeviceLocationSource {}
 class _MockBattery extends Mock implements BatterySource {}
 
 class _MockRepository extends Mock implements LocationRepository {}
+
+class _MockSteps extends Mock implements StepSource {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -82,6 +85,47 @@ void main() {
     expect(uploaded.latitude, 50.85);
     expect(uploaded.battery, 64);
     expect(container.read(locationTrackerProvider), TrackingStatus.active);
+  });
+
+  test('met toestemming gaat de stand van de stappenteller mee', () async {
+    final steps = _MockSteps();
+    final counts = StreamController<int>();
+    addTearDown(() => unawaited(counts.close()));
+    when(() => steps.hasAccess()).thenAnswer((_) async => true);
+    when(() => steps.counts()).thenAnswer((_) => counts.stream);
+    container = ProviderContainer(
+      overrides: [
+        deviceLocationSourceProvider.overrideWithValue(device),
+        batterySourceProvider.overrideWithValue(battery),
+        locationRepositoryProvider.overrideWithValue(repository),
+        stepSourceProvider.overrideWithValue(steps),
+      ],
+    );
+    addTearDown(container.dispose);
+    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+    when(() => repository.upload(any())).thenAnswer((_) async {});
+
+    await start();
+    await pumpEventQueue();
+    counts.add(4312);
+    await pumpEventQueue();
+    positions.add(position);
+    await pumpEventQueue();
+
+    final uploaded = verify(() => repository.upload(captureAny())).captured.single as MemberLocation;
+    expect(uploaded.steps, 4312);
+    expect(uploaded.toJson()['steps'], 4312);
+  });
+
+  test('zonder stappenteller blijft de kolom weg uit de upload', () {
+    final location = MemberLocation(
+      userId: 'u1',
+      familyId: 'f1',
+      latitude: 51,
+      longitude: 4,
+      updatedAt: DateTime(2026),
+    );
+    expect(location.toJson().containsKey('steps'), isFalse);
   });
 
   test('mislukte upload zet de status op offline en blijft volgen', () async {

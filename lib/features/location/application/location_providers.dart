@@ -7,6 +7,7 @@ import '../../../core/utils/resync_signal.dart';
 import '../data/battery_source.dart';
 import '../data/device_location_source.dart';
 import '../data/location_repository.dart';
+import '../data/step_source.dart';
 import '../domain/member_location.dart';
 import 'location_tracker.dart';
 import 'tracking_status.dart';
@@ -14,6 +15,14 @@ import 'tracking_status.dart';
 final deviceLocationSourceProvider = Provider<DeviceLocationSource>((ref) => DeviceLocationSource());
 
 final batterySourceProvider = Provider<BatterySource>((ref) => BatterySource());
+
+final stepSourceProvider = Provider<StepSource>((ref) => StepSource());
+
+/// Mag dit toestel de stappenteller lezen? Opnieuw lezen (invalidate) na het
+/// vragen van de toestemming.
+final stepAccessProvider = FutureProvider.autoDispose<bool>(
+  (ref) => ref.watch(stepSourceProvider).hasAccess(),
+);
 
 final locationRepositoryProvider = Provider<LocationRepository>(
   (ref) => LocationRepository(ref.watch(supabaseClientProvider)),

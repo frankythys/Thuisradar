@@ -140,6 +140,7 @@ class _TripBody extends StatelessWidget {
             text: [
               drivingDuration(activity.duration),
               if (activity.averageKmh case final kmh?) 'gem. ${drivingNumber(kmh)} km/u',
+              if (activity.steps case final steps? when steps > 0) drivingSteps(steps),
             ].join(' · '),
           ),
         ] else if (topSpeed case final speed?) ...[

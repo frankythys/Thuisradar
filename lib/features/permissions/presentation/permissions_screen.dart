@@ -10,7 +10,8 @@ import '../application/permissions_providers.dart';
 part 'permissions_screen_permission_card.dart';
 part 'permissions_screen_required_badge.dart';
 
-/// Scherm 10: vraagt locatie (vereist), meldingen en batterij-uitzondering.
+/// Scherm 10: vraagt locatie (vereist), meldingen, batterij-uitzondering en
+/// de stappenteller.
 /// Weigeren mag: de app gaat gewoon door en legt uit hoe je het later aanzet.
 class PermissionsScreen extends ConsumerStatefulWidget {
   const PermissionsScreen({super.key});
@@ -22,6 +23,7 @@ class PermissionsScreen extends ConsumerStatefulWidget {
 class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
   bool _wantNotifications = true;
   bool _wantBattery = true;
+  bool _wantSteps = true;
   bool _busy = false;
 
   void _finish() {
@@ -36,6 +38,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
     final locationGranted = await service.requestLocation();
     if (_wantNotifications) await service.requestNotifications();
     if (_wantBattery) await service.requestBatteryExemption();
+    if (_wantSteps) await service.requestSteps();
 
     if (!mounted) return;
     if (!locationGranted) {
@@ -107,6 +110,17 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
                 trailing: Switch(
                   value: _wantBattery,
                   onChanged: _busy ? null : (v) => setState(() => _wantBattery = v),
+                ),
+              ),
+              SizedBox(height: tokens.spaceMd),
+              _PermissionCard(
+                icon: Icons.directions_walk,
+                title: 'Stappen tellen',
+                subtitle: 'Voor je stappen bij een wandeling',
+                note: 'Android noemt dit "Fysieke activiteit".',
+                trailing: Switch(
+                  value: _wantSteps,
+                  onChanged: _busy ? null : (v) => setState(() => _wantSteps = v),
                 ),
               ),
               const SizedBox(height: 20),

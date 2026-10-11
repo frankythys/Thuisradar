@@ -3,15 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/location/data/device_location_source.dart';
+import 'package:thuisradar/features/location/data/step_source.dart';
 import 'package:thuisradar/features/permissions/application/permission_service.dart';
 import 'package:thuisradar/features/permissions/application/permissions_providers.dart';
 import 'package:thuisradar/features/permissions/presentation/permissions_screen.dart';
 
 class _FakePermissionService extends PermissionService {
-  _FakePermissionService({required this.locationGranted}) : super(DeviceLocationSource());
+  _FakePermissionService({required this.locationGranted}) : super(DeviceLocationSource(), StepSource());
 
   final bool locationGranted;
   bool locationRequested = false;
+  bool stepsRequested = false;
 
   @override
   Future<bool> requestLocation() async {
@@ -24,6 +26,12 @@ class _FakePermissionService extends PermissionService {
 
   @override
   Future<bool> requestBatteryExemption() async => true;
+
+  @override
+  Future<bool> requestSteps() async {
+    stepsRequested = true;
+    return true;
+  }
 
   @override
   Future<void> openSettings() async {}
@@ -66,6 +74,7 @@ void main() {
 
     expect(find.text('Toestemmingen voor gemoedsrust'), findsNothing);
     expect(service.locationRequested, isFalse);
+    expect(service.stepsRequested, isFalse);
   });
 
   testWidgets('Toestaan vraagt locatie en sluit daarna af', (tester) async {
@@ -77,6 +86,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(service.locationRequested, isTrue);
+    expect(service.stepsRequested, isTrue);
     expect(find.text('Toestemmingen voor gemoedsrust'), findsNothing);
   });
 

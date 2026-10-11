@@ -14,6 +14,7 @@ import '../domain/driving_report.dart';
 import 'driving_member_screen.dart';
 import 'driving_summary.dart';
 import 'driving_week_picker.dart';
+import 'steps_opt_in_card.dart';
 import 'travel_mode_filter.dart';
 
 /// Weekoverzicht van de verplaatsingen: week en vervoermiddel kiezen, drie
@@ -73,6 +74,7 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: EdgeInsets.all(tokens.spaceMd),
                   children: [
+                    if (_mode == TravelMode.walk) const StepsOptInCard(),
                     DrivingSummary(reports: data, mode: _mode),
                     SizedBox(height: tokens.spaceLg),
                     Text('PER GEZINSLID', style: text.labelSmall?.copyWith(color: AppColors.muted)),

@@ -8,6 +8,13 @@ import '../application/driving_providers.dart';
 import '../../../core/utils/calendar.dart';
 
 String drivingNumber(double value) => value.toStringAsFixed(1).replaceAll('.', ',');
+
+/// "4.512" — duizendtallen met een punt, zoals in Vlaanderen.
+String drivingCount(int value) =>
+    value.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+
+/// "4.512 stappen" of "1 stap".
+String drivingSteps(int steps) => '${drivingCount(steps)} ${steps == 1 ? 'stap' : 'stappen'}';
 String drivingDate(DateTime date) => '${date.day}/${date.month}';
 String drivingTime(DateTime date) =>
     '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
@@ -59,7 +66,10 @@ class DrivingSummary extends StatelessWidget {
     final (String, String) third = switch (mode) {
       TravelMode.car => _fastest(),
       TravelMode.bike => (hours <= 0 ? '—' : '${(km / hours).round()}', 'km/u gemiddeld'),
-      TravelMode.walk => (_hours(duration), 'gewandeld'),
+      TravelMode.walk => switch (reports.map((r) => r.report.stepsOf(mode)).nonNulls.toList()) {
+        final known when known.isNotEmpty => (drivingCount(known.fold(0, (a, b) => a + b)), 'stappen'),
+        _ => (_hours(duration), 'gewandeld'),
+      },
       null => (_hours(duration), 'onderweg'),
     };
     final countLabel = switch (mode) {

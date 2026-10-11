@@ -14,6 +14,7 @@ class DrivingTrip {
     required this.kilometers,
     required this.topSpeed,
     this.mode = TravelMode.car,
+    this.steps,
   });
 
   final DateTime start;
@@ -24,6 +25,9 @@ class DrivingTrip {
   /// GPS geen snelheid gaf).
   final double topSpeed;
   final TravelMode mode;
+
+  /// Gezette stappen (enkel bij een wandeling, als het toestel ze meegaf).
+  final int? steps;
 
   Duration get duration => end.difference(start);
 }
@@ -59,6 +63,13 @@ class DrivingReport {
   double? topSpeedOf(TravelMode? mode) {
     final trips = of(mode);
     return trips.isEmpty ? null : trips.map((trip) => trip.topSpeed).reduce((a, b) => a > b ? a : b);
+  }
+
+  /// Alle gekende stappen van de verplaatsingen met [mode]; null als geen
+  /// enkele verplaatsing stappen had.
+  int? stepsOf(TravelMode? mode) {
+    final known = [for (final trip in of(mode)) ?trip.steps];
+    return known.isEmpty ? null : known.fold<int>(0, (sum, steps) => sum + steps);
   }
 
   /// Gemiddelde snelheid in km/u over alle verplaatsingen met [mode].
@@ -120,6 +131,7 @@ DrivingReport buildDrivingReport(List<TrackPoint> points, DateTime week) {
           kilometers: meters / 1000,
           topSpeed: speeds.isEmpty ? meters / seconds * 3.6 : speeds.reduce((a, b) => a > b ? a : b),
           mode: move.mode,
+          steps: move.steps,
         ),
       );
     }

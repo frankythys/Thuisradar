@@ -10,6 +10,7 @@ class MemberLocation {
     this.speedMps,
     this.battery,
     this.isCharging,
+    this.steps,
   });
 
   factory MemberLocation.fromJson(Map<String, dynamic> json) => MemberLocation(
@@ -21,6 +22,7 @@ class MemberLocation {
     speedMps: (json['speed_mps'] as num?)?.toDouble(),
     battery: json['battery'] as int?,
     isCharging: json['is_charging'] as bool?,
+    steps: (json['steps'] as num?)?.toInt(),
     updatedAt: DateTime.parse(json['updated_at'] as String).toLocal(),
   );
 
@@ -32,6 +34,10 @@ class MemberLocation {
   final double? speedMps;
   final int? battery;
   final bool? isCharging;
+
+  /// Stand van de stappenteller van het toestel; null zonder stappenteller of
+  /// toestemming.
+  final int? steps;
   final DateTime updatedAt;
 
   /// Nieuwe locatie met een andere positie; overige velden blijven gelijk.
@@ -44,6 +50,7 @@ class MemberLocation {
     speedMps: speedMps,
     battery: battery,
     isCharging: isCharging,
+    steps: steps,
     updatedAt: updatedAt,
   );
 
@@ -56,6 +63,9 @@ class MemberLocation {
     'speed_mps': speedMps,
     'battery': battery,
     'is_charging': isCharging,
+    // Enkel meesturen als er stappen zijn: zo blijft uploaden werken tegen een
+    // database zonder migratie 019.
+    'steps': ?steps,
     'updated_at': updatedAt.toUtc().toIso8601String(),
   };
 }
