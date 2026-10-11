@@ -105,6 +105,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
   }
 
+  /// Beheerder: het beheer overdragen. Er blijft één beheerder; jij wordt
+  /// gewoon gezinslid (migratie 018).
+  Future<void> _makeOwner(FamilyMember member) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('${member.displayName} beheerder maken?'),
+        content: Text(
+          'Jij wordt dan gewoon gezinslid. ${member.displayName} kan daarna codes vernieuwen, '
+          'leden verwijderen (ook jou) en het beheer weer overdragen.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Beheerder maken')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await ref.read(familyRepositoryProvider).transferOwnership(widget.family.id, member.userId);
+      // De ledenlijst ververst via realtime; meteen opnieuw laden voor de
+      // zekerheid, zodat de beheerknoppen meteen verdwijnen.
+      ref.invalidate(familyMembersProvider(widget.family.id));
+      if (mounted) _snack('${member.displayName} is nu beheerder.');
+    } on Exception catch (error) {
+      debugPrint('Beheer overdragen mislukt: $error');
+      if (mounted) _snack('Beheer overdragen is niet gelukt. Probeer opnieuw.');
+    }
+  }
+
   /// Beheerder: iemand uit het gezin halen. Op de server verdwijnt die ook
   /// van de kaart en krijgt het gezin een nieuwe code (migratie 017).
   Future<void> _removeMember(FamilyMember member) async {
@@ -241,6 +271,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   context,
                   family: invite,
                   members: members,
+                  onMakeOwner: me?.isOwner == true ? _makeOwner : null,
                   onRemove: me?.isOwner == true ? _removeMember : null,
                   onInvite: () =>
                       Navigator.of(context)

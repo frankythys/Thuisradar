@@ -38,6 +38,7 @@ void main() {
       return invite;
     });
     when(() => repo.removeMember('fam', 'liam')).thenAnswer((_) async {});
+    when(() => repo.transferOwnership('fam', 'liam')).thenAnswer((_) async {});
     tester.view.physicalSize = const Size(1080, 2240);
     tester.view.devicePixelRatio = 2.625;
     addTearDown(tester.view.reset);
@@ -70,9 +71,11 @@ void main() {
   testWidgets('de beheerder verwijdert een lid na bevestiging', (tester) async {
     final repo = await pump(tester, me: 'papa');
 
-    // De beheerder zelf heeft geen verwijderknop, Liam wel.
-    expect(find.byTooltip('Papa verwijderen'), findsNothing);
-    await tester.tap(find.byTooltip('Liam verwijderen'));
+    // De beheerder zelf heeft geen menu, Liam wel.
+    expect(find.byTooltip('Opties voor Papa'), findsNothing);
+    await tester.tap(find.byTooltip('Opties voor Liam'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Verwijderen uit gezin'));
     await tester.pumpAndSettle();
     expect(find.text('Liam verwijderen?'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Verwijderen'));
@@ -85,7 +88,9 @@ void main() {
   testWidgets('annuleren verwijdert niemand', (tester) async {
     final repo = await pump(tester, me: 'papa');
 
-    await tester.tap(find.byTooltip('Liam verwijderen'));
+    await tester.tap(find.byTooltip('Opties voor Liam'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Verwijderen uit gezin'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Annuleren'));
     await tester.pumpAndSettle();
@@ -96,8 +101,8 @@ void main() {
   testWidgets('een gewoon lid kan niemand verwijderen', (tester) async {
     await pump(tester, me: 'liam');
 
-    expect(find.byTooltip('Papa verwijderen'), findsNothing);
-    expect(find.byTooltip('Liam verwijderen'), findsNothing);
+    expect(find.byTooltip('Opties voor Papa'), findsNothing);
+    expect(find.byTooltip('Opties voor Liam'), findsNothing);
   });
 
   testWidgets('Profiel › Gezin: de beheerder ziet de geldigheid en maakt een nieuwe code', (tester) async {
@@ -121,5 +126,21 @@ void main() {
 
     expect(find.text('K7Q2M9XA'), findsOneWidget);
     expect(find.text('Nieuwe code maken'), findsNothing);
+  });
+
+  testWidgets('de beheerder draagt het beheer over na bevestiging', (tester) async {
+    final repo = await pump(tester, me: 'papa');
+
+    await tester.tap(find.byTooltip('Opties voor Liam'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Beheerder maken'));
+    await tester.pumpAndSettle();
+    expect(find.text('Liam beheerder maken?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Beheerder maken'));
+    await tester.pumpAndSettle();
+
+    verify(() => repo.transferOwnership('fam', 'liam')).called(1);
+    verifyNever(() => repo.removeMember(any(), any()));
+    expect(find.text('Liam is nu beheerder.'), findsOneWidget);
   });
 }

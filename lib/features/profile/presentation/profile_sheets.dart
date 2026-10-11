@@ -36,13 +36,14 @@ Future<void> _sheet(BuildContext context, String title, Widget child) {
 
 /// Gezin: uitnodigingscode (kopiëren, geldigheid, voor de beheerder "Nieuwe
 /// code maken"), de leden en "iemand uitnodigen".
-/// Met [onRemove] (enkel voor de beheerder) krijgt elk ander lid een knop om
-/// het uit het gezin te verwijderen.
+/// Voor de beheerder ([onMakeOwner] en [onRemove]) krijgt elk ander lid een
+/// menu: beheerder maken of uit het gezin verwijderen.
 Future<void> showFamilySheet(
   BuildContext context, {
   required Family family,
   required List<FamilyMember> members,
   required VoidCallback onInvite,
+  void Function(FamilyMember member)? onMakeOwner,
   void Function(FamilyMember member)? onRemove,
 }) {
   final tokens = context.tokens;
@@ -61,15 +62,35 @@ Future<void> showFamilySheet(
             leading: MemberAvatar(member: member, size: 36),
             title: Text(member.displayName),
             subtitle: Text(member.isOwner ? 'Beheerder' : 'Gezinslid'),
-            trailing: onRemove == null || member.isOwner
+            trailing: (onRemove == null && onMakeOwner == null) || member.isOwner
                 ? null
-                : IconButton(
-                    tooltip: '${member.displayName} verwijderen',
-                    icon: const Icon(Icons.person_remove_outlined, color: AppColors.alert),
-                    onPressed: () {
+                : PopupMenuButton<void Function(FamilyMember)>(
+                    tooltip: 'Opties voor ${member.displayName}',
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (action) {
                       Navigator.pop(context);
-                      onRemove(member);
+                      action(member);
                     },
+                    itemBuilder: (context) => [
+                      if (onMakeOwner != null)
+                        PopupMenuItem(
+                          value: onMakeOwner,
+                          child: const ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(Icons.admin_panel_settings_outlined),
+                            title: Text('Beheerder maken'),
+                          ),
+                        ),
+                      if (onRemove != null)
+                        PopupMenuItem(
+                          value: onRemove,
+                          child: const ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(Icons.person_remove_outlined, color: AppColors.alert),
+                            title: Text('Verwijderen uit gezin'),
+                          ),
+                        ),
+                    ],
                   ),
           ),
         SizedBox(height: tokens.spaceSm),
