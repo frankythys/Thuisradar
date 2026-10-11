@@ -44,7 +44,8 @@ import '../../places/domain/place_timeline.dart';
 import '../../places/domain/save_as_place.dart';
 import '../../places/presentation/add_place_screen.dart';
 import '../../places/presentation/place_icons.dart';
-import '../../driving/domain/driving_activity.dart';
+import '../../driving/application/driving_providers.dart';
+import '../../driving/domain/day_driving.dart';
 import '../../driving/presentation/driving_activity_card.dart';
 
 part 'member_detail_screen_header.dart';
@@ -95,11 +96,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   /// provider-sleutel stabiel blijft tussen rebuilds (anders: oneindig laden).
   DateTime get _selectedDay {
     final now = ref.read(clockProvider).value ?? DateTime.now();
-    return DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).subtract(Duration(days: _dayOffset));
+    return DateTime(now.year, now.month, now.day).subtract(Duration(days: _dayOffset));
   }
 
   /// De live locatie uit de realtime-stroom; valt terug op de meegegeven
@@ -143,12 +140,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
       unawaited(ref.read(locationTrackerProvider.notifier).refreshNow());
     }
     ref.invalidate(dayHistoryProvider(query));
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      const SnackBar(
-        content: Text('Locatie wordt ververst…'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    ScaffoldMessenger.maybeOf(
+      context,
+    )?.showSnackBar(const SnackBar(content: Text('Locatie wordt ververst…'), duration: Duration(seconds: 2)));
   }
 
   @override
@@ -164,18 +158,22 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     final timeline = recent
         ? ref.watch(recentTimelineProvider(widget.member.userId))
         : dayHistory!.whenData((history) => history.entries);
-    final routePoints = dayHistory?.value?.points ?? const <TrackPoint>[];
+    // Ritten en hun sporen komen kant-en-klaar uit de provider: de klok tikt
+    // elke 5 s en mag die berekening niet telkens opnieuw laten doen.
+    final driving = recent
+        ? null
+        : ref.watch(
+            dayDrivingProvider((familyId: widget.familyId, userId: widget.member.userId, day: _selectedDay)),
+          );
     // Enkel de ritten (geen rondlopen in de winkel of thuis), en per rit enkel
     // betrouwbare stukken: geen sprongen en geen lijnen over meetgaten.
     final routeSegments = [
-      for (final trip in dayRoutes(dayHistory?.value?.entries ?? const [], routePoints))
+      for (final trip in driving?.value?.routes ?? const <List<TrackPoint>>[])
         for (final segment in routeMapSegments(trip))
           [for (final point in segment) LatLng(point.latitude, point.longitude)],
     ];
 
-    final places =
-        ref.watch(familyPlacesProvider(widget.familyId)).value ??
-        const <Place>[];
+    final places = ref.watch(familyPlacesProvider(widget.familyId)).value ?? const <Place>[];
     final body = <Widget>[
       if (_dayOffset == 0 && location != null) ...[
         _CurrentStayCard(
@@ -189,10 +187,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   MaterialPageRoute<void>(
                     builder: (_) => AddPlaceScreen(
                       familyId: widget.familyId,
-                      initialLocation: LatLng(
-                        location.latitude,
-                        location.longitude,
-                      ),
+                      initialLocation: LatLng(location.latitude, location.longitude),
                     ),
                   ),
                 )
@@ -200,16 +195,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         ),
         const SizedBox(height: 16),
       ],
-      _Stats(
-        location: location,
-        timeline: timeline.value ?? const [],
-        now: now,
-      ),
+      _Stats(location: location, timeline: timeline.value ?? const [], now: now),
       const SizedBox(height: 16),
-      _DayChips(
-        selected: _dayOffset,
-        onSelected: (i) => setState(() => _dayOffset = i),
-      ),
+      _DayChips(selected: _dayOffset, onSelected: (i) => setState(() => _dayOffset = i)),
       const SizedBox(height: 16),
       if (location != null) ...[
         AppCard(
@@ -244,28 +232,17 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.location_on_outlined,
-                    size: 18,
-                    color: AppColors.primary,
-                  ),
+                  const Icon(Icons.location_on_outlined, size: 18, color: AppColors.primary),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       ref
                           .watch(
-                            placeAddressProvider(
-                              snapToAddressGrid(
-                                location.latitude,
-                                location.longitude,
-                              ),
-                            ),
+                            placeAddressProvider(snapToAddressGrid(location.latitude, location.longitude)),
                           )
                           .when(
                             data: (address) =>
-                                address == null || address.isEmpty
-                                ? 'Adres niet beschikbaar'
-                                : address.label,
+                                address == null || address.isEmpty ? 'Adres niet beschikbaar' : address.label,
                             loading: () => 'Adres ophalen…',
                             error: (_, _) => 'Adres niet beschikbaar',
                           ),
@@ -280,22 +257,19 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         const SizedBox(height: 20),
       ],
       Text(
-        _dayOffset == 2
-            ? 'Locatiegeschiedenis · 30 dagen'
-            : 'Locatiegeschiedenis',
+        _dayOffset == 2 ? 'Locatiegeschiedenis · 30 dagen' : 'Locatiegeschiedenis',
         style: Theme.of(context).textTheme.titleLarge,
       ),
       SizedBox(height: tokens.spaceSm),
-      if (dayHistory?.value case final history?)
-        _DayActivities(
-          history: history,
+      if (driving?.value case final day?)
+        ..._dayActivities(
+          context,
+          day: day,
           places: places,
           onSaveAsPlace: (latitude, longitude) => Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => AddPlaceScreen(
-                familyId: widget.familyId,
-                initialLocation: LatLng(latitude, longitude),
-              ),
+              builder: (_) =>
+                  AddPlaceScreen(familyId: widget.familyId, initialLocation: LatLng(latitude, longitude)),
             ),
           ),
         )
@@ -304,8 +278,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           data: (entries) => _Timeline(
             entries: attachPlaceNames(
               entries,
-              ref.watch(familyPlacesProvider(widget.familyId)).value ??
-                  const [],
+              ref.watch(familyPlacesProvider(widget.familyId)).value ?? const [],
             ),
             onSaveAsPlace: (entry) => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -323,17 +296,14 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
           error: (e, _) => ErrorView(
             message: 'Geschiedenis laden mislukt.\n$e',
             onRetry: () => ref.invalidate(
-              recent
-                  ? recentTimelineProvider(widget.member.userId)
-                  : dayHistoryProvider(query),
+              recent ? recentTimelineProvider(widget.member.userId) : dayHistoryProvider(query),
             ),
           ),
         ),
       if (location != null) ...[
         const SizedBox(height: 20),
         FilledButton.icon(
-          onPressed: () =>
-              openDirections(context, location.latitude, location.longitude),
+          onPressed: () => openDirections(context, location.latitude, location.longitude),
           icon: const Icon(Icons.navigation_outlined, size: 20),
           label: Text('Routebeschrijving naar ${widget.member.displayName}'),
         ),
@@ -347,12 +317,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
             onPressed: () async {
               final family = await ref.read(myFamilyProvider.future);
               if (family != null && context.mounted) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => ChatScreen(family: family),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute<void>(builder: (_) => ChatScreen(family: family)));
               }
             },
             icon: const Icon(Icons.chat_bubble_outline, size: 16),
@@ -369,9 +334,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
               if (family != null && context.mounted) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => ProfileScreen(family: family),
-                  ),
+                  MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: family)),
                 );
               }
             },
@@ -386,12 +349,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
       controller: widget.scrollController,
       padding: widget.scrollController == null
           ? EdgeInsets.all(tokens.spaceLg)
-          : EdgeInsets.fromLTRB(
-              tokens.spaceLg,
-              tokens.spaceSm,
-              tokens.spaceLg,
-              tokens.spaceLg,
-            ),
+          : EdgeInsets.fromLTRB(tokens.spaceLg, tokens.spaceSm, tokens.spaceLg, tokens.spaceLg),
       children: body,
     );
     if (widget.scrollController != null) {
@@ -401,9 +359,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.onBack != null) ...[
-            const Center(
-              child: SizedBox(width: 36, child: Divider(thickness: 4)),
-            ),
+            const Center(child: SizedBox(width: 36, child: Divider(thickness: 4))),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -414,12 +370,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
             ),
           ],
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              tokens.spaceLg,
-              0,
-              tokens.spaceLg,
-              tokens.spaceSm,
-            ),
+            padding: EdgeInsets.fromLTRB(tokens.spaceLg, 0, tokens.spaceLg, tokens.spaceSm),
             child: _Header(member: widget.member, location: location),
           ),
         ],
@@ -427,10 +378,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
       final fixed = GestureDetector(
         behavior: HitTestBehavior.opaque,
         onVerticalDragStart: (details) {
-          _headerDrag = widget.scrollController!.position.drag(
-            details,
-            () => _headerDrag = null,
-          );
+          _headerDrag = widget.scrollController!.position.drag(details, () => _headerDrag = null);
         },
         onVerticalDragUpdate: (details) => _headerDrag?.update(details),
         onVerticalDragEnd: (details) => _headerDrag?.end(details),

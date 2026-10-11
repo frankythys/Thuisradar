@@ -7,11 +7,9 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../family/domain/family_member.dart';
 import '../../location/application/location_history_providers.dart';
-import '../../location/domain/track_point.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
-import '../../places/domain/place_timeline.dart';
-import '../domain/driving_activity.dart';
+import '../application/driving_providers.dart';
 import 'driving_activity_card.dart';
 import 'driving_summary.dart';
 
@@ -31,36 +29,58 @@ class DrivingMemberScreen extends ConsumerWidget {
     final tokens = context.tokens;
     final places = ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
     final now = ref.watch(clockProvider).value ?? DateTime.now();
-    final days = [for (var i = 0; i < 7; i++) DateTime(week.year, week.month, week.day + i)];
+    final today = DateTime(now.year, now.month, now.day);
+    // Dagen in de toekomst hebben nog geen geschiedenis: niet ophalen.
+    final days = [
+      for (var i = 0; i < 7; i++)
+        if (!DateTime(week.year, week.month, week.day + i).isAfter(today))
+          DateTime(week.year, week.month, week.day + i),
+    ];
 
-    final sections = <Widget>[];
+    // Platte lijst: de ListView bouwt zo enkel de zichtbare ritkaarten op,
+    // niet alle kaarten van een hele week tegelijk.
+    final items = <Widget>[];
     var loading = false;
     var failed = false;
     for (final day in days.reversed) {
-      final async = ref.watch(dayHistoryProvider((userId: member.userId, day: day)));
+      final async = ref.watch(dayDrivingProvider((familyId: familyId, userId: member.userId, day: day)));
       loading = loading || async.isLoading;
       failed = failed || async.hasError;
-      final history = async.value;
-      if (history == null) continue;
-      final activities = buildDayActivities(attachPlaceNames(history.entries, places), history.points);
-      if (activities.isEmpty) continue;
-      sections.add(
-        _DaySection(day: day, activities: activities, points: history.points, places: places, now: now),
+      final driving = async.value;
+      if (driving == null || driving.activities.isEmpty) continue;
+      items.add(
+        Padding(
+          padding: EdgeInsets.only(top: items.isEmpty ? 0 : tokens.spaceMd, bottom: tokens.spaceSm),
+          child: Text(drivingDayLabel(day, now: now), style: Theme.of(context).textTheme.titleLarge),
+        ),
       );
+      for (var index = driving.activities.length - 1; index >= 0; index--) {
+        items.add(
+          Padding(
+            padding: EdgeInsets.only(bottom: tokens.spaceSm),
+            child: DrivingActivityCard(
+              activity: driving.activities[index],
+              places: places,
+              route: driving.trackAt(index),
+            ),
+          ),
+        );
+      }
     }
 
     final Widget body;
-    if (sections.isNotEmpty) {
-      body = ListView(
+    if (items.isNotEmpty) {
+      final header = Padding(
+        padding: EdgeInsets.only(bottom: tokens.spaceMd),
+        child: Text(
+          '${drivingDate(week)} – ${drivingDate(DateTime(week.year, week.month, week.day + 6))}',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      );
+      body = ListView.builder(
         padding: EdgeInsets.all(tokens.spaceMd),
-        children: [
-          Text(
-            '${drivingDate(days.first)} – ${drivingDate(days.last)}',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          SizedBox(height: tokens.spaceMd),
-          ...sections,
-        ],
+        itemCount: items.length + 1,
+        itemBuilder: (context, index) => index == 0 ? header : items[index - 1],
       );
     } else if (loading) {
       body = const Center(child: CircularProgressIndicator());
@@ -80,44 +100,6 @@ class DrivingMemberScreen extends ConsumerWidget {
     return Scaffold(
       appBar: BrandedAppBar(title: member.displayName),
       body: body,
-    );
-  }
-}
-
-/// Eén dag: de dagtitel en de activiteiten (nieuwste eerst, zoals in het
-/// voorbeeld). Elke rit krijgt zijn eigen kaart, ingezoomd op die rit.
-class _DaySection extends StatelessWidget {
-  const _DaySection({
-    required this.day,
-    required this.activities,
-    required this.points,
-    required this.places,
-    required this.now,
-  });
-
-  final DateTime day;
-  final List<DrivingActivity> activities;
-
-  /// Alle ruwe GPS-punten van de dag: elke rit neemt er zijn eigen stuk uit.
-  final List<TrackPoint> points;
-  final List<Place> places;
-  final DateTime now;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(drivingDayLabel(day, now: now), style: text.titleLarge),
-        SizedBox(height: tokens.spaceSm),
-        for (final activity in activities.reversed) ...[
-          DrivingActivityCard(activity: activity, places: places, route: activityTrack(activity, points)),
-          SizedBox(height: tokens.spaceSm),
-        ],
-        SizedBox(height: tokens.spaceMd),
-      ],
     );
   }
 }

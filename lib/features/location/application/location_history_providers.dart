@@ -16,33 +16,18 @@ final locationHistoryRepositoryProvider = Provider<LocationHistoryRepository>(
 
 typedef HistoryQuery = ({String userId, DateTime day});
 
-/// Hoe lang we maximaal op de geschiedenis wachten voor we een fout tonen.
-const _historyTimeout = Duration(seconds: 10);
-
-/// De tijdlijn (stops en verplaatsingen) van één gezinslid op één dag.
-/// Faalt of time-out → AsyncError (het scherm toont dan een foutmelding met
-/// "Opnieuw proberen"); nooit oneindig laden.
-final timelineProvider = FutureProvider.family<List<TimelineEntry>, HistoryQuery>((ref, query) async {
-  final repository = ref.watch(locationHistoryRepositoryProvider);
-  try {
-    final points = await repository.fetchDay(query.userId, query.day).timeout(_historyTimeout);
-    return buildTimeline(points);
-  } on Object catch (error, stackTrace) {
-    debugPrint('Geschiedenis laden mislukt voor ${query.userId} op ${query.day}: $error');
-    debugPrintStack(stackTrace: stackTrace);
-    rethrow;
-  }
-});
-
-/// A single bounded range query, instead of 30 independent requests.
-final recentTimelineProvider = FutureProvider.family<List<TimelineEntry>, String>((ref, userId) async {
+/// Het laatste maand-overzicht: één begrensde bereikquery i.p.v. 30 losse.
+/// Opgeruimd zodra niemand meer kijkt: een maand ruwe punten is groot.
+final recentTimelineProvider = FutureProvider.autoDispose.family<List<TimelineEntry>, String>((
+  ref,
+  userId,
+) async {
   final now = DateTime.now();
   final end = DateTime(now.year, now.month, now.day + 1);
   final points = await ref
       .watch(locationHistoryRepositoryProvider)
-      .fetchRange(userId, end.subtract(const Duration(days: 30)), end)
-      .timeout(_historyTimeout);
-  return buildTimeline(points);
+      .fetchRange(userId, DateTime(now.year, now.month, now.day - 29), end);
+  return buildTimeline(withoutSpikes(points));
 });
 
 /// De tijdlijn én het ruwe routespoor van één dag, in één keer opgehaald.
@@ -55,12 +40,24 @@ typedef DayHistory = ({List<TimelineEntry> entries, List<TrackPoint> points});
 /// vorige gegevens zichtbaar tijdens het herladen).
 const _todayRefresh = Duration(minutes: 1);
 
-final dayHistoryProvider = FutureProvider.family<DayHistory, HistoryQuery>((ref, query) async {
+/// Een afgelopen dag verandert niet meer: zo lang blijft hij na het sluiten
+/// van het scherm bewaard, zodat heen en weer wisselen niet opnieuw laadt.
+const _pastDayCache = Duration(minutes: 5);
+
+/// autoDispose: zonder kijkers stopt het verversen van vandaag. Anders bleef
+/// elk ooit geopend gezinslid elke minuut zijn hele dag downloaden.
+final dayHistoryProvider = FutureProvider.autoDispose.family<DayHistory, HistoryQuery>((ref, query) async {
   final repository = ref.watch(locationHistoryRepositoryProvider);
   // Vandaag is nooit af: periodiek en bij terugkeer naar de app/Verversen
   // opnieuw ophalen, anders blijft de tijdlijn hangen op het eerste laden.
   final now = DateTime.now();
-  if (isSameDay(query.day, now)) {
+  if (!isSameDay(query.day, now)) {
+    final link = ref.keepAlive();
+    Timer? release;
+    ref.onCancel(() => release = Timer(_pastDayCache, link.close));
+    ref.onResume(() => release?.cancel());
+    ref.onDispose(() => release?.cancel());
+  } else {
     final timer = Timer(_todayRefresh, ref.invalidateSelf);
     final resync = ref.read(resyncSignalProvider).stream.listen((_) => ref.invalidateSelf());
     ref.onDispose(() {
@@ -69,9 +66,7 @@ final dayHistoryProvider = FutureProvider.family<DayHistory, HistoryQuery>((ref,
     });
   }
   try {
-    final points = withoutSpikes(
-      sortedByTime(await repository.fetchDay(query.userId, query.day).timeout(_historyTimeout)),
-    );
+    final points = withoutSpikes(sortedByTime(await repository.fetchDay(query.userId, query.day)));
     // Verblijven volgen uit de plek (clustering is tijd-onafhankelijk), zodat
     // op het werk blijven één verblijf blijft, ook al vallen er binnenshuis
     // metingen weg. Ritten komen los hiervan uit buildTripTracks (dat zelf

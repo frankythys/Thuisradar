@@ -13,6 +13,9 @@ class _FakeHistory implements LocationHistoryRepository {
   final List<TrackPoint> points;
 
   @override
+  Duration get pageTimeout => const Duration(seconds: 10);
+
+  @override
   Future<List<TrackPoint>> fetchDay(String userId, DateTime day) async => points;
 
   @override
