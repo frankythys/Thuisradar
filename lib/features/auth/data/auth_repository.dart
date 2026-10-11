@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepository {
@@ -7,9 +8,15 @@ class AuthRepository {
 
   static const _nameKey = 'display_name';
 
+  /// De sessie en elke wijziging ervan. Een fout op de auth-stroom (bv. geen
+  /// bereik op het moment dat het token automatisch ververst wordt) is geen
+  /// afmelding: die laten we vallen, zodat de app niet door een foutscherm
+  /// vervangen wordt. Gotrue probeert het verversen zelf opnieuw.
   Stream<Session?> watchSession() async* {
     yield _client.auth.currentSession;
-    yield* _client.auth.onAuthStateChange.map((state) => state.session);
+    yield* _client.auth.onAuthStateChange
+        .map((state) => state.session)
+        .handleError((Object error) => debugPrint('Sessie verversen mislukt: $error'));
   }
 
   Future<void> signIn({required String email, required String password}) {

@@ -57,6 +57,10 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
       await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => next(family)));
     } on PostgrestException catch (e) {
       if (mounted) setState(() => _error = e.message);
+    } on Exception catch (e) {
+      // Geen verbinding of time-out: zeg het, in plaats van stil niets te doen.
+      debugPrint('Gezin aanmaken/joinen mislukt: $e');
+      if (mounted) setState(() => _error = 'Geen verbinding. Controleer je internet en probeer opnieuw.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }

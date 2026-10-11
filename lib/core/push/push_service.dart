@@ -48,19 +48,24 @@ class PushService {
     _tokenRefreshSub = _messaging.onTokenRefresh.listen((t) => _save(t, userId));
   }
 
-  /// Verwijdert het token bij uitloggen.
-  Future<void> unregister() async {
+  /// Haalt het token van dit toestel weg uit `device_tokens`. Moet gebeuren
+  /// vóór het afmelden: zonder sessie filtert RLS de delete stil weg, en dan
+  /// bleef dit toestel pushes (ook SOS) van de vorige gebruiker krijgen als
+  /// `deleteToken` daarna offline mislukte.
+  Future<void> forgetServerToken() async {
     await _tokenRefreshSub?.cancel();
     _tokenRefreshSub = null;
-
-    final token = await _messaging.getToken();
-    if (token != null) {
-      try {
-        await _client.from('device_tokens').delete().eq('token', token);
-      } on Exception catch (e) {
-        debugPrint('Token verwijderen mislukt: $e');
-      }
+    try {
+      final token = await _messaging.getToken();
+      if (token != null) await _client.from('device_tokens').delete().eq('token', token);
+    } on Exception catch (e) {
+      debugPrint('Token verwijderen mislukt: $e');
     }
+  }
+
+  /// Verwijdert het token bij uitloggen.
+  Future<void> unregister() async {
+    await forgetServerToken();
     await _messaging.deleteToken();
   }
 

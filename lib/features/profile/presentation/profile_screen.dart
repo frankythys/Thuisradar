@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/push/push_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -85,9 +86,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _signOut() async {
     ref.read(locationTrackerProvider.notifier).stop();
-    // Vóór het afmelden: de toestelsleutel afmelden vraagt nog een sessie.
+    // Vóór het afmelden: de toestelsleutel en het pushtoken afmelden vraagt
+    // nog een sessie.
     await ref.read(geofenceSyncProvider.notifier).stop();
-    await ref.read(authRepositoryProvider).signOut();
+    await ref.read(pushServiceProvider).forgetServerToken();
+    try {
+      await ref.read(authRepositoryProvider).signOut();
+    } on Exception catch (error) {
+      // Offline: de lokale sessie is al weg, enkel de serveraanroep faalde.
+      debugPrint('Afmelden bij de server mislukt: $error');
+    }
     if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
   }
 
