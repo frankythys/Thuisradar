@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/features/driving/domain/driving_activity.dart';
 import 'package:thuisradar/features/driving/domain/driving_report.dart';
-import 'package:thuisradar/features/driving/domain/travel_mode.dart';
+import 'package:thuisradar/features/location/domain/travel_mode.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
 import 'package:thuisradar/features/location/domain/track_point.dart';
 

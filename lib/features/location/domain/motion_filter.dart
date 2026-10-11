@@ -12,6 +12,11 @@ double distanceMeters(double lat1, double lon1, double lat2, double lon2) {
   return 6371000 * 2 * math.asin(math.sqrt(a.clamp(0, 1)));
 }
 
+/// Vanaf deze snelheid (m/s, 3,6 km/u) is iemand onderweg: ook een rustige
+/// wandeling telt, zodat het spoor dan net zo fijn wordt gelogd als een rit.
+/// Dezelfde grens geldt voor de status op de kaart ([TripStatus]).
+const kMovingSpeedMps = 1.0;
+
 /// Waarom [MotionFilter.accept] een meting weigerde; voor de locatiediagnose.
 enum RejectReason {
   invalid('ongeldig'),
@@ -120,7 +125,7 @@ class MotionFilter {
       }
       // Een hoge snelheid terwijl de nauwkeurige fix niet beweegt is geen bewijs.
       if (speed != null &&
-          speed >= 1.5 &&
+          speed >= kMovingSpeedMps &&
           distance != null &&
           seconds! >= 2 &&
           distance + uncertainty < speed * seconds * 0.3) {
@@ -131,7 +136,7 @@ class MotionFilter {
       _movingSamples = _stillSamples = 0;
       _moving = null;
       _motionOrigin = point;
-    } else if (speed >= 1.5) {
+    } else if (speed >= kMovingSpeedMps) {
       _movingSamples++;
       _stillSamples = 0;
       // Twee metingen én echte verplaatsing, ook bij een GPS-snelheid.
@@ -150,7 +155,7 @@ class MotionFilter {
     // Null betekent onbekend; nul bevestigd stilstaand; positief onderweg.
     final reportedSpeed = _moving == false
         ? 0.0
-        : (_moving == true && speed != null && speed >= 1.5 ? speed : null);
+        : (_moving == true && speed != null && speed >= kMovingSpeedMps ? speed : null);
     return DevicePosition(
       latitude: point.latitude,
       longitude: point.longitude,

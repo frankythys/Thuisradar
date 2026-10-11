@@ -109,7 +109,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       } else if (current.lat != target.lat || current.lng != target.lng) {
         // Een rechte animatie tussen twee wegpunten kan dwars door een bocht
         // snijden. Auto's staan op de ontvangen (eventueel gematchte) positie.
-        _from[id] = TripStatus.at(location, widget.now).state == TripState.moving ? target : _displayed(id);
+        _from[id] = TripStatus.at(location, widget.now).driving ? target : _displayed(id);
         _to[id] = target;
         final previousAt = _lastAt[id];
         final gap = previousAt == null
@@ -185,7 +185,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     }
     // Rijdende auto's houden ieder hun eigen exacte wegpositie.
     for (final member in located) {
-      if (TripStatus.at(member.location, widget.now).state != TripState.moving) {
+      if (!TripStatus.at(member.location, widget.now).driving) {
         continue;
       }
       final id = member.member.userId;
@@ -209,8 +209,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     // zodat ze hieronder vlak naast elkaar boven het huis komen te staan.
     final together = colocatedAnchors([
       for (final group in groups)
-        if (group.length == 1 &&
-            TripStatus.at(byId[group.single]!.location, widget.now).state != TripState.moving)
+        if (group.length == 1 && !TripStatus.at(byId[group.single]!.location, widget.now).driving)
           GeoClusterPoint(group.single, coords[group.single]!.lat, coords[group.single]!.lng),
     ]);
     coords.addAll(together);
@@ -224,8 +223,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     final markers = <MapMarkerSpec>[];
     final placePoints = [for (final place in widget.reservedPlaces) camera.latLngToScreenOffset(place)];
     bool isDriving(List<String> group) =>
-        group.length == 1 &&
-        TripStatus.at(byId[group.single]!.location, widget.now).state == TripState.moving;
+        group.length == 1 && TripStatus.at(byId[group.single]!.location, widget.now).driving;
     Offset screenOf(String id) => camera.latLngToScreenOffset(LatLng(coords[id]!.lat, coords[id]!.lng));
 
     // Vrijhouden van het huis-icoon: voor wie echt bij huis is (op echte
@@ -362,8 +360,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             camera.latLngToScreenOffset(LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng)) +
             Offset(offsets[m.member.userId]?.dx ?? 0, 0),
     };
-    double baseDyOf(MemberOnMap member) =>
-        TripStatus.at(member.location, widget.now).state == TripState.moving ? -18 : -78;
+    double baseDyOf(MemberOnMap member) => TripStatus.at(member.location, widget.now).driving ? -18 : -78;
     // Alle ballonnen samen plaatsen, zodat ze nooit over elkaar vallen; per lid
     // eerst de kant die vrij is van andere leden.
     final placements = layoutBubbles(

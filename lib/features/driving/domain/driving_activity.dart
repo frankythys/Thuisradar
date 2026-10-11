@@ -2,7 +2,7 @@ import '../../location/domain/motion_filter.dart';
 import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
 import '../../location/domain/track_segments.dart';
-import 'travel_mode.dart';
+import '../../location/domain/travel_mode.dart';
 
 /// Soort activiteit in de dagtijdlijn van een gezinslid.
 enum DrivingActivityKind { trip, stay }

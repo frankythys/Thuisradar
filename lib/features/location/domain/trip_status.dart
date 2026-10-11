@@ -1,4 +1,6 @@
 import 'member_location.dart';
+import 'motion_filter.dart' show kMovingSpeedMps;
+import 'travel_mode.dart' show kBikeAverageKmh;
 
 /// Hoe een gezinslid zich verplaatst: één bron van waarheid voor de kaart,
 /// de ledenlijst, het info-kaartje en het detailscherm.
@@ -14,7 +16,7 @@ class TripStatus {
     if (location == null) return const TripStatus(TripState.missing, null);
     final speed = location.speedMps;
     final validSpeed = speed != null && speed.isFinite && speed >= 0 && speed <= 70;
-    final moving = validSpeed && speed >= 1.5;
+    final moving = validSpeed && speed >= kMovingSpeedMps;
     final age = now.difference(location.updatedAt);
     if (age > Duration(seconds: moving ? 45 : 90) || age < const Duration(seconds: -10)) {
       return const TripStatus(TripState.stale, null);
@@ -26,6 +28,14 @@ class TripStatus {
 
   final TripState state;
   final int? speedKmh;
+
+  /// Onderweg aan wandeltempo (onder ±9 km/u). Eén meting zegt niets zeker
+  /// over het vervoermiddel; dit kiest enkel het icoon en de woorden.
+  bool get walking => state == TripState.moving && speedKmh != null && speedKmh! < kBikeAverageKmh;
+
+  /// Onderweg sneller dan wandeltempo: de kaart toont dan een rijdende
+  /// marker (gecentreerd op de weg, zonder puntje).
+  bool get driving => state == TripState.moving && !walking;
 
   bool get canFollow => state != TripState.missing && state != TripState.stale;
 
@@ -42,7 +52,9 @@ class TripStatus {
   String shortDescription(MemberLocation? location, DateTime now, {String? place, String? address}) {
     if (location == null) return label;
     if (state == TripState.moving) {
-      if (address != null && address.isNotEmpty) return 'Rijden in de buurt van $address';
+      if (address != null && address.isNotEmpty) {
+        return '${walking ? 'Wandelen' : 'Rijden'} in de buurt van $address';
+      }
       if (place != null) return 'Onderweg · nabij $place';
       return speedKmh == null ? 'Onderweg' : 'Onderweg · $speedKmh km/u';
     }

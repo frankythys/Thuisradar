@@ -25,7 +25,7 @@ void main() {
     ),
   );
 
-  MemberOnMap movingMember(String id) => MemberOnMap(
+  MemberOnMap movingMember(String id, {double speedMps = 12.5}) => MemberOnMap(
     member: FamilyMember(userId: id, displayName: id, isOwner: false, colorIndex: 0),
     location: MemberLocation(
       userId: id,
@@ -33,7 +33,7 @@ void main() {
       latitude: 51,
       longitude: 3,
       updatedAt: now,
-      speedMps: 12.5,
+      speedMps: speedMps,
     ),
   );
 
@@ -183,6 +183,28 @@ void main() {
     expect(find.text('Rijden'), findsOneWidget);
     expect(find.text('45 km/u'), findsOneWidget);
     expect(find.text('Hier sinds'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wandelend lid toont een wandelaar i.p.v. de auto', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 142,
+              height: 48,
+              child: MemberHistoryBubble(entry: movingMember('Liam', speedMps: 1.3), now: now, onTap: () {}),
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(Image), findsNothing);
+    expect(find.byIcon(Icons.directions_walk), findsOneWidget);
+    expect(find.text('Wandelen'), findsOneWidget);
+    expect(find.text('5 km/u'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

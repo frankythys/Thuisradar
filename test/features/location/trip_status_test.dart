@@ -61,4 +61,22 @@ void main() {
     expect(text, contains('nabij Thuis'));
     expect(text, isNot(contains('Kerkstraat')));
   });
+
+  test('wandeltempo telt als onderweg, met wandelwoorden', () {
+    final location = _location(speedMps: 1.3);
+    final trip = TripStatus.at(location, _now);
+    expect(trip.state, TripState.moving);
+    expect(trip.walking, isTrue);
+    expect(
+      trip.shortDescription(location, _now, address: 'Kerkstraat'),
+      'Wandelen in de buurt van Kerkstraat',
+    );
+  });
+
+  test('autotempo is geen wandelen', () {
+    final location = _location(speedMps: 11.7);
+    final trip = TripStatus.at(location, _now);
+    expect(trip.walking, isFalse);
+    expect(trip.shortDescription(location, _now, address: 'N106'), 'Rijden in de buurt van N106');
+  });
 }

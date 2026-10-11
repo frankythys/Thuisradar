@@ -35,7 +35,7 @@ class MemberMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final driving = TripStatus.at(entry.location, now).state == TripState.moving;
+    final driving = TripStatus.at(entry.location, now).driving;
 
     final marker = _Avatar(entry: entry, selected: selected);
     // Tijdens rijden blijft het midden van de persoonscirkel op de wegpositie.

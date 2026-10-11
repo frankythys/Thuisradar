@@ -52,6 +52,18 @@ void main() {
     expect(accepted!.speedMps, 1.67);
   });
 
+  test('een rustige wandeling (4,5 km/u) wordt beweging en vraagt snelle uploads', () {
+    final filter = MotionFilter();
+    DevicePosition? accepted;
+    for (var i = 0; i < 8; i++) {
+      final at = base.add(Duration(seconds: i * 5));
+      // 1,25 m/s: elke 5 s ruim 6 m verder.
+      accepted = filter.accept(pos(51 + i * 0.0000562, 3, at, accuracy: 8, speed: 1.25), at);
+    }
+    expect(accepted!.speedMps, 1.25);
+    expect(filter.wantsFastUpdates, isTrue);
+  });
+
   test('een grove fix (binnenshuis) wordt bewaard maar meldt geen beweging', () {
     final accepted = MotionFilter().accept(pos(51, 3, base, accuracy: 80), base);
 

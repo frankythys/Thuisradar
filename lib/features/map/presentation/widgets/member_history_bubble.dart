@@ -45,7 +45,7 @@ class MemberHistoryBubble extends StatelessWidget {
     final sinceTime = atPlace ? placeSince : (stopped ? stationarySince : null);
     final duration = sinceTime == null ? null : now.difference(sinceTime);
     final title = isMoving
-        ? 'Rijden'
+        ? (status.walking ? 'Wandelen' : 'Rijden')
         : atPlace
         ? placeStatus!.name
         : stopped
@@ -57,7 +57,7 @@ class MemberHistoryBubble extends StatelessWidget {
         ? 'sinds ${_formatSince(duration)}'
         : _formatUpdated(entry.location?.updatedAt, now);
     final icon = isMoving
-        ? Icons.directions_car
+        ? (status.walking ? Icons.directions_walk : Icons.directions_car)
         : (atPlace ? placeIcon(placeStatus!.icon) : Icons.location_on);
     return Semantics(
       button: true,
@@ -79,7 +79,7 @@ class MemberHistoryBubble extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             child: Row(
               children: [
-                if (isMoving)
+                if (isMoving && !status.walking)
                   Image.asset(
                     'assets/icon/Rijdende auto.png',
                     width: 38,

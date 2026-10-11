@@ -1,7 +1,7 @@
 import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
 import 'driving_activity.dart';
-import 'travel_mode.dart';
+import '../../location/domain/travel_mode.dart';
 
 DateTime drivingWeekStart(DateTime date) => DateTime(date.year, date.month, date.day - date.weekday + 1);
 
