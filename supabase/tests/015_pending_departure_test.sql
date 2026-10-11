@@ -73,7 +73,9 @@ select confirm_pending_departures();
 select pg_temp.check(pg_temp.departures() = 0 and pg_temp.inside(), 'upload op 80 m (binnen straal + 50) houdt je thuis');
 
 -- ─── Echt vertrek met slapende app: na 3 minuten toch gemeld ────────────────
--- Laatste upload van vóór het vertrek; daarna slaapt de app.
+-- Laatste upload van vóór het vertrek; daarna slaapt de app. Eerst de rij
+-- wissen: sinds 016 zet een ouder punt de huidige plek niet meer terug.
+delete from member_locations where user_id = '00000000-0000-0000-0000-0000000000a5';
 select pg_temp.upload(51.0, now() - interval '10 minutes');
 
 select pg_temp.check(pg_temp.device('departure', 51.0 + 400 / 111320.0, now() - interval '2 minutes') = 'pending',
