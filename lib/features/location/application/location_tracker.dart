@@ -10,6 +10,7 @@ import '../domain/device_reading.dart';
 import '../domain/member_location.dart';
 import '../domain/motion_filter.dart';
 import '../domain/upload_throttle.dart';
+import 'location_diagnostics.dart';
 import 'location_providers.dart';
 import 'tracking_status.dart';
 import '../../profile/application/profile_providers.dart';
@@ -45,6 +46,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
   DeviceLocationSource get _device => ref.read(deviceLocationSourceProvider);
   BatterySource get _battery => ref.read(batterySourceProvider);
   LocationRepository get _repository => ref.read(locationRepositoryProvider);
+  LocationDiagnostics get _diagnostics => ref.read(locationDiagnosticsProvider);
 
   @override
   TrackingStatus build() {
@@ -74,6 +76,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
     if (access != LocationAccess.granted) return;
 
     _granted = true;
+    _diagnostics.event('delen gestart');
     _attach();
   }
 
@@ -92,6 +95,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
     final lastFix = _lastFixAt;
     if (_subscription == null || lastFix == null || DateTime.now().difference(lastFix) > _silentStreamAfter) {
       debugPrint('Locatiestroom stil sinds $lastFix — opnieuw aanhaken');
+      _diagnostics.event('stroom stil bij hervatten', 'laatste GPS ${lastFix ?? 'nooit'}');
       _attach();
     }
     unawaited(refreshNow());
@@ -103,7 +107,9 @@ class LocationTracker extends Notifier<TrackingStatus> {
     if (!_granted || _userId == null) return;
     final generation = _generation;
     final position = await _device.currentPosition();
-    if (position == null || !ref.mounted || generation != _generation) return;
+    if (!ref.mounted || generation != _generation) return;
+    _diagnostics.event('verse meting', position == null ? 'geen positie' : 'ontvangen');
+    if (position == null) return;
     _queue(position, generation, force: true);
     await _uploads;
   }
@@ -117,18 +123,24 @@ class LocationTracker extends Notifier<TrackingStatus> {
     // Late events van de oude stroom worden genegeerd via de generatietellers.
     unawaited(old?.cancel());
     if (!ref.mounted) return;
+    _diagnostics.event('stroom gestart');
     _subscription = _device.positions().listen(
       (position) {
         if (generation != _generation || streamGeneration != _streamGeneration) return;
         _lastFixAt = DateTime.now();
+        _diagnostics.received();
         _queue(position, generation);
       },
       onError: (Object error) {
         debugPrint('Locatiestroom fout: $error');
+        if (ref.mounted) _diagnostics.event('stroom fout', error);
         if (ref.mounted && generation == _generation) state = TrackingStatus.error;
         _scheduleReattach(generation, streamGeneration);
       },
-      onDone: () => _scheduleReattach(generation, streamGeneration),
+      onDone: () {
+        if (ref.mounted) _diagnostics.event('stroom gestopt');
+        _scheduleReattach(generation, streamGeneration);
+      },
     );
   }
 
@@ -151,6 +163,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
   }
 
   void stop() {
+    if (_granted) _diagnostics.event('delen gestopt');
     _cancel();
     _userId = null;
     _familyId = null;
@@ -166,8 +179,16 @@ class LocationTracker extends Notifier<TrackingStatus> {
 
     final now = DateTime.now();
     final accepted = _motion.accept(position, now);
-    if (accepted == null) return;
-    if (!force && !_throttle.shouldUpload(accepted, now, moving: _motion.wantsFastUpdates)) return;
+    final diagnostics = _diagnostics;
+    if (accepted == null) {
+      diagnostics.rejected(_motion.lastRejection ?? RejectReason.invalid, position.accuracyMeters);
+      return;
+    }
+    diagnostics.accepted();
+    if (!force && !_throttle.shouldUpload(accepted, now, moving: _motion.wantsFastUpdates)) {
+      diagnostics.throttled();
+      return;
+    }
     try {
       final battery = await _battery.read().timeout(_uploadTimeout);
       if (!ref.mounted || generation != _generation) return;
@@ -185,11 +206,13 @@ class LocationTracker extends Notifier<TrackingStatus> {
 
       await _repository.upload(location).timeout(_uploadTimeout);
       _throttle.uploaded(accepted, now);
+      diagnostics.uploadOk();
       if (ref.mounted && generation == _generation) {
         state = TrackingStatus.active;
       }
     } on Exception catch (error) {
       debugPrint('Locatie uploaden mislukt: $error');
+      diagnostics.uploadFailed(error);
       if (ref.mounted && generation == _generation) {
         state = TrackingStatus.offline;
       }

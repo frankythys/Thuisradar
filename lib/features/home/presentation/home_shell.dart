@@ -2,6 +2,7 @@ import 'dart:async';
 
 import '../../../core/utils/resync_signal.dart';
 import '../../geofencing/application/geofencing_providers.dart';
+import '../../location/application/location_diagnostics.dart';
 import '../../location/application/location_providers.dart';
 import '../../profile/presentation/profile_screen.dart';
 
@@ -44,7 +45,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     // Terug op de voorgrond: Android kan op de achtergrond zowel de GPS-stroom
     // als het realtime-kanaal stilgelegd hebben. Haal alles vers op, anders
     // blijft de kaart iemand tonen op een plek van een kwartier geleden.
-    _lifecycle = AppLifecycleListener(onResume: _onResume);
+    _lifecycle = AppLifecycleListener(
+      onResume: _onResume,
+      onStateChange: ref.read(locationDiagnosticsProvider).lifecycle,
+    );
   }
 
   @override

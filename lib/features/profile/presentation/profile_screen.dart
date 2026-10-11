@@ -15,6 +15,7 @@ import '../../geofencing/application/geofencing_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../../onboarding/presentation/replay_onboarding_button.dart';
 import '../application/profile_providers.dart';
+import 'diagnostics_export_tile.dart';
 import 'profile_edit_sheet.dart';
 import 'profile_header.dart';
 import 'profile_sheets.dart';
@@ -211,6 +212,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () => showPrivacySheet(context, onForgetLogin: _forgetLogin),
               ),
               const ReplayOnboardingButton(),
+              const DiagnosticsExportTile(),
             ]),
             SizedBox(height: tokens.spaceMd),
             group([

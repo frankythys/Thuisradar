@@ -6,9 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/config/env.dart';
 import 'core/utils/startup_diagnostics.dart';
+import 'features/location/application/location_diagnostics.dart';
+import 'features/location/data/diagnostics_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Eerst: zo staat elke (her)start van het proces in het locatielogboek.
+  final locationDiagnostics = LocationDiagnostics(DiagnosticsStore())..start();
   final diagnostics = StartupDiagnostics();
   Env.assertConfigured();
 
@@ -27,5 +31,10 @@ Future<void> main() async {
   diagnostics.checkpoint('Firebase gereed of overgeslagen');
 
   diagnostics.watchFirstFrame();
-  runApp(const ProviderScope(child: ThuisradarApp()));
+  runApp(
+    ProviderScope(
+      overrides: [locationDiagnosticsProvider.overrideWithValue(locationDiagnostics)],
+      child: const ThuisradarApp(),
+    ),
+  );
 }
