@@ -85,3 +85,22 @@ bool isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month
 /// Oudste eerst, ongeacht hoe de server ze teruggaf.
 List<TrackPoint> sortedByTime(List<TrackPoint> points) =>
     [...points]..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+
+/// Zoveel geschiedenis halen we vóór en na een dag erbij, zodat een rit over
+/// middernacht heel blijft (23:50 → 00:20 is één rit op de vertrekdag).
+const kDayMargin = Duration(hours: 3);
+
+typedef DayMargins = ({List<TrackPoint> before, List<TrackPoint> after});
+
+/// De punten in de [kDayMargin] vóór en na een dag. Faalt dit, dan tonen de
+/// schermen gewoon de dag zelf (zoals vroeger); daarom geen nieuwe pogingen.
+final dayMarginsProvider = FutureProvider.autoDispose.family<DayMargins, HistoryQuery>((ref, query) async {
+  final repository = ref.watch(locationHistoryRepositoryProvider);
+  final (start, end) = dayBounds(query.day);
+  final now = DateTime.now();
+  final before = await repository.fetchRange(query.userId, start.subtract(kDayMargin), start);
+  final after = end.isAfter(now)
+      ? const <TrackPoint>[]
+      : await repository.fetchRange(query.userId, end, end.add(kDayMargin));
+  return (before: before, after: after);
+}, retry: (_, _) => null);

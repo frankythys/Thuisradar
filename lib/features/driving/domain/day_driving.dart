@@ -10,11 +10,22 @@ import 'driving_activity.dart';
 class DayDriving {
   DayDriving._(this.activities, this._tracks);
 
-  factory DayDriving.build(List<TimelineEntry> entries, List<TrackPoint> points) {
+  /// Met [from]/[to] (de kalenderdag) mogen [entries] en [points] verder
+  /// reiken dan de dag zelf: dan hoort een rit bij de dag waarop hij vertrekt
+  /// en blijft hij heel, ook over middernacht. Verblijven tonen we op elke dag
+  /// die ze raken, afgeknipt op die dag.
+  factory DayDriving.build(
+    List<TimelineEntry> entries,
+    List<TrackPoint> points, {
+    DateTime? from,
+    DateTime? to,
+  }) {
     // Eén keer filteren; buildDayActivities en het spoor gebruiken dezelfde
     // punten, zodat afstand en ritkaart altijd over hetzelfde spoor gaan.
     final clean = withoutSpikes(points);
-    final activities = buildDayActivities(entries, clean);
+    final activities = [
+      for (final activity in buildDayActivities(entries, clean)) ?_withinDay(activity, from, to),
+    ];
     return DayDriving._(activities, [
       for (final activity in activities)
         activity.kind == DrivingActivityKind.trip ? _tripTrack(clean, activity) : const [],
@@ -33,6 +44,25 @@ class DayDriving {
     for (var i = 0; i < activities.length; i++)
       if (activities[i].kind == DrivingActivityKind.trip) ...splitTrackGaps(_tracks[i]),
   ];
+}
+
+/// Een rit telt op zijn vertrekdag; een verblijf op elke dag die het raakt,
+/// afgeknipt op die dag. Zonder grenzen blijft alles staan.
+DrivingActivity? _withinDay(DrivingActivity activity, DateTime? from, DateTime? to) {
+  if (from == null || to == null) return activity;
+  if (activity.kind == DrivingActivityKind.trip) {
+    return !activity.start.isBefore(from) && activity.start.isBefore(to) ? activity : null;
+  }
+  if (!activity.end.isAfter(from) || !activity.start.isBefore(to)) return null;
+  if (!activity.start.isBefore(from) && !activity.end.isAfter(to)) return activity;
+  return DrivingActivity(
+    kind: activity.kind,
+    start: activity.start.isBefore(from) ? from : activity.start,
+    end: activity.end.isAfter(to) ? to : activity.end,
+    latitude: activity.latitude,
+    longitude: activity.longitude,
+    placeName: activity.placeName,
+  );
 }
 
 /// Het spoor van een rit. Werd de aankomst over een meetgat overbrugd
