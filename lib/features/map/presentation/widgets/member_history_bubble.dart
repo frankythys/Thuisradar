@@ -6,6 +6,9 @@ import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/member_on_map.dart';
 
+/// Geanimeerde wandelaar in de ballon tijdens een wandeling.
+const walkingGifAsset = 'assets/gif/wandelen.gif';
+
 class MemberHistoryBubble extends StatelessWidget {
   const MemberHistoryBubble({
     super.key,
@@ -86,6 +89,16 @@ class MemberHistoryBubble extends StatelessWidget {
                     height: 32,
                     cacheWidth: 152,
                     fit: BoxFit.contain,
+                  )
+                else if (isMoving)
+                  // Wandelende figuur; ontbreekt de GIF, dan het wandelicoon.
+                  Image.asset(
+                    walkingGifAsset,
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                    errorBuilder: (context, error, stack) => Icon(icon, color: AppColors.primary, size: 23),
                   )
                 else if (atPlace && placeStatus!.icon == 'home')
                   Image.asset('assets/markers/huis.png', width: 32, height: 32, fit: BoxFit.contain)
