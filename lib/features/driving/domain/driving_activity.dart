@@ -114,12 +114,19 @@ List<DrivingActivity> buildDayActivities(
       ),
     );
   }
-  for (final raw in buildTripTracks(points)) {
+  for (final raw in buildTripTracks(withoutSpikes(points))) {
     // Enkel het stuk waarin echt gereden wordt: zonder de minuten stilstaan
     // ervoor (nog thuis) en erna (al aangekomen). Een spoor dat alleen uit
     // stilstaan bestaat, is geen rit.
     final track = trimStill(raw);
     if (track.length < 2 || trackMeters(track) < minTripMeters) continue;
+    // Een geïsoleerde uitschieter die door de tijdlijn in een verblijf werd
+    // samengevoegd is geen rit. Echte rondritten blijven aparte verplaatsingen.
+    if (stops.any(
+      (stop) => !track.first.recordedAt.isBefore(stop.start) && !track.last.recordedAt.isAfter(stop.end),
+    )) {
+      continue;
+    }
     final last = track.last;
     // De bestemming: het eerstvolgende verblijf dat binnen [kArrivalGap] na de
     // laatste meting begint. Zo eindigt de rit op de plek waar hij stopte, ook
@@ -128,6 +135,11 @@ List<DrivingActivity> buildDayActivities(
     for (final stop in stops) {
       if (stop.start.isBefore(last.recordedAt)) continue;
       if (stop.start.difference(last.recordedAt) > kArrivalGap) continue;
+      final seconds = stop.start.difference(last.recordedAt).inMilliseconds / 1000;
+      final meters = distanceMeters(last.latitude, last.longitude, stop.latitude, stop.longitude);
+      if (meters > kStopRadiusMeters && (seconds <= 0 || meters / seconds > kMaxPlausibleSpeedMps)) {
+        continue;
+      }
       if (arrival == null || stop.start.isBefore(arrival.start)) arrival = stop;
     }
     final endLatitude = arrival?.latitude ?? last.latitude;
@@ -139,12 +151,6 @@ List<DrivingActivity> buildDayActivities(
       meters += distanceMeters(last.latitude, last.longitude, endLatitude, endLongitude);
     }
     if (meters < minTripMeters) continue;
-    // Een "rit" die eindigt waar ze begon (binnen de stopstraal) ging nergens
-    // heen: het zijn GPS-uitschieters op één plek, geen echte verplaatsing.
-    if (distanceMeters(track.first.latitude, track.first.longitude, endLatitude, endLongitude) <
-        kStopRadiusMeters) {
-      continue;
-    }
     activities.add(
       DrivingActivity(
         kind: DrivingActivityKind.trip,
@@ -195,10 +201,10 @@ double _legMeters(TrackPoint a, TrackPoint b) =>
 /// geen punten in dat tijdsvak vallen.
 List<TrackPoint> activityTrack(DrivingActivity activity, List<TrackPoint> points) {
   if (activity.kind != DrivingActivityKind.trip) return const [];
-  return withoutSpikes([
-    for (final point in points)
+  return [
+    for (final point in withoutSpikes(points))
       if (!point.recordedAt.isBefore(activity.start) && !point.recordedAt.isAfter(activity.end)) point,
-  ]);
+  ];
 }
 
 /// Alle ritten van een dag als routestukken, zonder het stilstaan ertussen.
@@ -217,12 +223,22 @@ const kMaxPlausibleSpeedMps = 45.0;
 /// heen en terug wordt zo één weggelaten punt i.p.v. twee lange lijnen.
 List<TrackPoint> withoutSpikes(List<TrackPoint> track, {double maxSpeedMps = kMaxPlausibleSpeedMps}) {
   final kept = <TrackPoint>[];
-  for (final point in track) {
+  final sorted = [...track]..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+  for (final point in sorted) {
+    if (!point.latitude.isFinite ||
+        !point.longitude.isFinite ||
+        point.latitude.abs() > 90 ||
+        point.longitude.abs() > 180) {
+      continue;
+    }
     if (kept.isNotEmpty) {
       final previous = kept.last;
       final seconds = point.recordedAt.difference(previous.recordedAt).inMilliseconds / 1000;
+      if (seconds <= 0) continue;
       final meters = _legMeters(previous, point);
-      if (seconds > 0 && meters / seconds > maxSpeedMps && meters > kStopRadiusMeters) continue;
+      if (seconds <= kMaxTrackGap.inSeconds && meters / seconds > maxSpeedMps && meters > kStopRadiusMeters) {
+        continue;
+      }
     }
     kept.add(point);
   }

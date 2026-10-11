@@ -144,12 +144,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _collapseSheet();
   }
 
-  /// Tik op een groepspin: zoom in zodat de leden uit elkaar gaan.
+  /// Tik op de groepsachtergrond behoudt zowel de selectie als de zoom.
   void _onGroupTap(LatLng center) {
     _autoFit.lock();
-    final maxZoom = FamilyMap.maxZoomFor(google: FeatureFlags.useGoogleMaps);
-    final zoom = (_mapController.camera.zoom + 2).clamp(1.0, maxZoom);
-    _mapController.move(center, zoom);
   }
 
   void _deselect() {
@@ -339,7 +336,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onHistory: _openDetail,
             onGroupTap: _onGroupTap,
             onUserGesture: _onUserGesture,
-            onMapTap: _deselect,
+            // Selectie blijft tot "Terug naar personen", ook na kaarttikken.
+            onMapTap: null,
             onMapReady: () {
               _mapReady = true;
               _fit(members);

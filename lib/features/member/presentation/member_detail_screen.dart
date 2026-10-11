@@ -38,6 +38,8 @@ import '../../location/domain/track_segments.dart';
 import '../../location/domain/trip_status.dart';
 import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
+import '../../places/domain/confirmed_presence.dart';
+import '../../map/domain/member_on_map.dart';
 import '../../places/domain/place_timeline.dart';
 import '../../places/domain/save_as_place.dart';
 import '../../places/presentation/add_place_screen.dart';
@@ -105,12 +107,31 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
   /// detailscherm mee met nieuwe updates.
   MemberLocation? _liveLocation(WidgetRef ref) {
     final locations = ref.watch(familyLocationsProvider(widget.familyId)).value;
+    var current = widget.location;
     if (locations != null) {
       for (final location in locations) {
-        if (location.userId == widget.member.userId) return location;
+        if (location.userId == widget.member.userId) {
+          current = location;
+          break;
+        }
       }
     }
-    return widget.location;
+    if (current == null) return null;
+    final now = ref.watch(clockProvider).value ?? DateTime.now();
+    if (TripStatus.at(current, now).state == TripState.moving) return current;
+    final places = ref.watch(familyPlacesProvider(widget.familyId)).value ?? const <Place>[];
+    final presence = confirmedPresence(
+      ref.watch(familyPresenceProvider(widget.familyId)).value ?? const [],
+      places,
+      [current],
+    );
+    // Eén geselecteerde persoon staat exact op de plaats, zonder de waaier
+    // waarmee de hoofdkaart meerdere gezinsleden zichtbaar uit elkaar zet.
+    return anchorMembersToPlaces(
+      [MemberOnMap(member: widget.member, location: current)],
+      places,
+      presence,
+    ).single.location;
   }
 
   /// Verversen haalt écht alles vers op: de laatste locatie van de server

@@ -35,6 +35,50 @@ Offset _screen(LatLng p, double zoom) {
 }
 
 void main() {
+  testWidgets('Google-groepsavatar selecteert de aangeklikte persoon', (tester) async {
+    final now = DateTime(2026, 10, 11);
+    String? selected;
+    var groupTaps = 0;
+    final members = [
+      for (final id in ['Franky', 'Liam'])
+        MemberOnMap(
+          member: FamilyMember(userId: id, displayName: id, isOwner: false, colorIndex: 0),
+          location: MemberLocation(
+            userId: id,
+            familyId: 'f',
+            latitude: _home.latitude,
+            longitude: _home.longitude,
+            updatedAt: now,
+            speedMps: 0,
+          ),
+        ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: FlutterMap(
+            options: const MapOptions(initialCenter: _home, initialZoom: 15),
+            children: [
+              ClusteredMarkerLayer(
+                members: members,
+                now: now,
+                onMemberTap: (m) => selected = m.member.userId,
+                onGroupTap: (_) => groupTaps++,
+                onNativeMarkers: (_) {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final avatar = find.byWidgetPredicate((w) => w is MemberAvatar && w.member.userId == 'Liam');
+    await tester.tap(avatar);
+    await tester.pump();
+    expect(selected, 'Liam');
+    expect(groupTaps, 0);
+  });
   final names = ['Franky', 'Liam', 'Mama'];
   final positions = [for (var i = 0; i < 3; i++) _fanned(i, 3)];
 
@@ -77,8 +121,8 @@ void main() {
           location: MemberLocation(
             userId: names[i],
             familyId: 'gezin',
-            latitude: positions[i].latitude,
-            longitude: positions[i].longitude,
+            latitude: _home.latitude,
+            longitude: _home.longitude,
             updatedAt: now,
             speedMps: 0,
           ),
@@ -106,6 +150,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(GroupPin), findsNothing);
     expect(find.byType(MemberMarker), findsNWidgets(3));
+    controller.move(_home, 15);
+    await tester.pumpAndSettle();
+    expect(find.byType(GroupPin), findsOneWidget);
+    expect(find.byType(MemberMarker), findsNothing);
   });
 
   testWidgets('Franky en Liam thuis, ver ingezoomd: apart maar vlak naast elkaar boven het huis', (

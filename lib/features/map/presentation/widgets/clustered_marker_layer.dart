@@ -186,6 +186,17 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
           ),
         ),
     ]);
+    // Op huisniveau scheiden alleen de avatars. Hun geografische ankers
+    // blijven gelijk; bij uitzoomen berekenen we opnieuw de groepspinnen.
+    if (camera.zoom >= 18) {
+      final separate = [
+        for (final group in groups)
+          for (final id in group) [id],
+      ];
+      groups
+        ..clear()
+        ..addAll(separate);
+    }
     // Rijdende auto's houden ieder hun eigen exacte wegpositie.
     for (final member in located) {
       if (TripStatus.at(member.location, widget.now).state !=
@@ -468,7 +479,11 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer>
               replaceChild: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: onTap,
-                child: const SizedBox.expand(),
+                // De groepsafbeelding heeft individuele avatars: behoud hun
+                // tikvlakken ook als Google het zichtbare beeld tekent.
+                child: spec.id.startsWith('group_')
+                    ? Opacity(opacity: 0, child: spec.child)
+                    : const SizedBox.expand(),
               ),
             ),
       ],

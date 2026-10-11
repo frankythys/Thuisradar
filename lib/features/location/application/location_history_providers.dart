@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
 import '../../../core/utils/resync_signal.dart';
+import '../../driving/domain/driving_activity.dart' show withoutSpikes;
 import '../data/location_history_repository.dart';
 import '../domain/timeline.dart';
 import '../domain/track_point.dart';
@@ -68,7 +69,9 @@ final dayHistoryProvider = FutureProvider.family<DayHistory, HistoryQuery>((ref,
     });
   }
   try {
-    final points = sortedByTime(await repository.fetchDay(query.userId, query.day).timeout(_historyTimeout));
+    final points = withoutSpikes(
+      sortedByTime(await repository.fetchDay(query.userId, query.day).timeout(_historyTimeout)),
+    );
     // Verblijven volgen uit de plek (clustering is tijd-onafhankelijk), zodat
     // op het werk blijven één verblijf blijft, ook al vallen er binnenshuis
     // metingen weg. Ritten komen los hiervan uit buildTripTracks (dat zelf

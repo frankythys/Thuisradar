@@ -13,10 +13,17 @@ class FakeGeofenceStore implements GeofenceStore {
   Future<String> ensureDeviceKey() async => key ??= 'nieuwe-sleutel';
 
   @override
-  Future<List<GeofenceReport>> pending() async => queue;
+  Future<List<GeofenceReport>> pending(String deviceKey) async => [...queue];
 
   @override
-  Future<void> savePending(List<GeofenceReport> reports) async => queue = reports;
+  Future<void> enqueue(String deviceKey, List<GeofenceReport> reports) async {
+    for (final report in reports) {
+      if (!queue.contains(report)) queue.add(report);
+    }
+  }
+
+  @override
+  Future<void> acknowledge(String deviceKey, GeofenceReport report) async => queue.remove(report);
 
   @override
   Future<void> clear() async {

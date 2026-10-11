@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thuisradar/features/map/application/map_style_provider.dart';
 
 void main() {
-  test('standaard gewone kaart; satelliet wordt onthouden na herstart', () async {
+  test('kaart start gewoon, ook na satellietgebruik in de vorige sessie', () async {
     SharedPreferences.setMockInitialValues({});
     final first = ProviderContainer();
     addTearDown(first.dispose);
@@ -18,6 +18,6 @@ void main() {
     addTearDown(second.dispose);
     second.read(mapSatelliteProvider);
     await pumpEventQueue();
-    expect(second.read(mapSatelliteProvider), isTrue);
+    expect(second.read(mapSatelliteProvider), isFalse);
   });
 }

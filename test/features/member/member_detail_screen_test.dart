@@ -15,6 +15,8 @@ import 'package:thuisradar/features/location/domain/track_point.dart';
 import 'package:thuisradar/features/member/presentation/member_detail_screen.dart';
 import 'package:thuisradar/features/places/application/places_providers.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
+import 'package:thuisradar/features/places/domain/place_presence.dart';
+import 'package:thuisradar/shared/widgets/location_preview.dart';
 
 class _NoGeocoding extends GeocodingSource {
   @override
@@ -23,7 +25,14 @@ class _NoGeocoding extends GeocodingSource {
 
 const _member = FamilyMember(userId: 'u1', displayName: 'Papa', isOwner: true, colorIndex: 0);
 
-Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() result, {Widget? home}) {
+Future<void> _pump(
+  WidgetTester tester,
+  Future<List<TimelineEntry>> Function() result, {
+  Widget? home,
+  List<Place> places = const [],
+  List<PlacePresence> presence = const [],
+  List<MemberLocation> locations = const [],
+}) {
   return tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -32,9 +41,10 @@ Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() r
         dayHistoryProvider.overrideWith(
           (ref, arg) async => (entries: await result(), points: const <TrackPoint>[]),
         ),
-        familyPlacesProvider.overrideWith((ref, arg) => Stream.value(const <Place>[])),
+        familyPlacesProvider.overrideWith((ref, arg) => Stream.value(places)),
+        familyPresenceProvider.overrideWith((ref, arg) => Stream.value(presence)),
         // Geen echte Supabase-stroom nodig voor deze schermtests.
-        familyLocationsProvider.overrideWith((ref, arg) => Stream.value(const <MemberLocation>[])),
+        familyLocationsProvider.overrideWith((ref, arg) => Stream.value(locations)),
         geocodingSourceProvider.overrideWithValue(_NoGeocoding()),
       ],
       child: MaterialApp(
@@ -46,6 +56,39 @@ Future<void> _pump(WidgetTester tester, Future<List<TimelineEntry>> Function() r
 }
 
 void main() {
+  for (final scenario in ['thuis', 'vertrokken', 'rijdend']) {
+    testWidgets('persoon aanklikken: $scenario gebruikt de juiste kaartpositie', (tester) async {
+      const house = Place(
+        id: 'home',
+        familyId: 'fam',
+        name: 'Thuis',
+        latitude: 51,
+        longitude: 4,
+        radiusMeters: 60,
+        icon: 'home',
+      );
+      final raw = MemberLocation(
+        userId: 'u1',
+        familyId: 'fam',
+        latitude: scenario == 'vertrokken' ? 51.02 : 51.0003,
+        longitude: 4.0002,
+        updatedAt: DateTime(2026, 1, 2, 10),
+        speedMps: scenario == 'rijdend' ? 10 : 0,
+      );
+      await _pump(
+        tester,
+        () async => [],
+        places: [house],
+        locations: [raw],
+        presence: const [PlacePresence(userId: 'u1', placeId: 'home', isInside: true)],
+      );
+      await tester.pumpAndSettle();
+      final map = tester.widget<LocationPreview>(find.byType(LocationPreview).first);
+      expect(map.latitude, scenario == 'thuis' ? house.latitude : raw.latitude);
+      expect(map.longitude, scenario == 'thuis' ? house.longitude : raw.longitude);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('een doorlopende veeg opent het persoonsvenster voorbij de compacte hoogte', (tester) async {
     tester.view.physicalSize = const Size(360, 640);
     tester.view.devicePixelRatio = 1;

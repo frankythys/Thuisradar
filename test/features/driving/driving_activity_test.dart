@@ -104,11 +104,10 @@ void main() {
     expect(activities.where((a) => a.kind == DrivingActivityKind.trip), isEmpty);
   });
 
-  test('een rit die eindigt waar ze begon is GPS-ruis, geen rit', () {
-    // Heen 300 m en weer helemaal terug: netto nul verplaatsing.
+  test('een korte rondrit blijft een rit als de gemeten beweging plausibel is', () {
     final activities = buildDayActivities(const [], [p(0, 0), p(1, 0.15), p(2, 0.3), p(3, 0.15), p(4, 0)]);
 
-    expect(activities, isEmpty);
+    expect(activities.single.distanceMeters, closeTo(600, 30));
   });
 
   test('een kort meetgat vlak voor de aankomst hoort nog bij de rit', () {

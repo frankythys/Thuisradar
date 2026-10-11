@@ -16,6 +16,12 @@ class GeofenceStore {
 
   static const _keyName = 'geofence_device_key';
   static const _queueName = 'geofence_pending_reports';
+  static const _reportPrefix = 'geofence_report_v2_';
+
+  String _prefix(String deviceKey) => '$_reportPrefix${deviceKey}_';
+
+  String _reportKey(String deviceKey, GeofenceReport report) =>
+      '${_prefix(deviceKey)}${base64UrlEncode(utf8.encode(jsonEncode(report.toJson())))}';
 
   Future<String?> deviceKey() => _prefs.getString(_keyName);
 
@@ -29,26 +35,47 @@ class GeofenceStore {
     return key;
   }
 
-  Future<List<GeofenceReport>> pending() async {
-    final raw = await _prefs.getString(_queueName);
-    if (raw == null) return const [];
-    try {
-      return [
-        for (final item in jsonDecode(raw) as List<dynamic>)
-          GeofenceReport.fromJson(item as Map<String, dynamic>),
-      ];
-    } on FormatException {
-      return const [];
+  /// Elke melding heeft een eigen sleutel: geen gedeelde read-modify-write-lijst
+  /// die vanuit een andere isolate overschreven kan worden. De toestelnaamruimte
+  /// voorkomt dat een oude callback meldingen aan een nieuw account doorgeeft.
+  Future<void> enqueue(String deviceKey, List<GeofenceReport> reports) async {
+    for (final report in reports) {
+      await _prefs.setString(_reportKey(deviceKey, report), jsonEncode(report.toJson()));
     }
   }
 
-  Future<void> savePending(List<GeofenceReport> reports) => reports.isEmpty
-      ? _prefs.remove(_queueName)
-      : _prefs.setString(_queueName, jsonEncode([for (final r in reports) r.toJson()]));
+  Future<void> acknowledge(String deviceKey, GeofenceReport report) =>
+      _prefs.remove(_reportKey(deviceKey, report));
+
+  Future<List<GeofenceReport>> pending(String deviceKey) async {
+    // Bestaande offline meldingen éénmalig overnemen bij een app-update.
+    final raw = await _prefs.getString(_queueName);
+    if (raw != null && await this.deviceKey() == deviceKey) {
+      try {
+        await enqueue(deviceKey, [
+          for (final item in jsonDecode(raw) as List<dynamic>)
+            GeofenceReport.fromJson(item as Map<String, dynamic>),
+        ]);
+      } on FormatException {
+        // Ongeldige oude wachtrij kan niet gemigreerd worden.
+      }
+      await _prefs.remove(_queueName);
+    }
+    final reports = <GeofenceReport>[];
+    for (final entry in (await _prefs.getAll()).entries) {
+      if (entry.key.startsWith(_prefix(deviceKey))) {
+        reports.add(GeofenceReport.fromJson(jsonDecode(entry.value as String) as Map<String, dynamic>));
+      }
+    }
+    return reports;
+  }
 
   /// Afmelden of delen uit: sleutel en wachtrij weg.
   Future<void> clear() async {
     await _prefs.remove(_keyName);
     await _prefs.remove(_queueName);
+    for (final key in await _prefs.getKeys()) {
+      if (key.startsWith(_reportPrefix)) await _prefs.remove(key);
+    }
   }
 }

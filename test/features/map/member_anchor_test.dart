@@ -46,7 +46,7 @@ void main() {
     expect(anchored.single.location!.longitude, 3.73);
   });
 
-  test('meerdere leden op dezelfde plek worden uitgewaaierd', () {
+  test('meerdere leden thuis behouden exact de huispositie', () {
     const member2 = FamilyMember(userId: 'u2', displayName: 'Liam', isOwner: false, colorIndex: 1);
     final second = MemberOnMap(
       member: member2,
@@ -66,11 +66,10 @@ void main() {
 
     final a = anchored[0].location!;
     final b = anchored[1].location!;
-    // Niet meer op exact hetzelfde punt: ze kunnen bij inzoomen scheiden.
-    expect(a.latitude == b.latitude && a.longitude == b.longitude, isFalse);
-    // Maar wel vlak bij het midden van de plek (binnen de straal).
-    expect((a.latitude - 51.05).abs() < 0.001, isTrue);
-    expect((b.latitude - 51.05).abs() < 0.001, isTrue);
+    for (final location in [a, b]) {
+      expect(location.latitude, home.latitude);
+      expect(location.longitude, home.longitude);
+    }
   });
 
   test('zonder locatie verandert er niets', () {

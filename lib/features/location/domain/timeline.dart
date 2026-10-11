@@ -133,14 +133,18 @@ List<TimelineEntry> buildTimeline(
   }
   emitMove(null);
 
-  return _mergeSamePlaceStops(entries, stopRadiusMeters);
+  return _mergeSamePlaceStops(entries, stopRadiusMeters, sorted);
 }
 
 /// Een enkele GPS-uitschieter midden in een lange stop maakt soms twee losse
 /// clusters op dezelfde plek, met een schijnverplaatsing ertussen. Liggen twee
 /// opeenvolgende stops binnen [stopRadiusMeters] van elkaar, dan hoorden ze bij
 /// elkaar: voeg ze samen en laat de verplaatsing ertussen vallen.
-List<TimelineEntry> _mergeSamePlaceStops(List<TimelineEntry> entries, double stopRadiusMeters) {
+List<TimelineEntry> _mergeSamePlaceStops(
+  List<TimelineEntry> entries,
+  double stopRadiusMeters,
+  List<TrackPoint> points,
+) {
   final merged = <TimelineEntry>[];
   TimelineEntry? pendingMove;
   for (final entry in entries) {
@@ -151,7 +155,19 @@ List<TimelineEntry> _mergeSamePlaceStops(List<TimelineEntry> entries, double sto
     final last = merged.isEmpty ? null : merged.last;
     if (last != null &&
         last.kind == TimelineKind.stop &&
-        _distanceMeters(last.latitude, last.longitude, entry.latitude, entry.longitude) <= stopRadiusMeters) {
+        _distanceMeters(last.latitude, last.longitude, entry.latitude, entry.longitude) <= stopRadiusMeters &&
+        (pendingMove == null ||
+            points
+                    .where(
+                      (p) =>
+                          !p.recordedAt.isBefore(pendingMove!.start) &&
+                          !p.recordedAt.isAfter(pendingMove.end) &&
+                          _distanceMeters(last.latitude, last.longitude, p.latitude, p.longitude) >
+                              stopRadiusMeters,
+                    )
+                    .take(2)
+                    .length <
+                2)) {
       merged[merged.length - 1] = TimelineEntry(
         kind: TimelineKind.stop,
         start: last.start,

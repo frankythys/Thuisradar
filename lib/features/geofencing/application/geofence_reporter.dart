@@ -17,23 +17,26 @@ class GeofenceReporter {
   Future<List<String>> report(List<GeofenceReport> reports) async {
     final key = await _store.deviceKey();
     if (key == null) return const []; // afgemeld of delen uit
-    final queue = pruneReportQueue([...await _store.pending(), ...reports], now: _clock());
+    // Eerst duurzaam opslaan, ook als de callback tijdens het versturen stopt.
+    await _store.enqueue(key, reports);
+    final pending = await _store.pending(key);
+    final queue = pruneReportQueue(pending, now: _clock());
+    for (final report in pending) {
+      if (!queue.contains(report)) await _store.acknowledge(key, report);
+    }
     final answers = <String>[];
-    final remaining = <GeofenceReport>[];
     for (final report in queue) {
-      // Na één netwerkfout de rest niet meer proberen: die faalt toch.
-      if (remaining.isNotEmpty) {
-        remaining.add(report);
-        continue;
-      }
+      if (await _store.deviceKey() != key) break;
       try {
         answers.add(await _api.send(deviceKey: key, report: report));
+        await _store.acknowledge(key, report);
       } on GeofenceSendException catch (error) {
-        if (error.retry) remaining.add(report);
         answers.add('error: ${error.message}');
+        // Na één netwerkfout blijven deze en volgende meldingen bewaard.
+        if (error.retry) break;
+        await _store.acknowledge(key, report);
       }
     }
-    await _store.savePending(remaining);
     return answers;
   }
 

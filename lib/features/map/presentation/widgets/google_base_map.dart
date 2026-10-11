@@ -59,6 +59,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   ({double latitude, double longitude, double zoom})? _wanted;
   ({double latitude, double longitude, double zoom})? _shown;
   bool _moving = false;
+  bool _zoomSatellite = false;
   final _icons = <String, gm.BitmapDescriptor>{};
   double? _iconPixelRatio;
   late final _members = GoogleMemberMarkers(
@@ -72,6 +73,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   void initState() {
     super.initState();
+    _zoomSatellite = widget.initialZoom >= 18;
     _wanted = (
       latitude: widget.initialCenter.latitude,
       longitude: widget.initialCenter.longitude,
@@ -80,6 +82,10 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     widget.markers?.addListener(_onMarkers);
     _events = widget.controller.mapEventStream.listen((event) {
       final camera = event.camera;
+      final satellite = camera.zoom >= 18;
+      if (satellite != _zoomSatellite && mounted) {
+        setState(() => _zoomSatellite = satellite);
+      }
       _wanted = (latitude: camera.center.latitude, longitude: camera.center.longitude, zoom: camera.zoom);
       unawaited(_sync());
     });
@@ -194,7 +200,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
         target: gm.LatLng(target.latitude, target.longitude),
         zoom: widget.initialZoom,
       ),
-      mapType: widget.satellite ? gm.MapType.hybrid : gm.MapType.normal,
+      mapType: widget.satellite || _zoomSatellite ? gm.MapType.hybrid : gm.MapType.normal,
       circles: placeCircles(
         widget.places,
         color: AppColors.primary,

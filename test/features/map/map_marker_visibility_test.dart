@@ -70,6 +70,11 @@ void main() {
     for (final zoom in [16.0, 17.0, 18.0]) {
       controller.move(home, zoom);
       await tester.pumpAndSettle();
+      if (zoom >= 18) {
+        expect(find.byType(GroupPin), findsNothing);
+        expect(find.byType(MemberMarker), findsNWidgets(2));
+        continue;
+      }
       expect(
         tester
             .getRect(find.byType(GroupPin))

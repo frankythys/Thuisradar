@@ -1,5 +1,6 @@
 import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
+import 'driving_activity.dart' show withoutSpikes;
 
 DateTime drivingWeekStart(DateTime date) => DateTime(date.year, date.month, date.day - date.weekday + 1);
 
@@ -38,7 +39,7 @@ DrivingReport buildDrivingReport(List<TrackPoint> points, DateTime week) {
   final sorted = points.where((p) => !p.recordedAt.isBefore(start) && p.recordedAt.isBefore(end)).toList()
     ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
   final segments = <List<TrackPoint>>[];
-  for (final point in sorted) {
+  for (final point in withoutSpikes(sorted)) {
     if (!point.latitude.isFinite ||
         !point.longitude.isFinite ||
         point.latitude.abs() > 90 ||
