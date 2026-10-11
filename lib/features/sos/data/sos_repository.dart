@@ -47,6 +47,10 @@ class SosRepository {
         .from('sos_alerts')
         .stream(primaryKey: ['id'])
         .eq('family_id', familyId)
+        // De nieuwste alarmen: een actief alarm mag nooit wegvallen achter de
+        // 1000-rijen-grens van oude, opgeloste alarmen.
+        .order('created_at', ascending: false)
+        .limit(100)
         .map(
           (rows) =>
               rows.map(SosAlert.fromJson).where((a) => a.active).toList()

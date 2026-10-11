@@ -11,14 +11,22 @@ class ChatRepository {
 
   final SupabaseClient _client;
 
-  /// Realtime berichten (oudste eerst).
+  /// Zoveel recente berichten laadt de chat. PostgREST geeft er hoe dan ook
+  /// hooguit 1000 terug; zonder eigen grens waren dat na een tijd de oudste.
+  static const recentLimit = 500;
+
+  /// Realtime berichten (oudste eerst). `order()` op een stream staat standaard
+  /// op aflopend: we halen de nieuwste op en sorteren zelf oplopend.
   Stream<List<Message>> watchMessages(String familyId) {
     return _client
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('family_id', familyId)
-        .order('created_at')
-        .map((rows) => rows.map(Message.fromJson).toList());
+        .order('created_at', ascending: false)
+        .limit(recentLimit)
+        .map(
+          (rows) => rows.map(Message.fromJson).toList()..sort((a, b) => a.createdAt.compareTo(b.createdAt)),
+        );
   }
 
   Future<String> attachmentUrl(String path) =>

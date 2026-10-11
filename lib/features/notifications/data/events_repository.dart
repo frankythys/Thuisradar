@@ -13,6 +13,10 @@ class EventsRepository {
         .from('family_events')
         .stream(primaryKey: ['id'])
         .eq('family_id', familyId)
+        // Zonder volgorde + grens kwamen na ±1000 meldingen willekeurige (oude)
+        // rijen terug en ontbraken de nieuwste.
+        .order('created_at', ascending: false)
+        .limit(300)
         .map(
           (rows) =>
               rows.map(FamilyEvent.fromJson).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
