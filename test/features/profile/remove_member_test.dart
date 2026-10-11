@@ -21,7 +21,22 @@ void main() {
 
   Future<_Repo> pump(WidgetTester tester, {required String me}) async {
     final repo = _Repo();
-    when(() => repo.fetchInvite('fam')).thenAnswer((_) async => _family);
+    var invite = Family(
+      id: 'fam',
+      name: 'Familie Thys',
+      inviteCode: 'K7Q2M9XA',
+      inviteExpiresAt: DateTime(2026, 10, 18, 16, 21),
+    );
+    when(() => repo.fetchInvite('fam')).thenAnswer((_) async => invite);
+    when(() => repo.rotateInviteCode('fam')).thenAnswer((_) async {
+      invite = Family(
+        id: 'fam',
+        name: 'Familie Thys',
+        inviteCode: 'NEW98765',
+        inviteExpiresAt: DateTime(2026, 10, 25, 9),
+      );
+      return invite;
+    });
     when(() => repo.removeMember('fam', 'liam')).thenAnswer((_) async {});
     tester.view.physicalSize = const Size(1080, 2240);
     tester.view.devicePixelRatio = 2.625;
@@ -83,5 +98,28 @@ void main() {
 
     expect(find.byTooltip('Papa verwijderen'), findsNothing);
     expect(find.byTooltip('Liam verwijderen'), findsNothing);
+  });
+
+  testWidgets('Profiel › Gezin: de beheerder ziet de geldigheid en maakt een nieuwe code', (tester) async {
+    final repo = await pump(tester, me: 'papa');
+
+    expect(find.text('Geldig tot 18/10 om 16:21'), findsOneWidget);
+    await tester.tap(find.text('Nieuwe code maken'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nieuwe code'));
+    await tester.pumpAndSettle();
+
+    verify(() => repo.rotateInviteCode('fam')).called(1);
+    expect(find.text('NEW98765'), findsOneWidget);
+    expect(find.text('Geldig tot 25/10 om 09:00'), findsOneWidget);
+  });
+
+  testWidgets('Profiel › Gezin: een gewoon lid ziet de code, maar geen knop om ze te vernieuwen', (
+    tester,
+  ) async {
+    await pump(tester, me: 'liam');
+
+    expect(find.text('K7Q2M9XA'), findsOneWidget);
+    expect(find.text('Nieuwe code maken'), findsNothing);
   });
 }

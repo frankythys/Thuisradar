@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -7,6 +6,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/member_avatar.dart';
 import '../../family/domain/family.dart';
 import '../../family/domain/family_member.dart';
+import '../../family/presentation/invite_code_controls.dart';
 import '../application/profile_providers.dart';
 
 Future<void> _sheet(BuildContext context, String title, Widget child) {
@@ -34,7 +34,8 @@ Future<void> _sheet(BuildContext context, String title, Widget child) {
   );
 }
 
-/// Gezin: uitnodigingscode (kopiëren), de leden en "iemand uitnodigen".
+/// Gezin: uitnodigingscode (kopiëren, geldigheid, voor de beheerder "Nieuwe
+/// code maken"), de leden en "iemand uitnodigen".
 /// Met [onRemove] (enkel voor de beheerder) krijgt elk ander lid een knop om
 /// het uit het gezin te verwijderen.
 Future<void> showFamilySheet(
@@ -45,44 +46,14 @@ Future<void> showFamilySheet(
   void Function(FamilyMember member)? onRemove,
 }) {
   final tokens = context.tokens;
-  final text = Theme.of(context).textTheme;
   return _sheet(
     context,
     family.name,
     Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceXs, tokens.spaceSm),
-          decoration: BoxDecoration(
-            color: AppColors.primarySoft,
-            borderRadius: BorderRadius.circular(tokens.radiusMd),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('UITNODIGINGSCODE', style: text.labelSmall?.copyWith(color: AppColors.muted)),
-                    Text(family.inviteCode, style: text.titleLarge?.copyWith(color: AppColors.primary)),
-                  ],
-                ),
-              ),
-              IconButton(
-                tooltip: 'Code kopiëren',
-                icon: const Icon(Icons.content_copy, color: AppColors.primary),
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: family.inviteCode));
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(const SnackBar(content: Text('Code gekopieerd')));
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
+        // Code, geldigheid en (beheerder) "Nieuwe code maken".
+        InviteCodePanel(family: family),
         SizedBox(height: tokens.spaceSm),
         for (final member in members)
           ListTile(

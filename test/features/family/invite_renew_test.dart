@@ -8,6 +8,7 @@ import 'package:thuisradar/features/family/application/family_providers.dart';
 import 'package:thuisradar/features/family/data/family_repository.dart';
 import 'package:thuisradar/features/family/domain/family.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
+import 'package:thuisradar/features/family/presentation/invite_code_controls.dart';
 import 'package:thuisradar/features/family/presentation/invite_screen.dart';
 
 class _Repo extends Mock implements FamilyRepository {}

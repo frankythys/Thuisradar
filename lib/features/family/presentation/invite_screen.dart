@@ -5,18 +5,17 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
-import '../../../core/utils/time_format.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../../permissions/presentation/permissions_screen.dart';
 import '../application/family_providers.dart';
 import '../domain/family.dart';
+import 'invite_code_controls.dart';
 
 part 'invite_screen_success_hero.dart';
 part 'invite_screen_code_card.dart';
 part 'invite_screen_how_it_works.dart';
 part 'invite_screen_step_badge.dart';
-part 'invite_screen_renew.dart';
 
 /// Scherm 8: na het aanmaken van een familie. Toont de code en laat die delen.
 class InviteScreen extends ConsumerWidget {
@@ -92,16 +91,8 @@ class InviteScreen extends ConsumerWidget {
               ),
               SizedBox(height: tokens.spaceLg),
               _CodeCard(code: family.inviteCode, onCopy: () => _copy(context, family)),
-              if (inviteValidity(family, DateTime.now(), isOwner: isOwner) case final validity?) ...[
-                SizedBox(height: tokens.spaceXs),
-                Text(
-                  validity,
-                  style: text.bodySmall?.copyWith(
-                    color: family.inviteExpiredAt(DateTime.now()) ? AppColors.alert : AppColors.muted,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              SizedBox(height: tokens.spaceXs),
+              InviteValidityText(family: family, isOwner: isOwner, textAlign: TextAlign.center),
               SizedBox(height: tokens.spaceMd),
               Builder(
                 builder: (buttonContext) => FilledButton.icon(
@@ -110,7 +101,7 @@ class InviteScreen extends ConsumerWidget {
                   label: const Text('Uitnodiging versturen'),
                 ),
               ),
-              if (isOwner) ...[SizedBox(height: tokens.spaceSm), _RenewCodeButton(familyId: family.id)],
+              if (isOwner) ...[SizedBox(height: tokens.spaceSm), RenewInviteCodeButton(familyId: family.id)],
               SizedBox(height: tokens.spaceLg),
               const _HowItWorks(),
               if (justCreated) ...[
