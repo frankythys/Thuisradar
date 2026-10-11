@@ -24,7 +24,7 @@ Audit van A tot Z: ritten en ritkaarten, tracking en geofencing, kaart en perfor
 | Backend | SOS-alarm kon naar een ander gezin verplaatst worden, oud punt kon de kaart terugzetten, cron-logboek groeide onbeperkt | Migratie 016 (handmatig uitvoeren) |
 | A52 | Native crash van de renderer (Impeller/OpenGLES) bij terugkeren, drie keer vastgesteld op 11/10 | Omzeild in `5183f95` (Skia); nog te bevestigen op een nieuwe APK |
 | Bewaartermijn locatiegeschiedenis | Geen: alles blijft bewaard (gratis plan vol in ±1 jaar met 4 leden) | **Beslispunt voor de eigenaar** (§4.0), niet automatisch ingevoerd |
-| **GPS-gaten** | 102 gaten van meer dan 5 min in de historiek van één toestel; oorzaak **niet bewezen** | **Open** (§4.1): A52-crashes (vastgesteld), achtergrondtracking en offline opslag zijn kandidaat-oorzaken |
+| **GPS-gaten** | 102 gaten van meer dan 5 min in de historiek van één toestel (3–10/10) | **Open** (§4.1): op 11/10 vallen 3 van de 4 gaten samen met een A52-crash; voor de oudere gaten is de oorzaak niet bewezen |
 
 ### Wat jij nog moet doen
 
@@ -138,7 +138,16 @@ Ongedaan maken: `select cron.unschedule('thuisradar-history-cleanup');` Al gewis
 
 De historiek van één toestel bevat 102 meetgaten van meer dan 5 minuten (3–11 oktober). **De oorzaak daarvan is niet bewezen.** De tellingen tonen dat er gaten zijn, niet waarom. Hieronder staan de kandidaat-oorzaken, van vastgesteld naar vermoed.
 
-0. **Vastgesteld: native crashes op de A52.** Op 11/10 om 10:00:32, 11:50:39 en 12:51:35 crashte de app met `SIGSEGV` in de Impeller/OpenGLES-renderer (`A52_HERSTART_DIAGNOSE.md`). Een crash beëindigt het proces en daarmee de GPS-stroom; tot de app weer opent wordt er niets gemeten. Of deze crashes samenvallen met gaten in de historiek is **nog niet nagegaan**.
+0. **Vastgesteld: native crashes op de A52.** Op 11/10 om 10:00:32, 11:50:39 en 12:51:35 crashte de app met `SIGSEGV` in de Impeller/OpenGLES-renderer (`A52_HERSTART_DIAGNOSE.md`). Een crash beëindigt het proces en daarmee de GPS-stroom; tot de app weer opent wordt er niets gemeten. **Nagegaan voor 11/10 (alleen-lezen query op `location_history`, Europe/Brussels):** het toestel had die dag 4 gaten van meer dan 5 minuten. Drie ervan beginnen enkele seconden vóór een vastgestelde crash:
+
+   | Laatste meting vóór het gat | Crash (crashbuffer) | Eerste meting na het gat | Gat |
+   |---|---|---|---|
+   | 10:00:30 | 10:00:32 | 10:13:13 | 12,7 min |
+   | 11:50:20 | 11:50:39 | 11:56:26 | 6,1 min |
+   | 12:51:33 | 12:51:35 | 13:07:13 | 15,7 min |
+   | 09:39:18 | — (geen crash bekend) | 09:56:25 | 17,1 min |
+
+   Voor die dag zijn de crashes dus **aangetoond** de oorzaak van 3 van de 4 gaten. Het gat van 09:39 heeft een andere, onbekende oorzaak. Voor de 102 gaten van 3–10 oktober is dit **niet** nagegaan: de crashbuffer van die dagen is niet gelezen.
    - *Omzeild in `5183f95`* (Skia in plaats van Impeller), nog te bevestigen op een nieuwe APK.
    - *Na te gaan:* de crashtijden en de crashbuffer (`adb logcat -b crash`) naast de gaten in `location_history` leggen, en de locatiediagnose-export van dezelfde dag erbij nemen.
 
