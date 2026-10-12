@@ -335,13 +335,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     : null,
                 onTap: _lockOrSignOut,
               ),
-              if (userId != null && ref.watch(appLockEnabledProvider(userId)).value == true)
-                ProfileTile(
-                  icon: Icons.logout,
-                  title: 'Account volledig afmelden',
-                  subtitle: 'Daarna opnieuw aanmelden via Google of e-mail',
-                  onTap: _signOut,
-                ),
               ProfileTile(icon: Icons.exit_to_app, title: 'Familie verlaten', danger: true, onTap: _leaveFamily),
             ]),
             SizedBox(height: tokens.spaceMd),
