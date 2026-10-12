@@ -8,4 +8,4 @@ De oude wachtwoordgebaseerde optie wordt niet automatisch overgenomen. Schakel V
 
 Toestelcontrole: Google-login, activeren, app sluiten/openen, annuleren, foutieve scan, correcte scan, profiel/detailpagina open laten en app naar achtergrond/terug, uitloggen en opnieuw aanmelden. Unit/widgettests testen sessie-afscherming en annuleren; een echte sensorcontrole blijft nodig.
 
-Als Vingerscan aan staat, is de dagelijkse afsluitknop in Profiel **Vergrendelen**. Die bewaart de sessie; daarna kom je met een scan terug binnen. **Account volledig afmelden** beëindigt expliciet de serversessie en vereist een nieuwe Google/e-mail-aanmelding. Zo blijven vergrendelen en volledige accountafmelding duidelijk onderscheiden.
+Als Vingerscan aan staat, is de dagelijkse afsluitknop in Profiel **Uitloggen**. Dit meldt de zichtbare app af en bewaart de toestel-login voor biometrie; daarna kom je met een scan terug binnen. **Account volledig afmelden** beëindigt expliciet de serversessie en vereist een nieuwe Google/e-mail-aanmelding. Zo blijven vergrendelen en volledige accountafmelding duidelijk onderscheiden.

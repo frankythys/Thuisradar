@@ -344,11 +344,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: userId != null && ref.watch(biometricEnabledProvider(userId)).value == true
                     ? Icons.lock_outline
                     : Icons.logout,
-                title: userId != null && ref.watch(biometricEnabledProvider(userId)).value == true
-                    ? 'Vergrendelen'
-                    : 'Uitloggen',
+                title: 'Uitloggen',
                 subtitle: userId != null && ref.watch(biometricEnabledProvider(userId)).value == true
-                    ? 'Daarna weer openen met je vingerafdruk'
+                    ? 'Opnieuw inloggen met je vingerafdruk'
                     : null,
                 onTap: _lockOrSignOut,
               ),
