@@ -4,9 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
+import 'auth_repository.dart';
+
 final biometricLoginProvider = Provider((ref) => BiometricLogin());
 
-/// Biometrie ontgrendelt een bestaande sessie; bewaart nooit wachtwoorden.
+/// "Onthouden" bewaart enkel het e-mailadres. Het wachtwoord staat alleen op
+/// het toestel zolang de vingerafdruk-login aan staat én je ingelogd bent:
+/// uitloggen wist het ([forgetOnSignOut]). Versleuteld door het toestel, nooit
+/// in gewone voorkeuren.
 class BiometricLogin {
   BiometricLogin({LocalAuthentication? local, FlutterSecureStorage? storage})
     : _local = local ?? LocalAuthentication(),
@@ -14,9 +19,6 @@ class BiometricLogin {
   final LocalAuthentication _local;
   final FlutterSecureStorage _storage;
   static const _key = 'thuisradar_biometric_login';
-  static const _enrollKey = 'circlebeacon_biometric_enroll';
-  String? _freshlyEnabledUser;
-  static const _userKey = 'circlebeacon_biometric_user';
   static const _rememberKey = 'thuisradar_remembered_login';
 
   /// Het onthouden e-mailadres. Een wachtwoord dat een oudere versie hier
@@ -44,7 +46,17 @@ class BiometricLogin {
     required String password,
     required bool remember,
   }) async {
-    await _storage.delete(key: _key); // Verwijder oude opgeslagen wachtwoorden.
+    final value = jsonEncode({'email': email, 'password': password});
+    final biometric = await _storage.read(key: _key);
+    if (biometric != null) {
+      final saved = jsonDecode(biometric) as Map<String, dynamic>;
+      if ((saved['email'] as String).toLowerCase() == email.toLowerCase()) {
+        await _storage.write(key: _key, value: value);
+      } else {
+        // Switching accounts must not retain biometric access to the old one.
+        await disable();
+      }
+    }
     if (remember) {
       await _storage.write(key: _rememberKey, value: jsonEncode({'email': email}));
     } else {
@@ -52,62 +64,32 @@ class BiometricLogin {
     }
   }
 
-  Future<void> requestEnrollment() => _storage.write(key: _enrollKey, value: 'true');
+  Future<bool> get enabled => _storage.containsKey(key: _key);
+  Future<void> disable() => _storage.delete(key: _key);
 
-  Future<bool> completeEnrollmentFor(String userId) async {
-    if (await _storage.read(key: _enrollKey) != 'true') return false;
-    if (!await enableFor(userId)) {
-      await _storage.delete(key: _enrollKey);
-      return false;
-    }
-    await _storage.delete(key: _enrollKey);
-    _freshlyEnabledUser = userId;
-    return true;
-  }
-
-  bool consumeEnrollmentUnlock(String userId) {
-    if (_freshlyEnabledUser != userId) return false;
-    _freshlyEnabledUser = null;
-    return true;
-  }
-
-  Future<bool> enabledFor(String userId) async => await _storage.read(key: _userKey) == userId;
-
-  Future<void> disable() async {
-    await _storage.delete(key: _key);
-    await _storage.delete(key: _userKey);
-    await _storage.delete(key: _enrollKey);
-  }
-
-  Future<bool> enableFor(String userId) async {
-    if (!await authenticate()) return false;
-    await _storage.delete(key: _key);
-    await _storage.write(key: _userKey, value: userId);
-    return true;
-  }
-
-  Future<bool> authenticate() async {
+  Future<bool> signIn(AuthRepository auth, {String? email, String? password, bool? remember}) async {
     if ((await _local.getAvailableBiometrics()).isEmpty) {
       throw StateError('Stel eerst een vingerafdruk of gezichtsherkenning in op je toestel.');
     }
-    return _local.authenticate(
-      localizedReason: 'Ontgrendel CircleBeacon',
+    final accepted = await _local.authenticate(
+      localizedReason: 'Bevestig dat jij inlogt bij CircleBeacon',
       biometricOnly: true,
-      persistAcrossBackgrounding: true,
     );
+    if (!accepted) return false;
+    final stored = await _storage.read(key: _key);
+    final credentials = stored == null ? null : jsonDecode(stored) as Map<String, dynamic>;
+    final loginEmail = credentials?['email'] as String? ?? email;
+    final loginPassword = credentials?['password'] as String? ?? password;
+    if (loginEmail == null || loginPassword == null) {
+      throw StateError('Vul eerst je e-mailadres en wachtwoord in.');
+    }
+    await auth.signIn(email: loginEmail, password: loginPassword);
+    if (stored == null) {
+      await _storage.write(key: _key, value: jsonEncode({'email': loginEmail, 'password': loginPassword}));
+    }
+    if (remember != null) {
+      await rememberSuccessfulLogin(email: loginEmail, password: loginPassword, remember: remember);
+    }
+    return true;
   }
 }
-
-final biometricEnabledProvider = FutureProvider.family<bool, String>(
-  (ref, userId) => ref.watch(biometricLoginProvider).enabledFor(userId),
-);
-
-/// Een expliciete vergrendeling vanuit het profiel, zonder de sessie te beÃ«indigen.
-class BiometricLockRequest extends Notifier<int> {
-  @override
-  int build() => 0;
-
-  void lock() => state++;
-}
-
-final biometricLockRequestProvider = NotifierProvider<BiometricLockRequest, int>(BiometricLockRequest.new);

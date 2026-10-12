@@ -6,8 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'biometric_login.dart';
-
 @visibleForTesting
 String derivePin((String, String) input) {
   final hmac = Hmac(sha256, utf8.encode(input.$1));
@@ -71,10 +69,14 @@ class PinLock {
 
 final pinLockProvider = Provider((ref) => PinLock());
 final pinEnabledProvider = FutureProvider.family<bool, String>((ref, id) => ref.watch(pinLockProvider).enabledFor(id));
-final appLockEnabledProvider = FutureProvider.family<bool, String>((ref, id) async {
-  final enrolled = await ref.watch(biometricLoginProvider).completeEnrollmentFor(id);
-  if (enrolled) ref.invalidate(biometricEnabledProvider(id));
-  final biometric = await ref.watch(biometricEnabledProvider(id).future);
-  final pin = await ref.watch(pinEnabledProvider(id).future);
-  return biometric || pin;
-});
+final appLockEnabledProvider = FutureProvider.family<bool, String>(
+  (ref, id) => ref.watch(pinEnabledProvider(id).future),
+);
+
+class PinLockRequest extends Notifier<int> {
+  @override
+  int build() => 0;
+  void lock() => state++;
+}
+
+final pinLockRequestProvider = NotifierProvider<PinLockRequest, int>(PinLockRequest.new);

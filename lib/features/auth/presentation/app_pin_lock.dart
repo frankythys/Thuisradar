@@ -3,13 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/auth_providers.dart';
-import '../data/biometric_login.dart';
 import '../data/pin_lock.dart';
 
 /// Bedekt de volledige navigator, ook als een profiel/detailpagina open staat.
 /// De sessie en achtergrondlocatie blijven actief terwijl de UI vergrendeld is.
-class BiometricLock extends ConsumerWidget {
-  const BiometricLock({super.key, required this.child, required this.onSignedOut});
+class AppPinLock extends ConsumerWidget {
+  const AppPinLock({super.key, required this.child, required this.onSignedOut});
   final Widget child;
   final VoidCallback onSignedOut;
 
@@ -62,32 +61,10 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Een biometrisch systeemvenster mag zichzelf niet opnieuw vergrendelen.
+    // Vergrendel de toegangscode bij terugkeer uit de achtergrond.
     if (state == AppLifecycleState.paused && !_busy) {
       _pin.clear();
       setState(() => _locked = true);
-    }
-  }
-
-  Future<void> _unlock() async {
-    if (_busy) return;
-    setState(() {
-      _busy = true;
-      _message = null;
-    });
-    try {
-      final accepted = await ref.read(biometricLoginProvider).authenticate();
-      if (mounted && accepted) setState(() => _locked = false);
-    } catch (error) {
-      if (mounted) {
-        setState(
-          () => _message = error is StateError
-              ? error.message.toString()
-              : 'Vingerscan lukt niet. Probeer opnieuw of log opnieuw in.',
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -119,16 +96,13 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
     if (_busy) return;
     setState(() => _busy = true);
     final auth = ref.read(authRepositoryProvider);
-    final biometric = ref.read(biometricLoginProvider);
     final container = ProviderScope.containerOf(context);
     try {
       // Alleen aanmelden via Google/wachtwoord biedt een alternatief voor de scan.
       await auth.signOut();
       widget.onSignedOut();
-      await biometric.forgetOnSignOut();
       await container.read(pinLockProvider).disable(widget.userId);
       container.invalidate(pinEnabledProvider(widget.userId));
-      container.invalidate(biometricEnabledProvider(widget.userId));
     } catch (_) {
       if (mounted) setState(() => _message = 'Opnieuw inloggen starten is niet gelukt. Probeer opnieuw.');
     } finally {
@@ -138,18 +112,14 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(biometricLockRequestProvider, (previous, next) {
+    ref.listen(pinLockRequestProvider, (previous, next) {
       if (previous != next) {
         _pin.clear();
         setState(() => _locked = true);
       }
     });
     final preference = ref.watch(appLockEnabledProvider(widget.userId));
-    final biometric = ref.watch(biometricEnabledProvider(widget.userId));
     final pinEnabled = ref.watch(pinEnabledProvider(widget.userId));
-    if (preference.hasValue && ref.read(biometricLoginProvider).consumeEnrollmentUnlock(widget.userId)) {
-      _locked = false;
-    }
     final blocked = preference.isLoading || preference.hasError || (preference.value == true && _locked);
     return Stack(
       fit: StackFit.expand,
@@ -175,14 +145,6 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
                           if (preference.isLoading)
                             const CircularProgressIndicator()
                           else ...[
-                            if (biometric.value == true)
-                              Semantics(
-                                label: 'Ontgrendelen met biometrie',
-                                child: IconButton.filledTonal(
-                                  onPressed: _busy || preference.hasError ? null : _unlock,
-                                  icon: const Icon(Icons.fingerprint, size: 48),
-                                ),
-                              ),
                             if (pinEnabled.value == true) ...[
                               const SizedBox(height: 20),
                               TextField(
@@ -203,7 +165,7 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
                             Text(
                               _message ??
                                   (preference.hasError
-                                      ? 'Vingerscan-instelling kon niet worden geladen.'
+                                      ? 'Toegangscode-instelling kon niet worden geladen.'
                                       : 'Ontgrendel om verder te gaan.'),
                               textAlign: TextAlign.center,
                             ),

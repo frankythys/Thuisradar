@@ -2,21 +2,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:thuisradar/features/auth/data/auth_repository.dart';
 import 'package:thuisradar/features/auth/data/biometric_login.dart';
 
 class _Local extends Mock implements LocalAuthentication {}
 
 class _Storage extends Mock implements FlutterSecureStorage {}
 
+class _Auth extends Mock implements AuthRepository {}
+
 void main() {
   late _Local local;
   late _Storage storage;
+  late _Auth auth;
   late BiometricLogin service;
   setUp(() {
     local = _Local();
     storage = _Storage();
+    auth = _Auth();
     service = BiometricLogin(local: local, storage: storage);
     when(() => storage.delete(key: any(named: 'key'))).thenAnswer((_) async {});
+    when(() => local.getAvailableBiometrics()).thenAnswer((_) async => [BiometricType.fingerprint]);
+    when(() => local.authenticate(localizedReason: any(named: 'localizedReason'), biometricOnly: true))
+        .thenAnswer((_) async => true);
     when(() => storage.read(key: any(named: 'key'))).thenAnswer((_) async => null);
     when(
       () => storage.write(
@@ -24,48 +32,22 @@ void main() {
         value: any(named: 'value'),
       ),
     ).thenAnswer((_) async {});
-    when(() => local.getAvailableBiometrics()).thenAnswer((_) async => [BiometricType.fingerprint]);
-    when(
-      () => local.authenticate(
-        localizedReason: any(named: 'localizedReason'),
-        biometricOnly: true,
-        persistAcrossBackgrounding: true,
-      ),
-    ).thenAnswer((_) async => true);
   });
-  test('Google-account schakelt biometrie in zonder wachtwoord, na scan', () async {
-    expect(await service.enableFor('google-user'), isTrue);
-    verifyInOrder([
-      () => local.authenticate(
-        localizedReason: any(named: 'localizedReason'),
-        biometricOnly: true,
-        persistAcrossBackgrounding: true,
+  test('annuleren leest geen credentials en logt niet in', () async {
+    when(() => local.authenticate(localizedReason: any(named: 'localizedReason'), biometricOnly: true))
+        .thenAnswer((_) async => false);
+    expect(await service.signIn(auth), isFalse);
+    verifyNever(() => storage.read(key: any(named: 'key')));
+    verifyNever(
+      () => auth.signIn(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
       ),
-      () => storage.delete(key: 'thuisradar_biometric_login'),
-      () => storage.write(key: 'circlebeacon_biometric_user', value: 'google-user'),
-    ]);
+    );
   });
-  test('instellen op het inlogscherm bindt aan de eerste succesvolle accountlogin', () async {
-    await service.requestEnrollment();
-    verify(() => storage.write(key: 'circlebeacon_biometric_enroll', value: 'true')).called(1);
-    when(() => storage.read(key: 'circlebeacon_biometric_enroll')).thenAnswer((_) async => 'true');
-    expect(await service.completeEnrollmentFor('google-user'), isTrue);
-    verify(() => storage.write(key: 'circlebeacon_biometric_user', value: 'google-user')).called(1);
-    verify(() => storage.delete(key: 'circlebeacon_biometric_enroll')).called(1);
-    expect(service.consumeEnrollmentUnlock('another-user'), isFalse);
-    expect(service.consumeEnrollmentUnlock('google-user'), isTrue);
-    expect(service.consumeEnrollmentUnlock('google-user'), isFalse);
-  });
-
-  test('annuleren schakelt biometrie niet in', () async {
-    when(
-      () => local.authenticate(
-        localizedReason: any(named: 'localizedReason'),
-        biometricOnly: true,
-        persistAcrossBackgrounding: true,
-      ),
-    ).thenAnswer((_) async => false);
-    expect(await service.enableFor('user'), isFalse);
+  test('mislukte aanmelding slaat geen wachtwoord op', () async {
+    when(() => auth.signIn(email: 'test@example.com', password: 'invalid')).thenThrow(Exception('invalid'));
+    await expectLater(service.signIn(auth, email: 'test@example.com', password: 'invalid'), throwsException);
     verifyNever(
       () => storage.write(
         key: any(named: 'key'),
@@ -73,26 +55,69 @@ void main() {
       ),
     );
   });
-  test('voorkeur geeft een ander account geen biometrische toegang', () async {
-    when(() => storage.read(key: 'circlebeacon_biometric_user')).thenAnswer((_) async => 'user-a');
-    expect(await service.enabledFor('user-a'), isTrue);
-    expect(await service.enabledFor('user-b'), isFalse);
+  test('opgeslagen login wordt alleen na biometrie gebruikt', () async {
+    when(() => storage.read(key: any(named: 'key')))
+        .thenAnswer((_) async => '{"email":"test@example.com","password":"test-only"}');
+    when(() => auth.signIn(email: 'test@example.com', password: 'test-only')).thenAnswer((_) async {});
+    expect(await service.signIn(auth), isTrue);
+    verifyInOrder([
+      () => local.authenticate(localizedReason: any(named: 'localizedReason'), biometricOnly: true),
+      () => storage.read(key: any(named: 'key')),
+      () => auth.signIn(email: 'test@example.com', password: 'test-only'),
+    ]);
   });
-  test('zonder geregistreerde biometrie geen toegang', () async {
-    when(() => local.getAvailableBiometrics()).thenAnswer((_) async => []);
-    await expectLater(service.authenticate(), throwsStateError);
-    verifyNever(
-      () => local.authenticate(
-        localizedReason: any(named: 'localizedReason'),
-        biometricOnly: true,
-        persistAcrossBackgrounding: true,
-      ),
+
+  test('gewone login bewaart gegevens en vernieuwt biometrisch wachtwoord', () async {
+    when(() => storage.read(key: 'thuisradar_biometric_login'))
+        .thenAnswer((_) async => '{"email":"test@example.com","password":"old-password"}');
+    await service.rememberSuccessfulLogin(
+      email: 'test@example.com',
+      password: 'new-password',
+      remember: true,
     );
+    // De vingerafdruk-login (opt-in) krijgt het nieuwe wachtwoord; "Onthouden"
+    // bewaart enkel het e-mailadres.
+    verify(
+      () => storage.write(
+        key: 'thuisradar_biometric_login',
+        value: '{"email":"test@example.com","password":"new-password"}',
+      ),
+    ).called(1);
+    verify(() => storage.write(key: 'thuisradar_remembered_login', value: '{"email":"test@example.com"}'))
+        .called(1);
   });
-  test('onthouden bewaart enkel e-mail en verwijdert oude biometrische wachtwoorden', () async {
-    await service.rememberSuccessfulLogin(email: 'a@example.com', password: 'secret', remember: true);
+
+  test('onthouden bewaart nooit het wachtwoord', () async {
+    await service.rememberSuccessfulLogin(email: 'test@example.com', password: 'geheim', remember: true);
+    final written = verify(
+      () => storage.write(
+        key: 'thuisradar_remembered_login',
+        value: captureAny(named: 'value'),
+      ),
+    ).captured;
+    expect(written.single, isNot(contains('geheim')));
+  });
+
+  test('een door een oudere versie bewaard wachtwoord wordt bij het lezen gewist', () async {
+    when(() => storage.read(key: 'thuisradar_remembered_login'))
+        .thenAnswer((_) async => '{"email":"test@example.com","password":"oud-wachtwoord"}');
+
+    expect(await service.rememberedEmail(), 'test@example.com');
+    verify(() => storage.write(key: 'thuisradar_remembered_login', value: '{"email":"test@example.com"}'))
+        .called(1);
+  });
+
+  test('uitloggen wist het wachtwoord van de vingerafdruk-login, niet het e-mailadres', () async {
+    await service.forgetOnSignOut();
     verify(() => storage.delete(key: 'thuisradar_biometric_login')).called(1);
-    verify(() => storage.write(key: 'thuisradar_remembered_login', value: '{"email":"a@example.com"}')).called(1);
+    verifyNever(() => storage.delete(key: 'thuisradar_remembered_login'));
+  });
+
+  test('ander account verwijdert de oude biometrische login', () async {
+    when(() => storage.read(key: 'thuisradar_biometric_login'))
+        .thenAnswer((_) async => '{"email":"old@example.com","password":"old-password"}');
+    await service.rememberSuccessfulLogin(email: 'new@example.com', password: 'new-password', remember: true);
+    verify(() => storage.delete(key: 'thuisradar_biometric_login')).called(1);
     verifyNever(
       () => storage.write(
         key: 'thuisradar_biometric_login',
@@ -100,16 +125,15 @@ void main() {
       ),
     );
   });
-  test('uitloggen verwijdert biometrische voorkeur en oude credentials', () async {
-    await service.forgetOnSignOut();
-    verify(() => storage.delete(key: 'circlebeacon_biometric_user')).called(1);
-    verify(() => storage.delete(key: 'thuisradar_biometric_login')).called(1);
-    verifyNever(() => storage.delete(key: 'thuisradar_remembered_login'));
-  });
-  test('oud onthouden wachtwoord wordt verwijderd', () async {
-    when(() => storage.read(key: 'thuisradar_remembered_login'))
-        .thenAnswer((_) async => '{"email":"a@example.com","password":"old"}');
-    expect(await service.rememberedEmail(), 'a@example.com');
-    verify(() => storage.write(key: 'thuisradar_remembered_login', value: '{"email":"a@example.com"}')).called(1);
+
+  test('onthouden uit verwijdert de automatisch ingevulde login', () async {
+    await service.rememberSuccessfulLogin(email: 'test@example.com', password: 'password', remember: false);
+    verify(() => storage.delete(key: 'thuisradar_remembered_login')).called(1);
+    verifyNever(
+      () => storage.write(
+        key: any(named: 'key'),
+        value: any(named: 'value'),
+      ),
+    );
   });
 }

@@ -1,0 +1,3 @@
+## Toegangscode
+
+Via Profiel > Toegangscode stel je twee keer dezelfde code van zes cijfers in. Deze werkt ook na de gewone Uitloggen-knop. De code wordt met PBKDF2-HMAC-SHA256, een willekeurige salt en 100.000 iteraties afgeleid; alleen die afgeleide waarde wordt in beveiligde toestelopslag bewaard. Na vijf fouten geldt een wachttijd van 30 seconden die bij volgende fouten oploopt tot maximaal 15 minuten; de teller blijft na een appherstart behouden. Via dezelfde instelling kun je wijzigen of uitschakelen. Bij code vergeten kies je Opnieuw inloggen en meld je aan via Google/e-mail. Opgeslagen login verwijderen wist de toestelcode.

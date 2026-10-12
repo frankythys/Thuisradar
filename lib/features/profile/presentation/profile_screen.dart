@@ -84,7 +84,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (userId != null) {
         await ref.read(pinLockProvider).disable(userId);
         ref.invalidate(pinEnabledProvider(userId));
-        ref.invalidate(biometricEnabledProvider(userId));
       }
       if (mounted) _snack('Opgeslagen login en vingerafdruk verwijderd.');
     } catch (_) {
@@ -99,7 +98,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final enabled = await ref.read(appLockEnabledProvider(userId).future);
       if (!mounted) return;
       if (enabled) {
-        ref.read(biometricLockRequestProvider.notifier).lock();
+        ref.read(pinLockRequestProvider.notifier).lock();
         Navigator.popUntil(context, (route) => route.isFirst);
       } else {
         await _signOut();
@@ -132,7 +131,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (userId != null) {
       await container.read(pinLockProvider).disable(userId);
       container.invalidate(pinEnabledProvider(userId));
-      container.invalidate(biometricEnabledProvider(userId));
     }
     if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
   }
@@ -331,7 +329,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     : Icons.logout,
                 title: 'Uitloggen',
                 subtitle: userId != null && ref.watch(appLockEnabledProvider(userId)).value == true
-                    ? 'Opnieuw inloggen met vingerscan of toegangscode'
+                    ? 'Opnieuw inloggen met je toegangscode'
                     : null,
                 onTap: _lockOrSignOut,
               ),

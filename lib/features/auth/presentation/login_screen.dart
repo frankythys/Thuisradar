@@ -166,31 +166,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _biometric() async {
     if (_busy) return;
-    final enable = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Vingerscan instellen'),
-        content: const Text(
-          'Log één keer in met Google of e-mail en bevestig je vingerafdruk. '
-          'Daarna kun je ook na Uitloggen met je vingerscan opnieuw binnen.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Instellen')),
-        ],
-      ),
-    );
-    if (enable != true || !mounted) return;
-    setState(() {
-      _busy = true;
-      _message = null;
-    });
+    setState(() => _busy = true);
+    final service = ref.read(biometricLoginProvider);
+    final auth = ref.read(authRepositoryProvider);
     try {
-      await ref.read(biometricLoginProvider).requestEnrollment();
+      final enabled = await service.enabled;
       if (!mounted) return;
-      setState(() => _message = 'Vingerscan klaar om in te stellen. Log nu één keer in via Google of e-mail.');
-    } catch (_) {
-      if (mounted) setState(() => _message = 'Vingerscan instellen is niet gelukt. Probeer opnieuw.');
+      if (!enabled) {
+        if (!_formKey.currentState!.validate()) return;
+        final allow = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Biometrie inschakelen'),
+            content: const Text(
+              'Bewaar je login versleuteld op dit toestel om voortaan met je vingerafdruk of gezicht in te loggen. Je kunt dit verwijderen in je profiel.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Inschakelen')),
+            ],
+          ),
+        );
+        if (allow != true || !mounted) return;
+      }
+      setState(() {
+        _busy = true;
+        _message = null;
+      });
+      await service.signIn(auth, email: _email.text.trim(), password: _password.text, remember: _remember);
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () => _message = error is StateError
+              ? error.message.toString()
+              : 'Biometrisch inloggen lukt niet. Gebruik je e-mailadres en wachtwoord.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
