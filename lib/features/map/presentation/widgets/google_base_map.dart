@@ -68,6 +68,8 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     },
   );
   Set<gm.Marker> _memberMarkers = const {};
+  final _mapReady = Completer<void>();
+
   Future<void> _assetsReady = Future<void>.value();
 
   @override
@@ -116,7 +118,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       markers.value,
       wrap: wrapForBitmap(context),
       pixelRatio: MediaQuery.devicePixelRatioOf(context),
-      ready: _assetsReady,
+      ready: Future.wait([_assetsReady, _mapReady.future]),
     );
   }
 
@@ -238,7 +240,12 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       indoorViewEnabled: false,
       onMapCreated: (controller) {
         _google = controller;
-        unawaited(_sync());
+        unawaited(() async {
+          await _sync();
+          if (!mounted) return;
+          if (!_mapReady.isCompleted) _mapReady.complete();
+          _onMarkers();
+        }());
       },
     );
   }

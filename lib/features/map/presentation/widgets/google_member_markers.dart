@@ -45,12 +45,7 @@ class GoogleMemberMarkers {
   final _animations =
       <
         String,
-        ({
-          NativeMarkerFrame frame,
-          double pixelRatio,
-          List<gm.BitmapDescriptor> icons,
-          List<Duration> durations,
-        })
+        ({NativeMarkerFrame frame, double pixelRatio, List<gm.BitmapDescriptor> icons, List<Duration> durations})
       >{};
   int _frameIndex = 0;
   Timer? _frameTimer;
@@ -177,12 +172,7 @@ class GoogleMemberMarkers {
 
   /// Eén marker als afbeelding. Is het beeld identiek aan het vorige, dan
   /// blijft de oude marker (geen onnodige update naar Google).
-  Future<gm.Marker> _marker(
-    MapMarkerSpec spec,
-    int index,
-    Widget Function(Widget) wrap,
-    double pixelRatio,
-  ) async {
+  Future<gm.Marker> _marker(MapMarkerSpec spec, int index, Widget Function(Widget) wrap, double pixelRatio) async {
     final frame = _frameOf(spec);
     if (spec.frames.isNotEmpty) return _animatedMarker(spec, index, frame, wrap, pixelRatio);
     final png = await renderWidgetToPng(
@@ -206,12 +196,25 @@ class GoogleMemberMarkers {
     final marker = gm.Marker(
       markerId: gm.MarkerId(spec.id),
       position: position,
-      icon: gm.BitmapDescriptor.bytes(png, width: frame.canvas.width, height: frame.canvas.height),
+      icon: _bitmap(png, frame, pixelRatio),
       anchor: frame.anchor,
       zIndexInt: 10 + index,
     );
     _cache[spec.id] = (png: png, marker: marker, frame: frame);
     return marker;
+  }
+
+  gm.BitmapDescriptor _bitmap(Uint8List png, NativeMarkerFrame frame, double pixelRatio) {
+    // Android krijgt al fysieke schermpixels: voorkom een tweede schaalbewerking.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return gm.BitmapDescriptor.bytes(png, bitmapScaling: gm.MapBitmapScaling.none);
+    }
+    return gm.BitmapDescriptor.bytes(
+      png,
+      width: frame.canvas.width,
+      height: frame.canvas.height,
+      imagePixelRatio: pixelRatio,
+    );
   }
 
   /// Een geanimeerde marker: elk beeld één keer getekend (opnieuw enkel als
@@ -241,7 +244,7 @@ class GoogleMemberMarkers {
           size: frame.canvas,
           pixelRatio: pixelRatio,
         );
-        icons.add(gm.BitmapDescriptor.bytes(png, width: frame.canvas.width, height: frame.canvas.height));
+        icons.add(_bitmap(png, frame, pixelRatio));
       }
       _animations[spec.id] = (
         frame: frame,
