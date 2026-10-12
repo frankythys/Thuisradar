@@ -117,12 +117,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     await ref.read(geofenceSyncProvider.notifier).stop();
     await ref.read(pushServiceProvider).forgetServerToken();
     try {
-      // Uitloggen beëindigt ook de biometrische toegang voor dit account.
-      await ref.read(biometricLoginProvider).forgetOnSignOut();
-    } on Exception catch (error) {
-      debugPrint('Opgeslagen wachtwoord wissen mislukt: $error');
-    }
-    try {
       await ref.read(authRepositoryProvider).signOut();
     } on Exception catch (error) {
       // Offline: de lokale sessie is al weg, enkel de serveraanroep faalde.
@@ -283,7 +277,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ProfileTile(
                 icon: Icons.share_location,
                 title: 'Locatie delen',
-                subtitle: _sharing ? 'Aan · je gezin ziet waar je bent' : 'Gepauzeerd · je gezin ziet je niet',
+                subtitle: _sharing
+                    ? 'Aan · je gezin ziet waar je bent'
+                    : 'Gepauzeerd · je gezin ziet je niet',
                 trailing: Switch(value: _sharing, onChanged: _share),
                 onTap: () => _share(!_sharing),
               ),
@@ -294,7 +290,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ProfileTile(
                 icon: Icons.groups_outlined,
                 title: widget.family.name,
-                subtitle: '${members.length} ${members.length == 1 ? 'lid' : 'leden'} · code ${invite.inviteCode}',
+                subtitle:
+                    '${members.length} ${members.length == 1 ? 'lid' : 'leden'} · code ${invite.inviteCode}',
                 onTap: () => showFamilySheet(
                   context,
                   family: invite,
@@ -333,7 +330,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     : null,
                 onTap: _lockOrSignOut,
               ),
-              ProfileTile(icon: Icons.exit_to_app, title: 'Familie verlaten', danger: true, onTap: _leaveFamily),
+              ProfileTile(
+                icon: Icons.exit_to_app,
+                title: 'Familie verlaten',
+                danger: true,
+                onTap: _leaveFamily,
+              ),
             ]),
             SizedBox(height: tokens.spaceMd),
             Text(

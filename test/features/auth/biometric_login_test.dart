@@ -107,8 +107,8 @@ void main() {
         .called(1);
   });
 
-  test('uitloggen wist het wachtwoord van de vingerafdruk-login, niet het e-mailadres', () async {
-    await service.forgetOnSignOut();
+  test('expliciet verwijderen wist de vingerafdruk-login, niet het e-mailadres', () async {
+    await service.disable();
     verify(() => storage.delete(key: 'thuisradar_biometric_login')).called(1);
     verifyNever(() => storage.delete(key: 'thuisradar_remembered_login'));
   });

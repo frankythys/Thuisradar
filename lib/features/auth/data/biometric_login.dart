@@ -8,10 +8,9 @@ import 'auth_repository.dart';
 
 final biometricLoginProvider = Provider((ref) => BiometricLogin());
 
-/// "Onthouden" bewaart enkel het e-mailadres. Het wachtwoord staat alleen op
-/// het toestel zolang de vingerafdruk-login aan staat én je ingelogd bent:
-/// uitloggen wist het ([forgetOnSignOut]). Versleuteld door het toestel, nooit
-/// in gewone voorkeuren.
+/// "Onthouden" bewaart enkel het e-mailadres. De vingerafdruk-login bewaart
+/// de login in beveiligde toestelopslag, ook na uitloggen. Alleen expliciet
+/// verwijderen of aanmelden met een ander e-mailaccount schakelt deze uit.
 class BiometricLogin {
   BiometricLogin({LocalAuthentication? local, FlutterSecureStorage? storage})
     : _local = local ?? LocalAuthentication(),
@@ -33,10 +32,6 @@ class BiometricLogin {
     }
     return email;
   }
-
-  /// Bij uitloggen: geen wachtwoord meer op het toestel. Het e-mailadres
-  /// blijft (als "Onthouden" aan stond).
-  Future<void> forgetOnSignOut() => disable();
 
   Future<void> forgetRememberedLogin() => _storage.delete(key: _rememberKey);
 
