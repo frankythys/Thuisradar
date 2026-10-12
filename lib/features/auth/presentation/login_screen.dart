@@ -295,10 +295,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           busy: _busy,
                           onSubmit: _submit,
                         ),
-                        SizedBox(height: tokens.spaceMd),
+                        SizedBox(height: tokens.spaceXl),
                         GoogleSignInButton(onPressed: _busy ? null : _google),
                         if (!isRegister) ...[
-                          SizedBox(height: tokens.spaceLg),
+                          SizedBox(height: tokens.spaceXxl),
                           _BiometricButton(onPressed: _busy ? null : _biometric),
                         ],
                         SizedBox(height: tokens.spaceMd),
