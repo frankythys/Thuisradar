@@ -122,6 +122,9 @@ flutter:
     - assets/markers/
 
   fonts:
+    - family: Google Sans
+      fonts:
+        - asset: assets/fonts/GoogleSans/GoogleSans.ttf
     - family: Plus Jakarta Sans
       fonts:
         - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Regular.ttf

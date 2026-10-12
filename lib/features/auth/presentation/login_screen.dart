@@ -8,6 +8,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/radar_logo.dart';
 import '../application/auth_providers.dart';
 import '../data/biometric_login.dart';
+import 'google_sign_in_button.dart';
 
 part 'login_screen_actions.dart';
 part 'login_screen_field.dart';
@@ -297,7 +298,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onBiometric: isRegister ? null : _biometric,
                         ),
                         SizedBox(height: tokens.spaceSm),
-                        OutlinedButton(onPressed: _busy ? null : _google, child: const Text('Doorgaan met Google')),
+                        GoogleSignInButton(onPressed: _busy ? null : _google),
                         SizedBox(height: tokens.spaceSm),
                         TextButton(
                           onPressed: _busy ? null : _toggleMode,
