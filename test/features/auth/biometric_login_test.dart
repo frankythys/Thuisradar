@@ -45,6 +45,18 @@ void main() {
       () => storage.write(key: 'circlebeacon_biometric_user', value: 'google-user'),
     ]);
   });
+  test('instellen op het inlogscherm bindt aan de eerste succesvolle accountlogin', () async {
+    await service.requestEnrollment();
+    verify(() => storage.write(key: 'circlebeacon_biometric_enroll', value: 'true')).called(1);
+    when(() => storage.read(key: 'circlebeacon_biometric_enroll')).thenAnswer((_) async => 'true');
+    expect(await service.completeEnrollmentFor('google-user'), isTrue);
+    verify(() => storage.write(key: 'circlebeacon_biometric_user', value: 'google-user')).called(1);
+    verify(() => storage.delete(key: 'circlebeacon_biometric_enroll')).called(1);
+    expect(service.consumeEnrollmentUnlock('another-user'), isFalse);
+    expect(service.consumeEnrollmentUnlock('google-user'), isTrue);
+    expect(service.consumeEnrollmentUnlock('google-user'), isFalse);
+  });
+
   test('annuleren schakelt biometrie niet in', () async {
     when(
       () => local.authenticate(

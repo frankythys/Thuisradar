@@ -164,12 +164,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _biometric() {
-    setState(
-      () => _message =
-          'Log eerst in met Google of je e-mailadres. Schakel daarna Vingerscan in via je profiel. '
-          'Bij opnieuw openen ontgrendel je de app zonder wachtwoord.',
+  Future<void> _biometric() async {
+    if (_busy) return;
+    final enable = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Vingerscan instellen'),
+        content: const Text(
+          'Log één keer in met Google of e-mail en bevestig je vingerafdruk. '
+          'Daarna kun je ook na Uitloggen met je vingerscan opnieuw binnen.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Instellen')),
+        ],
+      ),
     );
+    if (enable != true || !mounted) return;
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+    try {
+      await ref.read(biometricLoginProvider).requestEnrollment();
+      if (!mounted) return;
+      setState(() => _message = 'Vingerscan klaar om in te stellen. Log nu één keer in via Google of e-mail.');
+    } catch (_) {
+      if (mounted) setState(() => _message = 'Vingerscan instellen is niet gelukt. Probeer opnieuw.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override

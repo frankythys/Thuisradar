@@ -14,6 +14,8 @@ class BiometricLogin {
   final LocalAuthentication _local;
   final FlutterSecureStorage _storage;
   static const _key = 'thuisradar_biometric_login';
+  static const _enrollKey = 'circlebeacon_biometric_enroll';
+  String? _freshlyEnabledUser;
   static const _userKey = 'circlebeacon_biometric_user';
   static const _rememberKey = 'thuisradar_remembered_login';
 
@@ -50,11 +52,31 @@ class BiometricLogin {
     }
   }
 
+  Future<void> requestEnrollment() => _storage.write(key: _enrollKey, value: 'true');
+
+  Future<bool> completeEnrollmentFor(String userId) async {
+    if (await _storage.read(key: _enrollKey) != 'true') return false;
+    if (!await enableFor(userId)) {
+      await _storage.delete(key: _enrollKey);
+      return false;
+    }
+    await _storage.delete(key: _enrollKey);
+    _freshlyEnabledUser = userId;
+    return true;
+  }
+
+  bool consumeEnrollmentUnlock(String userId) {
+    if (_freshlyEnabledUser != userId) return false;
+    _freshlyEnabledUser = null;
+    return true;
+  }
+
   Future<bool> enabledFor(String userId) async => await _storage.read(key: _userKey) == userId;
 
   Future<void> disable() async {
     await _storage.delete(key: _key);
     await _storage.delete(key: _userKey);
+    await _storage.delete(key: _enrollKey);
   }
 
   Future<bool> enableFor(String userId) async {
@@ -80,7 +102,7 @@ final biometricEnabledProvider = FutureProvider.family<bool, String>(
   (ref, userId) => ref.watch(biometricLoginProvider).enabledFor(userId),
 );
 
-/// Een expliciete vergrendeling vanuit het profiel, zonder de sessie te beëindigen.
+/// Een expliciete vergrendeling vanuit het profiel, zonder de sessie te beÃ«indigen.
 class BiometricLockRequest extends Notifier<int> {
   @override
   int build() => 0;

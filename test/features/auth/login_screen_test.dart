@@ -56,6 +56,19 @@ void main() {
     expect(button.onPressed, isNotNull);
   });
 
+  testWidgets('vingerscan wordt eenmalig ingesteld vanaf het inlogscherm', (tester) async {
+    await _pump(tester);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byTooltip('Inloggen met biometrie'));
+    await tester.tap(find.byTooltip('Inloggen met biometrie'));
+    await tester.pumpAndSettle();
+    expect(find.text('Vingerscan instellen'), findsOneWidget);
+    await tester.tap(find.text('Instellen'));
+    await tester.pumpAndSettle();
+    expect(await const FlutterSecureStorage().read(key: 'circlebeacon_biometric_enroll'), 'true');
+    expect(find.text('Vingerscan klaar om in te stellen. Log nu één keer in via Google of e-mail.'), findsOneWidget);
+  });
+
   testWidgets('start in inlog-modus zonder naamveld', (tester) async {
     await _pump(tester);
 
@@ -92,7 +105,7 @@ void main() {
   });
 
   testWidgets('past op een telefoonscherm zonder te scrollen', (tester) async {
-    // Samsung A52: 412 × 915 dp, min. status- en navigatiebalk.
+    // Samsung A52: 412 Ã— 915 dp, min. status- en navigatiebalk.
     tester.view.physicalSize = const Size(412, 860);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);

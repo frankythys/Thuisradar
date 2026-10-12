@@ -147,6 +147,9 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
     final preference = ref.watch(appLockEnabledProvider(widget.userId));
     final biometric = ref.watch(biometricEnabledProvider(widget.userId));
     final pinEnabled = ref.watch(pinEnabledProvider(widget.userId));
+    if (preference.hasValue && ref.read(biometricLoginProvider).consumeEnrollmentUnlock(widget.userId)) {
+      _locked = false;
+    }
     final blocked = preference.isLoading || preference.hasError || (preference.value == true && _locked);
     return Stack(
       fit: StackFit.expand,

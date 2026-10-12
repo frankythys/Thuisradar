@@ -72,6 +72,8 @@ class PinLock {
 final pinLockProvider = Provider((ref) => PinLock());
 final pinEnabledProvider = FutureProvider.family<bool, String>((ref, id) => ref.watch(pinLockProvider).enabledFor(id));
 final appLockEnabledProvider = FutureProvider.family<bool, String>((ref, id) async {
+  final enrolled = await ref.watch(biometricLoginProvider).completeEnrollmentFor(id);
+  if (enrolled) ref.invalidate(biometricEnabledProvider(id));
   final biometric = await ref.watch(biometricEnabledProvider(id).future);
   final pin = await ref.watch(pinEnabledProvider(id).future);
   return biometric || pin;

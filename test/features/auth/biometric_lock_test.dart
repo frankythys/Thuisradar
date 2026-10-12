@@ -27,6 +27,8 @@ void main() {
   );
 
   Future<void> pump(WidgetTester tester, _Bio bio, {bool enabled = true}) async {
+    when(() => bio.completeEnrollmentFor(any())).thenAnswer((_) async => false);
+    when(() => bio.consumeEnrollmentUnlock(any())).thenReturn(false);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -68,19 +70,22 @@ void main() {
     // Open detailpagina wordt bij achtergrond/terugkeer ook afgeschermd.
     final context = tester.element(find.text('Gezinskaart'));
     Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('PrivÃƒÆ’Ã‚Â©profiel'))));
+        .push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('PrivÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©profiel'))));
     await tester.pumpAndSettle();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(find.text('PrivÃƒÆ’Ã‚Â©profiel'), findsNothing);
+    expect(find.text('PrivÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©profiel'), findsNothing);
     await tester.tap(find.byIcon(Icons.fingerprint));
     await tester.pumpAndSettle();
-    expect(find.text('PrivÃƒÆ’Ã‚Â©profiel'), findsOneWidget);
+    expect(find.text('PrivÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©profiel'), findsOneWidget);
   });
 
   testWidgets('toegangscode werkt zonder biometrie en een foute code opent niets', (tester) async {
     final pin = _Pin();
+    final bio = _Bio();
+    when(() => bio.completeEnrollmentFor(any())).thenAnswer((_) async => false);
+    when(() => bio.consumeEnrollmentUnlock(any())).thenReturn(false);
     when(() => pin.verify('google-user', '000000')).thenAnswer((_) async => false);
     when(() => pin.verify('google-user', '123456')).thenAnswer((_) async => true);
     await tester.pumpWidget(
@@ -88,6 +93,7 @@ void main() {
         overrides: [
           sessionProvider.overrideWith((ref) => Stream.value(session)),
           pinLockProvider.overrideWithValue(pin),
+          biometricLoginProvider.overrideWithValue(bio),
           biometricEnabledProvider('google-user').overrideWith((ref) async => false),
           pinEnabledProvider('google-user').overrideWith((ref) async => true),
         ],

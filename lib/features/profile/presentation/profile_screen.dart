@@ -75,22 +75,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _snack(String message) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
-  Future<void> _setBiometric(bool enabled) async {
-    final userId = ref.read(currentUserIdProvider);
-    if (userId == null) return;
-    try {
-      final service = ref.read(biometricLoginProvider);
-      if (enabled) {
-        if (!await service.enableFor(userId)) return;
-      } else {
-        await service.disable();
-      }
-      ref.invalidate(biometricEnabledProvider(userId));
-    } catch (error) {
-      if (mounted) _snack(error is StateError ? error.message.toString() : 'Vingerscan instellen is niet gelukt.');
-    }
-  }
-
   Future<void> _forgetLogin() async {
     final login = ref.read(biometricLoginProvider);
     try {
@@ -308,16 +292,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ]),
             SizedBox(height: tokens.spaceMd),
             group([
-              if (userId != null)
-                ProfileTile(
-                  icon: Icons.fingerprint,
-                  title: 'Vingerscan',
-                  subtitle: 'Ontgrendel de app bij openen, ook met Google-login',
-                  trailing: Switch(
-                    value: ref.watch(biometricEnabledProvider(userId)).value ?? false,
-                    onChanged: ref.watch(biometricEnabledProvider(userId)).isLoading ? null : _setBiometric,
-                  ),
-                ),
               if (userId != null) PinSettingsTile(userId: userId),
               ProfileTile(
                 icon: Icons.groups_outlined,
