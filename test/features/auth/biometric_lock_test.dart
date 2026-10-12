@@ -52,17 +52,26 @@ void main() {
     await tester.tap(find.byIcon(Icons.fingerprint));
     await tester.pumpAndSettle();
     expect(find.text('Gezinskaart'), findsOneWidget);
+    // Expliciet afsluiten behoudt de sessie en vraagt alleen een nieuwe scan.
+    final container = ProviderScope.containerOf(tester.element(find.text('Gezinskaart')));
+    container.read(biometricLockRequestProvider.notifier).lock();
+    await tester.pumpAndSettle();
+    expect(find.text('Gezinskaart'), findsNothing);
+    expect(container.read(sessionProvider).value, same(session));
+    await tester.tap(find.byIcon(Icons.fingerprint));
+    await tester.pumpAndSettle();
+    expect(find.text('Gezinskaart'), findsOneWidget);
     // Open detailpagina wordt bij achtergrond/terugkeer ook afgeschermd.
     final context = tester.element(find.text('Gezinskaart'));
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('Privéprofiel'))));
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('PrivÃ©profiel'))));
     await tester.pumpAndSettle();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(find.text('Privéprofiel'), findsNothing);
+    expect(find.text('PrivÃ©profiel'), findsNothing);
     await tester.tap(find.byIcon(Icons.fingerprint));
     await tester.pumpAndSettle();
-    expect(find.text('Privéprofiel'), findsOneWidget);
+    expect(find.text('PrivÃ©profiel'), findsOneWidget);
   });
 
   testWidgets('zonder opt-in blijft de app toegankelijk zonder scan', (tester) async {

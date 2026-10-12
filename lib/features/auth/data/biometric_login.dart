@@ -79,3 +79,13 @@ class BiometricLogin {
 final biometricEnabledProvider = FutureProvider.family<bool, String>(
   (ref, userId) => ref.watch(biometricLoginProvider).enabledFor(userId),
 );
+
+/// Een expliciete vergrendeling vanuit het profiel, zonder de sessie te beëindigen.
+class BiometricLockRequest extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void lock() => state++;
+}
+
+final biometricLockRequestProvider = NotifierProvider<BiometricLockRequest, int>(BiometricLockRequest.new);

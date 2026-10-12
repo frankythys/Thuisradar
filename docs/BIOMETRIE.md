@@ -7,3 +7,5 @@ Annuleren en scanfouten geven geen toegang. Bij ontbrekende biometrie kun je kie
 De oude wachtwoordgebaseerde optie wordt niet automatisch overgenomen. Schakel Vingerscan opnieuw in via Profiel. De voorkeur is gekoppeld aan het gebruikers-ID en geeft een ander account geen toegang.
 
 Toestelcontrole: Google-login, activeren, app sluiten/openen, annuleren, foutieve scan, correcte scan, profiel/detailpagina open laten en app naar achtergrond/terug, uitloggen en opnieuw aanmelden. Unit/widgettests testen sessie-afscherming en annuleren; een echte sensorcontrole blijft nodig.
+
+Als Vingerscan aan staat, is de dagelijkse afsluitknop in Profiel **Vergrendelen**. Die bewaart de sessie; daarna kom je met een scan terug binnen. **Account volledig afmelden** beëindigt expliciet de serversessie en vereist een nieuwe Google/e-mail-aanmelding. Zo blijven vergrendelen en volledige accountafmelding duidelijk onderscheiden.

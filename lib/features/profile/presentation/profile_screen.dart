@@ -102,6 +102,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Future<void> _lockOrSignOut() async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+    try {
+      final enabled = await ref.read(biometricEnabledProvider(userId).future);
+      if (!mounted) return;
+      if (enabled) {
+        ref.read(biometricLockRequestProvider.notifier).lock();
+        Navigator.popUntil(context, (route) => route.isFirst);
+      } else {
+        await _signOut();
+      }
+    } catch (_) {
+      if (mounted) _snack('Afsluiten is niet gelukt. Probeer opnieuw.');
+    }
+  }
+
   Future<void> _signOut() async {
     final userId = ref.read(currentUserIdProvider);
     final container = ProviderScope.containerOf(context);
@@ -323,7 +340,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ]),
             SizedBox(height: tokens.spaceMd),
             group([
-              ProfileTile(icon: Icons.logout, title: 'Uitloggen', onTap: _signOut),
+              ProfileTile(
+                icon: userId != null && ref.watch(biometricEnabledProvider(userId)).value == true
+                    ? Icons.lock_outline
+                    : Icons.logout,
+                title: userId != null && ref.watch(biometricEnabledProvider(userId)).value == true
+                    ? 'Vergrendelen'
+                    : 'Uitloggen',
+                subtitle: userId != null && ref.watch(biometricEnabledProvider(userId)).value == true
+                    ? 'Daarna weer openen met je vingerafdruk'
+                    : null,
+                onTap: _lockOrSignOut,
+              ),
+              if (userId != null && ref.watch(biometricEnabledProvider(userId)).value == true)
+                ProfileTile(
+                  icon: Icons.logout,
+                  title: 'Account volledig afmelden',
+                  subtitle: 'Daarna opnieuw aanmelden via Google of e-mail',
+                  onTap: _signOut,
+                ),
               ProfileTile(icon: Icons.exit_to_app, title: 'Familie verlaten', danger: true, onTap: _leaveFamily),
             ]),
             SizedBox(height: tokens.spaceMd),

@@ -107,6 +107,9 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(biometricLockRequestProvider, (previous, next) {
+      if (previous != next) setState(() => _locked = true);
+    });
     final preference = ref.watch(biometricEnabledProvider(widget.userId));
     final blocked = preference.isLoading || preference.hasError || (preference.value == true && _locked);
     return Stack(
