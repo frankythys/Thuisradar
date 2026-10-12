@@ -73,11 +73,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _snack(String message) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
+  Future<void> _setBiometric(bool enabled) async {
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+    try {
+      final service = ref.read(biometricLoginProvider);
+      if (enabled) {
+        if (!await service.enableFor(userId)) return;
+      } else {
+        await service.disable();
+      }
+      ref.invalidate(biometricEnabledProvider(userId));
+    } catch (error) {
+      if (mounted) _snack(error is StateError ? error.message.toString() : 'Vingerscan instellen is niet gelukt.');
+    }
+  }
+
   Future<void> _forgetLogin() async {
     final login = ref.read(biometricLoginProvider);
     try {
       await login.forgetRememberedLogin();
       await login.disable();
+      final userId = ref.read(currentUserIdProvider);
+      if (userId != null) ref.invalidate(biometricEnabledProvider(userId));
       if (mounted) _snack('Opgeslagen login en vingerafdruk verwijderd.');
     } catch (_) {
       if (mounted) _snack('Verwijderen is niet gelukt. Probeer opnieuw.');
@@ -85,13 +103,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _signOut() async {
+    final userId = ref.read(currentUserIdProvider);
+    final container = ProviderScope.containerOf(context);
     ref.read(locationTrackerProvider.notifier).stop();
     // Vóór het afmelden: de toestelsleutel en het pushtoken afmelden vraagt
     // nog een sessie.
     await ref.read(geofenceSyncProvider.notifier).stop();
     await ref.read(pushServiceProvider).forgetServerToken();
     try {
-      // Na uitloggen staat het wachtwoord nergens meer op het toestel.
+      // Uitloggen beëindigt ook de biometrische toegang voor dit account.
       await ref.read(biometricLoginProvider).forgetOnSignOut();
     } on Exception catch (error) {
       debugPrint('Opgeslagen wachtwoord wissen mislukt: $error');
@@ -102,6 +122,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       // Offline: de lokale sessie is al weg, enkel de serveraanroep faalde.
       debugPrint('Afmelden bij de server mislukt: $error');
     }
+    if (userId != null) container.invalidate(biometricEnabledProvider(userId));
     if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
   }
 
@@ -253,20 +274,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ProfileTile(
                 icon: Icons.share_location,
                 title: 'Locatie delen',
-                subtitle: _sharing
-                    ? 'Aan · je gezin ziet waar je bent'
-                    : 'Gepauzeerd · je gezin ziet je niet',
+                subtitle: _sharing ? 'Aan · je gezin ziet waar je bent' : 'Gepauzeerd · je gezin ziet je niet',
                 trailing: Switch(value: _sharing, onChanged: _share),
                 onTap: () => _share(!_sharing),
               ),
             ]),
             SizedBox(height: tokens.spaceMd),
             group([
+              if (userId != null)
+                ProfileTile(
+                  icon: Icons.fingerprint,
+                  title: 'Vingerscan',
+                  subtitle: 'Ontgrendel de app bij openen, ook met Google-login',
+                  trailing: Switch(
+                    value: ref.watch(biometricEnabledProvider(userId)).value ?? false,
+                    onChanged: ref.watch(biometricEnabledProvider(userId)).isLoading ? null : _setBiometric,
+                  ),
+                ),
               ProfileTile(
                 icon: Icons.groups_outlined,
                 title: widget.family.name,
-                subtitle:
-                    '${members.length} ${members.length == 1 ? 'lid' : 'leden'} · code ${invite.inviteCode}',
+                subtitle: '${members.length} ${members.length == 1 ? 'lid' : 'leden'} · code ${invite.inviteCode}',
                 onTap: () => showFamilySheet(
                   context,
                   family: invite,
@@ -296,12 +324,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             SizedBox(height: tokens.spaceMd),
             group([
               ProfileTile(icon: Icons.logout, title: 'Uitloggen', onTap: _signOut),
-              ProfileTile(
-                icon: Icons.exit_to_app,
-                title: 'Familie verlaten',
-                danger: true,
-                onTap: _leaveFamily,
-              ),
+              ProfileTile(icon: Icons.exit_to_app, title: 'Familie verlaten', danger: true, onTap: _leaveFamily),
             ]),
             SizedBox(height: tokens.spaceMd),
             Text(
