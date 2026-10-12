@@ -113,4 +113,64 @@ void main() {
     });
     expect(positions, [4.301, 4.302, 4.303]);
   });
+
+  testWidgets('wandel-GIF: de beelden wisselen op het tempo van de GIF, zonder opnieuw te tekenen', (
+    tester,
+  ) async {
+    late Widget Function(Widget) wrap;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            wrap = wrapForBitmap(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final updates = <Set<gm.Marker>>[];
+    final markers = GoogleMemberMarkers(onChanged: updates.add);
+    addTearDown(markers.dispose);
+    Widget box(Color color) => ColoredBox(color: color);
+    final frames = [
+      for (final color in [Colors.red, Colors.green, Colors.blue])
+        (child: box(color), duration: const Duration(milliseconds: 60)),
+    ];
+    MapMarkerSpec walker(double lng) => MapMarkerSpec(
+      id: 'walker_Franky',
+      point: LatLng(51.2, lng),
+      width: 40,
+      height: 20,
+      frames: frames,
+      child: frames.first.child,
+    );
+
+    await tester.runAsync(() async {
+      markers.update([walker(4.3)], wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+      await Future<void>.delayed(const Duration(milliseconds: 1000));
+    });
+    final icons = <gm.BitmapDescriptor>{for (final update in updates) update.single.icon};
+    // Alle drie de beelden zijn al getoond, telkens als nieuwe afbeelding.
+    expect(icons, hasLength(3));
+
+    // Franky wandelt verder: de plaats volgt, de animatie loopt door.
+    final before = updates.length;
+    await tester.runAsync(() async {
+      markers.update([walker(4.301)], wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    expect(updates.length, greaterThan(before + 2));
+    expect(updates.last.single.position.longitude, 4.301);
+    expect(icons, contains(updates.last.single.icon));
+
+    // Gestopt met wandelen: geen animatie meer, geen updates meer.
+    await tester.runAsync(() async {
+      markers.update(const [], wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    });
+    final stopped = updates.length;
+    expect(updates.last, isEmpty);
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 300)));
+    expect(updates.length, stopped);
+  });
 }

@@ -9,6 +9,8 @@ import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_history_bubble.dart';
+import 'package:thuisradar/features/map/presentation/widgets/walking_gif_frames.dart';
+import 'package:thuisradar/features/map/presentation/widgets/walking_sneakers.dart';
 import 'package:thuisradar/features/places/domain/place_status.dart';
 
 void main() {
@@ -201,12 +203,16 @@ void main() {
         ),
       ),
     );
-    final walker = tester.widget<Image>(find.byType(Image));
-    expect((walker.image as AssetImage).assetName, walkingGifAsset);
-    // De GIF bestaat: geen terugval op het wandelicoon.
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
+    // Geen auto; de sneakers spelen beeld per beeld zodra de GIF geladen is.
+    expect(find.byType(Image), findsNothing);
+    expect(find.byType(WalkingSneakers), findsOneWidget);
+    await tester.runAsync(() => walkingGifFrames());
     await tester.pump();
+    final first = tester.widget<RawImage>(find.byType(RawImage)).image;
     expect(find.byIcon(Icons.directions_walk), findsNothing);
+    await tester.pump(const Duration(milliseconds: 100));
+    // Het volgende beeld van de GIF.
+    expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNot(same(first)));
     expect(find.text('Wandelen'), findsOneWidget);
     expect(find.text('5 km/u'), findsOneWidget);
     expect(tester.takeException(), isNull);

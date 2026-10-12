@@ -14,6 +14,7 @@ class MapMarkerSpec {
     this.alignment = Alignment.center,
     this.offset = Offset.zero,
     this.onTap,
+    this.frames = const [],
   });
 
   /// Vaste sleutel per marker (lid, groep of ballon).
@@ -32,6 +33,10 @@ class MapMarkerSpec {
   /// Tik op de marker; ook gebruikt voor de onzichtbare tikvlakken boven
   /// Google Maps.
   final VoidCallback? onTap;
+
+  /// Animatie voor Google Maps: de beelden die na elkaar getoond worden, elk
+  /// met hoe lang het blijft staan. Leeg = een vaste afbeelding ([child]).
+  final List<({Widget child, Duration duration})> frames;
 
   /// Als flutter_map-marker, met [child] of een vervangende inhoud.
   Marker toMarker({Widget? replaceChild}) {

@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -5,10 +7,27 @@ import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/member_on_map.dart';
+import 'walking_sneakers.dart';
 
-/// Geanimeerde sneakers in de ballon tijdens een wandeling (144×96, witte
-/// achtergrond zoals de ballon).
-const walkingGifAsset = 'assets/gif/wandelen.gif';
+/// Geanimeerde sneakers in de ballon tijdens een wandeling (transparante
+/// GIF, 144×96). De app speelt hem zelf beeld per beeld af (zie
+/// `walkingGifFrames`). Het origineel staat ernaast als `wandelen.gif`.
+const walkingGifAsset = 'assets/gif/wandelen_transparant.gif';
+
+/// Hoe de wandel-animatie in de ballon getekend wordt.
+enum WalkerDisplay {
+  /// De beelden spelen af in de ballon zelf (flutter_map: de ballon is een
+  /// echte widget).
+  gif,
+
+  /// Lege plek: Google tekent de ballon als vaste afbeelding, de animatie
+  /// komt er als aparte marker bovenop ([frame]).
+  slot,
+
+  /// Enkel dit ene beeld van de GIF, op exact dezelfde plek; de rest van de
+  /// ballon is onzichtbaar.
+  frame,
+}
 
 class MemberHistoryBubble extends StatelessWidget {
   const MemberHistoryBubble({
@@ -19,6 +38,8 @@ class MemberHistoryBubble extends StatelessWidget {
     this.placeStatus,
     this.stationarySince,
     this.tailLeft = true,
+    this.walker = WalkerDisplay.gif,
+    this.walkerFrame,
   });
 
   final MemberOnMap entry;
@@ -32,6 +53,16 @@ class MemberHistoryBubble extends StatelessWidget {
   /// Staat de ballon rechts van de avatar? Dan wijst de staart linksonder naar
   /// de avatar; staat hij links, dan spiegelt de staart naar rechtsonder.
   final bool tailLeft;
+
+  /// Zie [WalkerDisplay]; bij [WalkerDisplay.frame] hoort [walkerFrame].
+  final WalkerDisplay walker;
+  final ui.Image? walkerFrame;
+
+  /// Is dit de wandelballon (dus met animatie)?
+  static bool isWalking(MemberOnMap entry, DateTime now) {
+    final status = TripStatus.at(entry.location, now);
+    return status.state == TripState.moving && status.speedKmh != null && status.walking;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,12 +94,13 @@ class MemberHistoryBubble extends StatelessWidget {
     final icon = isMoving
         ? (status.walking ? Icons.directions_walk : Icons.directions_car)
         : (atPlace ? placeIcon(placeStatus!.icon) : Icons.location_on);
+    final only = walker == WalkerDisplay.frame;
     return Semantics(
       button: true,
       label: 'Geschiedenis van ${entry.member.displayName}',
       child: Material(
-        color: Colors.white,
-        elevation: 3,
+        color: only ? Colors.transparent : Colors.white,
+        elevation: only ? 0 : 3,
         shadowColor: const Color(0x44000000),
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(15),
@@ -92,44 +124,39 @@ class MemberHistoryBubble extends StatelessWidget {
                     fit: BoxFit.contain,
                   )
                 else if (isMoving)
-                  // Wandelende figuur; ontbreekt de GIF, dan het wandelicoon.
-                  Image.asset(
-                    walkingGifAsset,
-                    width: 40,
-                    height: 32,
-                    fit: BoxFit.contain,
-                    gaplessPlayback: true,
-                    errorBuilder: (context, error, stack) => Icon(icon, color: AppColors.primary, size: 23),
-                  )
+                  _walkerImage()
                 else if (atPlace && placeStatus!.icon == 'home')
                   Image.asset('assets/markers/huis.png', width: 32, height: 32, fit: BoxFit.contain)
                 else
                   Icon(icon, color: AppColors.primary, size: 23),
                 const SizedBox(width: 5),
                 Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 13,
-                          height: 1.2,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
+                  child: Visibility.maintain(
+                    visible: !only,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontSize: 13,
+                            height: 1.2,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
                         ),
-                      ),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
-                      ),
-                    ],
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -139,7 +166,22 @@ class MemberHistoryBubble extends StatelessWidget {
       ),
     );
   }
+
+  /// De wandelende sneakers in hun vak van [_walkerSize].
+  Widget _walkerImage() => switch (walker) {
+    WalkerDisplay.gif => WalkingSneakers(width: _walkerSize.width, height: _walkerSize.height),
+    WalkerDisplay.slot => SizedBox.fromSize(size: _walkerSize),
+    WalkerDisplay.frame => RawImage(
+      image: walkerFrame,
+      width: _walkerSize.width,
+      height: _walkerSize.height,
+      fit: BoxFit.contain,
+    ),
+  };
 }
+
+/// Vak voor de sneakers: breder dan hoog, zoals het paar schoenen.
+const _walkerSize = Size(52, 32);
 
 String _formatSince(Duration duration) => duration.inHours > 0
     ? '${duration.inHours} uur, ${duration.inMinutes.remainder(60)} min'

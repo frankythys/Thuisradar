@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -18,6 +21,7 @@ import 'group_pin.dart';
 import 'map_marker_spec.dart';
 import 'member_marker.dart';
 import 'member_history_bubble.dart';
+import 'walking_gif_frames.dart';
 
 typedef _Coord = ({double lat, double lng});
 
@@ -69,6 +73,22 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
   final Map<String, _Coord> _from = {};
   final Map<String, _Coord> _to = {};
   final Map<String, DateTime> _lastAt = {};
+
+  /// Beelden van de wandel-GIF, enkel geladen als Google de markers tekent
+  /// en iemand wandelt.
+  List<WalkingGifFrame>? _walkerFrames;
+  bool _loadingWalker = false;
+
+  void _loadWalkerFrames() {
+    if (_loadingWalker || _walkerFrames != null) return;
+    _loadingWalker = true;
+    unawaited(
+      walkingGifFrames().then((frames) {
+        _loadingWalker = false;
+        if (mounted && frames.isNotEmpty) setState(() => _walkerFrames = frames);
+      }),
+    );
+  }
 
   @override
   void initState() {
@@ -397,6 +417,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           ),
       },
     );
+    final native = widget.onNativeMarkers;
     for (final selected in bubbleMembers) {
       final id = selected.member.userId;
       final coordinate = coords[id]!;
@@ -404,35 +425,63 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       final placement = placements[id];
       final onRight = placement == null || placement.side == BubbleSide.right;
       void onBubbleTap() => (widget.onHistory ?? widget.onMemberTap)(selected);
-      markers.add(
-        MapMarkerSpec(
-          id: 'bubble_$id',
-          point: point,
-          width: kBubbleWidth,
-          height: kBubbleHeight,
-          alignment: Alignment(
-            (onRight ? 1 : -1) + 2 * (offsets[id]?.dx ?? 0) / 142,
-            -1 + 2 * (offsets[id]?.dy ?? 0) / 48,
-          ),
-          // Zoals de referentie: hoger en verder over de bovenhoek.
-          offset: Offset(
-            onRight ? kBubbleInset : -kBubbleInset,
-            baseDyOf(selected) + (placement?.shiftY ?? 0),
-          ),
-          onTap: onBubbleTap,
-          child: MemberHistoryBubble(
+      final alignment = Alignment(
+        (onRight ? 1 : -1) + 2 * (offsets[id]?.dx ?? 0) / 142,
+        -1 + 2 * (offsets[id]?.dy ?? 0) / 48,
+      );
+      // Zoals de referentie: hoger en verder over de bovenhoek.
+      final offset = Offset(
+        onRight ? kBubbleInset : -kBubbleInset,
+        baseDyOf(selected) + (placement?.shiftY ?? 0),
+      );
+      // Google tekent een ballon als vaste afbeelding: de wandel-GIF speelt
+      // dan als aparte marker bovenop, beeld per beeld.
+      final animate = native != null && MemberHistoryBubble.isWalking(selected, widget.now);
+      if (animate) _loadWalkerFrames();
+      MemberHistoryBubble bubble({WalkerDisplay walker = WalkerDisplay.gif, ui.Image? frame}) =>
+          MemberHistoryBubble(
             entry: selected,
             now: widget.now,
             placeStatus: widget.placeByUser[id],
             stationarySince: widget.stationarySinceByUser[id],
             tailLeft: onRight,
             onTap: onBubbleTap,
-          ),
+            walker: walker,
+            walkerFrame: frame,
+          );
+      markers.add(
+        MapMarkerSpec(
+          id: 'bubble_$id',
+          point: point,
+          width: kBubbleWidth,
+          height: kBubbleHeight,
+          alignment: alignment,
+          offset: offset,
+          onTap: onBubbleTap,
+          child: bubble(walker: animate ? WalkerDisplay.slot : WalkerDisplay.gif),
         ),
       );
+      final walkerFrames = _walkerFrames;
+      if (animate && walkerFrames != null) {
+        final frames = [
+          for (final frame in walkerFrames)
+            (child: bubble(walker: WalkerDisplay.frame, frame: frame.image), duration: frame.duration),
+        ];
+        markers.add(
+          MapMarkerSpec(
+            id: 'walker_$id',
+            point: point,
+            width: kBubbleWidth,
+            height: kBubbleHeight,
+            alignment: alignment,
+            offset: offset,
+            frames: frames,
+            child: frames.first.child,
+          ),
+        );
+      }
     }
 
-    final native = widget.onNativeMarkers;
     if (native == null) {
       return MarkerLayer(markers: [for (final spec in markers) spec.toMarker()]);
     }

@@ -27,6 +27,7 @@ void main() {
 
   Future<List<MapMarkerSpec>> pumpNative(
     WidgetTester tester, {
+    MemberOnMap? member,
     String? selected,
     ValueChanged<MemberOnMap>? onMemberTap,
   }) async {
@@ -39,7 +40,7 @@ void main() {
             options: const MapOptions(initialCenter: LatLng(51, 3), initialZoom: 17),
             children: [
               ClusteredMarkerLayer(
-                members: [franky],
+                members: [member ?? franky],
                 now: now,
                 selectedUserId: selected,
                 onMemberTap: onMemberTap ?? (_) {},
@@ -75,5 +76,38 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(tapped?.member.userId, 'Franky');
+  });
+
+  testWidgets('met Google: wandelend krijgt de ballon een aparte, geanimeerde sneaker-marker', (
+    tester,
+  ) async {
+    final walking = MemberOnMap(
+      member: franky.member,
+      location: MemberLocation(
+        userId: 'Franky',
+        familyId: 'gezin',
+        latitude: 51,
+        longitude: 3,
+        updatedAt: now,
+        speedMps: 1.3,
+      ),
+    );
+    var specs = await pumpNative(tester, member: walking);
+    // De GIF-beelden laden op de achtergrond; daarna komt de animatie erbij.
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
+    await tester.pump(const Duration(milliseconds: 100));
+    specs = await pumpNative(tester, member: walking);
+
+    final bubble = specs.firstWhere((s) => s.id == 'bubble_Franky');
+    final walker = specs.firstWhere((s) => s.id == 'walker_Franky');
+    expect(bubble.frames, isEmpty);
+    expect(walker.frames, hasLength(58));
+    // Exact boven de ballon, en erna getekend (bovenop).
+    expect(walker.point, bubble.point);
+    expect(walker.alignment, bubble.alignment);
+    expect(walker.offset, bubble.offset);
+    expect(specs.indexOf(walker), greaterThan(specs.indexOf(bubble)));
+    // Tikken gaat via de ballon zelf.
+    expect(walker.onTap, isNull);
   });
 }

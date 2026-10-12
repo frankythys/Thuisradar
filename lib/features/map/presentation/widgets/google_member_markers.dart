@@ -15,6 +15,10 @@ import 'widget_bitmap.dart';
 /// marker is een afbeelding. Verandert enkel de plaats (bv. tijdens het
 /// rijden), dan schuift de bestaande afbeelding meteen mee: vloeiend, zonder
 /// te wachten.
+///
+/// Een marker met [MapMarkerSpec.frames] (de wandel-GIF) wordt één keer per
+/// beeld getekend; daarna wisselt enkel de afbeelding, op het tempo van de
+/// GIF, zonder opnieuw te tekenen.
 class GoogleMemberMarkers {
   GoogleMemberMarkers({required this.onChanged});
 
@@ -37,6 +41,20 @@ class GoogleMemberMarkers {
   final _moveClock = Stopwatch();
   Timer? _moveTimer;
 
+  /// Getekende beelden per geanimeerde marker, met waarvoor ze getekend zijn.
+  final _animations =
+      <
+        String,
+        ({
+          NativeMarkerFrame frame,
+          double pixelRatio,
+          List<gm.BitmapDescriptor> icons,
+          List<Duration> durations,
+        })
+      >{};
+  int _frameIndex = 0;
+  Timer? _frameTimer;
+
   /// Nieuwe berekening van de kaartlaag; getekend zodra die even stil is.
   void update(
     List<MapMarkerSpec> specs, {
@@ -54,6 +72,7 @@ class GoogleMemberMarkers {
     _generation++;
     _settleTimer?.cancel();
     _moveTimer?.cancel();
+    _frameTimer?.cancel();
   }
 
   /// Plaatsupdate zonder opnieuw te tekenen, begrensd tot ~30x/s; de laatste
@@ -97,9 +116,35 @@ class GoogleMemberMarkers {
   }
 
   void _emit(Set<gm.Marker> markers) {
-    if (setEquals(markers, _shown)) return;
-    _shown = markers;
-    onChanged(markers);
+    final current = {for (final marker in markers) _withCurrentFrame(marker)};
+    _scheduleFrame(current);
+    if (setEquals(current, _shown)) return;
+    _shown = current;
+    onChanged(current);
+  }
+
+  /// Een geanimeerde marker met het beeld dat nu aan de beurt is.
+  gm.Marker _withCurrentFrame(gm.Marker marker) {
+    final animation = _animations[marker.markerId.value];
+    if (animation == null) return marker;
+    return marker.copyWith(iconParam: animation.icons[_frameIndex % animation.icons.length]);
+  }
+
+  /// Volgend beeld op het tempo van de GIF, zolang er iets geanimeerd wordt.
+  void _scheduleFrame(Set<gm.Marker> markers) {
+    final animated = [for (final marker in markers) ?_animations[marker.markerId.value]];
+    if (animated.isEmpty) {
+      _frameTimer?.cancel();
+      _frameTimer = null;
+      return;
+    }
+    if (_frameTimer != null) return;
+    final durations = animated.first.durations;
+    _frameTimer = Timer(durations[_frameIndex % durations.length], () {
+      _frameTimer = null;
+      _frameIndex++;
+      _emit(_shown);
+    });
   }
 
   NativeMarkerFrame _frameOf(MapMarkerSpec spec) => nativeMarkerFrame(
@@ -126,6 +171,7 @@ class GoogleMemberMarkers {
     }
     if (generation != _generation) return;
     _cache.removeWhere((id, _) => !specs.any((s) => s.id == id));
+    _animations.removeWhere((id, _) => !specs.any((s) => s.id == id && s.frames.isNotEmpty));
     _emit(markers);
   }
 
@@ -138,6 +184,7 @@ class GoogleMemberMarkers {
     double pixelRatio,
   ) async {
     final frame = _frameOf(spec);
+    if (spec.frames.isNotEmpty) return _animatedMarker(spec, index, frame, wrap, pixelRatio);
     final png = await renderWidgetToPng(
       wrap(
         Stack(
@@ -164,6 +211,53 @@ class GoogleMemberMarkers {
       zIndexInt: 10 + index,
     );
     _cache[spec.id] = (png: png, marker: marker, frame: frame);
+    return marker;
+  }
+
+  /// Een geanimeerde marker: elk beeld één keer getekend (opnieuw enkel als
+  /// het vak of de schermdichtheid verandert); de marker toont het huidige.
+  Future<gm.Marker> _animatedMarker(
+    MapMarkerSpec spec,
+    int index,
+    NativeMarkerFrame frame,
+    Widget Function(Widget) wrap,
+    double pixelRatio,
+  ) async {
+    final cached = _animations[spec.id];
+    if (cached == null ||
+        cached.frame.canvas != frame.canvas ||
+        cached.frame.child != frame.child ||
+        cached.pixelRatio != pixelRatio ||
+        cached.icons.length != spec.frames.length) {
+      final icons = <gm.BitmapDescriptor>[];
+      for (final image in spec.frames) {
+        final png = await renderWidgetToPng(
+          wrap(
+            Stack(
+              clipBehavior: Clip.none,
+              children: [Positioned.fromRect(rect: frame.child, child: image.child)],
+            ),
+          ),
+          size: frame.canvas,
+          pixelRatio: pixelRatio,
+        );
+        icons.add(gm.BitmapDescriptor.bytes(png, width: frame.canvas.width, height: frame.canvas.height));
+      }
+      _animations[spec.id] = (
+        frame: frame,
+        pixelRatio: pixelRatio,
+        icons: icons,
+        durations: [for (final image in spec.frames) image.duration],
+      );
+    }
+    final marker = gm.Marker(
+      markerId: gm.MarkerId(spec.id),
+      position: gm.LatLng(spec.point.latitude, spec.point.longitude),
+      icon: _animations[spec.id]!.icons.first,
+      anchor: frame.anchor,
+      zIndexInt: 10 + index,
+    );
+    _cache[spec.id] = (png: Uint8List(0), marker: marker, frame: frame);
     return marker;
   }
 }
