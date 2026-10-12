@@ -14,6 +14,7 @@ import '../../domain/bubble_side.dart';
 import '../../domain/colocated_anchor.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/marker_motion.dart';
+import '../../domain/driving_follow.dart';
 import '../../domain/marker_spread.dart';
 import '../../domain/marker_clearance.dart';
 import '../../domain/member_on_map.dart';
@@ -44,6 +45,7 @@ class ClusteredMarkerLayer extends StatefulWidget {
     this.onHistory,
     this.reservedPlaces = const [],
     this.onNativeMarkers,
+    this.onDrivingFrame,
   });
 
   final List<MemberOnMap> members;
@@ -60,6 +62,7 @@ class ClusteredMarkerLayer extends StatefulWidget {
   /// Met Google Maps: de markers gaan als afbeelding naar Google (die ze vast
   /// aan de kaart tekent); deze laag toont dan enkel onzichtbare tikvlakken.
   final ValueChanged<List<MapMarkerSpec>>? onNativeMarkers;
+  final void Function(String id, LatLng point, double? bearing)? onDrivingFrame;
 
   @override
   State<ClusteredMarkerLayer> createState() => _ClusteredMarkerLayerState();
@@ -73,6 +76,14 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
   final Map<String, _Coord> _from = {};
   final Map<String, _Coord> _to = {};
   final Map<String, DateTime> _lastAt = {};
+  final Map<String, double> _bearingFrom = {};
+  final Map<String, double> _bearingTo = {};
+
+  double? _bearing(String id) {
+    final to = _bearingTo[id];
+    if (to == null) return null;
+    return interpolateBearing(_bearingFrom[id] ?? to, to, _controller.value);
+  }
 
   /// Beelden van de wandel-GIF, enkel geladen als Google de markers tekent
   /// en iemand wandelt.
@@ -111,6 +122,10 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
   /// Neemt nieuwe doelen over. Beweegt alleen als er echt een nieuw punt
   /// ontvangen is; de duur volgt het tijdsgat tussen de twee punten.
   void _syncTargets() {
+    // Bewaar alle zichtbare posities vóór de gedeelde animatie herstart.
+    // Anders springt een ander, nog bewegend lid terug naar zijn beginpunt.
+    final displayed = {for (final id in _to.keys) id: _displayed(id)};
+    final bearings = {for (final id in _bearingTo.keys) id: _bearing(id)!};
     final seen = <String>{};
     Duration? duration;
     var changed = false;
@@ -127,14 +142,15 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
         _from[id] = target;
         _to[id] = target;
       } else if (current.lat != target.lat || current.lng != target.lng) {
-        // Een rechte animatie tussen twee wegpunten kan dwars door een bocht
-        // snijden. Auto's staan op de ontvangen (eventueel gematchte) positie.
-        _from[id] = TripStatus.at(location, widget.now).driving ? target : _displayed(id);
+        final bearing = drivingBearing(LatLng(current.lat, current.lng), LatLng(target.lat, target.lng));
+        if (bearing != null) {
+          _bearingFrom[id] = bearings[id] ?? bearing;
+          _bearingTo[id] = bearing;
+        }
+        _from[id] = displayed[id]!;
         _to[id] = target;
         final previousAt = _lastAt[id];
-        final gap = previousAt == null
-            ? markerMotionMax
-            : markerMotionDuration(previousAt, location.updatedAt);
+        final gap = previousAt == null ? markerMotionMax : markerMotionDuration(previousAt, location.updatedAt);
         if (duration == null || gap > duration) duration = gap;
         changed = true;
       }
@@ -144,8 +160,14 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     _from.removeWhere((id, _) => !seen.contains(id));
     _to.removeWhere((id, _) => !seen.contains(id));
     _lastAt.removeWhere((id, _) => !seen.contains(id));
+    _bearingFrom.removeWhere((id, _) => !seen.contains(id));
+    _bearingTo.removeWhere((id, _) => !seen.contains(id));
 
     if (!changed) return;
+    for (final id in _to.keys) {
+      if (displayed.containsKey(id)) _from[id] = displayed[id]!;
+      if (bearings.containsKey(id)) _bearingFrom[id] = bearings[id]!;
+    }
     if (duration != null) _controller.duration = duration;
     _controller.forward(from: 0);
   }
@@ -156,7 +178,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     final to = _to[id];
     if (from == null) return to ?? (lat: 0, lng: 0);
     if (to == null) return from;
-    final t = Curves.easeOut.transform(_controller.value);
+    final t = _controller.value;
     return lerpCoordinate(from, to, t);
   }
 
@@ -181,6 +203,16 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
 
     final byId = {for (final m in located) m.member.userId: m};
     final coords = {for (final m in located) m.member.userId: _displayed(m.member.userId)};
+    final follow = widget.onDrivingFrame;
+    final selected = byId[widget.selectedUserId];
+    if (follow != null && selected != null && TripStatus.at(selected.location, widget.now).driving) {
+      final id = selected.member.userId;
+      final point = coords[id]!;
+      final bearing = _bearing(id);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) follow(id, LatLng(point.lat, point.lng), bearing);
+      });
+    }
     // Enkel wie op dezelfde plek staat én op het scherm overlapt, komt samen
     // in één groepspin: thuis uitgezoomd één groep, ingezoomd elk apart.
     final groups = clusterByMetersAndScreen([
@@ -277,12 +309,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
         ),
         [
           for (final (index, place) in widget.reservedPlaces.indexed)
-            if (distanceMeters(
-                  coords[group.first]!.lat,
-                  coords[group.first]!.lng,
-                  place.latitude,
-                  place.longitude,
-                ) <=
+            if (distanceMeters(coords[group.first]!.lat, coords[group.first]!.lng, place.latitude, place.longitude) <=
                 _nearPlaceMeters)
               placePoints[index],
         ],
@@ -330,9 +357,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             point: point,
             width: MemberMarker.width,
             height: MemberMarker.height,
-            alignment: driving
-                ? Alignment.center
-                : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
+            alignment: driving ? Alignment.center : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
             onTap: () => widget.onMemberTap(member),
             child: GestureDetector(onTap: () => widget.onMemberTap(member), child: memberMarker()),
           ),
@@ -499,9 +524,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
                 onTap: onTap,
                 // De groepsafbeelding heeft individuele avatars: behoud hun
                 // tikvlakken ook als Google het zichtbare beeld tekent.
-                child: spec.id.startsWith('group_')
-                    ? Opacity(opacity: 0, child: spec.child)
-                    : const SizedBox.expand(),
+                child: spec.id.startsWith('group_') ? Opacity(opacity: 0, child: spec.child) : const SizedBox.expand(),
               ),
             ),
       ],

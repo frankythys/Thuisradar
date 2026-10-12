@@ -46,6 +46,7 @@ class MapMarkerSpec {
       width: width,
       height: height,
       alignment: alignment,
+      rotate: true,
       child: offset == Offset.zero ? content : Transform.translate(offset: offset, child: content),
     );
   }

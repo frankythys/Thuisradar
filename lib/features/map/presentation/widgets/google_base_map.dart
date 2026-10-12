@@ -56,8 +56,8 @@ class GoogleBaseMap extends StatefulWidget {
 class _GoogleBaseMapState extends State<GoogleBaseMap> {
   gm.GoogleMapController? _google;
   StreamSubscription<MapEvent>? _events;
-  ({double latitude, double longitude, double zoom})? _wanted;
-  ({double latitude, double longitude, double zoom})? _shown;
+  ({double latitude, double longitude, double zoom, double bearing})? _wanted;
+  ({double latitude, double longitude, double zoom, double bearing})? _shown;
   bool _moving = false;
   bool _zoomSatellite = false;
   final _icons = <String, gm.BitmapDescriptor>{};
@@ -78,6 +78,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       latitude: widget.initialCenter.latitude,
       longitude: widget.initialCenter.longitude,
       zoom: widget.initialZoom,
+      bearing: 0.0,
     );
     widget.markers?.addListener(_onMarkers);
     _events = widget.controller.mapEventStream.listen((event) {
@@ -86,7 +87,12 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       if (satellite != _zoomSatellite && mounted) {
         setState(() => _zoomSatellite = satellite);
       }
-      _wanted = (latitude: camera.center.latitude, longitude: camera.center.longitude, zoom: camera.zoom);
+      _wanted = (
+        latitude: camera.center.latitude,
+        longitude: camera.center.longitude,
+        zoom: camera.zoom,
+        bearing: (-camera.rotation + 360) % 360,
+      );
       unawaited(_sync());
     });
   }
@@ -124,9 +130,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     for (final key in widget.places.map((p) => p.icon).toSet()) {
       if (_icons.containsKey(key)) continue;
       unawaited(
-        placeIconBitmap(placeIcon(key), color: AppColors.primary, size: 20, pixelRatio: pixelRatio).then((
-          icon,
-        ) {
+        placeIconBitmap(placeIcon(key), color: AppColors.primary, size: 20, pixelRatio: pixelRatio).then((icon) {
           if (!mounted || _iconPixelRatio != pixelRatio) return;
           setState(() => _icons[key] = icon);
         }),
@@ -163,18 +167,32 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     if (google == null || _moving) return;
     while (mounted) {
       final wanted = _wanted;
-      if (wanted == null || !googleCameraChanged(_shown, wanted)) return;
+      if (wanted == null) return;
+      final shown = _shown;
+      if (shown != null &&
+          !googleCameraChanged(
+            (latitude: shown.latitude, longitude: shown.longitude, zoom: shown.zoom),
+            (latitude: wanted.latitude, longitude: wanted.longitude, zoom: wanted.zoom),
+          ) &&
+          (shown.bearing - wanted.bearing).abs() < .001) {
+        return;
+      }
       _moving = true;
       final target = googleCameraTarget(
         latitude: wanted.latitude,
         longitude: wanted.longitude,
         zoom: wanted.zoom,
         bottomPadding: widget.bottomPadding,
+        bearing: wanted.bearing,
       );
       try {
         await google.moveCamera(
           gm.CameraUpdate.newCameraPosition(
-            gm.CameraPosition(target: gm.LatLng(target.latitude, target.longitude), zoom: wanted.zoom),
+            gm.CameraPosition(
+              target: gm.LatLng(target.latitude, target.longitude),
+              zoom: wanted.zoom,
+              bearing: wanted.bearing,
+            ),
           ),
         );
         _shown = wanted;

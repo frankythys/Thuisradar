@@ -32,6 +32,7 @@ class FamilyMap extends StatelessWidget {
     this.myUserId,
     this.onMapReady,
     this.onUserGesture,
+    this.onDrivingFrame,
     this.onMapTap,
     this.onHistory,
     this.useGoogleMaps = FeatureFlags.useGoogleMaps,
@@ -59,6 +60,7 @@ class FamilyMap extends StatelessWidget {
 
   /// Vuurt wanneer de gebruiker zelf de kaart zoomt of verschuift.
   final VoidCallback? onUserGesture;
+  final void Function(String id, LatLng point, double? bearing)? onDrivingFrame;
 
   /// Tik op een lege plek op de kaart (om de selectie op te heffen).
   final VoidCallback? onMapTap;
@@ -108,8 +110,9 @@ class FamilyMap extends StatelessWidget {
         cameraConstraint: const CameraConstraint.containLatitude(),
         onMapReady: onMapReady,
         onTap: (_, _) => onMapTap?.call(),
-        onPositionChanged: (camera, hasGesture) {
-          if (hasGesture) onUserGesture?.call();
+        onMapEvent: (event) {
+          // Zoomen behoudt navigatievolgen; bewust slepen stopt het.
+          if (event.source == MapEventSource.onDrag) onUserGesture?.call();
         },
         interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
       ),
@@ -157,6 +160,7 @@ class FamilyMap extends StatelessWidget {
           selectedUserId: selectedUserId,
           myUserId: myUserId,
           onNativeMarkers: onNativeMarkers,
+          onDrivingFrame: onDrivingFrame,
         ),
         if (!useGoogleMaps) const SimpleAttributionWidget(source: Text('OpenStreetMap-bijdragers')),
       ],

@@ -13,11 +13,14 @@ import 'dart:math' as math;
   required double longitude,
   required double zoom,
   double bottomPadding = 0,
+  double bearing = 0,
 }) {
   if (bottomPadding == 0) return (latitude: latitude, longitude: longitude);
   final worldSize = 256 * math.pow(2, zoom);
-  final y = _mercatorY(latitude) * worldSize - bottomPadding / 2;
-  return (latitude: _latitudeAt(y / worldSize), longitude: longitude);
+  final angle = bearing * math.pi / 180;
+  final y = _mercatorY(latitude) * worldSize - bottomPadding / 2 * math.cos(angle);
+  final lng = longitude + bottomPadding / 2 * math.sin(angle) / worldSize * 360;
+  return (latitude: _latitudeAt(y / worldSize), longitude: lng);
 }
 
 /// Is de camera genoeg veranderd om de Google-kaart te verplaatsen?
