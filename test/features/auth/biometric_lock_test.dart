@@ -5,9 +5,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thuisradar/features/auth/application/auth_providers.dart';
 import 'package:thuisradar/features/auth/data/biometric_login.dart';
+import 'package:thuisradar/features/auth/data/pin_lock.dart';
 import 'package:thuisradar/features/auth/presentation/biometric_lock.dart';
 
 class _Bio extends Mock implements BiometricLogin {}
+
+class _Pin extends Mock implements PinLock {}
 
 void main() {
   final session = Session(
@@ -29,6 +32,7 @@ void main() {
         overrides: [
           sessionProvider.overrideWith((ref) => Stream.value(session)),
           biometricLoginProvider.overrideWithValue(bio),
+          pinEnabledProvider('google-user').overrideWith((ref) async => false),
           biometricEnabledProvider('google-user').overrideWith((ref) async => enabled),
         ],
         child: MaterialApp(
@@ -63,15 +67,47 @@ void main() {
     expect(find.text('Gezinskaart'), findsOneWidget);
     // Open detailpagina wordt bij achtergrond/terugkeer ook afgeschermd.
     final context = tester.element(find.text('Gezinskaart'));
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('PrivÃ©profiel'))));
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('PrivÃƒÆ’Ã‚Â©profiel'))));
     await tester.pumpAndSettle();
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(find.text('PrivÃ©profiel'), findsNothing);
+    expect(find.text('PrivÃƒÆ’Ã‚Â©profiel'), findsNothing);
     await tester.tap(find.byIcon(Icons.fingerprint));
     await tester.pumpAndSettle();
-    expect(find.text('PrivÃ©profiel'), findsOneWidget);
+    expect(find.text('PrivÃƒÆ’Ã‚Â©profiel'), findsOneWidget);
+  });
+
+  testWidgets('toegangscode werkt zonder biometrie en een foute code opent niets', (tester) async {
+    final pin = _Pin();
+    when(() => pin.verify('google-user', '000000')).thenAnswer((_) async => false);
+    when(() => pin.verify('google-user', '123456')).thenAnswer((_) async => true);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sessionProvider.overrideWith((ref) => Stream.value(session)),
+          pinLockProvider.overrideWithValue(pin),
+          biometricEnabledProvider('google-user').overrideWith((ref) async => false),
+          pinEnabledProvider('google-user').overrideWith((ref) async => true),
+        ],
+        child: MaterialApp(
+          builder: (context, child) => BiometricLock(onSignedOut: () {}, child: child!),
+          home: const Scaffold(body: Text('Gezinskaart')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.fingerprint), findsNothing);
+    await tester.enterText(find.byType(TextField), '000000');
+    await tester.tap(find.text('Ontgrendelen'));
+    await tester.pumpAndSettle();
+    expect(find.text('Gezinskaart'), findsNothing);
+    expect(find.text('Onjuiste toegangscode.'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '123456');
+    await tester.tap(find.text('Ontgrendelen'));
+    await tester.pumpAndSettle();
+    expect(find.text('Gezinskaart'), findsOneWidget);
   });
 
   testWidgets('zonder opt-in blijft de app toegankelijk zonder scan', (tester) async {

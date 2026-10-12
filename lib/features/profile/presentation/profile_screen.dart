@@ -8,6 +8,8 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../auth/data/biometric_login.dart';
+import '../../auth/data/pin_lock.dart';
+import 'pin_settings_tile.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../family/domain/family_member.dart';
@@ -95,7 +97,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await login.forgetRememberedLogin();
       await login.disable();
       final userId = ref.read(currentUserIdProvider);
-      if (userId != null) ref.invalidate(biometricEnabledProvider(userId));
+      if (userId != null) {
+        await ref.read(pinLockProvider).disable(userId);
+        ref.invalidate(pinEnabledProvider(userId));
+        ref.invalidate(biometricEnabledProvider(userId));
+      }
       if (mounted) _snack('Opgeslagen login en vingerafdruk verwijderd.');
     } catch (_) {
       if (mounted) _snack('Verwijderen is niet gelukt. Probeer opnieuw.');
@@ -106,7 +112,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
     try {
-      final enabled = await ref.read(biometricEnabledProvider(userId).future);
+      final enabled = await ref.read(appLockEnabledProvider(userId).future);
       if (!mounted) return;
       if (enabled) {
         ref.read(biometricLockRequestProvider.notifier).lock();
@@ -139,7 +145,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       // Offline: de lokale sessie is al weg, enkel de serveraanroep faalde.
       debugPrint('Afmelden bij de server mislukt: $error');
     }
-    if (userId != null) container.invalidate(biometricEnabledProvider(userId));
+    if (userId != null) {
+      await container.read(pinLockProvider).disable(userId);
+      container.invalidate(pinEnabledProvider(userId));
+      container.invalidate(biometricEnabledProvider(userId));
+    }
     if (mounted) Navigator.popUntil(context, (route) => route.isFirst);
   }
 
@@ -308,6 +318,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onChanged: ref.watch(biometricEnabledProvider(userId)).isLoading ? null : _setBiometric,
                   ),
                 ),
+              if (userId != null) PinSettingsTile(userId: userId),
               ProfileTile(
                 icon: Icons.groups_outlined,
                 title: widget.family.name,
@@ -341,16 +352,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             SizedBox(height: tokens.spaceMd),
             group([
               ProfileTile(
-                icon: userId != null && ref.watch(biometricEnabledProvider(userId)).value == true
+                icon: userId != null && ref.watch(appLockEnabledProvider(userId)).value == true
                     ? Icons.lock_outline
                     : Icons.logout,
                 title: 'Uitloggen',
-                subtitle: userId != null && ref.watch(biometricEnabledProvider(userId)).value == true
-                    ? 'Opnieuw inloggen met je vingerafdruk'
+                subtitle: userId != null && ref.watch(appLockEnabledProvider(userId)).value == true
+                    ? 'Opnieuw inloggen met vingerscan of toegangscode'
                     : null,
                 onTap: _lockOrSignOut,
               ),
-              if (userId != null && ref.watch(biometricEnabledProvider(userId)).value == true)
+              if (userId != null && ref.watch(appLockEnabledProvider(userId)).value == true)
                 ProfileTile(
                   icon: Icons.logout,
                   title: 'Account volledig afmelden',
