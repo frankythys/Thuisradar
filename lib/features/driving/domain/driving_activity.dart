@@ -4,6 +4,7 @@ import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
 import '../../location/domain/track_segments.dart';
 import '../../location/domain/travel_mode.dart';
+import 'travel_legs.dart';
 
 /// Soort activiteit in de dagtijdlijn van een gezinslid.
 enum DrivingActivityKind { trip, stay }
@@ -120,7 +121,7 @@ const kArrivalGap = Duration(minutes: 20);
 /// De activiteiten van één dag: verblijven uit de tijdlijn en verplaatsingen
 /// (te voet, met de fiets of de auto) uit de echte metingen, chronologisch
 /// (oudste eerst). Een verplaatsing met minder dan [minTripMeters] beweging is
-/// ruis en valt weg; een wandeling moet minstens [kMinWalkMeters] lang zijn.
+/// ruis en valt weg; een wandeling moet minstens [minWalkMeters] lang zijn.
 List<DrivingActivity> buildDayActivities(
   List<TimelineEntry> entries,
   List<TrackPoint> points, {
@@ -143,17 +144,24 @@ List<DrivingActivity> buildDayActivities(
     );
   }
   final clean = withoutSpikes(points);
-  for (final raw in buildTripTracks(clean)) {
-    // Enkel het stuk waarin echt gereden wordt: zonder de minuten stilstaan
-    // ervoor (nog thuis) en erna (al aangekomen). Een spoor dat alleen uit
-    // stilstaan bestaat, is geen rit.
-    final track = trimStill(raw);
+  // Eerst per vervoermiddel splitsen (rijden naar de parking, dan te voet
+  // verder), dan per deel enkel het stuk waarin echt bewogen wordt: zonder de
+  // minuten stilstaan ervoor (nog thuis) en erna (al aangekomen). Een spoor
+  // dat alleen uit stilstaan bestaat, is geen verplaatsing.
+  final legs = [
+    for (final raw in buildTripTracks(clean))
+      for (final leg in splitByTravelMode(raw)) trimStill(leg),
+  ];
+  for (final track in legs) {
     if (track.length < 2 || trackMeters(track) < minTripMeters) continue;
     // Een geïsoleerde uitschieter die door de tijdlijn in een verblijf werd
-    // samengevoegd is geen rit. Echte rondritten blijven aparte verplaatsingen.
-    if (stops.any(
-      (stop) => !track.first.recordedAt.isBefore(stop.start) && !track.last.recordedAt.isAfter(stop.end),
-    )) {
+    // samengevoegd is geen rit. Echte rondritten blijven aparte verplaatsingen,
+    // net als een trage wandeling die de tijdlijn als verblijf zag (de
+    // bewegingsfilter bevestigde toen wél beweging).
+    if (!_confirmedMoving(track) &&
+        stops.any(
+          (stop) => !track.first.recordedAt.isBefore(stop.start) && !track.last.recordedAt.isAfter(stop.end),
+        )) {
       continue;
     }
     final arrival = _arrivalStop(track.last, stops, clean);
@@ -173,8 +181,10 @@ List<DrivingActivity> buildDayActivities(
       duration: endTime.difference(track.first.recordedAt),
       speedsMps: track.map((point) => point.speedMps),
     );
-    // Rondlopen in huis of het stukje naar de auto is geen wandeling.
-    if (mode == TravelMode.walk && meters < kMinWalkMeters) continue;
+    // Rondlopen in huis of het stukje naar de auto is geen wandeling, tenzij
+    // de stappenteller bewijst dat er echt gestapt werd.
+    final steps = mode == TravelMode.walk ? stepsAlong(track) : null;
+    if (mode == TravelMode.walk && meters < minWalkMeters(steps)) continue;
     activities.add(
       DrivingActivity(
         kind: DrivingActivityKind.trip,
@@ -186,11 +196,56 @@ List<DrivingActivity> buildDayActivities(
         fromLatitude: track.first.latitude,
         fromLongitude: track.first.longitude,
         mode: mode,
-        steps: mode == TravelMode.walk ? stepsAlong(track) : null,
+        steps: steps,
       ),
     );
   }
-  return activities..sort((a, b) => a.start.compareTo(b.start));
+  return _withoutOverlap(activities)..sort((a, b) => a.start.compareTo(b.start));
+}
+
+/// Een verblijf begint pas als de verplaatsing ervoor gedaan is en stopt als
+/// de volgende begint: de tijdlijn zag een trage wandeling soms al als
+/// verblijf, met overlappende tijden als gevolg.
+List<DrivingActivity> _withoutOverlap(List<DrivingActivity> activities) {
+  final trips = [
+    for (final a in activities)
+      if (a.kind == DrivingActivityKind.trip) a,
+  ];
+  return [
+    for (final activity in activities)
+      if (activity.kind == DrivingActivityKind.trip) activity else ?_clipStay(activity, trips),
+  ];
+}
+
+DrivingActivity? _clipStay(DrivingActivity stay, List<DrivingActivity> trips) {
+  var start = stay.start;
+  var end = stay.end;
+  for (final trip in trips) {
+    if (trip.start.isBefore(start) || trip.start == start) {
+      if (trip.end.isAfter(start)) start = trip.end;
+    } else if (trip.start.isBefore(end)) {
+      end = trip.start;
+    }
+  }
+  if (!end.isAfter(start)) return null;
+  if (start == stay.start && end == stay.end) return stay;
+  return DrivingActivity(
+    kind: stay.kind,
+    start: start,
+    end: end,
+    latitude: stay.latitude,
+    longitude: stay.longitude,
+    placeName: stay.placeName,
+  );
+}
+
+/// Bevestigde de bewegingsfilter van het toestel minstens een minuut lang
+/// beweging (positieve snelheid in het merendeel van de metingen)? Een
+/// GPS-uitschieter heeft dat nooit.
+bool _confirmedMoving(List<TrackPoint> track) {
+  if (track.last.recordedAt.difference(track.first.recordedAt) < const Duration(minutes: 1)) return false;
+  final moving = track.where((p) => (p.speedMps ?? 0) >= kMovingSpeedMps).length;
+  return moving >= 6 && moving * 2 >= track.length;
 }
 
 /// De bestemming van een rit die eindigt op [last]:
@@ -244,9 +299,9 @@ bool _measuredElsewhere(List<TrackPoint> clean, DateTime after, TimelineEntry st
 /// eerste meting al binnen [radiusMeters] van het eindpunt.
 ///
 /// Binnen die straal kan wel al bewogen zijn: te voet duurt 100 m ruim een
-/// minuut. Metingen die gestaag van het beginpunt weg (of naar het eindpunt
-/// toe) gaan, horen dus nog bij de verplaatsing; anders miste elke wandeling
-/// 200 m en begon ze te laat.
+/// minuut. Metingen waar het toestel beweging meldde, of die gestaag van het
+/// beginpunt weg (of naar het eindpunt toe) gaan, horen dus nog bij de
+/// verplaatsing; anders miste elke wandeling 200 m en begon ze te laat.
 List<TrackPoint> trimStill(List<TrackPoint> track, {double radiusMeters = kStopRadiusMeters}) {
   if (track.length < 2) return track;
   var first = 0;
@@ -258,15 +313,21 @@ List<TrackPoint> trimStill(List<TrackPoint> track, {double radiusMeters = kStopR
     last--;
   }
   if (last > first) {
-    while (first > 0 && _steadyStep(track.first, track[first - 1], track[first])) {
+    while (first > 0 &&
+        (_deviceMoving(track[first - 1]) || _steadyStep(track.first, track[first - 1], track[first]))) {
       first--;
     }
-    while (last < track.length - 1 && _steadyStep(track.last, track[last + 1], track[last])) {
+    while (last < track.length - 1 &&
+        (_deviceMoving(track[last + 1]) || _steadyStep(track.last, track[last + 1], track[last]))) {
       last++;
     }
   }
   return track.sublist(first, last + 1);
 }
+
+/// Meldde de bewegingsfilter van het toestel hier beweging? Die bevestigt
+/// pas na meerdere metingen én echte verplaatsing, dus GPS-ruis telt niet.
+bool _deviceMoving(TrackPoint point) => (point.speedMps ?? 0) >= kMovingSpeedMps;
 
 /// Ligt [far] gestaag verder van [anchor] dan [near], kort na elkaar gemeten
 /// en minstens wandeltempo? Dan is het tussenstuk beweging, geen GPS-ruis.

@@ -31,6 +31,15 @@ const kBikeAverageKmh = 9.0;
 /// het stukje naar de auto.
 const kMinWalkMeters = 300.0;
 
+/// Met stappen als bewijs telt ook een korte wandeling (van de parking naar
+/// de werf): vanaf zoveel meter en [kMinWalkSteps] stappen.
+const kMinStepWalkMeters = 100.0;
+const kMinWalkSteps = 100;
+
+/// Kortste wandeling die telt, gegeven de gezette stappen (null = onbekend).
+double minWalkMeters(int? steps) =>
+    steps != null && steps >= kMinWalkSteps ? kMinStepWalkMeters : kMinWalkMeters;
+
 /// Schat het vervoermiddel van een verplaatsing van [meters] in [duration]
 /// met de gemeten GPS-snelheden [speedsMps] (m/s; onbruikbare waarden mogen
 /// erin zitten, die vallen weg). Puur: geen Flutter of Supabase.
