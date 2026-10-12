@@ -18,8 +18,10 @@ class ThuisradarApp extends StatelessWidget {
       title: 'CircleBeacon',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      builder: (context, child) =>
-          AppPinLock(onSignedOut: () => _navigatorKey.currentState?.popUntil((route) => route.isFirst), child: child!),
+      builder: (context, child) => AppPinLock(
+        onSignedOut: () => _navigatorKey.currentState?.popUntil((route) => route.isFirst),
+        child: child!,
+      ),
       home: const PushGate(child: OnboardingGate(child: AuthGate())),
     );
   }

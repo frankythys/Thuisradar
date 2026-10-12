@@ -74,7 +74,6 @@ void main() {
           ),
           familyMessagesProvider.overrideWith((ref, id) => Stream.value(messages)),
           familyEventsProvider.overrideWith((ref, id) => Stream.value(events)),
-          timelineProvider.overrideWith((ref, query) async => history),
           dayHistoryProvider.overrideWith(
             (ref, query) async => (entries: history, points: const <TrackPoint>[]),
           ),

@@ -23,7 +23,9 @@ class AppPinLock extends ConsumerWidget {
       );
     }
     if (session.hasError) {
-      return const Material(child: Center(child: Text('Je sessie kon niet worden geladen. Open de app opnieuw.')));
+      return const Material(
+        child: Center(child: Text('Je sessie kon niet worden geladen. Open de app opnieuw.')),
+      );
     }
     if (userId == null) return child;
     return _SessionLock(key: ValueKey(userId), userId: userId, onSignedOut: onSignedOut, child: child);
@@ -85,7 +87,10 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
       }
     } catch (error) {
       if (mounted) {
-        setState(() => _message = error is StateError ? error.message.toString() : 'Code controleren is niet gelukt.');
+        setState(
+          () =>
+              _message = error is StateError ? error.message.toString() : 'Code controleren is niet gelukt.',
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -159,7 +164,10 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
                                 onSubmitted: (_) => _unlockPin(),
                               ),
                               const SizedBox(height: 12),
-                              FilledButton(onPressed: _busy ? null : _unlockPin, child: const Text('Ontgrendelen')),
+                              FilledButton(
+                                onPressed: _busy ? null : _unlockPin,
+                                child: const Text('Ontgrendelen'),
+                              ),
                             ],
                             const SizedBox(height: 16),
                             Text(
@@ -175,7 +183,10 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
                                 onPressed: () => ref.invalidate(appLockEnabledProvider(widget.userId)),
                                 child: const Text('Opnieuw proberen'),
                               ),
-                            TextButton(onPressed: _busy ? null : _signOut, child: const Text('Opnieuw inloggen')),
+                            TextButton(
+                              onPressed: _busy ? null : _signOut,
+                              child: const Text('Opnieuw inloggen'),
+                            ),
                           ],
                         ],
                       ),

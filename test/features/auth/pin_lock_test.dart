@@ -16,7 +16,8 @@ void main() {
     storage = _Storage();
     values = {};
     now = DateTime(2026, 10, 12);
-    when(() => storage.read(key: any(named: 'key'))).thenAnswer((call) async => values[call.namedArguments[#key]]);
+    when(() => storage.read(key: any(named: 'key')))
+        .thenAnswer((call) async => values[call.namedArguments[#key]]);
     when(() => storage.containsKey(key: any(named: 'key')))
         .thenAnswer((call) async => values.containsKey(call.namedArguments[#key]));
     when(

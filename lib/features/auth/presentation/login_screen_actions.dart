@@ -56,7 +56,10 @@ class _LoginActions extends StatelessWidget {
     return FilledButton(
       onPressed: busy ? null : onSubmit,
       child: busy
-          ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+          ? const SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

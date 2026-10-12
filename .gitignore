@@ -45,6 +45,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Lokale Android-diagnoselogs
+/android/gat.txt
+/android/klein.txt
+
 # Widget Preview related
 .widget_preview/
 

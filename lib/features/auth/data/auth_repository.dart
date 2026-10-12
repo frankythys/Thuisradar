@@ -38,7 +38,11 @@ class AuthRepository {
   /// Geeft `true` terug als er meteen een sessie is, `false` als de gebruiker
   /// eerst zijn e-mail moet bevestigen.
   Future<bool> signUp({required String email, required String password, required String displayName}) async {
-    final response = await _client.auth.signUp(email: email, password: password, data: {_nameKey: displayName});
+    final response = await _client.auth.signUp(
+      email: email,
+      password: password,
+      data: {_nameKey: displayName},
+    );
     return response.session != null;
   }
 

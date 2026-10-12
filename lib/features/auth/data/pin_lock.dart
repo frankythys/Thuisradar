@@ -36,7 +36,10 @@ class PinLock {
     final random = Random.secure();
     final salt = base64Encode(List.generate(16, (_) => random.nextInt(256)));
     final digest = await compute(derivePin, (pin, salt));
-    await _storage.write(key: _key(id), value: jsonEncode({'salt': salt, 'digest': digest, 'failures': 0, 'until': 0}));
+    await _storage.write(
+      key: _key(id),
+      value: jsonEncode({'salt': salt, 'digest': digest, 'failures': 0, 'until': 0}),
+    );
   }
 
   Future<bool> verify(String id, String pin) async {
@@ -49,7 +52,9 @@ class PinLock {
       final now = _now().millisecondsSinceEpoch;
       final until = data['until'] as int;
       if (until > now) throw StateError('Te veel pogingen. Wacht ${((until - now) / 1000).ceil()} seconden.');
-      final digest = RegExp(r'^\d{6}$').hasMatch(pin) ? await compute(derivePin, (pin, data['salt'] as String)) : '';
+      final digest = RegExp(r'^\d{6}$').hasMatch(pin)
+          ? await compute(derivePin, (pin, data['salt'] as String))
+          : '';
       final expected = data['digest'] as String;
       var difference = digest.length ^ expected.length;
       for (var i = 0; i < min(digest.length, expected.length); i++) {
@@ -58,7 +63,9 @@ class PinLock {
       final accepted = difference == 0;
       final failures = accepted ? 0 : (data['failures'] as int) + 1;
       data['failures'] = failures;
-      data['until'] = !accepted && failures >= 5 ? now + min(900, 30 * (1 << min(failures - 5, 5))) * 1000 : 0;
+      data['until'] = !accepted && failures >= 5
+          ? now + min(900, 30 * (1 << min(failures - 5, 5))) * 1000
+          : 0;
       await _storage.write(key: _key(id), value: jsonEncode(data));
       return accepted;
     } finally {
@@ -68,7 +75,9 @@ class PinLock {
 }
 
 final pinLockProvider = Provider((ref) => PinLock());
-final pinEnabledProvider = FutureProvider.family<bool, String>((ref, id) => ref.watch(pinLockProvider).enabledFor(id));
+final pinEnabledProvider = FutureProvider.family<bool, String>(
+  (ref, id) => ref.watch(pinLockProvider).enabledFor(id),
+);
 final appLockEnabledProvider = FutureProvider.family<bool, String>(
   (ref, id) => ref.watch(pinEnabledProvider(id).future),
 );

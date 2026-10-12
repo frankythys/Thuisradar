@@ -178,14 +178,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (!mounted || !_mapReady || !_followSelected || _selected?.member.userId != id) return;
     final camera = _mapController.camera;
     final heading = bearing ?? (-camera.rotation + 360) % 360;
-    final center = drivingCameraCenter(point, heading, camera.zoom, camera.nonRotatedSize.height, bottomInset);
+    final center = drivingCameraCenter(
+      point,
+      heading,
+      camera.zoom,
+      camera.nonRotatedSize.height,
+      bottomInset,
+    );
     _mapController.moveAndRotate(center, camera.zoom, -heading);
   }
 
   void _openDetail(MemberOnMap entry) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => MemberDetailScreen(member: entry.member, familyId: widget.family.id, location: entry.location),
+        builder: (_) =>
+            MemberDetailScreen(member: entry.member, familyId: widget.family.id, location: entry.location),
       ),
     );
   }
@@ -199,7 +206,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _addPlace() {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => AddPlaceScreen(familyId: widget.family.id)));
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => AddPlaceScreen(familyId: widget.family.id)));
   }
 
   void _snack(String message) {
@@ -233,7 +241,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     try {
-      await ref.read(sosRepositoryProvider).raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng);
+      await ref
+          .read(sosRepositoryProvider)
+          .raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng);
       _snack('SOS verzonden naar je gezin.');
     } on Exception {
       _snack('SOS versturen mislukt. Probeer opnieuw.');
@@ -440,7 +450,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               onScrollControllerReady: (controller) => _sheetScrollController = controller,
               onInvite: _openInvite,
               onCreateCircle: () =>
-                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const FamilySetupScreen())),
+                  Navigator.of(context)
+                      .push(MaterialPageRoute<void>(builder: (_) => const FamilySetupScreen())),
               onPlaces: _openPlaces,
               onAddPlace: _addPlace,
             ),

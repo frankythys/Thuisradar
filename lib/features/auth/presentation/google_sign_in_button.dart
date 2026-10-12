@@ -33,7 +33,12 @@ class GoogleSignInButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          SvgPicture.asset('assets/illustrations/google_g.svg', width: 20, height: 20, excludeFromSemantics: true),
+          SvgPicture.asset(
+            'assets/illustrations/google_g.svg',
+            width: 20,
+            height: 20,
+            excludeFromSemantics: true,
+          ),
           SizedBox(width: isIos ? 12 : 10),
           const Flexible(child: Text('Doorgaan met Google')),
         ],

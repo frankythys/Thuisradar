@@ -135,7 +135,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) setState(() => _message = e.message);
     } catch (_) {
       if (mounted) {
-        setState(() => _message = 'Inloggen of het onthouden van je gegevens is niet gelukt. Probeer opnieuw.');
+        setState(
+          () => _message = 'Inloggen of het onthouden van je gegevens is niet gelukt. Probeer opnieuw.',
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -280,7 +282,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         if (!isRegister)
                           _RememberRow(
                             value: _remember,
-                            onChanged: _busy || _loadingSaved ? null : (value) => _setRemember(value ?? false),
+                            onChanged: _busy || _loadingSaved
+                                ? null
+                                : (value) => _setRemember(value ?? false),
                             onForgot: _busy ? null : _resetPassword,
                           ),
                         if (_message != null)
