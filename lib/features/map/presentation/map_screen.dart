@@ -20,7 +20,6 @@ import '../../geofencing/presentation/geofence_banner.dart';
 import '../application/map_style_provider.dart';
 import 'widgets/map_style_button.dart';
 import '../../location/application/location_providers.dart';
-import '../../location/domain/trip_status.dart';
 import '../../family/presentation/invite_screen.dart';
 import '../../family/presentation/family_setup_screen.dart';
 import '../../member/presentation/member_detail_screen.dart';
@@ -36,6 +35,7 @@ import '../../../shared/widgets/profile_action.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../application/map_providers.dart';
 import '../domain/auto_fit.dart';
+import '../domain/driving_follow.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_map.dart';
 import 'widgets/member_list_sheet.dart';
@@ -61,7 +61,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   static const _startupZoom = 12.0;
 
   static const _focusZoom = 16.0;
-  static const _drivingFollowZoom = 15.0;
 
   final _mapController = MapController();
   final _autoFit = AutoFitController();
@@ -69,8 +68,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   ScrollController? _sheetScrollController;
   bool _mapReady = false;
   bool _followSelected = false;
-  String? _lastFollowedUserId;
-  DateTime? _lastFollowedUpdate;
   MemberOnMap? _selected;
 
   /// Ingeklapte hoogte van het paneel als fractie; bijgewerkt bij elke layout.
@@ -135,8 +132,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     _autoFit.lock();
     _followSelected = true;
-    _lastFollowedUserId = entry.member.userId;
-    _lastFollowedUpdate = location.updatedAt;
+    _mapController.rotate(0);
     _mapController.move(LatLng(location.latitude, location.longitude), _focusZoom);
     setState(() => _selected = entry);
     // Het paneel gaat altijd beneden staan: de persoon zie je op de kaart,
@@ -151,8 +147,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   void _deselect() {
     _followSelected = false;
-    _lastFollowedUserId = null;
-    _lastFollowedUpdate = null;
+    _mapController.rotate(0);
     if (_selected == null) return;
     setState(() => _selected = null);
     _collapseSheet();
@@ -179,25 +174,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _followSelected = false;
   }
 
-  void _followMovingSelected(MemberOnMap? selected) {
-    if (!_mapReady || !_followSelected || selected?.location == null) return;
-    final location = selected!.location!;
-    final status = TripStatus.at(location, ref.read(clockProvider).value ?? DateTime.now());
-    if (status.state != TripState.moving) return;
-    if (_lastFollowedUserId == selected.member.userId && _lastFollowedUpdate == location.updatedAt) {
-      return;
-    }
-
-    _lastFollowedUserId = selected.member.userId;
-    _lastFollowedUpdate = location.updatedAt;
-    _mapController.move(LatLng(location.latitude, location.longitude), _drivingFollowZoom);
+  void _followDrivingFrame(String id, LatLng point, double? bearing, double bottomInset) {
+    if (!mounted || !_mapReady || !_followSelected || _selected?.member.userId != id) return;
+    final camera = _mapController.camera;
+    final heading = bearing ?? (-camera.rotation + 360) % 360;
+    final center = drivingCameraCenter(point, heading, camera.zoom, camera.nonRotatedSize.height, bottomInset);
+    _mapController.moveAndRotate(center, camera.zoom, -heading);
   }
 
   void _openDetail(MemberOnMap entry) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            MemberDetailScreen(member: entry.member, familyId: widget.family.id, location: entry.location),
+        builder: (_) => MemberDetailScreen(member: entry.member, familyId: widget.family.id, location: entry.location),
       ),
     );
   }
@@ -211,8 +199,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _addPlace() {
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (_) => AddPlaceScreen(familyId: widget.family.id)));
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => AddPlaceScreen(familyId: widget.family.id)));
   }
 
   void _snack(String message) {
@@ -246,9 +233,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
 
     try {
-      await ref
-          .read(sosRepositoryProvider)
-          .raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng);
+      await ref.read(sosRepositoryProvider).raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng);
       _snack('SOS verzonden naar je gezin.');
     } on Exception {
       _snack('SOS versturen mislukt. Probeer opnieuw.');
@@ -294,9 +279,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       }
       selected ??= chosen;
     }
-    if (selected != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _followMovingSelected(selected));
-    }
 
     final size = MediaQuery.sizeOf(context);
     final sheetTop = MemberSheetDimensions.collapsedHeight(
@@ -336,6 +318,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onHistory: _openDetail,
             onGroupTap: _onGroupTap,
             onUserGesture: _onUserGesture,
+            onDrivingFrame: (id, point, bearing) => _followDrivingFrame(id, point, bearing, sheetTop),
             // Selectie blijft tot "Terug naar personen", ook na kaarttikken.
             onMapTap: null,
             onMapReady: () {
@@ -348,7 +331,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           Positioned(
             right: 16,
             bottom: sheetTop + 16,
-            child: _RecenterButton(onPressed: () => _fit(members, deliberate: true)),
+            child: _RecenterButton(
+              onPressed: () {
+                _followSelected = false;
+                _mapController.rotate(0);
+                _fit(members, deliberate: true);
+              },
+            ),
           ),
           if (FeatureFlags.useGoogleMaps)
             Positioned(
@@ -451,8 +440,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               onScrollControllerReady: (controller) => _sheetScrollController = controller,
               onInvite: _openInvite,
               onCreateCircle: () =>
-                  Navigator.of(context)
-                      .push(MaterialPageRoute<void>(builder: (_) => const FamilySetupScreen())),
+                  Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const FamilySetupScreen())),
               onPlaces: _openPlaces,
               onAddPlace: _addPlace,
             ),
