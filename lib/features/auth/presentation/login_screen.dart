@@ -215,7 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
-          // Minstens schermhoog, zodat de knoppen onderaan staan; scrollt alleen
+          // Minstens schermhoog voor een gecentreerd formulier; scrollt alleen
           // als het toetsenbord of een klein scherm de ruimte opeist.
           builder: (context, constraints) => SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(tokens.spaceLg, tokens.spaceMd, tokens.spaceLg, tokens.spaceLg),
@@ -230,7 +230,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       children: [
                         _LoginHeader(onBack: isRegister ? _toggleMode : null),
                         SizedBox(height: tokens.spaceXl),
-                        // Zet het formulier iets onder het midden, dicht bij de duim.
+                        // Verdeel vrije ruimte boven en onder het formulier.
                         const Spacer(),
                         Text(isRegister ? 'Maak je account' : 'Welkom terug', style: text.headlineLarge),
                         SizedBox(height: tokens.spaceXs),
@@ -289,21 +289,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: Text(_message!, style: text.bodyMedium?.copyWith(color: AppColors.alert)),
                           ),
                         if (isRegister) ...[SizedBox(height: tokens.spaceLg), const _PrivacyNote()],
-                        const Spacer(),
-                        SizedBox(height: tokens.spaceXl),
+                        SizedBox(height: tokens.spaceLg),
                         _LoginActions(
                           label: isRegister ? 'Account aanmaken' : 'Inloggen',
                           busy: _busy,
                           onSubmit: _submit,
-                          onBiometric: isRegister ? null : _biometric,
                         ),
-                        SizedBox(height: tokens.spaceSm),
+                        SizedBox(height: tokens.spaceMd),
                         GoogleSignInButton(onPressed: _busy ? null : _google),
-                        SizedBox(height: tokens.spaceSm),
+                        if (!isRegister) ...[
+                          SizedBox(height: tokens.spaceLg),
+                          _BiometricButton(onPressed: _busy ? null : _biometric),
+                        ],
+                        SizedBox(height: tokens.spaceMd),
                         TextButton(
                           onPressed: _busy ? null : _toggleMode,
                           child: Text(isRegister ? 'Ik heb al een account' : 'Nieuw? Maak een account'),
                         ),
+                        const Spacer(),
                       ],
                     ),
                   ),
