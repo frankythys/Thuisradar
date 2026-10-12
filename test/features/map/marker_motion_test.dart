@@ -6,7 +6,16 @@ void main() {
 
   test('duur blijft binnen de grenzen', () {
     expect(markerMotionDuration(start, start), markerMotionMin);
+    expect(markerMotionDuration(start, start.add(const Duration(minutes: 1))), markerMotionMax);
     expect(markerMotionDuration(start, start.add(const Duration(seconds: 5))), markerMotionMax);
+    expect(
+      markerMotionDuration(start, start.add(const Duration(seconds: 5)), driving: true),
+      const Duration(seconds: 5),
+    );
+    expect(
+      markerMotionDuration(start, start.add(const Duration(minutes: 1)), driving: true),
+      markerDrivingMotionMax,
+    );
   });
 
   test('duur volgt het gat tussen twee ontvangen punten', () {

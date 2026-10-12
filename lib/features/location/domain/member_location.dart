@@ -11,6 +11,7 @@ class MemberLocation {
     this.battery,
     this.isCharging,
     this.steps,
+    this.drivingHint,
   });
 
   factory MemberLocation.fromJson(Map<String, dynamic> json) => MemberLocation(
@@ -40,8 +41,11 @@ class MemberLocation {
   final int? steps;
   final DateTime updatedAt;
 
+  /// Tijdelijk onthouden rijstatus voor de weergave; nooit naar de database.
+  final bool? drivingHint;
+
   /// Nieuwe locatie met een andere positie; overige velden blijven gelijk.
-  MemberLocation copyWith({double? latitude, double? longitude}) => MemberLocation(
+  MemberLocation copyWith({double? latitude, double? longitude, bool? drivingHint}) => MemberLocation(
     userId: userId,
     familyId: familyId,
     latitude: latitude ?? this.latitude,
@@ -51,6 +55,7 @@ class MemberLocation {
     battery: battery,
     isCharging: isCharging,
     steps: steps,
+    drivingHint: drivingHint ?? this.drivingHint,
     updatedAt: updatedAt,
   );
 

@@ -10,6 +10,61 @@ import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_la
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
 
 void main() {
+  testWidgets('auto blijft bewegen tussen normale GPS-updates van vijf seconden', (tester) async {
+    final controller = MapController();
+    final now = DateTime(2026, 10, 12, 12);
+    var markers = <MapMarkerSpec>[];
+    Future<void> show(double longitude, int seconds) => tester.pumpWidget(
+      MaterialApp(
+        home: FlutterMap(
+          mapController: controller,
+          options: const MapOptions(initialCenter: LatLng(51, 3), initialZoom: 16),
+          children: [
+            ClusteredMarkerLayer(
+              members: [
+                MemberOnMap(
+                  member: const FamilyMember(
+                    userId: 'car',
+                    displayName: 'Auto',
+                    isOwner: false,
+                    colorIndex: 0,
+                  ),
+                  location: MemberLocation(
+                    userId: 'car',
+                    familyId: 'f',
+                    latitude: 51,
+                    longitude: longitude,
+                    updatedAt: now.add(Duration(seconds: seconds)),
+                    speedMps: 15,
+                  ),
+                ),
+              ],
+              now: now,
+              onMemberTap: (_) {},
+              onGroupTap: (_) {},
+              onNativeMarkers: (value) => markers = value,
+            ),
+          ],
+        ),
+      ),
+    );
+    double longitude() => markers.firstWhere((m) => m.id == 'member_car').point.longitude;
+    await show(3, 0);
+    await show(3.001, 5);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(longitude(), closeTo(3.0004, .000001));
+    await tester.pump(const Duration(milliseconds: 2900));
+    expect(longitude(), closeTo(3.00098, .000001));
+    await show(3.002, 10);
+    await tester.pump();
+    expect(longitude(), closeTo(3.00098, .000001));
+    await tester.pump(const Duration(seconds: 1));
+    expect(longitude(), greaterThan(3.00098));
+    await tester.pumpWidget(const SizedBox());
+    controller.dispose();
+  });
+
   testWidgets('auto beweegt door tijdens inzoomen en nieuwe locatie', (tester) async {
     final controller = MapController();
     final now = DateTime(2026, 10, 12, 12);

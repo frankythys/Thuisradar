@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -14,7 +15,8 @@ import '../../domain/bubble_side.dart';
 import '../../domain/colocated_anchor.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/marker_motion.dart';
-import '../../domain/driving_follow.dart';
+import '../../domain/marker_trajectory.dart';
+import '../../domain/road_matching.dart';
 import '../../domain/marker_spread.dart';
 import '../../domain/marker_clearance.dart';
 import '../../domain/member_on_map.dart';
@@ -72,18 +74,17 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
   /// Binnen deze echte afstand van het huis telt iemand als "bij huis".
   static const _nearPlaceMeters = 200.0;
 
-  late final AnimationController _controller = AnimationController(vsync: this, duration: markerMotionMin);
-  final Map<String, _Coord> _from = {};
-  final Map<String, _Coord> _to = {};
+  final _clock = ValueNotifier<Duration>(Duration.zero);
+  final _motions = <String, MarkerTrajectory>{};
   final Map<String, DateTime> _lastAt = {};
-  final Map<String, double> _bearingFrom = {};
-  final Map<String, double> _bearingTo = {};
+  final _roadPaths = <String, List<RoadPoint>?>{};
+  Duration _tickerOffset = Duration.zero;
+  late final Ticker _ticker = createTicker((elapsed) {
+    _clock.value = _tickerOffset + elapsed;
+    if (!_motions.values.any((motion) => motion.active(_clock.value))) _ticker.stop();
+  });
 
-  double? _bearing(String id) {
-    final to = _bearingTo[id];
-    if (to == null) return null;
-    return interpolateBearing(_bearingFrom[id] ?? to, to, _controller.value);
-  }
+  double? _bearing(String id) => _motions[id]?.bearing(_clock.value);
 
   /// Beelden van de wandel-GIF, enkel geladen als Google de markers tekent
   /// en iemand wandelt.
@@ -115,20 +116,15 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ticker.dispose();
+    _clock.dispose();
     super.dispose();
   }
 
   /// Neemt nieuwe doelen over. Beweegt alleen als er echt een nieuw punt
   /// ontvangen is; de duur volgt het tijdsgat tussen de twee punten.
   void _syncTargets() {
-    // Bewaar alle zichtbare posities vóór de gedeelde animatie herstart.
-    // Anders springt een ander, nog bewegend lid terug naar zijn beginpunt.
-    final displayed = {for (final id in _to.keys) id: _displayed(id)};
-    final bearings = {for (final id in _bearingTo.keys) id: _bearing(id)!};
     final seen = <String>{};
-    Duration? duration;
-    var changed = false;
 
     for (final member in widget.members) {
       final location = member.location;
@@ -137,54 +133,48 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       seen.add(id);
 
       final target = (lat: location.latitude, lng: location.longitude);
-      final current = _to[id];
+      final current = _motions[id];
       if (current == null) {
-        _from[id] = target;
-        _to[id] = target;
-      } else if (current.lat != target.lat || current.lng != target.lng) {
-        final bearing = drivingBearing(LatLng(current.lat, current.lng), LatLng(target.lat, target.lng));
-        if (bearing != null) {
-          _bearingFrom[id] = bearings[id] ?? bearing;
-          _bearingTo[id] = bearing;
-        }
-        _from[id] = displayed[id]!;
-        _to[id] = target;
+        _motions[id] = MarkerTrajectory([target], _clock.value, Duration.zero);
+      } else if (current.target != target ||
+          (member.roadPath != null && !identical(member.roadPath, _roadPaths[id]))) {
         final previousAt = _lastAt[id];
-        final gap = previousAt == null ? markerMotionMax : markerMotionDuration(previousAt, location.updatedAt);
-        if (duration == null || gap > duration) duration = gap;
-        changed = true;
+        final driving = TripStatus.at(location, widget.now).driving;
+        if (previousAt != null && location.updatedAt.isBefore(previousAt)) continue;
+        final gap = previousAt == location.updatedAt && current.active(_clock.value)
+            ? current.duration - (_clock.value - current.started)
+            : previousAt == null
+            ? (driving ? markerDrivingMotionMax : markerMotionMax)
+            : markerMotionDuration(previousAt, location.updatedAt, driving: driving);
+        _motions[id] = MarkerTrajectory.retarget(
+          previous: current,
+          target: target,
+          at: _clock.value,
+          duration: gap,
+          roadPath: member.roadPath,
+        );
       }
       _lastAt[id] = location.updatedAt;
+      _roadPaths[id] = member.roadPath;
     }
 
-    _from.removeWhere((id, _) => !seen.contains(id));
-    _to.removeWhere((id, _) => !seen.contains(id));
+    _motions.removeWhere((id, _) => !seen.contains(id));
     _lastAt.removeWhere((id, _) => !seen.contains(id));
-    _bearingFrom.removeWhere((id, _) => !seen.contains(id));
-    _bearingTo.removeWhere((id, _) => !seen.contains(id));
-
-    if (!changed) return;
-    for (final id in _to.keys) {
-      if (displayed.containsKey(id)) _from[id] = displayed[id]!;
-      if (bearings.containsKey(id)) _bearingFrom[id] = bearings[id]!;
+    _roadPaths.removeWhere((id, _) => !seen.contains(id));
+    if (!_ticker.isActive && _motions.values.any((motion) => motion.active(_clock.value))) {
+      _tickerOffset = _clock.value;
+      _ticker.start();
     }
-    if (duration != null) _controller.duration = duration;
-    _controller.forward(from: 0);
   }
 
   /// Huidige, mogelijk nog bewegende, positie van een lid.
   _Coord _displayed(String id) {
-    final from = _from[id];
-    final to = _to[id];
-    if (from == null) return to ?? (lat: 0, lng: 0);
-    if (to == null) return from;
-    final t = _controller.value;
-    return lerpCoordinate(from, to, t);
+    return _motions[id]?.point(_clock.value) ?? (lat: 0, lng: 0);
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(animation: _controller, builder: (context, _) => _buildLayer(context));
+    return AnimatedBuilder(animation: _clock, builder: (context, _) => _buildLayer(context));
   }
 
   Widget _buildLayer(BuildContext context) {
@@ -309,7 +299,12 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
         ),
         [
           for (final (index, place) in widget.reservedPlaces.indexed)
-            if (distanceMeters(coords[group.first]!.lat, coords[group.first]!.lng, place.latitude, place.longitude) <=
+            if (distanceMeters(
+                  coords[group.first]!.lat,
+                  coords[group.first]!.lng,
+                  place.latitude,
+                  place.longitude,
+                ) <=
                 _nearPlaceMeters)
               placePoints[index],
         ],
@@ -357,9 +352,19 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             point: point,
             width: MemberMarker.width,
             height: MemberMarker.height,
-            alignment: driving ? Alignment.center : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
+            alignment: driving
+                ? Alignment.center
+                : Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
             onTap: () => widget.onMemberTap(member),
             child: GestureDetector(onTap: () => widget.onMemberTap(member), child: memberMarker()),
+            imageKey: (
+              Theme.of(context),
+              MediaQuery.textScalerOf(context),
+              member.member.initial,
+              member.member.colorIndex,
+              selected,
+              driving,
+            ),
           ),
         );
       } else {
@@ -449,6 +454,33 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       final point = LatLng(coordinate.lat, coordinate.lng);
       final placement = placements[id];
       final onRight = placement == null || placement.side == BubbleSide.right;
+      final status = TripStatus.at(selected.location, widget.now);
+      final place = widget.placeByUser[id];
+      final atPlace =
+          place?.since != null &&
+          !place!.since!.isAfter(widget.now) &&
+          status.state != TripState.stale &&
+          status.state != TripState.moving;
+      final stopped =
+          (status.state == TripState.stationary || status.state == TripState.unknown) &&
+          widget.stationarySinceByUser[id] != null &&
+          !widget.stationarySinceByUser[id]!.isAfter(widget.now);
+      final since = atPlace
+          ? place.since
+          : stopped
+          ? widget.stationarySinceByUser[id]
+          : null;
+      final age = widget.now
+          .difference(selected.location?.updatedAt ?? widget.now)
+          .inSeconds
+          .clamp(0, 99999999);
+      final timeKey = status.state == TripState.moving
+          ? 0
+          : since != null && !since.isAfter(widget.now)
+          ? widget.now.difference(since).inMinutes
+          : age < 60
+          ? age
+          : age ~/ 60;
       void onBubbleTap() => (widget.onHistory ?? widget.onMemberTap)(selected);
       final alignment = Alignment(
         (onRight ? 1 : -1) + 2 * (offsets[id]?.dx ?? 0) / 142,
@@ -484,6 +516,18 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           offset: offset,
           onTap: onBubbleTap,
           child: bubble(walker: animate ? WalkerDisplay.slot : WalkerDisplay.gif),
+          imageKey: (
+            Theme.of(context),
+            MediaQuery.textScalerOf(context),
+            status.state,
+            status.walking,
+            status.speedKmh,
+            atPlace ? place.name : null,
+            atPlace ? place.icon : null,
+            stopped,
+            timeKey,
+            onRight,
+          ),
         ),
       );
       final walkerFrames = _walkerFrames;
@@ -524,7 +568,9 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
                 onTap: onTap,
                 // De groepsafbeelding heeft individuele avatars: behoud hun
                 // tikvlakken ook als Google het zichtbare beeld tekent.
-                child: spec.id.startsWith('group_') ? Opacity(opacity: 0, child: spec.child) : const SizedBox.expand(),
+                child: spec.id.startsWith('group_')
+                    ? Opacity(opacity: 0, child: spec.child)
+                    : const SizedBox.expand(),
               ),
             ),
       ],

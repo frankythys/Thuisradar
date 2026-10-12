@@ -15,6 +15,7 @@ class MapMarkerSpec {
     this.offset = Offset.zero,
     this.onTap,
     this.frames = const [],
+    this.imageKey,
   });
 
   /// Vaste sleutel per marker (lid, groep of ballon).
@@ -29,6 +30,9 @@ class MapMarkerSpec {
 
   /// Wat er getekend wordt (zonder de verschuiving).
   final Widget child;
+
+  /// Alleen veranderen wanneer de zichtbare inhoud wijzigt, niet bij rijden.
+  final Object? imageKey;
 
   /// Tik op de marker; ook gebruikt voor de onzichtbare tikvlakken boven
   /// Google Maps.

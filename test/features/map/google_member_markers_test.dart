@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
@@ -7,6 +9,116 @@ import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dar
 import 'package:thuisradar/features/map/presentation/widgets/widget_bitmap.dart';
 
 void main() {
+  testWidgets('rijden hergebruikt de afbeelding en vernieuwt gewijzigde inhoud', (tester) async {
+    late Widget Function(Widget) wrap;
+    var drawings = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            final original = wrapForBitmap(context);
+            wrap = (child) {
+              drawings++;
+              return original(child);
+            };
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final updates = <Set<gm.Marker>>[];
+    late Completer<void> arrived;
+    final markers = GoogleMemberMarkers(
+      onChanged: (value) {
+        updates.add(value);
+        if (!arrived.isCompleted &&
+            value.any((marker) => (marker.position.longitude - 3.00045).abs() < .000001)) {
+          arrived.complete();
+        }
+      },
+    );
+    addTearDown(markers.dispose);
+    MapMarkerSpec spec(Color color, double lng) => MapMarkerSpec(
+      id: 'car',
+      point: LatLng(51, lng),
+      width: 40,
+      height: 40,
+      imageKey: color,
+      child: ColoredBox(color: color),
+    );
+    await tester.runAsync(() async {
+      arrived = Completer<void>();
+      markers.update([spec(Colors.orange, 3)], wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final icon = updates.last.single.icon;
+      for (var i = 1; i <= 20; i++) {
+        markers.update(
+          [spec(Colors.orange, 3 + i * .00001)],
+          wrap: wrap,
+          pixelRatio: 1,
+          ready: Future<void>.value(),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+      }
+      expect(drawings, 1);
+      expect(updates.last.single.icon, same(icon));
+      for (var i = 21; i <= 45; i++) {
+        markers.update(
+          [spec(Colors.green, 3 + i * .00001)],
+          wrap: wrap,
+          pixelRatio: 1,
+          ready: Future<void>.value(),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+      }
+      // De plaatsupdates zijn begrensd tot 33 ms; de invoer komt elke 30 ms.
+      // Wacht op het laatste beeld, ook als de laatste invoer nog in de wachtrij staat.
+      await arrived.future.timeout(const Duration(seconds: 2));
+      expect(drawings, 2);
+      expect(updates.last.single.icon, isNot(same(icon)));
+      expect(updates.last.single.position.longitude, closeTo(3.00045, .000001));
+    });
+  });
+  testWidgets('nieuwe Google-marker verschijnt tijdens doorlopende plaatsupdates', (tester) async {
+    late Widget Function(Widget) wrap;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            wrap = wrapForBitmap(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final updates = <Set<gm.Marker>>[];
+    final markers = GoogleMemberMarkers(onChanged: updates.add);
+    addTearDown(markers.dispose);
+    await tester.runAsync(() async {
+      for (var i = 0; i < 25; i++) {
+        markers.update(
+          [
+            MapMarkerSpec(
+              id: 'car',
+              point: LatLng(51, 3 + i * .00001),
+              width: 40,
+              height: 40,
+              child: const ColoredBox(color: Colors.orange),
+            ),
+          ],
+          wrap: wrap,
+          pixelRatio: 1,
+          ready: Future<void>.value(),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+      }
+      expect(
+        updates.where((value) => value.isNotEmpty),
+        isNotEmpty,
+        reason: 'Tekenen mag niet blijven wachten tot een rijdende auto stilstaat.',
+      );
+    });
+  });
   testWidgets('Franky en Liam gaan naar Google, vast aan de kaart', (tester) async {
     late Widget Function(Widget) wrap;
     await tester.pumpWidget(

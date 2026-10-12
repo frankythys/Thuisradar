@@ -2,13 +2,17 @@
 /// mag schuiven. Kort genoeg om bij te blijven, lang genoeg om niet te springen.
 const markerMotionMin = Duration(milliseconds: 800);
 const markerMotionMax = Duration(milliseconds: 2000);
+// Een rijdend toestel deelt normaal om de vijf seconden. De rijanimatie moet
+// dat hele interval overbruggen; na een netwerkonderbreking blijft ze begrensd.
+const markerDrivingMotionMax = Duration(seconds: 10);
 
 /// Kiest de animatieduur tussen twee ontvangen punten op basis van hun
 /// tijdsverschil, begrensd tussen [markerMotionMin] en [markerMotionMax].
-Duration markerMotionDuration(DateTime previous, DateTime next) {
+Duration markerMotionDuration(DateTime previous, DateTime next, {bool driving = false}) {
   final gap = next.difference(previous);
+  final maximum = driving ? markerDrivingMotionMax : markerMotionMax;
   if (gap <= markerMotionMin) return markerMotionMin;
-  if (gap >= markerMotionMax) return markerMotionMax;
+  if (gap >= maximum) return maximum;
   return gap;
 }
 

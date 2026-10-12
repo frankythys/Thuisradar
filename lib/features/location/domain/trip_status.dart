@@ -7,7 +7,7 @@ import 'travel_mode.dart' show kBikeAverageKmh;
 enum TripState { missing, unknown, moving, stationary, stale }
 
 class TripStatus {
-  const TripStatus(this.state, this.speedKmh);
+  const TripStatus(this.state, this.speedKmh, {this.drivingHint});
 
   /// Leidt de ritstatus af uit de laatste locatie en het huidige tijdstip.
   /// Snelheid telt alleen mee binnen het geldige bereik; de GPS-snelheid wordt
@@ -22,16 +22,18 @@ class TripStatus {
       return const TripStatus(TripState.stale, null);
     }
     if (!validSpeed) return const TripStatus(TripState.unknown, null);
-    if (moving) return TripStatus(TripState.moving, (speed * 3.6).round());
+    if (moving) return TripStatus(TripState.moving, (speed * 3.6).round(), drivingHint: location.drivingHint);
     return const TripStatus(TripState.stationary, null);
   }
 
   final TripState state;
   final int? speedKmh;
+  final bool? drivingHint;
 
   /// Onderweg aan wandeltempo (onder ±9 km/u). Eén meting zegt niets zeker
   /// over het vervoermiddel; dit kiest enkel het icoon en de woorden.
-  bool get walking => state == TripState.moving && speedKmh != null && speedKmh! < kBikeAverageKmh;
+  bool get walking =>
+      state == TripState.moving && drivingHint != true && speedKmh != null && speedKmh! < kBikeAverageKmh;
 
   /// Onderweg sneller dan wandeltempo: de kaart toont dan een rijdende
   /// marker (gecentreerd op de weg, zonder puntje).

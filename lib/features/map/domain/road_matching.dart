@@ -91,12 +91,18 @@ class _Candidate {
 
 /// Conservatieve matching van een reeks metingen, met richting, OSM-verbindingen
 /// en alternatieve wegen. Geen betrouwbare, onderscheidbare match => ruwe GPS.
-RoadPoint? matchRoadTrace(List<MemberLocation> trace, RoadNetwork roads) {
+RoadPoint? matchRoadTrace(List<MemberLocation> trace, RoadNetwork roads) =>
+    matchRoadTracePoints(trace, roads)?.last;
+
+/// Bewaart ook de gekozen voorgeschiedenis, zodat de animatie de echte
+/// wegsegmenten tussen opeenvolgende gematchte fixes kan gebruiken.
+List<RoadPoint>? matchRoadTracePoints(List<MemberLocation> trace, RoadNetwork roads) {
   if (trace.length < 3 || !trace.any((p) => (p.speedMps ?? 0) >= 5)) {
     return null;
   }
   List<_Candidate> previous = [];
   List<double> costs = [];
+  List<List<RoadPoint>> paths = [];
   for (var i = 0; i < trace.length; i++) {
     final fix = trace[i];
     final accuracy = fix.accuracyMeters;
@@ -143,8 +149,10 @@ RoadPoint? matchRoadTrace(List<MemberLocation> trace, RoadNetwork roads) {
     }
     if (unique.isEmpty) return null;
     final nextCosts = <double>[];
+    final nextPaths = <List<RoadPoint>>[];
     for (final candidate in unique) {
       var best = double.infinity;
+      var bestIndex = -1;
       if (previous.isEmpty) best = 0;
       for (var j = 0; j < previous.length; j++) {
         final prior = previous[j];
@@ -157,17 +165,22 @@ RoadPoint? matchRoadTrace(List<MemberLocation> trace, RoadNetwork roads) {
         final connected =
             prior.way == candidate.way || (roads.connections[prior.way]?.contains(candidate.way) ?? false);
         final transition = (matchedDistance - movement).abs() / math.max(10, sigma) + (connected ? 0 : 4);
-        best = math.min(best, costs[j] + transition);
+        if (costs[j] + transition < best) {
+          best = costs[j] + transition;
+          bestIndex = j;
+        }
       }
       nextCosts.add(best + candidate.cost);
+      nextPaths.add([if (bestIndex >= 0) ...paths[bestIndex], candidate.point]);
     }
     final minimum = nextCosts.reduce(math.min);
     costs = nextCosts.map((cost) => cost - minimum).toList();
     previous = unique;
+    paths = nextPaths;
   }
   final ranking = List.generate(previous.length, (i) => i)..sort((a, b) => costs[a].compareTo(costs[b]));
   if (ranking.length > 1 && costs[ranking[1]] - costs[ranking.first] < 2) {
     return null;
   }
-  return previous[ranking.first].point;
+  return paths[ranking.first];
 }

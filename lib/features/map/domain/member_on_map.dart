@@ -2,13 +2,17 @@ import '../../family/domain/family_member.dart';
 import '../../location/domain/member_location.dart';
 import '../../places/domain/place.dart';
 import '../../places/domain/place_presence.dart';
+import 'road_matching.dart';
 
 /// Een gezinslid samen met zijn laatste locatie (kan nog ontbreken).
 class MemberOnMap {
-  const MemberOnMap({required this.member, this.location});
+  const MemberOnMap({required this.member, this.location, this.roadPath});
 
   final FamilyMember member;
   final MemberLocation? location;
+
+  /// Bekende wegvorm tussen de vorige en huidige fix, enkel voor weergave.
+  final List<RoadPoint>? roadPath;
 
   bool get hasLocation => location != null;
 }
