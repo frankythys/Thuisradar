@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:thuisradar/features/auth/data/auth_repository.dart';
+import 'package:thuisradar/features/auth/application/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/auth/presentation/login_screen.dart';
+
+class _GoogleAuth extends Mock implements AuthRepository {}
 
 Future<void> _pump(WidgetTester tester) {
   return tester.pumpWidget(
@@ -15,6 +20,42 @@ Future<void> _pump(WidgetTester tester) {
 
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+  testWidgets('Google-login werkt zonder ingevulde e-mail of wachtwoord', (tester) async {
+    final auth = _GoogleAuth();
+    when(() => auth.signInWithGoogle()).thenAnswer((_) async {});
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authRepositoryProvider.overrideWithValue(auth)],
+        child: MaterialApp(theme: AppTheme.light(), home: const LoginScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Doorgaan met Google'));
+    await tester.tap(find.text('Doorgaan met Google'));
+    await tester.pumpAndSettle();
+    verify(() => auth.signInWithGoogle()).called(1);
+    expect(find.text('Ongeldig e-mailadres'), findsNothing);
+    expect(find.text('Minstens 8 tekens'), findsNothing);
+  });
+
+  testWidgets('Google-startfout toont een melding en maakt opnieuw proberen mogelijk', (tester) async {
+    final auth = _GoogleAuth();
+    when(() => auth.signInWithGoogle()).thenThrow(StateError('Browser niet beschikbaar'));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authRepositoryProvider.overrideWithValue(auth)],
+        child: MaterialApp(theme: AppTheme.light(), home: const LoginScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Doorgaan met Google'));
+    await tester.tap(find.text('Doorgaan met Google'));
+    await tester.pumpAndSettle();
+    expect(find.text('Google-login kon niet worden gestart. Probeer opnieuw.'), findsOneWidget);
+    final button = tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Doorgaan met Google'));
+    expect(button.onPressed, isNotNull);
+  });
+
   testWidgets('start in inlog-modus zonder naamveld', (tester) async {
     await _pump(tester);
 
@@ -32,6 +73,7 @@ void main() {
     expect(find.text('Maak je account'), findsOneWidget);
     expect(find.text('Naam'), findsOneWidget);
     expect(find.text('Account aanmaken'), findsOneWidget);
+    expect(find.text('Doorgaan met Google'), findsOneWidget);
   });
 
   testWidgets('onthouden vult enkel het e-mailadres in, nooit het wachtwoord', (tester) async {

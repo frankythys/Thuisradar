@@ -85,6 +85,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _google() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+    try {
+      await ref.read(authRepositoryProvider).signInWithGoogle();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _message = 'Google-login kon niet worden gestart. Probeer opnieuw.');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (_busy || !_formKey.currentState!.validate()) return;
     setState(() {
@@ -117,9 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) setState(() => _message = e.message);
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _message = 'Inloggen of het onthouden van je gegevens is niet gelukt. Probeer opnieuw.',
-        );
+        setState(() => _message = 'Inloggen of het onthouden van je gegevens is niet gelukt. Probeer opnieuw.');
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -264,9 +279,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         if (!isRegister)
                           _RememberRow(
                             value: _remember,
-                            onChanged: _busy || _loadingSaved
-                                ? null
-                                : (value) => _setRemember(value ?? false),
+                            onChanged: _busy || _loadingSaved ? null : (value) => _setRemember(value ?? false),
                             onForgot: _busy ? null : _resetPassword,
                           ),
                         if (_message != null)
@@ -283,6 +296,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onSubmit: _submit,
                           onBiometric: isRegister ? null : _biometric,
                         ),
+                        SizedBox(height: tokens.spaceSm),
+                        OutlinedButton(onPressed: _busy ? null : _google, child: const Text('Doorgaan met Google')),
                         SizedBox(height: tokens.spaceSm),
                         TextButton(
                           onPressed: _busy ? null : _toggleMode,

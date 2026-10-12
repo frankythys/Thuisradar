@@ -23,14 +23,22 @@ class AuthRepository {
     return _client.auth.signInWithPassword(email: email, password: password);
   }
 
+  static const googleRedirectUrl = 'com.circlebeacon.app://login-callback/';
+
+  Future<void> signInWithGoogle() async {
+    final launched = await _client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: kIsWeb ? Uri.base.replace(fragment: '').toString() : googleRedirectUrl,
+      authScreenLaunchMode: LaunchMode.externalApplication,
+      queryParams: const {'prompt': 'select_account'},
+    );
+    if (!launched) throw StateError('Google-login kon niet worden geopend.');
+  }
+
   /// Geeft `true` terug als er meteen een sessie is, `false` als de gebruiker
   /// eerst zijn e-mail moet bevestigen.
   Future<bool> signUp({required String email, required String password, required String displayName}) async {
-    final response = await _client.auth.signUp(
-      email: email,
-      password: password,
-      data: {_nameKey: displayName},
-    );
+    final response = await _client.auth.signUp(email: email, password: password, data: {_nameKey: displayName});
     return response.session != null;
   }
 
@@ -51,11 +59,17 @@ class AuthRepository {
     final user = _client.auth.currentUser;
     if (user == null) return;
 
-    final name = (user.userMetadata?[_nameKey] as String?)?.trim();
+    final metadata = user.userMetadata;
+    final name = ((metadata?[_nameKey] ?? metadata?['full_name'] ?? metadata?['name']) as String?)?.trim();
     await _client
         .from('profiles')
         .upsert(
-          {'id': user.id, 'display_name': (name == null || name.isEmpty) ? 'Gezinslid' : name},
+          {
+            'id': user.id,
+            'display_name': (name == null || name.isEmpty)
+                ? 'Gezinslid'
+                : name.substring(0, name.length > 40 ? 40 : name.length),
+          },
           onConflict: 'id',
           ignoreDuplicates: true,
         );
