@@ -132,7 +132,9 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     for (final key in widget.places.map((p) => p.icon).toSet()) {
       if (_icons.containsKey(key)) continue;
       unawaited(
-        placeIconBitmap(placeIcon(key), color: AppColors.primary, size: 20, pixelRatio: pixelRatio).then((icon) {
+        placeIconBitmap(placeIcon(key), color: AppColors.primary, size: 20, pixelRatio: pixelRatio).then((
+          icon,
+        ) {
           if (!mounted || _iconPixelRatio != pixelRatio) return;
           setState(() => _icons[key] = icon);
         }),
@@ -240,12 +242,15 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       indoorViewEnabled: false,
       onMapCreated: (controller) {
         _google = controller;
-        unawaited(() async {
-          await _sync();
-          if (!mounted) return;
-          if (!_mapReady.isCompleted) _mapReady.complete();
-          _onMarkers();
-        }());
+        unawaited(_sync());
+      },
+      onCameraIdle: () {
+        // Een aangemaakte controller betekent nog geen afgewerkte kaart.
+        // Teken de eerste ballonnen pas na de eerste camerabeweging, ook
+        // wanneer de gebruiker de kaart nog niet heeft aangeraakt.
+        if (_mapReady.isCompleted) return;
+        _mapReady.complete();
+        _onMarkers();
       },
     );
   }
