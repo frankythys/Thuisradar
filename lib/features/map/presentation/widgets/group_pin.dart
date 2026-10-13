@@ -53,6 +53,21 @@ class GroupPin extends StatelessWidget {
     return (shown - 1) * _step + _avatar + (extra > 0 ? _step : 0);
   }
 
+  /// Alles wat het getekende beeld bepaalt, als vergelijkbare sleutel: Google
+  /// tekent de groepspin enkel opnieuw als die verandert.
+  String get imageKey {
+    final info = _info();
+    return [
+      for (final member in members.take(_maxShown))
+        '${member.member.userId}:${member.member.initial}:${member.member.colorIndex}:'
+            '${member.member.userId == selectedUserId}',
+      members.length,
+      info.icon.codePoint,
+      info.title,
+      if (info.at != null) formatRelative(info.at!, now: now),
+    ].join('|');
+  }
+
   @override
   Widget build(BuildContext context) {
     final shown = members.take(_maxShown).toList();

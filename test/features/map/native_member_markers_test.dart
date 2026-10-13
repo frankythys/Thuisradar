@@ -8,6 +8,7 @@ import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
+import 'package:thuisradar/features/map/presentation/widgets/member_history_bubble.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_marker.dart';
 import 'package:thuisradar/features/map/presentation/widgets/walking_gif_frames.dart';
 import 'package:thuisradar/shared/widgets/member_avatar.dart';
@@ -103,10 +104,22 @@ void main() {
     final walker = specs.firstWhere((s) => s.id == 'walker_Franky');
     expect(bubble.frames, isEmpty);
     expect(walker.frames, hasLength(kWalkingLoopFrames));
-    // Exact boven de ballon, en erna getekend (bovenop).
+    // Klein (enkel de sneakers), exact op de lege plek in de ballon, en erna
+    // getekend (bovenop).
+    Rect box(MapMarkerSpec spec) => Rect.fromCenter(
+      center: Offset(
+        spec.alignment.x * spec.width / 2 + spec.offset.dx,
+        spec.alignment.y * spec.height / 2 + spec.offset.dy,
+      ),
+      width: spec.width,
+      height: spec.height,
+    );
     expect(walker.point, bubble.point);
-    expect(walker.alignment, bubble.alignment);
-    expect(walker.offset, bubble.offset);
+    expect(walker.width, MemberHistoryBubble.walkerSlot.width);
+    expect(walker.margin, lessThan(24));
+    final expected = MemberHistoryBubble.walkerSlot.shift(box(bubble).topLeft);
+    expect(box(walker).left, closeTo(expected.left, 1e-9));
+    expect(box(walker).top, closeTo(expected.top, 1e-9));
     expect(specs.indexOf(walker), greaterThan(specs.indexOf(bubble)));
     // Tikken gaat via de ballon zelf.
     expect(walker.onTap, isNull);

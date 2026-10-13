@@ -285,4 +285,107 @@ void main() {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 300)));
     expect(updates.length, stopped);
   });
+
+  testWidgets('ballon die van kant wisselt bevriest niet en hergebruikt zijn eerdere beeld', (tester) async {
+    late Widget Function(Widget) wrap;
+    var drawings = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            final original = wrapForBitmap(context);
+            wrap = (child) {
+              drawings++;
+              return original(child);
+            };
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final updates = <Set<gm.Marker>>[];
+    final markers = GoogleMemberMarkers(onChanged: updates.add);
+    addTearDown(markers.dispose);
+    MapMarkerSpec bubble(double lng, {required bool right}) => MapMarkerSpec(
+      id: 'bubble_Franky',
+      point: LatLng(51, lng),
+      width: 142,
+      height: 48,
+      alignment: Alignment(right ? 1 : -1, -1),
+      offset: Offset(right ? 20 : -20, -78),
+      imageKey: right,
+      // De staart spiegelt mee: ander beeld per kant.
+      child: ColoredBox(color: right ? Colors.white : Colors.yellow),
+    );
+    Future<void> send(MapMarkerSpec spec, {int waitMs = 50}) async {
+      markers.update([spec], wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+      await Future<void>.delayed(Duration(milliseconds: waitMs));
+    }
+
+    await tester.runAsync(() async {
+      await send(bubble(3, right: true), waitMs: 400);
+      final rightIcon = updates.last.single.icon;
+      final rightAnchor = updates.last.single.anchor;
+      expect(drawings, 1);
+
+      // Kant wissel: de plaats volgt meteen, nog met het vorige beeld.
+      await send(bubble(3.001, right: false), waitMs: 10);
+      expect(updates.last.single.position.longitude, 3.001);
+      // Even later is het nieuwe beeld er.
+      await send(bubble(3.002, right: false), waitMs: 400);
+      expect(drawings, 2);
+      expect(updates.last.single.icon, isNot(same(rightIcon)));
+      expect(updates.last.single.anchor, isNot(rightAnchor));
+      expect(updates.last.single.position.longitude, 3.002);
+
+      // Terug naar rechts: meteen het bewaarde beeld, niets opnieuw getekend.
+      await send(bubble(3.003, right: true), waitMs: 40);
+      expect(updates.last.single.icon, same(rightIcon));
+      expect(updates.last.single.anchor, rightAnchor);
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(drawings, 2);
+    });
+  });
+
+  testWidgets('gelijke inhoud en plaats: geen enkele tekening of update meer', (tester) async {
+    late Widget Function(Widget) wrap;
+    var drawings = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            final original = wrapForBitmap(context);
+            wrap = (child) {
+              drawings++;
+              return original(child);
+            };
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final updates = <Set<gm.Marker>>[];
+    final markers = GoogleMemberMarkers(onChanged: updates.add);
+    addTearDown(markers.dispose);
+    // Zoals de kaartlaag tijdens het scrollen: elk frame een nieuwe lijst.
+    List<MapMarkerSpec> specs() => [
+      const MapMarkerSpec(
+        id: 'group_Franky',
+        point: LatLng(51, 3),
+        width: 60,
+        height: 40,
+        imageKey: 'Franky|Liam',
+        child: ColoredBox(color: Colors.blue),
+      ),
+    ];
+    await tester.runAsync(() async {
+      for (var i = 0; i < 30; i++) {
+        markers.update(specs(), wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    expect(drawings, 1);
+    expect(updates, hasLength(1));
+  });
 }

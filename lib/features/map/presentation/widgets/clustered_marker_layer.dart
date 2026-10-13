@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -24,6 +23,7 @@ import 'group_pin.dart';
 import 'map_marker_spec.dart';
 import 'member_marker.dart';
 import 'member_history_bubble.dart';
+import 'walker_marker_spec.dart';
 import 'walking_gif_frames.dart';
 
 typedef _Coord = ({double lat, double lng});
@@ -367,9 +367,18 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           ),
         );
       } else {
+        final pin = GroupPin(
+          members: groupMembers,
+          now: widget.now,
+          placeByUser: widget.placeByUser,
+          myUserId: widget.myUserId,
+          selectedUserId: widget.selectedUserId,
+          onMemberTap: widget.onMemberTap,
+        );
         markers.add(
           MapMarkerSpec(
             id: 'group_${groupMembers.first.member.userId}',
+            imageKey: (Theme.of(context), MediaQuery.textScalerOf(context), pin.imageKey),
             point: point,
             width: GroupPin.width,
             height: GroupPin.height,
@@ -377,17 +386,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             onTap: () => widget.onGroupTap(point),
             child: GestureDetector(
               onTap: () => widget.onGroupTap(point),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: GroupPin(
-                  members: groupMembers,
-                  now: widget.now,
-                  placeByUser: widget.placeByUser,
-                  myUserId: widget.myUserId,
-                  selectedUserId: widget.selectedUserId,
-                  onMemberTap: widget.onMemberTap,
-                ),
-              ),
+              child: Align(alignment: Alignment.bottomCenter, child: pin),
             ),
           ),
         );
@@ -499,20 +498,9 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
         baseDyOf(selected) + (placement?.shiftY ?? 0),
       );
       // Google tekent een ballon als vaste afbeelding: de wandel-GIF speelt
-      // dan als aparte marker bovenop, beeld per beeld.
+      // dan als aparte, kleine marker bovenop, beeld per beeld.
       final animate = native != null && MemberHistoryBubble.isWalking(selected, widget.now);
       if (animate) _loadWalkerFrames();
-      MemberHistoryBubble bubble({WalkerDisplay walker = WalkerDisplay.gif, ui.Image? frame}) =>
-          MemberHistoryBubble(
-            entry: selected,
-            now: widget.now,
-            placeStatus: widget.placeByUser[id],
-            stationarySince: widget.stationarySinceByUser[id],
-            tailLeft: onRight,
-            onTap: onBubbleTap,
-            walker: walker,
-            walkerFrame: frame,
-          );
       markers.add(
         MapMarkerSpec(
           id: 'bubble_$id',
@@ -522,7 +510,15 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           alignment: alignment,
           offset: offset,
           onTap: onBubbleTap,
-          child: bubble(walker: animate ? WalkerDisplay.slot : WalkerDisplay.gif),
+          child: MemberHistoryBubble(
+            entry: selected,
+            now: widget.now,
+            placeStatus: widget.placeByUser[id],
+            stationarySince: widget.stationarySinceByUser[id],
+            tailLeft: onRight,
+            onTap: onBubbleTap,
+            walker: animate ? WalkerDisplay.slot : WalkerDisplay.gif,
+          ),
           imageKey: (
             Theme.of(context),
             MediaQuery.textScalerOf(context),
@@ -539,20 +535,13 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       );
       final walkerFrames = _walkerFrames;
       if (animate && walkerFrames != null) {
-        final frames = [
-          for (final frame in walkerFrames)
-            (child: bubble(walker: WalkerDisplay.frame, frame: frame.image), duration: frame.duration),
-        ];
         markers.add(
-          MapMarkerSpec(
+          walkerSpec(
             id: 'walker_$id',
             point: point,
-            width: kBubbleWidth,
-            height: kBubbleHeight,
             alignment: alignment,
             offset: offset,
-            frames: frames,
-            child: frames.first.child,
+            frames: walkerFrames,
           ),
         );
       }

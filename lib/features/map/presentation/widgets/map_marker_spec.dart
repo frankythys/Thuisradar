@@ -16,6 +16,7 @@ class MapMarkerSpec {
     this.onTap,
     this.frames = const [],
     this.imageKey,
+    this.margin,
   });
 
   /// Vaste sleutel per marker (lid, groep of ballon).
@@ -41,6 +42,11 @@ class MapMarkerSpec {
   /// Animatie voor Google Maps: de beelden die na elkaar getoond worden, elk
   /// met hoe lang het blijft staan. Leeg = een vaste afbeelding ([child]).
   final List<({Widget child, Duration duration})> frames;
+
+  /// Ruimte rond het vak in de Google-afbeelding (schaduw, gloed); null = de
+  /// standaard. Een kleine marker zonder schaduw (de sneakers) houdt zo zijn
+  /// afbeelding klein.
+  final double? margin;
 
   /// Als flutter_map-marker, met [child] of een vervangende inhoud.
   Marker toMarker({Widget? replaceChild}) {
