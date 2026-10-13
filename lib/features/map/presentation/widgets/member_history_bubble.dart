@@ -18,7 +18,9 @@ const walkingGifAsset = 'assets/gif/wandelen_transparant.gif';
 /// (`GoogleBaseMap`): een andere sleutel (bv. zonder `width`) laadt niet
 /// dezelfde cache, en dan tekent Google de eerste ballon zonder afbeelding.
 const bubbleCarImage = ResizeImage(AssetImage('assets/icon/Rijdende auto.png'), width: 152);
-const bubbleBikeImage = ResizeImage(AssetImage('assets/markers/fiets.png'), width: 152);
+
+/// Blauwe mountainbike in zijaanzicht, zoals de auto: rijdt naar rechts.
+const bubbleBikeImage = ResizeImage(AssetImage('assets/markers/fiets_profiel.png'), width: 152);
 const bubbleHomeImage = AssetImage('assets/markers/huis.png');
 
 /// Hoe de wandel-animatie in de ballon getekend wordt.
