@@ -36,7 +36,7 @@ class FamilyMap extends StatelessWidget {
     this.onMapTap,
     this.onHistory,
     this.useGoogleMaps = FeatureFlags.useGoogleMaps,
-    this.satellite = false,
+    this.satellite,
     this.bottomInset = 0,
   });
 
@@ -68,8 +68,9 @@ class FamilyMap extends StatelessWidget {
   /// Google Maps als ondergrond; de markers en gebaren blijven van flutter_map.
   final bool useGoogleMaps;
 
-  /// Satellietbeeld (enkel met Google Maps).
-  final bool satellite;
+  /// Keuze met de kaartknop (enkel met Google Maps); `null` = automatisch:
+  /// satelliet op straatniveau.
+  final bool? satellite;
 
   /// Hoogte van het onderpaneel, zodat het Google-logo zichtbaar blijft.
   final double bottomInset;

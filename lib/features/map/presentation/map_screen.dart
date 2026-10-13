@@ -341,8 +341,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               right: 16,
               bottom: sheetTop + 16 + 48 + 12,
               child: MapStyleButton(
-                satellite: ref.watch(mapSatelliteProvider),
-                onPressed: () => unawaited(ref.read(mapSatelliteProvider.notifier).toggle()),
+                controller: _mapController,
+                choice: ref.watch(mapSatelliteProvider),
+                onChoose: ref.read(mapSatelliteProvider.notifier).choose,
               ),
             ),
           Positioned(
