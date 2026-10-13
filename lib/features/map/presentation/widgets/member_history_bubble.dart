@@ -14,6 +14,13 @@ import 'walking_sneakers.dart';
 /// `walkingGifFrames`). Het origineel staat ernaast als `wandelen.gif`.
 const walkingGifAsset = 'assets/gif/wandelen_transparant.gif';
 
+/// Afbeeldingen in de ballon. Precies deze sleutels worden vooraf geladen
+/// (`GoogleBaseMap`): een andere sleutel (bv. zonder `width`) laadt niet
+/// dezelfde cache, en dan tekent Google de eerste ballon zonder afbeelding.
+const bubbleCarImage = ResizeImage(AssetImage('assets/icon/Rijdende auto.png'), width: 152);
+const bubbleBikeImage = ResizeImage(AssetImage('assets/markers/fiets.png'), width: 152);
+const bubbleHomeImage = AssetImage('assets/markers/huis.png');
+
 /// Hoe de wandel-animatie in de ballon getekend wordt.
 enum WalkerDisplay {
   /// De beelden spelen af in de ballon zelf (flutter_map: de ballon is een
@@ -80,7 +87,7 @@ class MemberHistoryBubble extends StatelessWidget {
     final sinceTime = atPlace ? placeSince : (stopped ? stationarySince : null);
     final duration = sinceTime == null ? null : now.difference(sinceTime);
     final title = isMoving
-        ? (status.walking ? 'Wandelen' : 'Rijden')
+        ? status.mode!.label
         : atPlace
         ? placeStatus!.name
         : stopped
@@ -91,9 +98,7 @@ class MemberHistoryBubble extends StatelessWidget {
         : duration != null
         ? 'sinds ${_formatSince(duration)}'
         : _formatUpdated(entry.location?.updatedAt, now);
-    final icon = isMoving
-        ? (status.walking ? Icons.directions_walk : Icons.directions_car)
-        : (atPlace ? placeIcon(placeStatus!.icon) : Icons.location_on);
+    final icon = atPlace ? placeIcon(placeStatus!.icon) : Icons.location_on;
     final only = walker == WalkerDisplay.frame;
     return Semantics(
       button: true,
@@ -115,18 +120,17 @@ class MemberHistoryBubble extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             child: Row(
               children: [
-                if (isMoving && !status.walking)
-                  Image.asset(
-                    'assets/icon/Rijdende auto.png',
+                if (isMoving && status.walking)
+                  _walkerImage()
+                else if (isMoving)
+                  Image(
+                    image: status.cycling ? bubbleBikeImage : bubbleCarImage,
                     width: 38,
                     height: 32,
-                    cacheWidth: 152,
                     fit: BoxFit.contain,
                   )
-                else if (isMoving)
-                  _walkerImage()
                 else if (atPlace && placeStatus!.icon == 'home')
-                  Image.asset('assets/markers/huis.png', width: 32, height: 32, fit: BoxFit.contain)
+                  const Image(image: bubbleHomeImage, width: 32, height: 32, fit: BoxFit.contain)
                 else
                   Icon(icon, color: AppColors.primary, size: 23),
                 const SizedBox(width: 5),

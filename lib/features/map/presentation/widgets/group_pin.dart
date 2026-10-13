@@ -4,6 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/member_avatar.dart';
+import '../../../driving/presentation/travel_mode_filter.dart' show travelModeIcon;
+import '../../../location/domain/travel_mode.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
@@ -160,9 +162,10 @@ class GroupPin extends StatelessWidget {
         at: place.since ?? latest.location!.updatedAt,
       );
     }
-    if (TripStatus.at(latest.location, now).speedKmh != null) {
+    final trip = TripStatus.at(latest.location, now);
+    if (trip.speedKmh != null) {
       return (
-        icon: Icons.directions_car_filled_outlined,
+        icon: travelModeIcon(trip.mode ?? TravelMode.car),
         title: '$name is onderweg',
         at: latest.location!.updatedAt,
       );

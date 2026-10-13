@@ -56,8 +56,8 @@ class _CurrentStayCard extends ConsumerWidget {
     final String title;
     final IconData icon;
     if (moving) {
-      title = 'Onderweg';
-      icon = Icons.directions_car_filled_outlined;
+      title = status.mode?.label ?? 'Onderweg';
+      icon = travelModeIcon(status.mode ?? TravelMode.car);
     } else if (here != null) {
       title = here.name;
       icon = placeIcon(here.icon);

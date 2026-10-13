@@ -9,7 +9,7 @@ import '../data/device_location_source.dart';
 import '../data/location_repository.dart';
 import '../data/step_source.dart';
 import '../domain/member_location.dart';
-import '../domain/driving_mode_memory.dart';
+import '../domain/trip_mode_memory.dart';
 import 'location_tracker.dart';
 import 'tracking_status.dart';
 
@@ -35,10 +35,10 @@ final locationTrackerProvider = NotifierProvider<LocationTracker, TrackingStatus
 /// realtime-kanaal wegvalt en haalt vers op bij elk resync-signaal.
 final familyLocationsProvider = StreamProvider.family<List<MemberLocation>, String>((ref, familyId) {
   final repository = ref.watch(locationRepositoryProvider);
-  final driving = DrivingModeMemory();
+  final trips = TripModeMemory();
   return resilientStream(
     () => repository.watchFamily(familyId),
     resync: ref.watch(resyncSignalProvider).stream,
     onError: (error) => debugPrint('Locatiestroom (realtime) fout: $error'),
-  ).map((locations) => driving.update(locations, DateTime.now()));
+  ).map(trips.update);
 });

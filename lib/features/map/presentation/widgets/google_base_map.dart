@@ -14,6 +14,7 @@ import '../../domain/google_camera.dart';
 import 'google_member_markers.dart';
 import 'google_place_overlays.dart';
 import 'map_marker_spec.dart';
+import 'member_history_bubble.dart' show bubbleBikeImage, bubbleCarImage, bubbleHomeImage;
 import 'widget_bitmap.dart';
 
 /// Google Maps als achtergrond onder de bestaande kaart.
@@ -105,8 +106,8 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     _loadIcons();
     // Afbeeldingen in de markers moeten klaar zijn vóór we ze tekenen.
     _assetsReady = Future.wait([
-      precacheImage(const AssetImage('assets/markers/huis.png'), context),
-      precacheImage(const AssetImage('assets/icon/Rijdende auto.png'), context),
+      for (final image in const <ImageProvider>[bubbleHomeImage, bubbleCarImage, bubbleBikeImage])
+        precacheImage(image, context),
     ]);
     _onMarkers();
   }

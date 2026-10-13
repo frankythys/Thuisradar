@@ -1,3 +1,5 @@
+import 'trip_hint.dart';
+
 /// Laatste bekende locatie van één gezinslid (tabel `member_locations`).
 class MemberLocation {
   const MemberLocation({
@@ -11,7 +13,7 @@ class MemberLocation {
     this.battery,
     this.isCharging,
     this.steps,
-    this.drivingHint,
+    this.tripHint,
   });
 
   factory MemberLocation.fromJson(Map<String, dynamic> json) => MemberLocation(
@@ -41,11 +43,12 @@ class MemberLocation {
   final int? steps;
   final DateTime updatedAt;
 
-  /// Tijdelijk onthouden rijstatus voor de weergave; nooit naar de database.
-  final bool? drivingHint;
+  /// Status over meerdere metingen heen (zie `TripModeMemory`), enkel voor de
+  /// weergave; nooit naar de database.
+  final TripHint? tripHint;
 
   /// Nieuwe locatie met een andere positie; overige velden blijven gelijk.
-  MemberLocation copyWith({double? latitude, double? longitude, bool? drivingHint}) => MemberLocation(
+  MemberLocation copyWith({double? latitude, double? longitude, TripHint? tripHint}) => MemberLocation(
     userId: userId,
     familyId: familyId,
     latitude: latitude ?? this.latitude,
@@ -55,7 +58,7 @@ class MemberLocation {
     battery: battery,
     isCharging: isCharging,
     steps: steps,
-    drivingHint: drivingHint ?? this.drivingHint,
+    tripHint: tripHint ?? this.tripHint,
     updatedAt: updatedAt,
   );
 

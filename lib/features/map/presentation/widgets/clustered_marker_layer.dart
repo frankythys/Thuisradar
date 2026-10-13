@@ -506,7 +506,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             Theme.of(context),
             MediaQuery.textScalerOf(context),
             status.state,
-            status.walking,
+            status.mode,
             status.speedKmh,
             atPlace ? place.name : null,
             atPlace ? place.icon : null,

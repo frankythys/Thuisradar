@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
+import 'package:thuisradar/features/location/domain/travel_mode.dart';
+import 'package:thuisradar/features/location/domain/trip_hint.dart';
 import 'package:thuisradar/features/location/domain/trip_status.dart';
 
 final _now = DateTime(2026, 10, 2, 18, 5);
@@ -78,5 +80,49 @@ void main() {
     final trip = TripStatus.at(location, _now);
     expect(trip.walking, isFalse);
     expect(trip.shortDescription(location, _now, address: 'N106'), 'Rijden in de buurt van N106');
+  });
+
+  test('fietstempo zonder geschiedenis is fietsen', () {
+    final location = _location(speedMps: 4.5);
+    final trip = TripStatus.at(location, _now);
+    expect(trip.cycling, isTrue);
+    expect(trip.driving, isFalse);
+    expect(
+      trip.shortDescription(location, _now, address: 'Kerkstraat'),
+      'Fietsen in de buurt van Kerkstraat',
+    );
+  });
+
+  test('vervoermiddel bij één snelheid', () {
+    expect(travelModeForSpeed(5), TravelMode.walk);
+    expect(travelModeForSpeed(11), TravelMode.walk);
+    expect(travelModeForSpeed(12), TravelMode.bike);
+    expect(travelModeForSpeed(24), TravelMode.bike);
+    expect(travelModeForSpeed(25), TravelMode.car);
+  });
+
+  test('het geheugen beslist: onderweg met de vorige snelheid, of stil zonder snelheid', () {
+    final paused = MemberLocation(
+      userId: 'u1',
+      familyId: 'fam',
+      latitude: 50.85,
+      longitude: 4.35,
+      speedMps: 0,
+      updatedAt: _now,
+      tripHint: const TripHint(moving: true, mode: TravelMode.car, speedKmh: 0),
+    );
+    final trip = TripStatus.at(paused, _now);
+    expect(trip.driving, isTrue);
+    expect(trip.speedKmh, 0);
+
+    final still = MemberLocation(
+      userId: 'u1',
+      familyId: 'fam',
+      latitude: 50.85,
+      longitude: 4.35,
+      updatedAt: _now,
+      tripHint: const TripHint(moving: false),
+    );
+    expect(TripStatus.at(still, _now).state, TripState.stationary);
   });
 }

@@ -47,6 +47,8 @@ import '../../places/presentation/place_icons.dart';
 import '../../driving/application/driving_providers.dart';
 import '../../driving/domain/day_driving.dart';
 import '../../driving/presentation/driving_activity_card.dart';
+import '../../driving/presentation/travel_mode_filter.dart' show travelModeIcon;
+import '../../location/domain/travel_mode.dart';
 
 part 'member_detail_screen_header.dart';
 part 'member_detail_screen_current.dart';

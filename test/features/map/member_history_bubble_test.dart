@@ -217,4 +217,27 @@ void main() {
     expect(find.text('5 km/u'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('fietsend lid toont de fiets, niet de auto', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 142,
+              height: 48,
+              child: MemberHistoryBubble(entry: movingMember('Liam', speedMps: 5), now: now, onTap: () {}),
+            ),
+          ),
+        ),
+      ),
+    );
+    final bike = tester.widget<Image>(find.byType(Image));
+    expect(bike.image, same(bubbleBikeImage));
+    expect(find.text('Fietsen'), findsOneWidget);
+    expect(find.text('18 km/u'), findsOneWidget);
+    expect(find.byType(WalkingSneakers), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
