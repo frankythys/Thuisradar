@@ -37,6 +37,7 @@ import '../application/map_providers.dart';
 import '../domain/auto_fit.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_map.dart';
+import 'widgets/map_compass_button.dart';
 import 'widgets/member_list_sheet.dart';
 import 'widgets/member_sheet_dimensions.dart';
 import 'widgets/tracking_banner.dart';
@@ -344,6 +345,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 onPressed: () => unawaited(ref.read(mapSatelliteProvider.notifier).toggle()),
               ),
             ),
+          Positioned(
+            right: 16,
+            bottom: sheetTop + 16 + (48 + 12) * (FeatureFlags.useGoogleMaps ? 2 : 1),
+            child: MapCompassButton(controller: _mapController),
+          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),

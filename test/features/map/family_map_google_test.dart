@@ -7,11 +7,15 @@ import 'package:thuisradar/features/map/presentation/widgets/family_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/google_base_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/google_map_stack.dart';
+import 'package:thuisradar/features/map/presentation/widgets/map_gestures.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
 import 'package:thuisradar/shared/widgets/app_map_tiles.dart';
 
 class _Context extends Mock implements BuildContext {}
+
+/// De kaart zelf, onder de laag die het draaien met twee vingers bewaakt.
+FlutterMap _unwrap(Widget widget) => (widget as TwistToRotate).builder(_Context(), false) as FlutterMap;
 
 void main() {
   late MapController controller;
@@ -44,7 +48,7 @@ void main() {
   );
 
   test('vlag uit (standaard): gewone OpenStreetMap-kaart zoals voorheen', () {
-    final map = familyMap(google: false).build(_Context()) as FlutterMap;
+    final map = _unwrap(familyMap(google: false).build(_Context()));
     expect(map.children.whereType<AppMapTiles>(), hasLength(1));
     expect(map.children.whereType<CircleLayer>(), hasLength(1));
     expect(map.options.backgroundColor, const MapOptions().backgroundColor);
@@ -55,7 +59,7 @@ void main() {
     final stack = familyMap(google: true, satellite: satellite).build(_Context()) as GoogleMapStack;
     return (
       google: stack.base(ValueNotifier<List<MapMarkerSpec>>(const [])) as GoogleBaseMap,
-      map: stack.overlay((_) {}) as FlutterMap,
+      map: _unwrap(stack.overlay((_) {})),
     );
   }
 

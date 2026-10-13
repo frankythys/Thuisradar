@@ -13,6 +13,7 @@ import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
 import 'google_base_map.dart';
 import 'google_map_stack.dart';
+import 'map_gestures.dart';
 import 'map_marker_spec.dart';
 
 /// Kaart met een marker (of groepspin) per gezinslid met locatie. Ondergrond:
@@ -95,6 +96,17 @@ class FamilyMap extends StatelessWidget {
 
   /// [onNativeMarkers] gezet = Google tekent de markers (zie ClusteredMarkerLayer).
   Widget _map(LatLng center, double zoom, ValueChanged<List<MapMarkerSpec>>? onNativeMarkers) {
+    return TwistToRotate(
+      builder: (context, rotate) => _flutterMap(center, zoom, onNativeMarkers, rotate: rotate),
+    );
+  }
+
+  Widget _flutterMap(
+    LatLng center,
+    double zoom,
+    ValueChanged<List<MapMarkerSpec>>? onNativeMarkers, {
+    required bool rotate,
+  }) {
     return FlutterMap(
       mapController: controller,
       options: MapOptions(
@@ -111,7 +123,7 @@ class FamilyMap extends StatelessWidget {
         onMapEvent: (event) {
           if (event.source == MapEventSource.onDrag) onUserGesture?.call();
         },
-        interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+        interactionOptions: familyMapGestures(rotate: rotate),
       ),
       children: [
         if (!useGoogleMaps) const AppMapTiles(),
