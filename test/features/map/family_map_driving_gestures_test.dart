@@ -13,10 +13,11 @@ import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dar
 class _Context extends Mock implements BuildContext {}
 
 void main() {
-  testWidgets('pinch tijdens rijden behoudt zoom en volgen; eenvingersleep meldt stoppen', (tester) async {
+  testWidgets('zoomen en slepen blijven werken tijdens rijden, zonder automatisch meeschuiven', (
+    tester,
+  ) async {
     final controller = MapController();
     var drags = 0;
-    var followFrames = 0;
     var markers = <MapMarkerSpec>[];
     final now = DateTime(2026, 10, 12, 12);
     Future<void> show(double lng, int seconds) async {
@@ -42,7 +43,6 @@ void main() {
         onMemberTap: (_) {},
         onGroupTap: (_) {},
         onUserGesture: () => drags++,
-        onDrivingFrame: (_, _, _) => followFrames++,
       ).build(_Context()) as GoogleMapStack;
       await tester.pumpWidget(MaterialApp(home: stack.overlay((value) => markers = value)));
       await tester.pump();
@@ -51,8 +51,12 @@ void main() {
     await show(3, 0);
     controller.move(const LatLng(51, 3), 16);
     await tester.pump();
+    final center = controller.camera.center;
     await show(3.001, 5);
     await tester.pump(const Duration(milliseconds: 500));
+    expect(controller.camera.center, center);
+    expect(controller.camera.zoom, 16);
+    expect(controller.camera.rotation, 0);
     final before = markers.firstWhere((m) => m.id == 'member_car').point.longitude;
     final first = await tester.createGesture(pointer: 1);
     final second = await tester.createGesture(pointer: 2);
@@ -71,7 +75,12 @@ void main() {
     expect(drags, 0);
     expect(controller.camera.zoom, greaterThan(16));
     expect(markers.firstWhere((m) => m.id == 'member_car').point.longitude, greaterThan(before));
-    expect(followFrames, greaterThan(1));
+    final zoomedCenter = controller.camera.center;
+    final zoom = controller.camera.zoom;
+    await tester.pump(const Duration(seconds: 1));
+    expect(controller.camera.center, zoomedCenter);
+    expect(controller.camera.zoom, zoom);
+    expect(controller.camera.rotation, 0);
     await tester.dragFrom(const Offset(100, 100), const Offset(100, 0));
     await tester.pump();
     expect(drags, greaterThan(0));

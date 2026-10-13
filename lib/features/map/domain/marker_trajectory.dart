@@ -1,8 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:latlong2/latlong.dart';
-
-import 'driving_follow.dart';
 import 'marker_motion.dart';
 import 'road_matching.dart';
 import 'road_motion_path.dart';
@@ -10,7 +7,7 @@ import 'road_motion_path.dart';
 /// Een eigen tijdlijn per lid: updates van een ander lid mogen deze beweging
 /// niet vertragen of herstarten. Posities blijven binnen ontvangen wegpunten.
 class MarkerTrajectory {
-  MarkerTrajectory(this.path, this.started, this.duration, {this.initialBearing}) {
+  MarkerTrajectory(this.path, this.started, this.duration) {
     for (var i = 1; i < path.length; i++) {
       _lengths.add(_lengths.last + roadDistance(path[i - 1], path[i]));
     }
@@ -19,7 +16,6 @@ class MarkerTrajectory {
   final List<RoadPoint> path;
   final Duration started;
   final Duration duration;
-  final double? initialBearing;
   final _lengths = <double>[0];
   RoadPoint get target => path.last;
 
@@ -41,19 +37,6 @@ class MarkerTrajectory {
       }
     }
     return target;
-  }
-
-  double? bearing(Duration at) {
-    if (_lengths.last < 5) return initialBearing;
-    final progress = _progress(at);
-    // Kijk een klein stuk rond de zichtbare positie: bij een hoek draait de
-    // camera geleidelijk, zonder de persoonscirkel van de weg af te halen.
-    final before = _point(math.max(0, progress - .06));
-    final after = _point(math.min(1, progress + .06));
-    final heading =
-        (const Distance().bearing(LatLng(before.lat, before.lng), LatLng(after.lat, after.lng)) + 360) % 360;
-    final blend = ((at - started).inMilliseconds / 400).clamp(0.0, 1.0);
-    return initialBearing == null ? heading : interpolateBearing(initialBearing!, heading, blend);
   }
 
   List<RoadPoint> remaining(Duration at) {
@@ -84,7 +67,7 @@ class MarkerTrajectory {
         if (trimmed != null) path = trimmed;
       }
     }
-    return MarkerTrajectory(path, at, duration, initialBearing: previous.bearing(at));
+    return MarkerTrajectory(path, at, duration);
   }
 }
 

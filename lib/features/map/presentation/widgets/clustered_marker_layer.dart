@@ -47,7 +47,6 @@ class ClusteredMarkerLayer extends StatefulWidget {
     this.onHistory,
     this.reservedPlaces = const [],
     this.onNativeMarkers,
-    this.onDrivingFrame,
   });
 
   final List<MemberOnMap> members;
@@ -64,7 +63,6 @@ class ClusteredMarkerLayer extends StatefulWidget {
   /// Met Google Maps: de markers gaan als afbeelding naar Google (die ze vast
   /// aan de kaart tekent); deze laag toont dan enkel onzichtbare tikvlakken.
   final ValueChanged<List<MapMarkerSpec>>? onNativeMarkers;
-  final void Function(String id, LatLng point, double? bearing)? onDrivingFrame;
 
   @override
   State<ClusteredMarkerLayer> createState() => _ClusteredMarkerLayerState();
@@ -83,8 +81,6 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     _clock.value = _tickerOffset + elapsed;
     if (!_motions.values.any((motion) => motion.active(_clock.value))) _ticker.stop();
   });
-
-  double? _bearing(String id) => _motions[id]?.bearing(_clock.value);
 
   /// Beelden van de wandel-GIF, enkel geladen als Google de markers tekent
   /// en iemand wandelt.
@@ -193,16 +189,6 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
 
     final byId = {for (final m in located) m.member.userId: m};
     final coords = {for (final m in located) m.member.userId: _displayed(m.member.userId)};
-    final follow = widget.onDrivingFrame;
-    final selected = byId[widget.selectedUserId];
-    if (follow != null && selected != null && TripStatus.at(selected.location, widget.now).driving) {
-      final id = selected.member.userId;
-      final point = coords[id]!;
-      final bearing = _bearing(id);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) follow(id, LatLng(point.lat, point.lng), bearing);
-      });
-    }
     // Enkel wie op dezelfde plek staat én op het scherm overlapt, komt samen
     // in één groepspin: thuis uitgezoomd één groep, ingezoomd elk apart.
     final groups = clusterByMetersAndScreen([

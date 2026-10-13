@@ -35,7 +35,6 @@ import '../../../shared/widgets/profile_action.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../application/map_providers.dart';
 import '../domain/auto_fit.dart';
-import '../domain/driving_follow.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_map.dart';
 import 'widgets/member_list_sheet.dart';
@@ -67,7 +66,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final _sheetController = DraggableScrollableController();
   ScrollController? _sheetScrollController;
   bool _mapReady = false;
-  bool _followSelected = false;
   MemberOnMap? _selected;
 
   /// Ingeklapte hoogte van het paneel als fractie; bijgewerkt bij elke layout.
@@ -131,8 +129,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (location == null) return;
 
     _autoFit.lock();
-    _followSelected = true;
-    _mapController.rotate(0);
     _mapController.move(LatLng(location.latitude, location.longitude), _focusZoom);
     setState(() => _selected = entry);
     // Het paneel gaat altijd beneden staan: de persoon zie je op de kaart,
@@ -146,8 +142,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   void _deselect() {
-    _followSelected = false;
-    _mapController.rotate(0);
     if (_selected == null) return;
     setState(() => _selected = null);
     _collapseSheet();
@@ -171,21 +165,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   void _onUserGesture() {
     _autoFit.lock();
-    _followSelected = false;
-  }
-
-  void _followDrivingFrame(String id, LatLng point, double? bearing, double bottomInset) {
-    if (!mounted || !_mapReady || !_followSelected || _selected?.member.userId != id) return;
-    final camera = _mapController.camera;
-    final heading = bearing ?? (-camera.rotation + 360) % 360;
-    final center = drivingCameraCenter(
-      point,
-      heading,
-      camera.zoom,
-      camera.nonRotatedSize.height,
-      bottomInset,
-    );
-    _mapController.moveAndRotate(center, camera.zoom, -heading);
   }
 
   void _openDetail(MemberOnMap entry) {
@@ -328,7 +307,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             onHistory: _openDetail,
             onGroupTap: _onGroupTap,
             onUserGesture: _onUserGesture,
-            onDrivingFrame: (id, point, bearing) => _followDrivingFrame(id, point, bearing, sheetTop),
             // Selectie blijft tot "Terug naar personen", ook na kaarttikken.
             onMapTap: null,
             onMapReady: () {
@@ -343,8 +321,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             bottom: sheetTop + 16,
             child: _RecenterButton(
               onPressed: () {
-                _followSelected = false;
-                _mapController.rotate(0);
                 _fit(members, deliberate: true);
               },
             ),

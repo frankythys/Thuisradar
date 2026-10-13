@@ -5,7 +5,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
-import 'package:thuisradar/features/map/domain/driving_follow.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
 
@@ -65,7 +64,9 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets('auto beweegt door tijdens inzoomen en nieuwe locatie', (tester) async {
+  testWidgets('auto beweegt door tijdens inzoomen en nieuwe locatie zonder de kaart mee te schuiven', (
+    tester,
+  ) async {
     final controller = MapController();
     final now = DateTime(2026, 10, 12, 12);
     var markers = <MapMarkerSpec>[];
@@ -90,15 +91,6 @@ void main() {
               members: [car(longitude, seconds)],
               now: now,
               selectedUserId: 'car',
-              onDrivingFrame: (id, point, bearing) {
-                final camera = controller.camera;
-                final heading = bearing ?? 0;
-                controller.moveAndRotate(
-                  drivingCameraCenter(point, heading, camera.zoom, camera.nonRotatedSize.height, 100),
-                  camera.zoom,
-                  -heading,
-                );
-              },
               onMemberTap: (_) {},
               onGroupTap: (_) {},
               onNativeMarkers: (value) => markers = value,
@@ -121,12 +113,16 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(longitude(), closeTo(3.0005, 0.000001));
     expect(controller.camera.zoom, 20);
-    expect(controller.camera.rotation, closeTo(-90, .01));
+    expect(controller.camera.center, const LatLng(51, 3));
+    expect(controller.camera.rotation, 0);
     await show(3.002, 4);
     await tester.pump();
     expect(longitude(), closeTo(3.0005, 0.000001));
     await tester.pump(const Duration(seconds: 2));
     expect(longitude(), closeTo(3.002, 0.000001));
+    expect(controller.camera.center, const LatLng(51, 3));
+    expect(controller.camera.zoom, 20);
+    expect(controller.camera.rotation, 0);
     await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox());
     controller.dispose();

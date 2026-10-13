@@ -40,4 +40,13 @@ void main() {
     expect(googleCameraChanged(here, (latitude: 51.001, longitude: 4.0, zoom: 12.0)), isTrue);
     expect(googleCameraChanged(here, (latitude: 51.0, longitude: 4.0, zoom: 12.5)), isTrue);
   });
+
+  test('Google-padding volgt de rotatie zodat tikvlakken op de markers blijven', () {
+    final east = googleCameraTarget(latitude: 51, longitude: 3, zoom: 16, bottomPadding: 300, bearing: 90);
+    final south = googleCameraTarget(latitude: 51, longitude: 3, zoom: 16, bottomPadding: 300, bearing: 180);
+    expect(east.latitude, closeTo(51, .000001));
+    expect(east.longitude, greaterThan(3));
+    expect(south.latitude, lessThan(51));
+    expect(south.longitude, closeTo(3, .000001));
+  });
 }

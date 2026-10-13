@@ -5,13 +5,11 @@ import 'package:thuisradar/features/map/domain/road_motion_path.dart';
 import 'road_matching_test.dart' show point;
 
 void main() {
-  test('positie en camera-richting volgen de hoek in plaats van de diagonaal', () {
+  test('positie volgt de hoek in plaats van de diagonaal', () {
     final a = point(0, 0), corner = point(50, 0), b = point(50, 50);
     final motion = MarkerTrajectory([a, corner, b], Duration.zero, const Duration(seconds: 5));
     expect(roadDistance(motion.point(const Duration(milliseconds: 1250)), point(25, 0)), lessThan(.01));
     expect(roadDistance(motion.point(const Duration(milliseconds: 3750)), point(50, 25)), lessThan(.01));
-    expect(motion.bearing(const Duration(seconds: 1)), closeTo(90, .01));
-    expect(motion.bearing(const Duration(seconds: 4)), closeTo(0, .01));
     expect(motion.point(const Duration(seconds: 20)), b);
     expect(motion.active(const Duration(seconds: 20)), isFalse);
   });
