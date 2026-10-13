@@ -61,12 +61,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   static const _focusZoom = 16.0;
 
+  /// Zonebewaking start pas als de kaart geladen is: het aanmelden van de
+  /// zones en de achtergrondmeldingen die Android daarna kan sturen, vragen
+  /// anders rekenwerk net terwijl de kaart opbouwt.
+  static const _geofenceStartDelay = Duration(seconds: 4);
+
   final _mapController = MapController();
   final _autoFit = AutoFitController();
   final _sheetController = DraggableScrollableController();
   ScrollController? _sheetScrollController;
   bool _mapReady = false;
   MemberOnMap? _selected;
+  Timer? _geofenceStart;
 
   /// Ingeklapte hoogte van het paneel als fractie; bijgewerkt bij elke layout.
   double? _sheetMinimum;
@@ -79,6 +85,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   void dispose() {
+    _geofenceStart?.cancel();
     _mapController.dispose();
     _sheetController.dispose();
     super.dispose();
@@ -88,7 +95,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
     ref.read(locationTrackerProvider.notifier).start(userId: userId, familyId: widget.family.id);
-    unawaited(ref.read(geofenceSyncProvider.notifier).start(userId: userId, familyId: widget.family.id));
+    _geofenceStart = Timer(_geofenceStartDelay, () {
+      if (!mounted) return;
+      unawaited(ref.read(geofenceSyncProvider.notifier).start(userId: userId, familyId: widget.family.id));
+    });
   }
 
   /// Maakt de kaart passend. Automatisch hoogstens één keer en nooit meer nadat
