@@ -11,9 +11,8 @@ typedef WalkingGifFrame = ({ui.Image image, Duration duration});
 
 Future<List<WalkingGifFrame>>? _frames;
 
-/// Alle beelden van de (transparante) wandel-GIF, één keer gedecodeerd, als
-/// heen-en-terug-reeks (zie [pingPong]): zo sluiten einde en begin zonder
-/// sprong op elkaar aan.
+/// De beelden van de (transparante) wandel-GIF, één keer gedecodeerd, als
+/// doorlopende pas die altijd vooruit stapt (zie [walkingLoop]).
 ///
 /// De app speelt de beelden zelf af: op Google Maps is een marker een vaste
 /// afbeelding, dus daar kan een GIF niet vanzelf bewegen. Lukt het laden
@@ -32,7 +31,7 @@ Future<List<WalkingGifFrame>> _decode() async {
       frames.add((image: frame.image, duration: duration));
     }
     codec.dispose();
-    return pingPong(frames);
+    return walkingLoop(frames);
   } catch (error) {
     debugPrint('Wandel-GIF laden mislukt: $error');
     _frames = null;
@@ -40,10 +39,15 @@ Future<List<WalkingGifFrame>> _decode() async {
   }
 }
 
-/// Eerst vooruit, dan achteruit: 1 → 30 → 29 → … → 2, en dan weer 1. De
-/// eerste en laatste komen maar één keer voor, anders bleven die beelden
-/// dubbel zo lang staan.
-List<T> pingPong<T>(List<T> frames) => [
-  ...frames,
-  if (frames.length > 2) ...frames.reversed.skip(1).take(frames.length - 2),
-];
+/// Zoveel beelden vormen samen één volledige pas die naadloos herhaalt.
+///
+/// De GIF zelf sluit niet aan: na beeld 30 springt de achterste schoen terug
+/// naar voren. Heen en terug afspelen verbergt die sprong, maar dan stappen de
+/// schoenen achteruit. Beelden 1–19 tonen één hele pas (neerzetten, afduwen,
+/// doorzwaaien); beeld 19 → 1 is de kleinste overgang in de hele GIF (gemeten
+/// per pixel), en omdat beide schoenen er gelijk uitzien loopt het zo
+/// onafgebroken vooruit.
+const kWalkingLoopFrames = 19;
+
+/// Enkel vooruit: de eerste [kWalkingLoopFrames] beelden, telkens opnieuw.
+List<T> walkingLoop<T>(List<T> frames) => frames.take(kWalkingLoopFrames).toList();

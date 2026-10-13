@@ -9,6 +9,7 @@ import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_marker.dart';
+import 'package:thuisradar/features/map/presentation/widgets/walking_gif_frames.dart';
 import 'package:thuisradar/shared/widgets/member_avatar.dart';
 
 void main() {
@@ -101,7 +102,7 @@ void main() {
     final bubble = specs.firstWhere((s) => s.id == 'bubble_Franky');
     final walker = specs.firstWhere((s) => s.id == 'walker_Franky');
     expect(bubble.frames, isEmpty);
-    expect(walker.frames, hasLength(58));
+    expect(walker.frames, hasLength(kWalkingLoopFrames));
     // Exact boven de ballon, en erna getekend (bovenop).
     expect(walker.point, bubble.point);
     expect(walker.alignment, bubble.alignment);

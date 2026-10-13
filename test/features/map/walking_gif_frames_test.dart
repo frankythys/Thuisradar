@@ -10,17 +10,22 @@ import 'package:thuisradar/features/map/presentation/widgets/walking_gif_frames.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('heen en terug: 1 → 30 → 29 → 2, zonder dubbele begin- of eindbeelden', () {
-    expect(pingPong([1, 2, 3, 4]), [1, 2, 3, 4, 3, 2]);
-    expect(pingPong([1, 2]), [1, 2]);
-    expect(pingPong(<int>[]), isEmpty);
+  test('enkel vooruit: één volledige pas, nooit terug', () {
+    final frames = List.generate(30, (i) => i);
+    final loop = walkingLoop(frames);
+    expect(loop, List.generate(kWalkingLoopFrames, (i) => i));
+    for (var i = 1; i < loop.length; i++) {
+      expect(loop[i], greaterThan(loop[i - 1]), reason: 'nooit een beeld terug');
+    }
+    expect(walkingLoop([1, 2]), [1, 2]);
+    expect(walkingLoop(<int>[]), isEmpty);
   });
 
   testWidgets('de transparante wandel-GIF wordt beeld per beeld gedecodeerd', (tester) async {
     final frames = (await tester.runAsync(walkingGifFrames))!;
-    // 30 beelden vooruit + 28 terug.
-    expect(frames, hasLength(58));
-    expect(frames[30].image, same(frames[28].image));
+    // Eén volledige pas, enkel vooruit.
+    expect(frames, hasLength(kWalkingLoopFrames));
+    expect({for (final frame in frames) frame.image}, hasLength(kWalkingLoopFrames));
     expect(frames.every((f) => f.duration == const Duration(milliseconds: 100)), isTrue);
     expect(frames.first.image.width, 144);
     expect(frames.first.image.height, 96);
