@@ -35,7 +35,7 @@ class _Tracker extends LocationTracker {
   TrackingStatus build() => TrackingStatus.idle;
 
   @override
-  void stop() {}
+  void stop({String? reason}) {}
 }
 
 class _Zones extends GeofenceSync {

@@ -24,18 +24,18 @@ void main() {
     expect(queue.next!.updatedAt, start.add(const Duration(seconds: 5)));
   });
 
-  test('zonder netwerk steeds langer wachten, na succes meteen weer', () {
+  test('zonder netwerk steeds langer wachten, na succes weer van voor af aan', () {
     final queue = PendingUploads()..add(at(0));
-    expect(queue.readyAt(start), isTrue);
-    queue.failed(start);
-    expect(queue.readyAt(start.add(const Duration(seconds: 4))), isFalse);
-    expect(queue.readyAt(start.add(const Duration(seconds: 5))), isTrue);
-    queue.failed(start);
-    expect(queue.readyAt(start.add(const Duration(seconds: 9))), isFalse);
-    expect(PendingUploads.retryDelay(9), const Duration(seconds: 30));
+    expect(queue.failed(), const Duration(seconds: 5));
+    expect(queue.failed(), const Duration(seconds: 10));
+    expect(queue.failed(), const Duration(seconds: 20));
+    expect(queue.failed(), const Duration(seconds: 30));
+    expect(queue.failed(), const Duration(seconds: 30));
+    expect(queue.failures, 5);
+    expect(queue.length, 1, reason: 'een mislukte poging gooit niets weg');
     queue.sent();
     expect(queue.failures, 0);
-    expect(queue.readyAt(start), isTrue);
+    expect(queue.isEmpty, isTrue);
   });
 
   test('een te lange rij wordt grover, het nieuwste punt blijft', () {

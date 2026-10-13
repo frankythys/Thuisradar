@@ -13,6 +13,7 @@ import 'package:thuisradar/features/location/data/diagnostics_store.dart';
 import 'package:thuisradar/features/location/data/location_repository.dart';
 import 'package:thuisradar/features/location/domain/device_reading.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
+import 'package:thuisradar/features/profile/data/profile_preferences.dart';
 
 class _MockDevice extends Mock implements DeviceLocationSource {}
 
@@ -106,6 +107,47 @@ void main() {
 
       expect(sink.lines.any((l) => l.contains('upload mislukt: Exception: geen netwerk')), isTrue);
       expect(sink.lines.last, contains('upload mislukt 1'));
+    });
+
+    test('een mislukte upload staat in de wachtrij van het levensteken', () async {
+      when(() => repository.upload(any())).thenThrow(Exception('geen netwerk'));
+      await start();
+
+      positions.add(fix(accuracy: 8));
+      await pumpEventQueue();
+      diagnostics.beat();
+      await diagnostics.flush();
+
+      expect(sink.lines.last, contains('wachtrij 1'));
+    });
+
+    test('stoppen legt de reden vast', () async {
+      await start();
+      container.read(locationTrackerProvider.notifier).stop(reason: 'uitgelogd');
+      await diagnostics.flush();
+
+      expect(sink.lines.last, endsWith('delen gestopt: uitgelogd'));
+    });
+
+    test('gepauzeerd delen: de reden staat in het logboek', () async {
+      SharedPreferences.setMockInitialValues({ProfilePreferences().key('u1', 'sharing'): false});
+      await start();
+      await diagnostics.flush();
+
+      expect(sink.lines.last, endsWith('delen niet gestart: gepauzeerd in profiel'));
+      expect(sink.lines.any((l) => l.endsWith('delen gestart')), isFalse);
+    });
+
+    test('een verse meting telt als ontvangen én aanvaard', () async {
+      when(() => repository.upload(any())).thenAnswer((_) async {});
+      when(() => device.currentPosition()).thenAnswer((_) async => fix(accuracy: 8));
+      await start();
+
+      await container.read(locationTrackerProvider.notifier).refreshNow();
+      diagnostics.beat();
+      await diagnostics.flush();
+
+      expect(sink.lines.last, contains('ontvangen 1 · aanvaard 1 '));
     });
 
     test('einde en fout van de GPS-stroom worden vastgelegd', () async {

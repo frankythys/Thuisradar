@@ -16,7 +16,6 @@ class PendingUploads {
   final int capacity;
   final _items = <MemberLocation>[];
   int _failures = 0;
-  DateTime? _retryAt;
 
   bool get isEmpty => _items.isEmpty;
   int get length => _items.length;
@@ -35,27 +34,23 @@ class PendingUploads {
     if (_items.length > capacity) _thin();
   }
 
-  /// Mag er nu een poging gebeuren?
-  bool readyAt(DateTime now) => _retryAt == null || !now.isBefore(_retryAt!);
-
   /// Het oudste punt is aangekomen (of door de server geweigerd: dan heeft
   /// opnieuw proberen geen zin).
   void sent() {
     if (_items.isNotEmpty) _items.removeAt(0);
     _failures = 0;
-    _retryAt = null;
   }
 
-  /// Een poging mislukte (geen netwerk, time-out): later opnieuw.
-  void failed(DateTime now) {
+  /// Een poging mislukte (geen netwerk, time-out): geeft terug hoe lang te
+  /// wachten voor de volgende poging.
+  Duration failed() {
     _failures++;
-    _retryAt = now.add(retryDelay(_failures));
+    return retryDelay(_failures);
   }
 
   void clear() {
     _items.clear();
     _failures = 0;
-    _retryAt = null;
   }
 
   /// Wachttijd na [failures] mislukte pogingen: 5 s, 10 s, 20 s, dan 30 s.

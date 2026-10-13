@@ -63,6 +63,9 @@ class LocationDiagnostics {
   void throttled() => _tally.onThrottled();
   void uploadOk() => _tally.onUploadOk(_clock());
 
+  /// Hoeveel punten nog in de wachtrij staan (komt in het levensteken).
+  void pending(int count) => _tally.pending = count;
+
   void uploadFailed(Object error) {
     _tally.onUploadFailed();
     event('upload mislukt', error);

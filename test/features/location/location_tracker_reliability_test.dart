@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
+
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,7 +50,7 @@ void main() {
     );
   }
 
-  test('een hangende upload blokkeert de volgende metingen niet', () {
+  test('een hangende upload blokkeert de volgende metingen niet en gaat niet verloren', () {
     fakeAsync((async) {
       final device = _MockDevice();
       final battery = _MockBattery();
@@ -59,9 +61,12 @@ void main() {
       when(() => device.positions()).thenAnswer((_) => stream.stream);
       final hang = Completer<void>();
       var uploads = 0;
-      when(() => repository.upload(any())).thenAnswer((_) {
+      final arrived = <double>[];
+      when(() => repository.upload(any())).thenAnswer((invocation) {
         uploads++;
-        return uploads == 1 ? hang.future : Future<void>.value();
+        if (uploads == 1) return hang.future;
+        arrived.add((invocation.positionalArguments.single as MemberLocation).latitude);
+        return Future<void>.value();
       });
 
       final container = containerWith(device, battery, repository);
@@ -79,9 +84,13 @@ void main() {
       async.elapse(const Duration(seconds: 16));
       expect(container.read(locationTrackerProvider), TrackingStatus.offline);
 
+      // Een nieuwe meting tijdens de wachttijd: komt in de wachtrij.
       stream.add(posAt(base.subtract(const Duration(seconds: 10)), lat: 50.8505));
       async.elapse(const Duration(seconds: 1));
-      expect(uploads, 2);
+      expect(uploads, 1);
+      // Na de wachttijd (5 s) gaan beide punten, oudste eerst.
+      async.elapse(const Duration(seconds: 5));
+      expect(arrived, [50.85, 50.8505]);
       expect(container.read(locationTrackerProvider), TrackingStatus.active);
     });
   });
@@ -96,10 +105,12 @@ void main() {
 
       when(() => device.positions()).thenAnswer((_) => stream.stream);
       var uploads = 0;
-      when(() => repository.upload(any())).thenAnswer((_) {
+      final arrived = <double>[];
+      when(() => repository.upload(any())).thenAnswer((invocation) {
         uploads++;
         // Geen Exception maar een Error (bv. een gesloten http-client).
         if (uploads == 1) throw StateError('client gesloten');
+        arrived.add((invocation.positionalArguments.single as MemberLocation).latitude);
         return Future<void>.value();
       });
 
@@ -112,10 +123,15 @@ void main() {
       final base = DateTime.now();
       stream.add(posAt(base.subtract(const Duration(seconds: 40))));
       async.elapse(const Duration(seconds: 1));
+      // De mislukte meting blijft bewaard en gaat na de wachttijd (5 s) alsnog.
+      async.elapse(const Duration(seconds: 6));
+      expect(arrived, [50.85]);
+      // Ook daarna gaat alles gewoon verder.
+      async.elapse(const Duration(seconds: 10));
       stream.add(posAt(base.subtract(const Duration(seconds: 10)), lat: 50.8505));
       async.elapse(const Duration(seconds: 1));
 
-      expect(uploads, 2);
+      expect(arrived, [50.85, 50.8505]);
       expect(container.read(locationTrackerProvider), TrackingStatus.active);
     });
   });
@@ -267,6 +283,53 @@ void main() {
       async.flushMicrotasks();
       verifyNever(() => device.positions());
       verifyNever(() => device.currentPosition());
+    });
+  });
+
+  test('zonder internet: punten wachten, steeds langer tussen pogingen, en gaan daarna allemaal mee', () {
+    fakeAsync((async) {
+      final device = _MockDevice();
+      final battery = _MockBattery();
+      final repository = _MockRepository();
+      final stream = StreamController<DevicePosition>();
+      addTearDown(() => unawaited(stream.close()));
+
+      when(() => device.positions()).thenAnswer((_) => stream.stream);
+      var online = false;
+      var attempts = 0;
+      final arrived = <double>[];
+      when(() => repository.upload(any())).thenAnswer((invocation) async {
+        attempts++;
+        if (!online) throw Exception("Failed host lookup: 'x.supabase.co'");
+        arrived.add((invocation.positionalArguments.single as MemberLocation).latitude);
+      });
+
+      final container = containerWith(device, battery, repository);
+      addTearDown(container.dispose);
+      container.read(locationTrackerProvider.notifier).start(userId: 'u1', familyId: 'f1');
+      async.flushMicrotasks();
+
+      // 2 minuten lang elke 5 s een meting, telkens 10 m verder. Zonder
+      // snelheid telt dat als stilstaan: om de 15 s gaat er een punt mee.
+      for (var i = 0; i < 24; i++) {
+        stream.add(posAt(clock.now(), lat: 50.85 + i * 0.0001));
+        async.elapse(const Duration(seconds: 5));
+      }
+      expect(arrived, isEmpty);
+      expect(container.read(locationTrackerProvider), TrackingStatus.offline);
+      // Niet meer bij elke meting een vergeefse poging.
+      expect(attempts, lessThan(12));
+
+      online = true;
+      async.elapse(const Duration(seconds: 31));
+      expect(arrived, isNotEmpty);
+      // Oudste eerst, en de nieuwste plek als laatste.
+      for (var i = 1; i < arrived.length; i++) {
+        expect(arrived[i], greaterThan(arrived[i - 1]));
+      }
+      expect(arrived, hasLength(8));
+      expect(arrived.last, closeTo(50.85 + 21 * 0.0001, 1e-9));
+      expect(container.read(locationTrackerProvider), TrackingStatus.active);
     });
   });
 }

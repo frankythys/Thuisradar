@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/radar_logo.dart';
+import '../../location/application/location_diagnostics.dart';
 import '../application/auth_providers.dart';
 import '../data/biometric_login.dart';
 import 'google_sign_in_button.dart';
@@ -41,6 +42,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    // In het diagnoselogboek: een appstart zonder "delen gestart" is dan
+    // meteen verklaard.
+    ref.read(locationDiagnosticsProvider).event('aanmeldscherm', 'niet aangemeld, locatie delen staat uit');
     _restoreLogin();
   }
 

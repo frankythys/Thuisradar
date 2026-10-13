@@ -111,7 +111,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _signOut() async {
     final userId = ref.read(currentUserIdProvider);
     final container = ProviderScope.containerOf(context);
-    ref.read(locationTrackerProvider.notifier).stop();
+    ref.read(locationTrackerProvider.notifier).stop(reason: 'uitgelogd');
     // Vóór het afmelden: de toestelsleutel en het pushtoken afmelden vraagt
     // nog een sessie.
     await ref.read(geofenceSyncProvider.notifier).stop();
@@ -212,7 +212,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final myId = ref.read(currentUserIdProvider);
     if (myId == null) return;
     await ref.read(familyRepositoryProvider).leaveFamily(myId, widget.family.id);
-    ref.read(locationTrackerProvider.notifier).stop();
+    ref.read(locationTrackerProvider.notifier).stop(reason: 'familie verlaten');
     await ref.read(geofenceSyncProvider.notifier).stop();
     ref.invalidate(myFamilyProvider);
     if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
@@ -230,7 +230,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await tracker.start(userId: userId, familyId: widget.family.id);
       await zones.start(userId: userId, familyId: widget.family.id);
     } else {
-      tracker.stop();
+      tracker.stop(reason: 'locatie delen uitgezet in profiel');
       await zones.stop();
     }
   }

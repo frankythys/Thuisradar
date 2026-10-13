@@ -12,6 +12,9 @@ class DiagnosticTally {
   int throttled = 0;
   int uploadOk = 0;
   int uploadFailed = 0;
+
+  /// Punten die nog wachten op een upload; wordt niet op nul gezet.
+  int pending = 0;
   final Map<RejectReason, int> _rejected = {};
   double? _worstRejectedAccuracy;
   DateTime? _lastReceivedAt;
@@ -56,7 +59,8 @@ class DiagnosticTally {
       'ontvangen $received · aanvaard $accepted · geweigerd $rejected'
       '${reasons.isEmpty ? '' : ' [${reasons.join(', ')}]'}'
       ' · overgeslagen $throttled · upload ok $uploadOk · upload mislukt $uploadFailed'
-      ' · laatste GPS ${_ago(_lastReceivedAt, now)} · laatste upload ${_ago(_lastUploadAt, now)}',
+      ' · laatste GPS ${_ago(_lastReceivedAt, now)} · laatste upload ${_ago(_lastUploadAt, now)}'
+      '${pending > 0 ? ' · wachtrij $pending' : ''}',
     );
     received = accepted = throttled = uploadOk = uploadFailed = 0;
     _rejected.clear();
