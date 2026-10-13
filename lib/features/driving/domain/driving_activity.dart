@@ -4,6 +4,7 @@ import '../../location/domain/timeline.dart';
 import '../../location/domain/track_point.dart';
 import '../../location/domain/track_segments.dart';
 import '../../location/domain/travel_mode.dart';
+import 'traffic_stops.dart';
 import 'travel_legs.dart';
 
 /// Soort activiteit in de dagtijdlijn van een gezinslid.
@@ -24,6 +25,7 @@ class DrivingActivity {
     this.placeName,
     this.mode = TravelMode.car,
     this.steps,
+    this.waiting,
   });
 
   final DrivingActivityKind kind;
@@ -49,6 +51,10 @@ class DrivingActivity {
 
   /// Gezette stappen tijdens een wandeling, als het toestel ze meegaf.
   final int? steps;
+
+  /// Hoe lang een autorit stilstond of stapvoets reed (file), zie
+  /// [mergeTrafficStops].
+  final Duration? waiting;
 
   Duration get duration => end.difference(start);
 
@@ -200,7 +206,9 @@ List<DrivingActivity> buildDayActivities(
       ),
     );
   }
-  return _withoutOverlap(activities)..sort((a, b) => a.start.compareTo(b.start));
+  activities.sort((a, b) => a.start.compareTo(b.start));
+  // Een file knipt een rit niet meer in stukken (zie mergeTrafficStops).
+  return _withoutOverlap(mergeTrafficStops(activities, clean))..sort((a, b) => a.start.compareTo(b.start));
 }
 
 /// Een verblijf begint pas als de verplaatsing ervoor gedaan is en stopt als

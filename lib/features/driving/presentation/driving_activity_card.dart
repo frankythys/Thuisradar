@@ -140,16 +140,28 @@ class _TripBody extends StatelessWidget {
               if (activity.steps case final steps? when steps > 0) drivingSteps(steps),
             ].join(' · '),
           ),
-        ] else if (topSpeed case final speed?) ...[
-          SizedBox(height: tokens.spaceXs),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.speed, size: 16, color: AppColors.muted),
-              const SizedBox(width: 6),
-              Text('max $speed km/u', style: text.labelLarge),
-            ],
-          ),
+        ] else ...[
+          if (activity.waiting case final waiting? when waiting >= const Duration(minutes: 2)) ...[
+            SizedBox(height: tokens.spaceXs),
+            // File: hoe lang van de rit er stilgestaan of aangeschoven werd.
+            _Detail(
+              icon: Icons.traffic_outlined,
+              text:
+                  '${drivingDuration(activity.duration)} · waarvan ${drivingDuration(waiting)} '
+                  'stilstaan of stapvoets',
+            ),
+          ],
+          if (topSpeed case final speed?) ...[
+            SizedBox(height: tokens.spaceXs),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.speed, size: 16, color: AppColors.muted),
+                const SizedBox(width: 6),
+                Text('max $speed km/u', style: text.labelLarge),
+              ],
+            ),
+          ],
         ],
       ],
     );
