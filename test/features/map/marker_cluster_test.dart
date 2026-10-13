@@ -64,4 +64,41 @@ void main() {
       ['papa', 'mama'],
     ]);
   });
+
+  test('wie al samen stond, gaat pas voorbij een ruimere grens uit elkaar', () {
+    List<List<String>> cluster(double px, {List<List<String>> previous = const []}) =>
+        clusterByMetersAndScreen([
+          const GeoScreenClusterPoint('papa', 51, 3, Offset(100, 100)),
+          GeoScreenClusterPoint('liam', 51.0001, 3, Offset(100 + px, 100)),
+        ], previous: previous);
+    const together = [
+      ['papa', 'liam'],
+    ];
+    // Net voorbij 48 px: zonder geheugen apart, met geheugen nog samen.
+    expect(cluster(55), hasLength(2));
+    expect(cluster(55, previous: together), together);
+    // Ver genoeg: toch apart.
+    expect(cluster(70, previous: together), hasLength(2));
+    // Wie apart stond, komt pas samen binnen de gewone grens.
+    expect(
+      cluster(
+        55,
+        previous: const [
+          ['papa'],
+          ['liam'],
+        ],
+      ),
+      hasLength(2),
+    );
+    expect(
+      cluster(
+        40,
+        previous: const [
+          ['papa'],
+          ['liam'],
+        ],
+      ),
+      together,
+    );
+  });
 }

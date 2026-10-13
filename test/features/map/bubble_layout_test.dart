@@ -47,4 +47,39 @@ void main() {
     final placements = layoutBubbles([r], avatars: {'liam': face, 'franky': Rect.zero});
     expect(rectOf(r, placements['franky']!).overlaps(face), isFalse);
   });
+
+  test('een uitgeweken ballon blijft staan tot zijn gewone plek ruim vrij is', () {
+    final franky = req('franky', const Offset(150, 300));
+    // Een gezicht van een ander lid, net over de gewone plek van de ballon.
+    final home = bubbleRect(franky.anchor, BubbleSide.right, franky.baseDy);
+    Rect face(double dx) => Rect.fromLTWH(home.right - 10 + dx, home.top, 40, 40);
+    final away = layoutBubbles([franky], avatars: {'franky': Rect.zero, 'liam': face(0)});
+    expect(away['franky'], isNot(const BubblePlacement(BubbleSide.right, 0)));
+    // Het gezicht schuift net weg (4 px vrij): de ballon blijft waar hij was.
+    final kept = layoutBubbles(
+      [franky],
+      avatars: {'franky': Rect.zero, 'liam': face(14)},
+      previous: {'franky': away['franky']!},
+    );
+    expect(kept['franky'], away['franky']);
+    // Ruim vrij: terug naar de gewone plek.
+    final back = layoutBubbles(
+      [franky],
+      avatars: {'franky': Rect.zero, 'liam': face(40)},
+      previous: {'franky': away['franky']!},
+    );
+    expect(back['franky'], const BubblePlacement(BubbleSide.right, 0));
+  });
+
+  test('een ballon op zijn gewone plek wijkt niet uit voor een gezicht dat hem net raakt', () {
+    final franky = req('franky', const Offset(150, 300));
+    final home = bubbleRect(franky.anchor, BubbleSide.right, franky.baseDy);
+    final touching = Rect.fromLTWH(home.right - 4, home.top, 40, 40);
+    final placements = layoutBubbles(
+      [franky],
+      avatars: {'franky': Rect.zero, 'liam': touching},
+      previous: {'franky': const BubblePlacement(BubbleSide.right, 0)},
+    );
+    expect(placements['franky'], const BubblePlacement(BubbleSide.right, 0));
+  });
 }

@@ -50,4 +50,14 @@ void main() {
     expect(xs[1] - xs[0], greaterThanOrEqualTo(69.9));
     expect(xs[2] - xs[1], greaterThanOrEqualTo(69.9));
   });
+
+  test('verschuivingen zijn hele pixels', () {
+    final shift = spreadHorizontally([
+      const SpreadItem('a', Offset(100.3, 100), 32),
+      const SpreadItem('b', Offset(110.7, 100), 32),
+    ]);
+    for (final value in shift.values) {
+      expect(value, value.roundToDouble());
+    }
+  });
 }

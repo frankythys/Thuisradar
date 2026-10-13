@@ -12,7 +12,9 @@ class SpreadItem {
 /// Schuift markers die op het scherm over elkaar zouden vallen horizontaal
 /// uit elkaar, zodat leden op aparte locaties naast elkaar staan i.p.v.
 /// samen te vallen. Geeft per id de horizontale verschuiving in px (positief =
-/// naar rechts). Puur en deterministisch; wordt bij elke zoom herberekend.
+/// naar rechts), afgerond op hele pixels: een afbeelding op Google hoeft zo
+/// niet bij elke fractie opnieuw getekend te worden. Puur en deterministisch;
+/// wordt bij elke zoom herberekend.
 Map<String, double> spreadHorizontally(
   List<SpreadItem> items, {
   double gap = 6,
@@ -43,5 +45,5 @@ Map<String, double> spreadHorizontally(
     }
     if (!moved) break;
   }
-  return shift;
+  return shift.map((id, value) => MapEntry(id, value.roundToDouble()));
 }

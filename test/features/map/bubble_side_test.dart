@@ -23,4 +23,18 @@ void main() {
   test('een lid ver rechts (buiten ballonbreedte) telt niet mee', () {
     expect(chooseBubbleSide(self, const [Offset(300, 100)]), BubbleSide.right);
   });
+
+  test('links blijft links tot rechts ruim vrij is (geen heen-en-weer rond de grens)', () {
+    // Net buiten de ballonbreedte: zonder geheugen rechts, met geheugen links.
+    const edge = [Offset(250, 100)];
+    expect(chooseBubbleSide(self, edge), BubbleSide.right);
+    expect(chooseBubbleSide(self, edge, previous: BubbleSide.left), BubbleSide.left);
+    // Ruim vrij: terug naar rechts.
+    expect(chooseBubbleSide(self, const [Offset(300, 100)], previous: BubbleSide.left), BubbleSide.right);
+    // Links raakt ook bezet: standaard rechts.
+    expect(
+      chooseBubbleSide(self, const [Offset(250, 100), Offset(40, 100)], previous: BubbleSide.left),
+      BubbleSide.right,
+    );
+  });
 }

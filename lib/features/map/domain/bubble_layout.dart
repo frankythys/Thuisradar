@@ -16,6 +16,12 @@ class BubblePlacement {
 
   final BubbleSide side;
   final double shiftY;
+
+  @override
+  bool operator ==(Object other) => other is BubblePlacement && other.side == side && other.shiftY == shiftY;
+
+  @override
+  int get hashCode => Object.hash(side, shiftY);
 }
 
 /// Eén ballon die geplaatst moet worden.
@@ -33,10 +39,17 @@ Rect bubbleRect(Offset anchor, BubbleSide side, double dy) {
 /// onder krijgt elk lid de eerste vrije plek: eerst zijn voorkeurskant, dan de
 /// andere kant, daarna telkens een rij hoger of lager. Puur en in
 /// schermpixels, dus bij elke zoom opnieuw juist.
+///
+/// [previous]: de plaatsing van de vorige berekening. Een ballon die al
+/// uitweek, blijft op zijn plek zolang die (met [slack] speling) vrij blijft,
+/// en keert pas terug naar zijn gewone plek als die ruim vrij is. Zo springt
+/// hij niet heen en weer terwijl leden bewegen of de kaart zoomt.
 Map<String, BubblePlacement> layoutBubbles(
   List<BubbleRequest> requests, {
   Map<String, Rect> avatars = const {},
   double gap = 6,
+  Map<String, BubblePlacement> previous = const {},
+  double slack = 8,
 }) {
   final ordered = [...requests]
     ..sort((a, b) {
@@ -55,19 +68,35 @@ Map<String, BubblePlacement> layoutBubbles(
       for (final entry in avatars.entries)
         if (entry.key != request.id && (own == null || !own.overlaps(entry.value))) entry.value,
     ];
+    // [extra] > 0 is strenger (ruim vrij), < 0 milder (mag net raken).
+    bool free(Rect rect, {required bool avoidFaces, double extra = 0}) =>
+        placed.every((p) => !p.inflate(gap / 2 + extra).overlaps(rect)) &&
+        (!avoidFaces || faces.every((f) => !f.inflate(extra).overlaps(rect)));
     BubblePlacement? chosen;
     Rect? chosenRect;
+    final last = previous[request.id];
+    final home = BubblePlacement(request.preferred, 0);
+    if (last != null && last != home) {
+      final homeRect = bubbleRect(request.anchor, home.side, request.baseDy);
+      final lastRect = bubbleRect(request.anchor, last.side, request.baseDy + last.shiftY);
+      if (free(homeRect, avoidFaces: true, extra: slack)) {
+        (chosen, chosenRect) = (home, homeRect);
+      } else if (free(lastRect, avoidFaces: true, extra: -slack)) {
+        (chosen, chosenRect) = (last, lastRect);
+      }
+    } else if (last != null) {
+      final homeRect = bubbleRect(request.anchor, home.side, request.baseDy);
+      if (free(homeRect, avoidFaces: true, extra: -slack)) (chosen, chosenRect) = (home, homeRect);
+    }
     // Eerst een plek vrij van ballonnen én gezichten van anderen; lukt dat
     // nergens, dan minstens vrij van andere ballonnen.
     for (final avoidFaces in [true, false]) {
+      if (chosen != null) break;
       for (final row in rows) {
         final shift = row * (kBubbleHeight + gap);
         for (final side in [request.preferred, other]) {
           final rect = bubbleRect(request.anchor, side, request.baseDy + shift);
-          final free =
-              placed.every((p) => !p.inflate(gap / 2).overlaps(rect)) &&
-              (!avoidFaces || faces.every((f) => !f.overlaps(rect)));
-          if (free) {
+          if (free(rect, avoidFaces: avoidFaces)) {
             chosen = BubblePlacement(side, shift);
             chosenRect = rect;
             break;
@@ -75,7 +104,6 @@ Map<String, BubblePlacement> layoutBubbles(
         }
         if (chosen != null) break;
       }
-      if (chosen != null) break;
     }
     chosen ??= BubblePlacement(request.preferred, 0);
     chosenRect ??= bubbleRect(request.anchor, request.preferred, request.baseDy);

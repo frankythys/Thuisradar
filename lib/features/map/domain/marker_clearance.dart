@@ -16,5 +16,6 @@ Offset markerClearance(Rect marker, List<Offset> places) {
     }
     shift = next;
   }
-  return Offset(0, shift);
+  // Hele pixels: Google hoeft de groepspin niet bij elke fractie te hertekenen.
+  return Offset(0, shift.roundToDouble());
 }

@@ -82,6 +82,14 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     if (!_motions.values.any((motion) => motion.active(_clock.value))) _ticker.stop();
   });
 
+  /// Vorige uitkomst van groeperen en ballonplaatsing: de volgende berekening
+  /// houdt die vast tot het echt anders moet (zie de `previous`-parameters),
+  /// zodat er bij zoomen en bewegen niets heen en weer springt.
+  List<List<String>> _lastGroups = const [];
+  Map<String, BubbleSide> _lastSides = const {};
+  Map<String, BubblePlacement> _lastPlacements = const {};
+  bool _homeSplit = false;
+
   /// Beelden van de wandel-GIF, enkel geladen als Google de markers tekent
   /// en iemand wandelt.
   List<WalkingGifFrame>? _walkerFrames;
@@ -199,10 +207,15 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           coords[m.member.userId]!.lng,
           camera.latLngToScreenOffset(LatLng(coords[m.member.userId]!.lat, coords[m.member.userId]!.lng)),
         ),
-    ]);
+    ], previous: _lastGroups);
+    _lastGroups = [
+      for (final group in groups) [...group],
+    ];
     // Op huisniveau scheiden alleen de avatars. Hun geografische ankers
     // blijven gelijk; bij uitzoomen berekenen we opnieuw de groepspinnen.
-    if (camera.zoom >= 18) {
+    // Met marge: pas onder 17,7 opnieuw samen, anders wipt het rond 18.
+    _homeSplit = camera.zoom >= 18 || (_homeSplit && camera.zoom >= 17.7);
+    if (_homeSplit) {
       final separate = [
         for (final group in groups)
           for (final id in group) [id],
@@ -399,6 +412,15 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     double baseDyOf(MemberOnMap member) => TripStatus.at(member.location, widget.now).driving ? -18 : -78;
     // Alle ballonnen samen plaatsen, zodat ze nooit over elkaar vallen; per lid
     // eerst de kant die vrij is van andere leden.
+    final sides = {
+      for (final member in bubbleMembers)
+        if (screenById[member.member.userId] case final self?)
+          member.member.userId: chooseBubbleSide(self, [
+            for (final entry in screenById.entries)
+              if (entry.key != member.member.userId) entry.value,
+          ], previous: _lastSides[member.member.userId]),
+    };
+    _lastSides = sides;
     final placements = layoutBubbles(
       [
         for (final member in bubbleMembers)
@@ -406,13 +428,11 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             (
               id: member.member.userId,
               anchor: self + Offset(0, offsets[member.member.userId]?.dy ?? 0),
-              preferred: chooseBubbleSide(self, [
-                for (final entry in screenById.entries)
-                  if (entry.key != member.member.userId) entry.value,
-              ]),
+              preferred: sides[member.member.userId]!,
               baseDy: baseDyOf(member),
             ),
       ],
+      previous: _lastPlacements,
       avatars: {
         // Het gezicht van elk los lid, in dezelfde coördinaten als de ballon
         // (die hangt een ballonhoogte hoger dan zijn ankerpunt).
@@ -433,6 +453,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           ),
       },
     );
+    _lastPlacements = placements;
     final native = widget.onNativeMarkers;
     for (final selected in bubbleMembers) {
       final id = selected.member.userId;

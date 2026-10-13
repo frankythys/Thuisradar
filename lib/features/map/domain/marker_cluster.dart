@@ -88,11 +88,23 @@ class GeoScreenClusterPoint {
 /// (binnen [thresholdPx]). Zo staat het gezin thuis uitgezoomd als één
 /// groep, maar ingezoomd gaat elk rondje apart staan (zoals Life360). Wie
 /// ergens anders is, blijft altijd apart. Het eerste punt is het anker.
+///
+/// [previous]: de groepen van de vorige berekening. Wie al samen stond, gaat
+/// pas uit elkaar voorbij een ruimere grens ([release] keer de drempels), zodat
+/// een lid rond de grens niet bij elke pixel zoom in en uit de groep springt.
 List<List<String>> clusterByMetersAndScreen(
   List<GeoScreenClusterPoint> points, {
   double thresholdMeters = 60,
   double thresholdPx = 48,
+  List<List<String>> previous = const [],
+  double release = 1.35,
 }) {
+  final groupOf = <String, int>{
+    for (final (index, group) in previous.indexed)
+      for (final id in group) id: index,
+  };
+  bool together(String a, String b) => groupOf[a] != null && groupOf[a] == groupOf[b];
+
   final anchors = <GeoScreenClusterPoint>[];
   final groups = <List<String>>[];
 
@@ -100,9 +112,10 @@ List<List<String>> clusterByMetersAndScreen(
     var placed = false;
     for (var i = 0; i < anchors.length; i++) {
       final anchor = anchors[i];
-      if ((anchor.screen - point.screen).distance <= thresholdPx &&
+      final factor = together(anchor.id, point.id) ? release : 1.0;
+      if ((anchor.screen - point.screen).distance <= thresholdPx * factor &&
           distanceMeters(anchor.latitude, anchor.longitude, point.latitude, point.longitude) <=
-              thresholdMeters) {
+              thresholdMeters * factor) {
         groups[i].add(point.id);
         placed = true;
         break;
