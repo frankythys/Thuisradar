@@ -48,28 +48,44 @@ void main() {
     final order = leftFirst ? 'linker' : 'rechter';
     test('$order vinger eerst: kleine draai blijft knijpen, duidelijke draai draait', () {
       final small = TwistGesture();
-      twist(small, 10, leftFirst: leftFirst);
+      twist(small, 20, leftFirst: leftFirst);
       expect(small.rotating, isFalse);
 
       final clockwise = TwistGesture();
-      twist(clockwise, 20, leftFirst: leftFirst);
+      twist(clockwise, 35, leftFirst: leftFirst);
       expect(clockwise.rotating, isTrue);
 
       final counter = TwistGesture();
-      twist(counter, -20, leftFirst: leftFirst);
+      twist(counter, -35, leftFirst: leftFirst);
       expect(counter.rotating, isTrue);
     });
   }
 
   test('draaien blijft aan tot alle vingers los zijn, daarna begint het opnieuw', () {
     final gesture = TwistGesture();
-    twist(gesture, 30, leftFirst: true);
+    twist(gesture, 40, leftFirst: true);
     gesture.up(1);
     expect(gesture.rotating, isTrue);
     gesture.up(2);
     expect(gesture.rotating, isFalse);
 
     twist(gesture, 5, leftFirst: true);
+    expect(gesture.rotating, isFalse);
+  });
+
+  test('eerst zoomen: daarna meedraaien zet de kaart niet scheef', () {
+    final gesture = TwistGesture()
+      ..down(1, (x: 300, y: 300))
+      ..down(2, (x: 500, y: 300));
+    // Vingers 30% uit elkaar: zoomen.
+    gesture
+      ..move(1, (x: 270, y: 300))
+      ..move(2, (x: 530, y: 300));
+    expect(gesture.rotating, isFalse);
+    // Nu flink draaien in hetzelfde gebaar.
+    gesture
+      ..move(1, (x: 300, y: 450))
+      ..move(2, (x: 500, y: 150));
     expect(gesture.rotating, isFalse);
   });
 

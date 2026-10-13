@@ -75,7 +75,7 @@ void main() {
     testWidgets('$order vinger eerst: kleine draai zet de kaart niet scheef', (tester) async {
       await pumpMap(tester);
 
-      await twist(tester, 10, leftFirst: leftFirst);
+      await twist(tester, 20, leftFirst: leftFirst);
 
       expect(controller.camera.rotation, 0);
     });
