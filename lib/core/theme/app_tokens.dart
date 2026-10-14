@@ -81,9 +81,11 @@ class AppTokens extends ThemeExtension<AppTokens> {
       BoxShadow(color: Color(0x0812201C), blurRadius: 12, spreadRadius: -2, offset: Offset(0, 4)),
     ],
     shadowSheet: [BoxShadow(color: Color(0x1412201C), blurRadius: 32, offset: Offset(0, -8))],
+    // Duidelijk zichtbaar op de kaart: een zachte slagschaduw plus een
+    // korte contactschaduw vlak onder de rand.
     shadowMarker: [
-      BoxShadow(color: Color(0x4012201C), blurRadius: 12, offset: Offset(0, 5)),
-      BoxShadow(color: Color(0x2612201C), blurRadius: 3, offset: Offset(0, 1)),
+      BoxShadow(color: Color(0x5C12201C), blurRadius: 12, offset: Offset(0, 5)),
+      BoxShadow(color: Color(0x3D12201C), blurRadius: 4, offset: Offset(0, 1.5)),
     ],
     // AppColors.mapSelection (#762EEA) op 45 % en 20 %.
     glowSelection: [

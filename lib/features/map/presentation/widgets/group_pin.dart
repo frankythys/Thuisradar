@@ -205,7 +205,8 @@ class _Bubble extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [BoxShadow(color: Color(0x26121C1C), blurRadius: 8, offset: Offset(0, 2))],
+        border: Border.all(color: AppColors.border),
+        boxShadow: context.tokens.shadowMarker,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

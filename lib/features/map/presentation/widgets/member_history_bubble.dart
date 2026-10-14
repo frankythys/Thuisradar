@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_tokens.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
@@ -110,67 +111,74 @@ class MemberHistoryBubble extends StatelessWidget {
         ? 'sinds ${_formatSince(duration)}'
         : _formatUpdated(entry.location?.updatedAt, now);
     final icon = atPlace ? placeIcon(placeStatus!.icon) : Icons.location_on;
+    final radius = BorderRadius.only(
+      topLeft: const Radius.circular(15),
+      topRight: const Radius.circular(15),
+      bottomRight: Radius.circular(tailLeft ? 15 : 4),
+      bottomLeft: Radius.circular(tailLeft ? 4 : 15),
+    );
     return Semantics(
       button: true,
       label: 'Geschiedenis van ${entry.member.displayName}',
-      child: Material(
-        color: kBubbleColor,
-        elevation: 3,
-        shadowColor: const Color(0x44000000),
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(15),
-          topRight: const Radius.circular(15),
-          bottomRight: Radius.circular(tailLeft ? 15 : 4),
-          bottomLeft: Radius.circular(tailLeft ? 4 : 15),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _paddingX, vertical: 5),
-            child: Row(
-              children: [
-                if (isMoving && status.walking)
-                  _walkerImage()
-                else if (isMoving)
-                  Image(
-                    image: status.cycling ? bubbleBikeImage : bubbleCarImage,
-                    width: 38,
-                    height: 32,
-                    fit: BoxFit.contain,
-                  )
-                else if (atPlace && placeStatus!.icon == 'home')
-                  const Image(image: bubbleHomeImage, width: 32, height: 32, fit: BoxFit.contain)
-                else
-                  Icon(icon, color: AppColors.primary, size: 23),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 13,
-                          height: 1.2,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
+      // Zelfde schaduw als de rondjes, plus een lichte rand die de ballon
+      // laat loskomen van een lichte kaart.
+      child: DecoratedBox(
+        decoration: BoxDecoration(borderRadius: radius, boxShadow: context.tokens.shadowMarker),
+        child: Material(
+          color: kBubbleColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: const BorderSide(color: AppColors.border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _paddingX, vertical: 5),
+              child: Row(
+                children: [
+                  if (isMoving && status.walking)
+                    _walkerImage()
+                  else if (isMoving)
+                    Image(
+                      image: status.cycling ? bubbleBikeImage : bubbleCarImage,
+                      width: 38,
+                      height: 32,
+                      fit: BoxFit.contain,
+                    )
+                  else if (atPlace && placeStatus!.icon == 'home')
+                    const Image(image: bubbleHomeImage, width: 32, height: 32, fit: BoxFit.contain)
+                  else
+                    Icon(icon, color: AppColors.primary, size: 23),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontSize: 13,
+                            height: 1.2,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.ink,
+                          ),
                         ),
-                      ),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
-                      ),
-                    ],
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
