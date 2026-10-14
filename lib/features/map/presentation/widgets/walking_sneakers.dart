@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'walking_gif_frames.dart';
 
-/// Speelt de wandel-GIF af als widget (flutter_map), beeld per beeld op het
-/// tempo van de GIF. Zolang de beelden laden, of als laden mislukt: het
-/// wandelicoon.
+/// Speelt de wandelanimatie af als widget (flutter_map), beeld per beeld op
+/// het tempo van de cyclus (zie `walkingGifFrames`). Zolang de beelden laden,
+/// of als laden mislukt: het wandelicoon.
 class WalkingSneakers extends StatefulWidget {
   const WalkingSneakers({super.key, required this.width, required this.height});
 

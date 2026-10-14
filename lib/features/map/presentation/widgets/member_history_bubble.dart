@@ -8,11 +8,6 @@ import '../../domain/bubble_layout.dart';
 import '../../domain/member_on_map.dart';
 import 'walking_sneakers.dart';
 
-/// Geanimeerde sneakers in de ballon tijdens een wandeling (transparante
-/// GIF, 144×96). De app speelt hem zelf beeld per beeld af (zie
-/// `walkingGifFrames`). Het origineel staat ernaast als `wandelen.gif`.
-const walkingGifAsset = 'assets/gif/wandelen_transparant.gif';
-
 /// Afbeeldingen in de ballon. Precies deze sleutels worden vooraf geladen
 /// (`GoogleBaseMap`): een andere sleutel (bv. zonder `width`) laadt niet
 /// dezelfde cache, en dan tekent Google de eerste ballon zonder afbeelding.

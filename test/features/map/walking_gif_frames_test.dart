@@ -5,37 +5,27 @@ import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/bubble_layout.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
+import 'package:thuisradar/features/map/domain/walking_cycle.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_history_bubble.dart';
 import 'package:thuisradar/features/map/presentation/widgets/walking_gif_frames.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('enkel vooruit: één volledige pas, nooit terug', () {
-    final frames = List.generate(30, (i) => i);
-    final loop = walkingLoop(frames);
-    expect(loop, List.generate(kWalkingLoopFrames, (i) => i));
-    for (var i = 1; i < loop.length; i++) {
-      expect(loop[i], greaterThan(loop[i - 1]), reason: 'nooit een beeld terug');
-    }
-    expect(walkingLoop([1, 2]), [1, 2]);
-    expect(walkingLoop(<int>[]), isEmpty);
-  });
-
-  testWidgets('de transparante wandel-GIF wordt beeld per beeld gedecodeerd', (tester) async {
+  testWidgets('de wandelcyclus wordt één keer naar beelden getekend', (tester) async {
     final frames = (await tester.runAsync(walkingGifFrames))!;
-    // Eén volledige pas, enkel vooruit.
+    // Eén volledige, naadloze cyclus op een vast tempo.
     expect(frames, hasLength(kWalkingLoopFrames));
     expect({for (final frame in frames) frame.image}, hasLength(kWalkingLoopFrames));
-    expect(frames.every((f) => f.duration == const Duration(milliseconds: 100)), isTrue);
-    expect(frames.first.image.width, 144);
-    expect(frames.first.image.height, 96);
-    // Tweede keer uit het geheugen, niet opnieuw gedecodeerd.
+    expect(frames.every((f) => f.duration == kWalkFrameDuration), isTrue);
+    expect(frames.first.image.width, kWalkingFrameWidth);
+    expect(frames.first.image.height, kWalkingFrameHeight);
+    // Tweede keer uit het geheugen, niet opnieuw getekend.
     expect(identical(await tester.runAsync(walkingGifFrames), frames), isTrue);
   });
 
-  test('de ballon gebruikt de transparante GIF', () {
-    expect(walkingGifAsset, 'assets/gif/wandelen_transparant.gif');
+  test('de sneaker komt uit de marker-assets', () {
+    expect(walkingSneakerAsset, 'assets/markers/sneaker.webp');
   });
 
   testWidgets('Google: de ballon heeft een lege plek, precies waar de sneakers-marker komt', (tester) async {

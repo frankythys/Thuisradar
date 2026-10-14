@@ -6,6 +6,7 @@ import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
+import 'package:thuisradar/features/map/domain/walking_cycle.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_history_bubble.dart';
@@ -94,8 +95,11 @@ void main() {
         speedMps: 1.3,
       ),
     );
+    // De beelden van de wandelanimatie vooraf tekenen (gebeurt in de app op
+    // de achtergrond); zo is de wachttijd hieronder ruim genoeg.
+    expect(await tester.runAsync(walkingGifFrames), hasLength(kWalkingLoopFrames));
     var specs = await pumpNative(tester, member: walking);
-    // De GIF-beelden laden op de achtergrond; daarna komt de animatie erbij.
+    // De beelden laden op de achtergrond; daarna komt de animatie erbij.
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
     await tester.pump(const Duration(milliseconds: 100));
     specs = await pumpNative(tester, member: walking);
