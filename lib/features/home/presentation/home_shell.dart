@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../../core/platform/app_background.dart';
 import '../../../core/utils/resync_signal.dart';
 import '../../geofencing/application/geofencing_providers.dart';
 import '../../location/application/location_diagnostics.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/app_bottom_nav.dart';
+import '../../../shared/widgets/back_to_background.dart';
 import '../../../shared/widgets/lazy_indexed_stack.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../chat/presentation/chat_screen.dart';
@@ -70,49 +72,54 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final active = ref.watch(activeSosProvider(familyId)).value ?? const [];
     final incoming = sosToShow(active, myUserId: myId, dismissed: _dismissed);
 
-    return Stack(
-      children: [
-        Scaffold(
-          body: LazyIndexedStack(
-            index: _tab.index,
-            builders: [
-              (_) => MapScreen(family: widget.family),
-              (_) => _tab == AppTab.rijden ? DrivingScreen(family: widget.family) : const SizedBox.shrink(),
-              (_) => PlacesScreen(family: widget.family),
-              (_) => ChatScreen(family: widget.family),
-            ],
-          ),
-          bottomNavigationBar: AppBottomNav(
-            offline:
-                _tab == AppTab.kaart &&
-                // Enkel de leeg/niet-leeg-vlag: anders herbouwde elke
-                // locatie-update de hele shell met alle tabs.
-                ref.watch(familyLocationsProvider(familyId).select((a) => a.value?.isEmpty == true)),
-            onFamily: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)),
+    // "Terug" sluit de app niet (dan stopte het delen), maar zet ze op de
+    // achtergrond, zoals de home-knop.
+    return BackToBackground(
+      onBackground: () => unawaited(ref.read(appBackgroundProvider).moveToBackground()),
+      child: Stack(
+        children: [
+          Scaffold(
+            body: LazyIndexedStack(
+              index: _tab.index,
+              builders: [
+                (_) => MapScreen(family: widget.family),
+                (_) => _tab == AppTab.rijden ? DrivingScreen(family: widget.family) : const SizedBox.shrink(),
+                (_) => PlacesScreen(family: widget.family),
+                (_) => ChatScreen(family: widget.family),
+              ],
             ),
-            onSettings: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)),
-            ),
-            current: _tab,
-            onSelected: _onSelectTab,
-          ),
-        ),
-        if (incoming != null)
-          Positioned.fill(
-            child: SosReceivedOverlay(
-              alert: incoming,
-              name: _nameFor(incoming.userId, familyId),
-              onShowOnMap: () => setState(() {
-                _tab = AppTab.kaart;
-                _dismissed.add(incoming.id);
-              }),
-              onDismiss: () => setState(() => _dismissed.add(incoming.id)),
+            bottomNavigationBar: AppBottomNav(
+              offline:
+                  _tab == AppTab.kaart &&
+                  // Enkel de leeg/niet-leeg-vlag: anders herbouwde elke
+                  // locatie-update de hele shell met alle tabs.
+                  ref.watch(familyLocationsProvider(familyId).select((a) => a.value?.isEmpty == true)),
+              onFamily: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)),
+              ),
+              onSettings: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => ProfileScreen(family: widget.family)),
+              ),
+              current: _tab,
+              onSelected: _onSelectTab,
             ),
           ),
-      ],
+          if (incoming != null)
+            Positioned.fill(
+              child: SosReceivedOverlay(
+                alert: incoming,
+                name: _nameFor(incoming.userId, familyId),
+                onShowOnMap: () => setState(() {
+                  _tab = AppTab.kaart;
+                  _dismissed.add(incoming.id);
+                }),
+                onDismiss: () => setState(() => _dismissed.add(incoming.id)),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
