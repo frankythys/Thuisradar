@@ -62,6 +62,17 @@ Supabase URL + key come in via `--dart-define-from-file=env.json` (copy `env.exa
 - **Cross-platform first.** Don't write Android-only code when a cross-platform alternative exists (iPhone comes later — see below).
 - **Commit per logical step** with a clear Dutch message; attribution is disabled (no co-author trailer). **Never push without asking.**
 
+## Branches — `main` is the single source of truth
+
+Several Claude sessions (cloud, Claude chat, local) work on this repo. Each one used to push to its own branch, so features "disappeared" whenever the owner built from a branch that lacked them (two-finger map rotation and the satellite button vanished this way on 14 Oct). To prevent that:
+
+- **Start from the latest `main`.** First thing in every session: `git fetch origin` and base your work on `origin/main` (merge it into your working branch if that branch already exists).
+- **Before every push: bring in GitHub first.** `git fetch origin` and merge `origin/main` (and any branch the owner names) into your work, resolve conflicts, then run format/analyze/test again. Never push something that would drop commits already on GitHub.
+- **Finish on `main`.** When the owner approves a push, push the work to `main` too (fast-forward or merge commit), not only to a side branch. If a separate branch is needed, say so explicitly and tell the owner the branch name.
+- **Never force-push** (`--force`, `--force-with-lease`) to `main` or to a branch someone else pushed to. Never rewrite published history.
+- **Before telling the owner to switch branches**, check with `git log origin/main..origin/<branch>` (and the reverse) that nothing on the branch they are leaving is missing from the one they go to.
+- The owner updates the laptop with Android Studio **Ctrl+T on `main`**; a commit that is not pushed never reaches the laptop.
+
 ## Test devices
 
 - **Samsung A52 "Papa"** — real phone over wireless adb (the id looks like `adb-XXXX._adb-tls-connect._tcp`; it changes and drops when wifi/debugging resets — re-check with `flutter devices`).
