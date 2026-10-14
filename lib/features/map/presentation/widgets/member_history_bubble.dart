@@ -123,7 +123,7 @@ class MemberHistoryBubble extends StatelessWidget {
       // Zelfde schaduw als de rondjes, plus een lichte rand die de ballon
       // laat loskomen van een lichte kaart.
       child: DecoratedBox(
-        decoration: BoxDecoration(borderRadius: radius, boxShadow: context.tokens.shadowMarker),
+        decoration: BoxDecoration(borderRadius: radius, boxShadow: context.tokens.shadowBubble),
         child: Material(
           color: kBubbleColor,
           shape: RoundedRectangleBorder(

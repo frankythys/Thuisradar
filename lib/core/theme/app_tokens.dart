@@ -24,6 +24,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     required this.shadowLevel2,
     required this.shadowSheet,
     required this.shadowMarker,
+    required this.shadowBubble,
     required this.glowSelection,
     required this.memberColors,
   });
@@ -52,6 +53,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
 
   /// Duidelijke slagschaduw onder de cirkels op de kaart.
   final List<BoxShadow> shadowMarker;
+
+  /// Schaduw onder de tekstballonnen op de kaart, iets lichter dan de rondjes.
+  final List<BoxShadow> shadowBubble;
 
   /// Zachte gloed in de selectiekleur rond het gekozen lid op de kaart.
   final List<BoxShadow> glowSelection;
@@ -84,6 +88,10 @@ class AppTokens extends ThemeExtension<AppTokens> {
     // Duidelijk zichtbaar op de kaart: een zachte slagschaduw plus een
     // korte contactschaduw vlak onder de rand.
     shadowMarker: [
+      BoxShadow(color: Color(0x8012201C), blurRadius: 12, offset: Offset(0, 5)),
+      BoxShadow(color: Color(0x5212201C), blurRadius: 4, offset: Offset(0, 1.5)),
+    ],
+    shadowBubble: [
       BoxShadow(color: Color(0x5C12201C), blurRadius: 12, offset: Offset(0, 5)),
       BoxShadow(color: Color(0x3D12201C), blurRadius: 4, offset: Offset(0, 1.5)),
     ],
@@ -112,6 +120,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     List<BoxShadow>? shadowLevel2,
     List<BoxShadow>? shadowSheet,
     List<BoxShadow>? shadowMarker,
+    List<BoxShadow>? shadowBubble,
     List<BoxShadow>? glowSelection,
     List<Color>? memberColors,
   }) {
@@ -131,6 +140,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       shadowLevel2: shadowLevel2 ?? this.shadowLevel2,
       shadowSheet: shadowSheet ?? this.shadowSheet,
       shadowMarker: shadowMarker ?? this.shadowMarker,
+      shadowBubble: shadowBubble ?? this.shadowBubble,
       glowSelection: glowSelection ?? this.glowSelection,
       memberColors: memberColors ?? this.memberColors,
     );
@@ -155,6 +165,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
       shadowLevel2: BoxShadow.lerpList(shadowLevel2, other.shadowLevel2, t) ?? shadowLevel2,
       shadowSheet: BoxShadow.lerpList(shadowSheet, other.shadowSheet, t) ?? shadowSheet,
       shadowMarker: BoxShadow.lerpList(shadowMarker, other.shadowMarker, t) ?? shadowMarker,
+      shadowBubble: BoxShadow.lerpList(shadowBubble, other.shadowBubble, t) ?? shadowBubble,
       glowSelection: BoxShadow.lerpList(glowSelection, other.glowSelection, t) ?? glowSelection,
       memberColors: t < 0.5 ? memberColors : other.memberColors,
     );
