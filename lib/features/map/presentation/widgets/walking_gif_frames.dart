@@ -19,6 +19,12 @@ const kWalkingFrameWidth = 156;
 const kWalkingFrameHeight = 104;
 
 Future<List<WalkingGifFrame>>? _frames;
+List<WalkingGifFrame>? _loaded;
+
+/// De beelden als ze al getekend zijn, anders null. Zo toont een nieuwe
+/// widget (bv. na opnieuw opbouwen) meteen de schoenen, zonder één beeld
+/// met het wandelicoon ertussen.
+List<WalkingGifFrame>? get walkingFramesLoaded => _loaded;
 
 /// De beelden van de wandelanimatie: één naadloze cyclus van
 /// [kWalkingLoopFrames] beelden, één keer getekend en daarna uit het
@@ -37,7 +43,9 @@ Future<List<WalkingGifFrame>> _load() async {
     final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
     sprite = (await codec.getNextFrame()).image;
     codec.dispose();
-    return await renderWalkingFrames(sprite);
+    final frames = await renderWalkingFrames(sprite);
+    _loaded = frames;
+    return frames;
   } catch (error) {
     debugPrint('Wandelanimatie laden mislukt: $error');
     _frames = null;

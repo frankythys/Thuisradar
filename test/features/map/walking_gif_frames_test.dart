@@ -28,7 +28,7 @@ void main() {
     expect(walkingSneakerAsset, 'assets/markers/sneaker.webp');
   });
 
-  testWidgets('Google: de ballon heeft een lege plek, precies waar de sneakers-marker komt', (tester) async {
+  testWidgets('Google: de ballon heeft een vak, precies waar de sneakers erboven komen', (tester) async {
     final now = DateTime(2026, 10, 12, 15);
     final walking = MemberOnMap(
       member: const FamilyMember(userId: 'p', displayName: 'Papa', isOwner: true, colorIndex: 0),
@@ -62,7 +62,7 @@ void main() {
           ),
         ),
       );
-      // Vaste ballon: tekst zichtbaar, geen GIF (die tekent Google er bovenop).
+      // Vaste ballon: tekst zichtbaar; zonder stilstaand beeld blijft het vak leeg.
       expect(find.byType(RawImage), findsNothing);
       expect(find.text('Wandelen'), findsOneWidget);
       final slot = find.byWidgetPredicate(
@@ -74,5 +74,45 @@ void main() {
       final origin = tester.getTopLeft(find.byKey(const Key('ballon')));
       expect(tester.getRect(slot).shift(-origin), MemberHistoryBubble.walkerSlot);
     }
+  });
+
+  testWidgets('Google: met een stilstaand beeld staan de schoenen in het vak', (tester) async {
+    final frames = (await tester.runAsync(walkingGifFrames))!;
+    final now = DateTime(2026, 10, 12, 15);
+    final walking = MemberOnMap(
+      member: const FamilyMember(userId: 'p', displayName: 'Papa', isOwner: true, colorIndex: 0),
+      location: MemberLocation(
+        userId: 'p',
+        familyId: 'f',
+        latitude: 51,
+        longitude: 4,
+        updatedAt: now,
+        speedMps: 1.3,
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Center(
+          child: SizedBox(
+            key: const Key('ballon'),
+            width: kBubbleWidth,
+            height: kBubbleHeight,
+            child: MemberHistoryBubble(
+              entry: walking,
+              now: now,
+              onTap: () {},
+              walker: WalkerDisplay.slot,
+              walkerStill: frames.first.image,
+            ),
+          ),
+        ),
+      ),
+    );
+    final still = find.byType(RawImage);
+    expect(still, findsOneWidget);
+    expect(tester.widget<RawImage>(still).image, same(frames.first.image));
+    final origin = tester.getTopLeft(find.byKey(const Key('ballon')));
+    expect(tester.getRect(still).shift(-origin), MemberHistoryBubble.walkerSlot);
   });
 }

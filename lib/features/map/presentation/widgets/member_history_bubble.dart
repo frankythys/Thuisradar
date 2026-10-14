@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -17,15 +19,20 @@ const bubbleCarImage = ResizeImage(AssetImage('assets/icon/Rijdende auto.png'), 
 const bubbleBikeImage = ResizeImage(AssetImage('assets/markers/fiets_profiel.png'), width: 152);
 const bubbleHomeImage = AssetImage('assets/markers/huis.png');
 
+/// Achtergrond van de ballon; ook het vlak onder de sneakers boven de
+/// Google-kaart (`GoogleWalkerOverlay`), dat het stilstaande beeld afdekt.
+const kBubbleColor = Colors.white;
+
 /// Hoe de wandel-animatie in de ballon getekend wordt.
 enum WalkerDisplay {
   /// De beelden spelen af in de ballon zelf (flutter_map: de ballon is een
   /// echte widget).
   gif,
 
-  /// Lege plek: Google tekent de ballon als vaste afbeelding, de animatie
-  /// komt er als aparte kleine marker bovenop, precies op
-  /// [MemberHistoryBubble.walkerSlot].
+  /// Google tekent de ballon als vaste afbeelding: in het vak staat een
+  /// stilstaand beeld ([MemberHistoryBubble.walkerStill], of leeg zolang dat
+  /// er niet is). De animatie speelt erboven als Flutter-widget
+  /// (`GoogleWalkerOverlay`), precies op [MemberHistoryBubble.walkerSlot].
   slot,
 }
 
@@ -39,6 +46,7 @@ class MemberHistoryBubble extends StatelessWidget {
     this.stationarySince,
     this.tailLeft = true,
     this.walker = WalkerDisplay.gif,
+    this.walkerStill,
   });
 
   /// Waar de sneakers staan in een ballon van [kBubbleWidth] × [kBubbleHeight]:
@@ -64,6 +72,9 @@ class MemberHistoryBubble extends StatelessWidget {
 
   /// Zie [WalkerDisplay].
   final WalkerDisplay walker;
+
+  /// Stilstaand beeld van de sneakers voor [WalkerDisplay.slot].
+  final ui.Image? walkerStill;
 
   /// Is dit de wandelballon (dus met animatie)?
   static bool isWalking(MemberOnMap entry, DateTime now) {
@@ -103,7 +114,7 @@ class MemberHistoryBubble extends StatelessWidget {
       button: true,
       label: 'Geschiedenis van ${entry.member.displayName}',
       child: Material(
-        color: Colors.white,
+        color: kBubbleColor,
         elevation: 3,
         shadowColor: const Color(0x44000000),
         borderRadius: BorderRadius.only(
@@ -170,7 +181,11 @@ class MemberHistoryBubble extends StatelessWidget {
   /// De wandelende sneakers in hun vak ([walkerSlot]).
   Widget _walkerImage() => switch (walker) {
     WalkerDisplay.gif => const WalkingSneakers(width: _walkerWidth, height: _walkerHeight),
-    WalkerDisplay.slot => const SizedBox(width: _walkerWidth, height: _walkerHeight),
+    WalkerDisplay.slot => SizedBox(
+      width: _walkerWidth,
+      height: _walkerHeight,
+      child: walkerStill == null ? null : RawImage(image: walkerStill, fit: BoxFit.contain),
+    ),
   };
 }
 

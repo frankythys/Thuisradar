@@ -8,10 +8,12 @@ import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/domain/walking_cycle.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
+import 'package:thuisradar/features/map/presentation/widgets/google_walker_overlay.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_history_bubble.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_marker.dart';
 import 'package:thuisradar/features/map/presentation/widgets/walking_gif_frames.dart';
+import 'package:thuisradar/features/map/presentation/widgets/walking_sneakers.dart';
 import 'package:thuisradar/shared/widgets/member_avatar.dart';
 
 void main() {
@@ -81,7 +83,7 @@ void main() {
     expect(tapped?.member.userId, 'Franky');
   });
 
-  testWidgets('met Google: wandelend krijgt de ballon een aparte, geanimeerde sneaker-marker', (
+  testWidgets('met Google: wandelend speelt de animatie boven de kaart, niet als Google-marker', (
     tester,
   ) async {
     final walking = MemberOnMap(
@@ -97,19 +99,26 @@ void main() {
     );
     // De beelden van de wandelanimatie vooraf tekenen (gebeurt in de app op
     // de achtergrond); zo is de wachttijd hieronder ruim genoeg.
-    expect(await tester.runAsync(walkingGifFrames), hasLength(kWalkingLoopFrames));
+    final frames = (await tester.runAsync(walkingGifFrames))!;
+    expect(frames, hasLength(kWalkingLoopFrames));
     var specs = await pumpNative(tester, member: walking);
-    // De beelden laden op de achtergrond; daarna komt de animatie erbij.
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
     await tester.pump(const Duration(milliseconds: 100));
     specs = await pumpNative(tester, member: walking);
 
+    // Google krijgt geen animatie meer: elk nieuw markerbeeld liet de kaart
+    // knipperen. De ballon zelf toont een stilstaand beeld van de schoenen.
+    expect(specs.map((s) => s.id), isNot(contains('walker_Franky')));
+    expect(specs.where((s) => s.frames.isNotEmpty), isEmpty);
     final bubble = specs.firstWhere((s) => s.id == 'bubble_Franky');
-    final walker = specs.firstWhere((s) => s.id == 'walker_Franky');
-    expect(bubble.frames, isEmpty);
-    expect(walker.frames, hasLength(kWalkingLoopFrames));
-    // Klein (enkel de sneakers), exact op de lege plek in de ballon, en erna
-    // getekend (bovenop).
+    final content = bubble.child as MemberHistoryBubble;
+    expect(content.walker, WalkerDisplay.slot);
+    expect(content.walkerStill, same(frames.first.image));
+
+    // De animatie staat boven de kaart, exact op het vak in de ballon.
+    final overlay = find.byType(GoogleWalkerOverlay);
+    expect(overlay, findsOneWidget);
+    expect(find.descendant(of: overlay, matching: find.byType(WalkingSneakers)), findsOneWidget);
     Rect box(MapMarkerSpec spec) => Rect.fromCenter(
       center: Offset(
         spec.alignment.x * spec.width / 2 + spec.offset.dx,
@@ -118,14 +127,13 @@ void main() {
       width: spec.width,
       height: spec.height,
     );
-    expect(walker.point, bubble.point);
-    expect(walker.width, MemberHistoryBubble.walkerSlot.width);
-    expect(walker.margin, lessThan(24));
-    final expected = MemberHistoryBubble.walkerSlot.shift(box(bubble).topLeft);
-    expect(box(walker).left, closeTo(expected.left, 1e-9));
-    expect(box(walker).top, closeTo(expected.top, 1e-9));
-    expect(specs.indexOf(walker), greaterThan(specs.indexOf(bubble)));
-    // Tikken gaat via de ballon zelf.
-    expect(walker.onTap, isNull);
+    // Franky staat in het midden van de kaart.
+    final point = tester.getCenter(find.byType(FlutterMap));
+    final slot = MemberHistoryBubble.walkerSlot.shift(point + box(bubble).topLeft);
+    final shown = tester.getRect(overlay);
+    expect(shown.center.dx, closeTo(slot.center.dx, 0.5));
+    expect(shown.center.dy, closeTo(slot.center.dy, 0.5));
+    expect(shown.width, closeTo(slot.width + 2 * GoogleWalkerOverlay.bleed, 0.01));
+    expect(shown.height, closeTo(slot.height + 2 * GoogleWalkerOverlay.bleed, 0.01));
   });
 }
