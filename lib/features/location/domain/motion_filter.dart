@@ -42,6 +42,9 @@ class MotionFilter {
   /// maar leiden we er nooit beweging uit af — anders zou GPS-ruis een rit lijken.
   static const _reliableAccuracyMeters = 50.0;
 
+  /// Onder deze GPS-snelheid (m/s, ±1 km/u) staat een voertuig echt stil.
+  static const _surelyStillMps = 0.3;
+
   DevicePosition? _previous;
   DevicePosition? _motionOrigin;
   int _movingSamples = 0;
@@ -144,7 +147,9 @@ class MotionFilter {
     } else if (speed <= 0.8) {
       _stillSamples++;
       _movingSamples = 0;
-      if (_stillSamples >= 2) {
+      // Na een rit is echt nul (rood licht, aankomst) meteen stil; een
+      // twijfelgeval (traag kruipen, GPS-ruis) vraagt twee metingen.
+      if (_stillSamples >= 2 || (_moving == true && speed <= _surelyStillMps)) {
         _moving = false;
         _motionOrigin = point;
       }

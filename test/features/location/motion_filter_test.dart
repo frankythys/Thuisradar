@@ -33,6 +33,23 @@ void main() {
     expect(filter.wantsFastUpdates, isTrue);
   });
 
+  test('rood licht: na een rit is echt nul meteen stil, kruipen pas na twee metingen', () {
+    MotionFilter driving() {
+      final filter = MotionFilter();
+      filter.accept(pos(51, 3, base, accuracy: 5, speed: 10), base);
+      final at = base.add(const Duration(seconds: 5));
+      expect(filter.accept(pos(51.0005, 3, at, accuracy: 5, speed: 10), at)!.speedMps, 10);
+      return filter;
+    }
+
+    final stop = base.add(const Duration(seconds: 10));
+    expect(driving().accept(pos(51.0005, 3, stop, accuracy: 5, speed: 0), stop)!.speedMps, 0);
+    final crawl = driving();
+    expect(crawl.accept(pos(51.0005, 3, stop, accuracy: 5, speed: 0.6), stop)!.speedMps, isNull);
+    final later = base.add(const Duration(seconds: 15));
+    expect(crawl.accept(pos(51.0005, 3, later, accuracy: 5, speed: 0.6), later)!.speedMps, 0);
+  });
+
   test('GPS-snelheid van 6 km/u zonder verplaatsing meldt geen beweging', () {
     final filter = MotionFilter();
     for (var i = 0; i < 12; i++) {

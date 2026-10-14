@@ -51,6 +51,30 @@ void main() {
     expect(throttle.shouldUpload(unknown, t5, moving: false), isFalse);
   });
 
+  test('rood licht: de bevestigde stilstand na een rit gaat meteen door', () {
+    final throttle = UploadThrottle()..uploaded(driving(t0), t0);
+    // Eerst onbekend (het toestel twijfelt nog), dan bevestigd stil.
+    final t5 = t0.add(const Duration(seconds: 5));
+    final unknown = DevicePosition(latitude: 51.2, longitude: 4.4, timestamp: t5);
+    expect(throttle.shouldUpload(unknown, t5, moving: false), isTrue);
+    throttle.uploaded(unknown, t5);
+    final t10 = t0.add(const Duration(seconds: 10));
+    expect(throttle.shouldUpload(still(t10), t10, moving: false), isTrue);
+    throttle.uploaded(still(t10), t10);
+    // Daarna weer het gewone tempo van 15 s.
+    final t15 = t0.add(const Duration(seconds: 15));
+    expect(throttle.shouldUpload(still(t15), t15, moving: false), isFalse);
+  });
+
+  test('lang na een rit wacht een stilstand op het gewone tempo', () {
+    final throttle = UploadThrottle()..uploaded(driving(t0), t0);
+    final t90 = t0.add(const Duration(seconds: 90));
+    final unknown = DevicePosition(latitude: 51.2, longitude: 4.4, timestamp: t90);
+    throttle.uploaded(unknown, t90);
+    final t95 = t0.add(const Duration(seconds: 95));
+    expect(throttle.shouldUpload(still(t95), t95, moving: false), isFalse);
+  });
+
   test('tijdens een eigen SOS om de 10 s', () {
     final throttle = UploadThrottle()
       ..fast = true
