@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/google_camera.dart';
+import '../../domain/map_style.dart';
 import 'google_member_markers.dart';
 import 'google_place_overlays.dart';
 import 'map_marker_spec.dart';
@@ -32,7 +33,7 @@ class GoogleBaseMap extends StatefulWidget {
     required this.controller,
     required this.initialCenter,
     required this.initialZoom,
-    this.satellite = false,
+    this.satellite,
     this.bottomPadding = 0,
     this.places = const [],
     this.markers,
@@ -41,7 +42,9 @@ class GoogleBaseMap extends StatefulWidget {
   final MapController controller;
   final LatLng initialCenter;
   final double initialZoom;
-  final bool satellite;
+
+  /// Keuze met de kaartknop; `null` = automatisch (zie [showsSatellite]).
+  final bool? satellite;
   final List<Place> places;
 
   /// Leden, groepspinnen en ballonnen zoals de kaart erboven ze berekent.
@@ -60,7 +63,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   ({double latitude, double longitude, double zoom, double bearing})? _wanted;
   ({double latitude, double longitude, double zoom, double bearing})? _shown;
   bool _moving = false;
-  bool _zoomSatellite = false;
+  double _zoom = 0;
   final _icons = <String, gm.BitmapDescriptor>{};
   double? _iconPixelRatio;
   late final _members = GoogleMemberMarkers(
@@ -76,7 +79,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   void initState() {
     super.initState();
-    _zoomSatellite = widget.initialZoom >= 18;
+    _zoom = widget.initialZoom;
     _wanted = (
       latitude: widget.initialCenter.latitude,
       longitude: widget.initialCenter.longitude,
@@ -86,10 +89,9 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     widget.markers?.addListener(_onMarkers);
     _events = widget.controller.mapEventStream.listen((event) {
       final camera = event.camera;
-      final satellite = camera.zoom >= 18;
-      if (satellite != _zoomSatellite && mounted) {
-        setState(() => _zoomSatellite = satellite);
-      }
+      final before = showsSatellite(choice: widget.satellite, zoom: _zoom);
+      _zoom = camera.zoom;
+      if (showsSatellite(choice: widget.satellite, zoom: _zoom) != before && mounted) setState(() {});
       _wanted = (
         latitude: camera.center.latitude,
         longitude: camera.center.longitude,
@@ -223,7 +225,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
         target: gm.LatLng(target.latitude, target.longitude),
         zoom: widget.initialZoom,
       ),
-      mapType: widget.satellite || _zoomSatellite ? gm.MapType.hybrid : gm.MapType.normal,
+      mapType: showsSatellite(choice: widget.satellite, zoom: _zoom) ? gm.MapType.hybrid : gm.MapType.normal,
       circles: placeCircles(
         widget.places,
         color: AppColors.primary,

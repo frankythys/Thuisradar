@@ -2,22 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/bubble_layout.dart';
+import 'google_walker_overlay.dart';
 import 'map_marker_spec.dart';
 import 'member_history_bubble.dart';
-import 'walking_gif_frames.dart';
 
-/// De wandelende sneakers als aparte Google-marker, exact op de lege plek
-/// ([MemberHistoryBubble.walkerSlot]) van de ballon met [alignment] en
-/// [offset].
+/// De wandelende sneakers boven de Google-kaart ([GoogleWalkerOverlay]),
+/// exact op het vak ([MemberHistoryBubble.walkerSlot]) van de ballon met
+/// [alignment] en [offset], plus een smalle rand ([GoogleWalkerOverlay.bleed]).
 ///
-/// Enkel het vak van de sneakers wordt getekend, met een smalle rand: elk
-/// beeld is zo een kleine afbeelding, die Android vlot kan wisselen.
-MapMarkerSpec walkerSpec({
+/// Dit gaat niet naar Google: de kaart erboven tekent het als widget, zodat
+/// Google voor de animatie niets hoeft te verversen.
+MapMarkerSpec walkerOverlaySpec({
   required String id,
   required LatLng point,
   required Alignment alignment,
   required Offset offset,
-  required List<WalkingGifFrame> frames,
 }) {
   const slot = MemberHistoryBubble.walkerSlot;
   // Midden van de ballon t.o.v. het kaartpunt, zoals flutter_map hem plaatst.
@@ -26,21 +25,13 @@ MapMarkerSpec walkerSpec({
     alignment.y * kBubbleHeight / 2 + offset.dy,
   );
   final slotCenter = bubbleCenter - const Offset(kBubbleWidth / 2, kBubbleHeight / 2) + slot.center;
-  final images = [
-    for (final frame in frames)
-      (
-        child: RawImage(image: frame.image, width: slot.width, height: slot.height, fit: BoxFit.contain),
-        duration: frame.duration,
-      ),
-  ];
+  const bleed = GoogleWalkerOverlay.bleed;
   return MapMarkerSpec(
     id: id,
     point: point,
-    width: slot.width,
-    height: slot.height,
+    width: slot.width + 2 * bleed,
+    height: slot.height + 2 * bleed,
     offset: slotCenter,
-    margin: 2,
-    frames: images,
-    child: images.first.child,
+    child: GoogleWalkerOverlay(width: slot.width, height: slot.height),
   );
 }

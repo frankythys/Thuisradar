@@ -287,6 +287,54 @@ void main() {
     expect(updates.length, stopped);
   });
 
+  testWidgets('Liams ballon wacht niet tot Franky\'s wandelanimatie getekend is', (tester) async {
+    late Widget Function(Widget) wrap;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            wrap = wrapForBitmap(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final updates = <Set<gm.Marker>>[];
+    final markers = GoogleMemberMarkers(onChanged: updates.add);
+    addTearDown(markers.dispose);
+    final frames = [
+      for (final color in [Colors.red, Colors.green, Colors.blue])
+        (child: ColoredBox(color: color), duration: const Duration(milliseconds: 60)),
+    ];
+    final specs = [
+      MapMarkerSpec(
+        id: 'walker_Franky',
+        point: const LatLng(51.2, 4.3),
+        width: 40,
+        height: 20,
+        frames: frames,
+        child: frames.first.child,
+      ),
+      const MapMarkerSpec(
+        id: 'bubble_Liam',
+        point: LatLng(51.1, 4.2),
+        width: 40,
+        height: 40,
+        imageKey: 'liam',
+        child: ColoredBox(color: Colors.orange),
+      ),
+    ];
+
+    await tester.runAsync(() async {
+      markers.update(specs, wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+    });
+
+    Set<String> ids(Set<gm.Marker> update) => {for (final marker in update) marker.markerId.value};
+    expect(ids(updates.first), {'bubble_Liam'});
+    expect(ids(updates.last), {'walker_Franky', 'bubble_Liam'});
+  });
+
   testWidgets('ballon die van kant wisselt bevriest niet en hergebruikt zijn eerdere beeld', (tester) async {
     late Widget Function(Widget) wrap;
     var drawings = 0;

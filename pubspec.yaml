@@ -83,6 +83,13 @@ dev_dependencies:
     sdk: flutter
   video_player_platform_interface: ^6.9.0
 
+# Gepatchte kopie van google_maps_flutter_android 2.21.0: hergebruikt marker-
+# afbeeldingen in plaats van ze bij elke verschuiving opnieuw te decoderen.
+# Zie third_party/README.md (ook voor het bijwerken naar een nieuwe versie).
+dependency_overrides:
+  google_maps_flutter_android:
+    path: third_party/google_maps_flutter_android
+
 # Appicoon: het originele bestand. Splash: dezelfde afbeelding met ronde hoeken.
 # Splashbron regenereren: dart run scripts/generate_splash.dart
 # Opnieuw genereren: dart run flutter_launcher_icons

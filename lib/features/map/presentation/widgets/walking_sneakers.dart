@@ -1,13 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import 'walking_gif_frames.dart';
 
-/// Speelt de wandelanimatie af als widget (flutter_map), beeld per beeld op
-/// het tempo van de cyclus (zie `walkingGifFrames`). Zolang de beelden laden,
-/// of als laden mislukt: het wandelicoon.
+/// Speelt de wandelanimatie af als widget, beeld per beeld op het tempo van
+/// de cyclus (zie `walkingGifFrames`), in de maat van het scherm (vsync).
+/// Zijn de beelden al getekend, dan staan ze er meteen; anders tot ze klaar
+/// zijn (of als het mislukt) het wandelicoon.
 class WalkingSneakers extends StatefulWidget {
   const WalkingSneakers({super.key, required this.width, required this.height});
 
@@ -18,34 +20,38 @@ class WalkingSneakers extends StatefulWidget {
   State<WalkingSneakers> createState() => _WalkingSneakersState();
 }
 
-class _WalkingSneakersState extends State<WalkingSneakers> {
-  List<WalkingGifFrame> _frames = const [];
+class _WalkingSneakersState extends State<WalkingSneakers> with SingleTickerProviderStateMixin {
+  List<WalkingGifFrame> _frames = walkingFramesLoaded ?? const [];
   int _index = 0;
-  Timer? _timer;
+  late final Ticker _ticker = createTicker(_tick);
 
   @override
   void initState() {
     super.initState();
+    if (_frames.isNotEmpty) {
+      unawaited(_ticker.start());
+      return;
+    }
     unawaited(
       walkingGifFrames().then((frames) {
         if (!mounted || frames.isEmpty) return;
         setState(() => _frames = frames);
-        _next();
+        unawaited(_ticker.start());
       }),
     );
   }
 
-  void _next() {
-    _timer = Timer(_frames[_index].duration, () {
-      if (!mounted) return;
-      setState(() => _index = (_index + 1) % _frames.length);
-      _next();
-    });
+  /// Welk beeld nu, uit de verstreken tijd: geen opgestapelde vertraging.
+  void _tick(Duration elapsed) {
+    final step = _frames.first.duration.inMicroseconds;
+    if (step <= 0) return;
+    final index = (elapsed.inMicroseconds ~/ step) % _frames.length;
+    if (index != _index) setState(() => _index = index);
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _ticker.dispose();
     super.dispose();
   }
 

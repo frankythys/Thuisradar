@@ -90,8 +90,8 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
   Map<String, BubblePlacement> _lastPlacements = const {};
   bool _homeSplit = false;
 
-  /// Beelden van de wandel-GIF, enkel geladen als Google de markers tekent
-  /// en iemand wandelt.
+  /// Beelden van de wandelanimatie, enkel geladen als Google de markers tekent
+  /// en iemand wandelt (het eerste is het stilstaande beeld in de ballon).
   List<WalkingGifFrame>? _walkerFrames;
   bool _loadingWalker = false;
 
@@ -262,6 +262,8 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     });
 
     final markers = <MapMarkerSpec>[];
+    // Sneakers boven de Google-kaart: gaan niet naar Google (zie walkerOverlaySpec).
+    final walkerOverlays = <MapMarkerSpec>[];
     final placePoints = [for (final place in widget.reservedPlaces) camera.latLngToScreenOffset(place)];
     bool isDriving(List<String> group) =>
         group.length == 1 && TripStatus.at(byId[group.single]!.location, widget.now).driving;
@@ -497,10 +499,12 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
         onRight ? kBubbleInset : -kBubbleInset,
         baseDyOf(selected) + (placement?.shiftY ?? 0),
       );
-      // Google tekent een ballon als vaste afbeelding: de wandel-GIF speelt
-      // dan als aparte, kleine marker bovenop, beeld per beeld.
+      // Google tekent een ballon als vaste afbeelding, met een stilstaand
+      // beeld van de sneakers. De animatie speelt erboven als Flutter-widget:
+      // een nieuw Google-markerbeeld per animatiebeeld liet de kaart knipperen.
       final animate = native != null && MemberHistoryBubble.isWalking(selected, widget.now);
       if (animate) _loadWalkerFrames();
+      final walkerStill = animate ? _walkerFrames?.first.image : null;
       markers.add(
         MapMarkerSpec(
           id: 'bubble_$id',
@@ -518,6 +522,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             tailLeft: onRight,
             onTap: onBubbleTap,
             walker: animate ? WalkerDisplay.slot : WalkerDisplay.gif,
+            walkerStill: walkerStill,
           ),
           imageKey: (
             Theme.of(context),
@@ -530,19 +535,13 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             stopped,
             timeKey,
             onRight,
+            walkerStill != null,
           ),
         ),
       );
-      final walkerFrames = _walkerFrames;
-      if (animate && walkerFrames != null) {
-        markers.add(
-          walkerSpec(
-            id: 'walker_$id',
-            point: point,
-            alignment: alignment,
-            offset: offset,
-            frames: walkerFrames,
-          ),
+      if (animate && walkerStill != null) {
+        walkerOverlays.add(
+          walkerOverlaySpec(id: 'walker_$id', point: point, alignment: alignment, offset: offset),
         );
       }
     }
@@ -569,6 +568,8 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
                     : const SizedBox.expand(),
               ),
             ),
+        // Laatst, dus bovenop; tikken gaat erdoor naar de ballon.
+        for (final spec in walkerOverlays) spec.toMarker(),
       ],
     );
   }

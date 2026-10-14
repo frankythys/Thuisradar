@@ -25,6 +25,7 @@ class _FakeNative implements NativeGeofenceSource {
   final registered = <String>[];
   final added = <String>[];
   final removed = <String>[];
+  var recreated = 0;
   bool permission = true;
 
   /// Wat Android antwoordt op een aanmelding (bv. locatienauwkeurigheid uit).
@@ -34,7 +35,7 @@ class _FakeNative implements NativeGeofenceSource {
   Future<void> initialize() async {}
 
   @override
-  Future<void> recreateAll() async {}
+  Future<void> recreateAll() async => recreated++;
 
   @override
   Future<List<String>> registeredIds() async => List.of(registered);
@@ -181,6 +182,29 @@ void main() {
 
     expect(native.added, ['tr1|thuis|51.00000|4.00000|150']);
     expect(status(), GeofenceStatus.active);
+  });
+
+  test('normale start: zones één keer aangemeld, niet ook de opgeslagen lijst herhaald', () async {
+    native.registered.add('tr1|thuis|51.00000|4.00000|150');
+
+    await start();
+    await emit([_place('thuis')]);
+
+    expect(native.recreated, 0);
+    expect(native.added, ['tr1|thuis|51.00000|4.00000|150']);
+  });
+
+  test('plaatsen laden niet (offline): de vorige zones blijven één keer heraangemeld', () async {
+    native.registered.add('tr1|thuis|51.00000|4.00000|150');
+
+    await start();
+    places.addError(Exception('offline'));
+    await pumpEventQueue();
+    places.addError(Exception('nog steeds offline'));
+    await pumpEventQueue();
+
+    expect(native.recreated, 1);
+    expect(native.added, isEmpty);
   });
 
   test('Google-locatienauwkeurigheid uit: status unavailable', () async {

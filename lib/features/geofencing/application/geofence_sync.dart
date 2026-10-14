@@ -26,8 +26,12 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
 
   /// Heeft Android de zones sinds deze start echt aanvaard? De lijst van de
   /// plugin onthoudt enkel wat ooit lukte; [NativeGeofenceSource.recreateAll]
-  /// meldt geen weigering. Daarom bij de eerste sync alles opnieuw aanmelden.
+  /// meldt geen weigering. Daarom bij de eerste sync alles opnieuw aanmelden
+  /// (en niet ook nog eens de opgeslagen lijst herhalen).
   bool _confirmed = false;
+
+  /// Offline-terugval al gebeurd sinds deze start (zie [_recreateStored]).
+  bool _recreated = false;
   ProviderSubscription<AsyncValue<List<Place>>>? _places;
   Future<void> _work = Future<void>.value();
 
@@ -44,6 +48,7 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
     _detach();
     final generation = ++_generation;
     _confirmed = false;
+    _recreated = false;
     _userId = userId;
     _familyId = familyId;
 
@@ -53,7 +58,6 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
     }
     try {
       await _native.initialize();
-      await _native.recreateAll();
       final key = await ref.read(geofenceStoreProvider).ensureDeviceKey();
       await ref.read(geofenceDeviceRepositoryProvider).register(key);
     } on PostgrestException catch (error) {
@@ -68,9 +72,16 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
     if (!ref.mounted || generation != _generation) return;
 
     unawaited(ref.read(geofenceReporterProvider).flush().catchError((Object e) => <String>[]));
+    // De eerste sync meldt alle plaatsen opnieuw aan (zie [_confirmed]); de
+    // opgeslagen lijst van de plugin herhalen is dan dubbel werk. Enkel als de
+    // plaatsen niet laden (offline), houden we zo de vorige zones levend.
     _places = ref.listen<AsyncValue<List<Place>>>(familyPlacesProvider(familyId), (_, next) {
       final places = next.value;
-      if (places != null) _enqueue(() => _sync(places, generation));
+      if (places != null) {
+        _enqueue(() => _sync(places, generation));
+      } else if (next.hasError && !_confirmed) {
+        _enqueue(() => _recreateStored(generation));
+      }
     }, fireImmediately: true);
   }
 
@@ -108,6 +119,16 @@ class GeofenceSync extends Notifier<GeofenceStatus> {
       debugPrint('Toestelsleutel afmelden mislukt: $error');
     }
     await store.clear();
+  }
+
+  Future<void> _recreateStored(int generation) async {
+    if (!ref.mounted || generation != _generation || _confirmed || _recreated) return;
+    _recreated = true;
+    try {
+      await _native.recreateAll();
+    } on Object catch (error) {
+      debugPrint('Opgeslagen zones heraanmelden mislukt: $error');
+    }
   }
 
   void _enqueue(Future<void> Function() job) {
