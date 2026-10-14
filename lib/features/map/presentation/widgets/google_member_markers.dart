@@ -224,14 +224,22 @@ class GoogleMemberMarkers {
     final specs = _pending;
     try {
       await ready;
+      // Gewone markers eerst, en meteen tonen: een wandelanimatie (tot 19
+      // beelden) mag de andere ballonnen niet laten wachten.
       for (final spec in specs) {
         if (generation != _generation) return;
-        if (!_needsDrawing(spec)) continue;
-        if (spec.frames.isNotEmpty) {
-          await _drawAnimation(spec, wrap, pixelRatio);
-        } else {
-          await _draw(spec, wrap, pixelRatio);
-        }
+        if (spec.frames.isNotEmpty || !_needsDrawing(spec)) continue;
+        await _draw(spec, wrap, pixelRatio);
+      }
+      if (generation != _generation) return;
+      final animated = [
+        for (final spec in specs)
+          if (spec.frames.isNotEmpty && _needsDrawing(spec)) spec,
+      ];
+      if (animated.isNotEmpty) _move();
+      for (final spec in animated) {
+        if (generation != _generation) return;
+        await _drawAnimation(spec, wrap, pixelRatio);
       }
       if (generation != _generation) return;
       final ids = {for (final spec in specs) spec.id};

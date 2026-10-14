@@ -6,8 +6,9 @@ import 'bubble_side.dart';
 const kBubbleWidth = 142.0;
 const kBubbleHeight = 48.0;
 
-/// Horizontale afstand tussen de ankerpositie van een lid en zijn ballon.
-const kBubbleInset = 20.0;
+/// Horizontale afstand tussen de ankerpositie van een lid en zijn ballon. Het
+/// rondje (avatar) reikt 32 px opzij, dus de ballon schuift er 20 px in.
+const kBubbleInset = 12.0;
 
 /// Waar een ballon komt: links of rechts van het lid, en hoeveel hoger (min)
 /// of lager (plus) dan zijn standaardhoogte.

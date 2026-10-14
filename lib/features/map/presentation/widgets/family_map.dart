@@ -13,6 +13,7 @@ import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
 import 'google_base_map.dart';
 import 'google_map_stack.dart';
+import 'map_gestures.dart';
 import 'map_marker_spec.dart';
 
 /// Kaart met een marker (of groepspin) per gezinslid met locatie. Ondergrond:
@@ -35,7 +36,7 @@ class FamilyMap extends StatelessWidget {
     this.onMapTap,
     this.onHistory,
     this.useGoogleMaps = FeatureFlags.useGoogleMaps,
-    this.satellite = false,
+    this.satellite,
     this.bottomInset = 0,
   });
 
@@ -67,8 +68,9 @@ class FamilyMap extends StatelessWidget {
   /// Google Maps als ondergrond; de markers en gebaren blijven van flutter_map.
   final bool useGoogleMaps;
 
-  /// Satellietbeeld (enkel met Google Maps).
-  final bool satellite;
+  /// Keuze met de kaartknop (enkel met Google Maps); `null` = automatisch:
+  /// satelliet op straatniveau.
+  final bool? satellite;
 
   /// Hoogte van het onderpaneel, zodat het Google-logo zichtbaar blijft.
   final double bottomInset;
@@ -95,6 +97,17 @@ class FamilyMap extends StatelessWidget {
 
   /// [onNativeMarkers] gezet = Google tekent de markers (zie ClusteredMarkerLayer).
   Widget _map(LatLng center, double zoom, ValueChanged<List<MapMarkerSpec>>? onNativeMarkers) {
+    return TwistToRotate(
+      builder: (context, rotate) => _flutterMap(center, zoom, onNativeMarkers, rotate: rotate),
+    );
+  }
+
+  Widget _flutterMap(
+    LatLng center,
+    double zoom,
+    ValueChanged<List<MapMarkerSpec>>? onNativeMarkers, {
+    required bool rotate,
+  }) {
     return FlutterMap(
       mapController: controller,
       options: MapOptions(
@@ -111,7 +124,7 @@ class FamilyMap extends StatelessWidget {
         onMapEvent: (event) {
           if (event.source == MapEventSource.onDrag) onUserGesture?.call();
         },
-        interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+        interactionOptions: familyMapGestures(rotate: rotate),
       ),
       children: [
         if (!useGoogleMaps) const AppMapTiles(),

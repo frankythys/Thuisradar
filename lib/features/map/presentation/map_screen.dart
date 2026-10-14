@@ -37,6 +37,7 @@ import '../application/map_providers.dart';
 import '../domain/auto_fit.dart';
 import '../domain/member_on_map.dart';
 import 'widgets/family_map.dart';
+import 'widgets/map_compass_button.dart';
 import 'widgets/member_list_sheet.dart';
 import 'widgets/member_sheet_dimensions.dart';
 import 'widgets/tracking_banner.dart';
@@ -61,12 +62,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   static const _focusZoom = 16.0;
 
+  /// Zonebewaking start pas als de kaart geladen is: het aanmelden van de
+  /// zones en de achtergrondmeldingen die Android daarna kan sturen, vragen
+  /// anders rekenwerk net terwijl de kaart opbouwt.
+  static const _geofenceStartDelay = Duration(seconds: 4);
+
   final _mapController = MapController();
   final _autoFit = AutoFitController();
   final _sheetController = DraggableScrollableController();
   ScrollController? _sheetScrollController;
   bool _mapReady = false;
   MemberOnMap? _selected;
+  Timer? _geofenceStart;
 
   /// Ingeklapte hoogte van het paneel als fractie; bijgewerkt bij elke layout.
   double? _sheetMinimum;
@@ -79,6 +86,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   void dispose() {
+    _geofenceStart?.cancel();
     _mapController.dispose();
     _sheetController.dispose();
     super.dispose();
@@ -88,7 +96,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
     ref.read(locationTrackerProvider.notifier).start(userId: userId, familyId: widget.family.id);
-    unawaited(ref.read(geofenceSyncProvider.notifier).start(userId: userId, familyId: widget.family.id));
+    _geofenceStart = Timer(_geofenceStartDelay, () {
+      if (!mounted) return;
+      unawaited(ref.read(geofenceSyncProvider.notifier).start(userId: userId, familyId: widget.family.id));
+    });
   }
 
   /// Maakt de kaart passend. Automatisch hoogstens één keer en nooit meer nadat
@@ -330,10 +341,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               right: 16,
               bottom: sheetTop + 16 + 48 + 12,
               child: MapStyleButton(
-                satellite: ref.watch(mapSatelliteProvider),
-                onPressed: () => unawaited(ref.read(mapSatelliteProvider.notifier).toggle()),
+                controller: _mapController,
+                choice: ref.watch(mapSatelliteProvider),
+                onChoose: ref.read(mapSatelliteProvider.notifier).choose,
               ),
             ),
+          Positioned(
+            right: 16,
+            bottom: sheetTop + 16 + (48 + 12) * (FeatureFlags.useGoogleMaps ? 2 : 1),
+            child: MapCompassButton(controller: _mapController),
+          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),

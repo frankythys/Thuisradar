@@ -1,19 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// Gewone kaart bij opstart; de handmatige keuze geldt voor deze sessie.
-class MapSatellite extends Notifier<bool> {
-  static const _key = 'map_satellite';
+import '../domain/map_style.dart';
 
+/// Keuze met de kaartknop: `null` = automatisch (zie [showsSatellite]),
+/// `true` = satelliet, `false` = gewone kaart. Geldt voor deze sessie; bij
+/// opstart weer automatisch.
+class MapSatellite extends Notifier<bool?> {
   @override
-  bool build() {
-    return false;
-  }
+  bool? build() => null;
 
-  Future<void> toggle() async {
-    state = !state;
-    await (await SharedPreferences.getInstance()).setBool(_key, state);
-  }
+  void choose({required bool satellite}) => state = satellite;
 }
 
-final mapSatelliteProvider = NotifierProvider<MapSatellite, bool>(MapSatellite.new);
+final mapSatelliteProvider = NotifierProvider<MapSatellite, bool?>(MapSatellite.new);
