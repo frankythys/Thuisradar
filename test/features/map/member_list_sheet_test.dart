@@ -141,15 +141,20 @@ void main() {
     );
     final minimum = tester
         .widget<DraggableScrollableSheet>(find.byType(DraggableScrollableSheet))
-        .minChildSize;
+        .initialChildSize;
     expect(controller.size, minimum);
     final invite = find.ancestor(of: find.text('Dierbaren toevoegen'), matching: find.byType(InkWell)).first;
     final sheetBottom = tester.getBottomLeft(find.byType(DraggableScrollableSheet)).dy;
     expect(tester.getBottomLeft(invite).dy, lessThan(sheetBottom));
     expect(find.text('Dierbaren toevoegen').hitTestable(), findsOneWidget);
+    // Ver naar beneden: het paneel zakt tot enkel de greep zichtbaar is.
     await tester.drag(find.text('Nodig anderen uit, blijf samen veiliger'), const Offset(0, 400));
     await tester.pumpAndSettle();
-    expect(controller.size, minimum);
+    final peek = tester.widget<DraggableScrollableSheet>(find.byType(DraggableScrollableSheet)).minChildSize;
+    expect(peek, lessThan(minimum));
+    expect(controller.size, closeTo(peek, 0.001));
+    controller.jumpTo(minimum);
+    await tester.pumpAndSettle();
     expect(find.text('Dierbaren toevoegen').hitTestable(), findsOneWidget);
     controller.jumpTo(0.94);
     await tester.pumpAndSettle();
@@ -221,7 +226,7 @@ void main() {
     );
     final minimum = tester
         .widget<DraggableScrollableSheet>(find.byType(DraggableScrollableSheet))
-        .minChildSize;
+        .initialChildSize;
     expect(controller.size, minimum);
     expect(find.text('Nodig anderen uit, blijf samen veiliger'), findsNothing);
     expect(find.text('Creve Family').hitTestable(), findsOneWidget);
@@ -296,7 +301,7 @@ void main() {
     scroll.position.jumpTo(0);
     final minimum = tester
         .widget<DraggableScrollableSheet>(find.byType(DraggableScrollableSheet))
-        .minChildSize;
+        .initialChildSize;
     controller.animateTo(minimum, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     await tester.pumpAndSettle();
     expect(controller.size, closeTo(minimum, 0.01));

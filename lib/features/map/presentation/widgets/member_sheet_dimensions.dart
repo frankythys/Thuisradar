@@ -69,5 +69,9 @@ abstract final class MemberSheetDimensions {
     return (header + tokens.spaceSm).ceilToDouble();
   }
 
+  /// Laagste stand: enkel de greep blijft zichtbaar, zodat je weet dat er
+  /// een paneel is en het weer omhoog kunt schuiven.
+  static double peekHeight(BuildContext context) => (2 * context.tokens.spaceSm + _handle).ceilToDouble();
+
   static const _handle = 16.0;
 }

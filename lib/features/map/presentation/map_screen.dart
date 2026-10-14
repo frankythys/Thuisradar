@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import '../../location/application/tracking_status.dart';
 import 'widgets/offline_members.dart';
@@ -327,29 +328,42 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             satellite: ref.watch(mapSatelliteProvider),
             bottomInset: sheetTop,
           ),
-          Positioned(
-            right: 16,
-            bottom: sheetTop + 16,
-            child: _RecenterButton(
-              onPressed: () {
-                _fit(members, deliberate: true);
-              },
-            ),
-          ),
-          if (FeatureFlags.useGoogleMaps)
-            Positioned(
-              right: 16,
-              bottom: sheetTop + 16 + 48 + 12,
-              child: MapStyleButton(
-                controller: _mapController,
-                choice: ref.watch(mapSatelliteProvider),
-                onChoose: ref.read(mapSatelliteProvider.notifier).choose,
-              ),
-            ),
-          Positioned(
-            right: 16,
-            bottom: sheetTop + 16 + (48 + 12) * (FeatureFlags.useGoogleMaps ? 2 : 1),
-            child: MapCompassButton(controller: _mapController),
+          // De knoppen staan boven het paneel en zakken mee als je het lager
+          // schuift dan de gewone stand (enkel de greep zichtbaar).
+          ListenableBuilder(
+            listenable: _sheetController,
+            builder: (context, _) {
+              final sheet = _sheetController.isAttached ? _sheetController.pixels : sheetTop;
+              final base = math.min(sheet, sheetTop) + 16;
+              return Stack(
+                children: [
+                  Positioned(
+                    right: 16,
+                    bottom: base,
+                    child: _RecenterButton(
+                      onPressed: () {
+                        _fit(members, deliberate: true);
+                      },
+                    ),
+                  ),
+                  if (FeatureFlags.useGoogleMaps)
+                    Positioned(
+                      right: 16,
+                      bottom: base + 48 + 12,
+                      child: MapStyleButton(
+                        controller: _mapController,
+                        choice: ref.watch(mapSatelliteProvider),
+                        onChoose: ref.read(mapSatelliteProvider.notifier).choose,
+                      ),
+                    ),
+                  Positioned(
+                    right: 16,
+                    bottom: base + (48 + 12) * (FeatureFlags.useGoogleMaps ? 2 : 1),
+                    child: MapCompassButton(controller: _mapController),
+                  ),
+                ],
+              );
+            },
           ),
           SafeArea(
             child: Padding(
