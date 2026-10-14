@@ -161,7 +161,7 @@ class MemberHistoryBubble extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 13,
+                            fontSize: 12,
                             height: 1.2,
                             fontWeight: FontWeight.w600,
                             color: AppColors.ink,

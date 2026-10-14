@@ -225,7 +225,7 @@ class _Bubble extends StatelessWidget {
                   info.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: text.labelLarge?.copyWith(color: AppColors.ink),
+                  style: text.labelLarge?.copyWith(color: AppColors.ink, fontSize: text.labelSmall?.fontSize),
                 ),
                 if (info.at != null)
                   Text(
