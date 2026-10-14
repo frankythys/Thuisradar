@@ -95,6 +95,13 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
     super.dispose();
   }
 
+  /// Zet het paneel vast op de gewone stand en beëindigt de beweging.
+  void _stopAtRest(double rest) {
+    final controller = _controller;
+    if (!mounted || !controller.isAttached || controller.size >= rest) return;
+    controller.jumpTo(rest);
+  }
+
   /// Na loslaten onder de gewone stand: naar de gewone stand of helemaal laag,
   /// nooit half (zie [sheetSnapTarget]).
   void _settle(double peek, double rest) {
@@ -135,7 +142,12 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
         );
         final minimum = (collapsed / constraints.maxHeight).clamp(0.0, 0.94);
         // Nog lager kan ook: dan blijft enkel de greep zichtbaar (meer kaart).
-        final peek = (MemberSheetDimensions.peekHeight(context) / constraints.maxHeight).clamp(0.0, minimum);
+        final peekHeight = MemberSheetDimensions.peekHeight(
+          context,
+          constraints.maxWidth,
+          familyName: widget.family.name,
+        );
+        final peek = (peekHeight / constraints.maxHeight).clamp(0.0, minimum);
         return NotificationListener<ScrollNotification>(
           onNotification: (notification) {
             final controller = _controller;
@@ -146,62 +158,70 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
             }
             return false;
           },
-          child: DraggableScrollableSheet(
-            controller: _controller,
-            initialChildSize: minimum,
-            minChildSize: peek,
-            maxChildSize: 0.94,
-            // Geen snap-punten boven de gewone stand: het paneel volgt de vinger,
-            // zodat je het rustig naar elke hoogte kunt slepen. Eronder klikt het
-            // naar de gewone of de laagste stand (zie [_settle]).
-            builder: (context, scrollController) {
-              widget.onScrollControllerReady?.call(scrollController);
-              return DecoratedBox(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                  boxShadow: [BoxShadow(color: Color(0x1A121C1C), blurRadius: 24, offset: Offset(0, -6))],
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  // Bij een gekozen persoon vult het infoscherm het hele paneel,
-                  // zonder familienaam of keuzeknoppen erboven.
-                  child: selected != null
-                      ? MemberDetailScreen(
-                          key: ValueKey(selected.member.userId),
-                          member: selected.member,
-                          familyId: familyId,
-                          location: selected.location,
-                          scrollController: scrollController,
-                          onBack: widget.onDeselect,
-                        )
-                      : LayoutBuilder(
-                          builder: (context, constraints) => Column(
-                            children: [
-                              _headerArea(context, constraints, scrollController, showInvite: showInvite),
-                              Expanded(
-                                child: ListView(
-                                  controller: scrollController,
-                                  padding: EdgeInsets.fromLTRB(
-                                    tokens.spaceMd,
-                                    tokens.spaceMd,
-                                    tokens.spaceMd,
-                                    tokens.spaceMd,
-                                  ),
-                                  children: [
-                                    if (_filter == 0)
-                                      ..._membersCard(context)
-                                    else
-                                      ..._places(context, places, presence, locations),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                ),
-              );
+          child: NotificationListener<DraggableScrollableNotification>(
+            // Van boven naar beneden: stoppen op de gewone stand, al tijdens het
+            // slepen. Pas een nieuwe beweging gaat verder naar de laagste stand.
+            onNotification: (notification) {
+              if (_startedAbove && notification.extent < minimum) _stopAtRest(minimum);
+              return false;
             },
+            child: DraggableScrollableSheet(
+              controller: _controller,
+              initialChildSize: minimum,
+              minChildSize: peek,
+              maxChildSize: 0.94,
+              // Geen snap-punten boven de gewone stand: het paneel volgt de vinger,
+              // zodat je het rustig naar elke hoogte kunt slepen. Eronder klikt het
+              // naar de gewone of de laagste stand (zie [_settle]).
+              builder: (context, scrollController) {
+                widget.onScrollControllerReady?.call(scrollController);
+                return DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                    boxShadow: [BoxShadow(color: Color(0x1A121C1C), blurRadius: 24, offset: Offset(0, -6))],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                    // Bij een gekozen persoon vult het infoscherm het hele paneel,
+                    // zonder familienaam of keuzeknoppen erboven.
+                    child: selected != null
+                        ? MemberDetailScreen(
+                            key: ValueKey(selected.member.userId),
+                            member: selected.member,
+                            familyId: familyId,
+                            location: selected.location,
+                            scrollController: scrollController,
+                            onBack: widget.onDeselect,
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) => Column(
+                              children: [
+                                _headerArea(context, constraints, scrollController, showInvite: showInvite),
+                                Expanded(
+                                  child: ListView(
+                                    controller: scrollController,
+                                    padding: EdgeInsets.fromLTRB(
+                                      tokens.spaceMd,
+                                      tokens.spaceMd,
+                                      tokens.spaceMd,
+                                      tokens.spaceMd,
+                                    ),
+                                    children: [
+                                      if (_filter == 0)
+                                        ..._membersCard(context)
+                                      else
+                                        ..._places(context, places, presence, locations),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                );
+              },
+            ),
           ),
         );
       },

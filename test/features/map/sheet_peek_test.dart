@@ -65,7 +65,7 @@ void main() {
           home: Scaffold(
             body: Builder(
               builder: (context) {
-                peekHeight = MemberSheetDimensions.peekHeight(context);
+                peekHeight = MemberSheetDimensions.peekHeight(context, 360, familyName: 'Gezin');
                 return MemberListSheet(
                   family: const Family(id: 'fam', name: 'Gezin', inviteCode: 'ABC12345'),
                   controller: controller,
@@ -98,9 +98,10 @@ void main() {
     await dragHandle((rest - peekHeight) * 0.3);
     expect(controller.pixels, moreOrLessEquals(rest, epsilon: 1));
 
-    // Ver naar beneden: enkel de greep blijft zichtbaar.
+    // Ver naar beneden: de greep en een stukje van de gezinsnaam blijven zichtbaar.
     await dragHandle(rest);
     expect(controller.pixels, moreOrLessEquals(peekHeight, epsilon: 1));
+    expect(find.text('Gezin'), findsOneWidget);
 
     // Een stukje omhoog (voorbij de helft): klikt terug naar de gewone stand.
     await dragHandle(-(rest - peekHeight) * 0.7);
@@ -110,8 +111,24 @@ void main() {
     await dragHandle(-200);
     expect(controller.pixels, greaterThan(rest + 150));
 
-    // Van hoog in één keer ver naar beneden: eerst stoppen op de gewone stand.
+    // Van hoog in één keer ver naar beneden: stopt al tijdens het slepen op de
+    // gewone stand, zakt er nooit onder.
+    // Gemeten bij elk getekend beeld: zo staat het paneel echt op het scherm.
+    var lowest = double.infinity;
+    var tracking = true;
+    tester.binding.addPersistentFrameCallback((_) {
+      if (tracking && controller.isAttached && controller.pixels < lowest) lowest = controller.pixels;
+    });
     await dragHandle(600);
+    tracking = false;
+    expect(controller.pixels, moreOrLessEquals(rest, epsilon: 1));
+    expect(lowest, greaterThan(rest - 2));
+
+    // Ook slepen in de lijst met personen stopt eerst op de gewone stand.
+    controller.jumpTo(0.8);
+    await tester.pumpAndSettle();
+    await tester.timedDrag(find.text('Liam'), const Offset(0, 600), const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
     expect(controller.pixels, moreOrLessEquals(rest, epsilon: 1));
 
     // Nog eens naar beneden: nu de laagste stand.

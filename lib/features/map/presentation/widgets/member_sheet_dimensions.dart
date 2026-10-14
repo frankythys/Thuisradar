@@ -71,9 +71,19 @@ abstract final class MemberSheetDimensions {
 
   /// Laagste stand: enkel de greep blijft zichtbaar, zodat je weet dat er
   /// een paneel is en het weer omhoog kunt schuiven.
-  /// 28 punten: 4 lager dan de eerste versie (32), met het hele streepje en
-  /// een randje eronder om het paneel met de vinger weer omhoog te nemen.
-  static double peekHeight(BuildContext context) => (2 * context.tokens.spaceSm + _handle - 4).ceilToDouble();
+  /// Laagste stand: de greep en de bovenste helft van de gezinsnaam, zodat je
+  /// weet dat er een paneel is en het makkelijk weer omhoog neemt.
+  static double peekHeight(BuildContext context, double width, {required String familyName}) {
+    final tokens = context.tokens;
+    final painter = TextPainter(
+      text: TextSpan(text: familyName, style: Theme.of(context).textTheme.headlineMedium),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout(maxWidth: (width - 2 * tokens.spaceMd).clamp(1.0, double.infinity));
+    final name = painter.height;
+    painter.dispose();
+    return (tokens.spaceSm + _handle + name / 2).ceilToDouble();
+  }
 
   static const _handle = 16.0;
 }
