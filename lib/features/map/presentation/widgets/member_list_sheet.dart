@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/widgets/icon_filter_chips.dart';
+import '../../../../shared/widgets/sheet_handle.dart';
 import '../../../family/domain/family.dart';
 import '../../../location/application/location_providers.dart';
 import '../../../location/domain/member_location.dart';
@@ -267,9 +268,8 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 16, child: Center(child: _Handle())),
                   // Tekst en knoppen iets lager: in de laagste stand verborgen.
-                  const SizedBox(height: MemberSheetDimensions.textDrop),
+                  const SheetHandle(),
                   if (widget.onInvite case final invite? when showInvite) ...[
                     _InviteBanner(onTap: invite),
                     SizedBox(height: tokens.spaceLg),
@@ -428,21 +428,6 @@ class _InviteBanner extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Handle extends StatelessWidget {
-  const _Handle();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 36,
-        height: 4,
-        decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
       ),
     );
   }

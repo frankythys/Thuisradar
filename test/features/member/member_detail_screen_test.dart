@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:thuisradar/shared/widgets/sheet_handle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
@@ -134,7 +135,7 @@ void main() {
     await collapse.up();
     await tester.pumpAndSettle();
     expect(controller.size, closeTo(0.14, 0.01));
-    final reopen = await tester.startGesture(tester.getCenter(find.byType(Divider).first));
+    final reopen = await tester.startGesture(tester.getCenter(find.byType(SheetHandle)));
     for (var i = 0; i < 20; i++) {
       await reopen.moveBy(const Offset(0, -40));
       await tester.pump();

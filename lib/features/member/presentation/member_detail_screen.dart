@@ -22,6 +22,7 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/member_avatar.dart';
+import '../../../shared/widgets/sheet_handle.dart';
 import '../../../shared/widgets/location_preview.dart';
 
 import 'package:latlong2/latlong.dart';
@@ -366,7 +367,12 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.onBack != null) ...[
-            const Center(child: SizedBox(width: 36, child: Divider(thickness: 4))),
+            // Zelfde greep en ruimte als de ledenlijst: in de laagste stand
+            // is ook hier enkel de greep zichtbaar.
+            Padding(
+              padding: EdgeInsets.only(top: context.tokens.spaceSm),
+              child: const SheetHandle(),
+            ),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(

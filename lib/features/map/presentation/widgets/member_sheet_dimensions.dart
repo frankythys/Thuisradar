@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/widgets/icon_filter_chips.dart';
+import '../../../../shared/widgets/sheet_handle.dart';
 
 /// Hoogtes volgen de beschikbare breedte en de tekstgrootte van het toestel.
 abstract final class MemberSheetDimensions {
@@ -79,11 +80,11 @@ abstract final class MemberSheetDimensions {
 
   /// Extra ruimte tussen de greep en de tekst: in de laagste stand blijven
   /// tekst en knoppen zo volledig verborgen, enkel de greep is zichtbaar.
-  static const textDrop = 16.0;
+  static const textDrop = SheetHandle.textDrop;
 
   /// Laagste stand: enkel de greep, in een strook net boven de tekst.
   static double peekHeight(BuildContext context) =>
       (context.tokens.spaceSm + _handle + textDrop - 2).ceilToDouble();
 
-  static const _handle = 16.0;
+  static const _handle = SheetHandle.handleHeight;
 }
