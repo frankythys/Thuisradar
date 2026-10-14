@@ -130,15 +130,26 @@ class GoogleMemberMarkers {
 
   gm.Marker? _markerFor(MapMarkerSpec spec, int index) {
     final frame = _frameOf(spec);
+    // Een passende afbeelding is pixel voor pixel gelijk, maar het anker kan
+    // verschoven zijn (bv. uitschuiven met een paar pixels): neem dus altijd
+    // het anker van de huidige stand. Enkel een vorige afbeelding die nog niet
+    // past, houdt haar eigen anker tot de nieuwe klaar is.
     final ({gm.BitmapDescriptor icon, Offset anchor})? look;
     if (spec.frames.isNotEmpty) {
-      final animation = _animationFor(spec, frame) ?? _animations[spec.id]?.first;
+      final match = _animationFor(spec, frame);
+      final animation = match ?? _animations[spec.id]?.first;
       look = animation == null
           ? null
-          : (icon: animation.icons[_frameIndex % animation.icons.length], anchor: animation.frame.anchor);
+          : (
+              icon: animation.icons[_frameIndex % animation.icons.length],
+              anchor: match != null ? frame.anchor : animation.frame.anchor,
+            );
     } else {
-      final drawn = _drawnFor(spec, frame) ?? _drawn[spec.id]?.first;
-      look = drawn == null ? null : (icon: drawn.icon, anchor: drawn.frame.anchor);
+      final match = _drawnFor(spec, frame);
+      final drawn = match ?? _drawn[spec.id]?.first;
+      look = drawn == null
+          ? null
+          : (icon: drawn.icon, anchor: match != null ? frame.anchor : drawn.frame.anchor);
     }
     if (look == null) return null; // nog nooit getekend
     return gm.Marker(

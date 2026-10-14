@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 import 'package:latlong2/latlong.dart';
+import 'package:thuisradar/features/map/domain/native_marker_frame.dart';
 import 'package:thuisradar/features/map/presentation/widgets/google_member_markers.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
 import 'package:thuisradar/features/map/presentation/widgets/widget_bitmap.dart';
@@ -387,5 +388,61 @@ void main() {
     });
     expect(drawings, 1);
     expect(updates, hasLength(1));
+  });
+
+  testWidgets('ballon die enkele pixels uitschuift: zelfde beeld, maar het anker schuift mee', (
+    tester,
+  ) async {
+    late Widget Function(Widget) wrap;
+    var drawings = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            final original = wrapForBitmap(context);
+            wrap = (child) {
+              drawings++;
+              return original(child);
+            };
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    final updates = <Set<gm.Marker>>[];
+    final markers = GoogleMemberMarkers(onChanged: updates.add);
+    addTearDown(markers.dispose);
+    // Een ballon rechts van het lid, zoals de kaartlaag hem maakt, met [shiftX]
+    // pixels uitschuiven. Tot een paar pixels naar links blijft de afbeelding
+    // even groot en gelijk; enkel het anker verandert.
+    MapMarkerSpec bubble(double shiftX) => MapMarkerSpec(
+      id: 'bubble_Franky',
+      point: const LatLng(51, 3),
+      width: 142,
+      height: 48,
+      alignment: Alignment(1 + 2 * shiftX / 142, -1),
+      offset: const Offset(20, -78),
+      imageKey: 'Werk',
+      child: const ColoredBox(color: Colors.white),
+    );
+    Offset anchorOf(double shiftX) => nativeMarkerFrame(
+      size: const Size(142, 48),
+      alignX: 1 + 2 * shiftX / 142,
+      alignY: -1,
+      offset: const Offset(20, -78),
+      margin: 24,
+    ).anchor;
+    expect(anchorOf(-20), isNot(anchorOf(0)), reason: 'de test moet een echte verschuiving tonen');
+
+    await tester.runAsync(() async {
+      markers.update([bubble(-20)], wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      markers.update([bubble(0)], wrap: wrap, pixelRatio: 1, ready: Future<void>.value());
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    });
+    expect(drawings, 1, reason: 'zelfde beeld, dus niet opnieuw getekend');
+    final anchor = updates.last.single.anchor;
+    expect(anchor.dx, closeTo(anchorOf(0).dx, 1e-9), reason: 'de ballon blijft vast aan zijn lid');
+    expect(anchor.dy, closeTo(anchorOf(0).dy, 1e-9));
   });
 }
