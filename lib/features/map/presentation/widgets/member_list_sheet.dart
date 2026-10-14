@@ -85,6 +85,10 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
   /// De huidige beweging begon boven de gewone stand (zie [sheetSnapTarget]).
   bool _startedAbove = false;
 
+  /// De huidige beweging begon onder de gewone stand: omhoog stopt dan ook
+  /// eerst op de gewone stand.
+  bool _startedBelow = false;
+
   DraggableScrollableController get _controller =>
       widget.controller ?? (_ownController ??= DraggableScrollableController());
 
@@ -98,7 +102,9 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
   /// Zet het paneel vast op de gewone stand en beëindigt de beweging.
   void _stopAtRest(double rest) {
     final controller = _controller;
-    if (!mounted || !controller.isAttached || controller.size >= rest) return;
+    if (!mounted || !controller.isAttached) return;
+    _startedAbove = false;
+    _startedBelow = false;
     controller.jumpTo(rest);
   }
 
@@ -142,27 +148,26 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
         );
         final minimum = (collapsed / constraints.maxHeight).clamp(0.0, 0.94);
         // Nog lager kan ook: dan blijft enkel de greep zichtbaar (meer kaart).
-        final peekHeight = MemberSheetDimensions.peekHeight(
-          context,
-          constraints.maxWidth,
-          familyName: widget.family.name,
-        );
+        final peekHeight = MemberSheetDimensions.peekHeight(context);
         final peek = (peekHeight / constraints.maxHeight).clamp(0.0, minimum);
         return NotificationListener<ScrollNotification>(
           onNotification: (notification) {
             final controller = _controller;
             if (notification is ScrollStartNotification && controller.isAttached) {
               _startedAbove = sheetAboveRest(controller.size, minimum);
+              _startedBelow = controller.size < minimum - 0.002;
             } else if (notification is ScrollEndNotification) {
               _settle(peek, minimum);
             }
             return false;
           },
           child: NotificationListener<DraggableScrollableNotification>(
-            // Van boven naar beneden: stoppen op de gewone stand, al tijdens het
-            // slepen. Pas een nieuwe beweging gaat verder naar de laagste stand.
+            // Stand per stand: van boven naar beneden én van onder naar boven
+            // stopt het paneel eerst op de gewone stand, al tijdens het slepen.
+            // Pas een nieuwe beweging gaat verder.
             onNotification: (notification) {
               if (_startedAbove && notification.extent < minimum) _stopAtRest(minimum);
+              if (_startedBelow && notification.extent > minimum) _stopAtRest(minimum);
               return false;
             },
             child: DraggableScrollableSheet(
@@ -265,6 +270,8 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 16, child: Center(child: _Handle())),
+                  // Tekst en knoppen iets lager: in de laagste stand verborgen.
+                  const SizedBox(height: MemberSheetDimensions.textDrop),
                   if (widget.onInvite case final invite? when showInvite) ...[
                     _InviteBanner(onTap: invite),
                     SizedBox(height: tokens.spaceLg),

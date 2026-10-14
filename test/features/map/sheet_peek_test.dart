@@ -65,7 +65,7 @@ void main() {
           home: Scaffold(
             body: Builder(
               builder: (context) {
-                peekHeight = MemberSheetDimensions.peekHeight(context, 360, familyName: 'Gezin');
+                peekHeight = MemberSheetDimensions.peekHeight(context);
                 return MemberListSheet(
                   family: const Family(id: 'fam', name: 'Gezin', inviteCode: 'ABC12345'),
                   controller: controller,
@@ -101,7 +101,7 @@ void main() {
     // Ver naar beneden: de greep en een stukje van de gezinsnaam blijven zichtbaar.
     await dragHandle(rest);
     expect(controller.pixels, moreOrLessEquals(peekHeight, epsilon: 1));
-    expect(find.text('Gezin'), findsOneWidget);
+    expect(find.text('Gezin').hitTestable(), findsNothing, reason: 'laagste stand: enkel de greep');
 
     // Een stukje omhoog (voorbij de helft): klikt terug naar de gewone stand.
     await dragHandle(-(rest - peekHeight) * 0.7);
@@ -134,5 +134,13 @@ void main() {
     // Nog eens naar beneden: nu de laagste stand.
     await dragHandle(rest);
     expect(controller.pixels, moreOrLessEquals(peekHeight, epsilon: 1));
+
+    // Van onder in één keer ver omhoog: eerst stoppen op de gewone stand.
+    await dragHandle(-600);
+    expect(controller.pixels, moreOrLessEquals(rest, epsilon: 1));
+
+    // Nog eens omhoog: nu gaat het verder open.
+    await dragHandle(-200);
+    expect(controller.pixels, greaterThan(rest + 150));
   });
 }

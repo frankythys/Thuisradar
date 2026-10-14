@@ -49,7 +49,13 @@ abstract final class MemberSheetDimensions {
     final name = painter.height;
     painter.dispose();
     var result =
-        2 * tokens.spaceSm + _handle + tokens.spaceMd + name + tokens.spaceMd + IconFilterChips.chipHeight;
+        2 * tokens.spaceSm +
+        _handle +
+        textDrop +
+        tokens.spaceMd +
+        name +
+        tokens.spaceMd +
+        IconFilterChips.chipHeight;
     if (showInvite) result += inviteHeight(context, width) + tokens.spaceLg;
     return result.ceilToDouble();
   }
@@ -64,26 +70,20 @@ abstract final class MemberSheetDimensions {
     required bool showInvite,
   }) {
     final tokens = context.tokens;
-    if (showInvite) return (2 * tokens.spaceSm + _handle + inviteHeight(context, width)).ceilToDouble();
+    if (showInvite) {
+      return (2 * tokens.spaceSm + _handle + textDrop + inviteHeight(context, width)).ceilToDouble();
+    }
     final header = headerHeight(context, width, familyName: familyName, showInvite: false);
     return (header + tokens.spaceSm).ceilToDouble();
   }
 
-  /// Laagste stand: enkel de greep blijft zichtbaar, zodat je weet dat er
-  /// een paneel is en het weer omhoog kunt schuiven.
-  /// Laagste stand: de greep en de bovenste helft van de gezinsnaam, zodat je
-  /// weet dat er een paneel is en het makkelijk weer omhoog neemt.
-  static double peekHeight(BuildContext context, double width, {required String familyName}) {
-    final tokens = context.tokens;
-    final painter = TextPainter(
-      text: TextSpan(text: familyName, style: Theme.of(context).textTheme.headlineMedium),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout(maxWidth: (width - 2 * tokens.spaceMd).clamp(1.0, double.infinity));
-    final name = painter.height;
-    painter.dispose();
-    return (tokens.spaceSm + _handle + name / 2).ceilToDouble();
-  }
+  /// Extra ruimte tussen de greep en de tekst: in de laagste stand blijven
+  /// tekst en knoppen zo volledig verborgen, enkel de greep is zichtbaar.
+  static const textDrop = 16.0;
+
+  /// Laagste stand: enkel de greep, in een strook net boven de tekst.
+  static double peekHeight(BuildContext context) =>
+      (context.tokens.spaceSm + _handle + textDrop - 2).ceilToDouble();
 
   static const _handle = 16.0;
 }
