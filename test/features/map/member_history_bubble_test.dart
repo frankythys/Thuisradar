@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
+import 'package:thuisradar/features/map/domain/walking_cycle.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/member_history_bubble.dart';
 import 'package:thuisradar/features/map/presentation/widgets/walking_gif_frames.dart';
@@ -189,6 +190,10 @@ void main() {
   });
 
   testWidgets('wandelend lid toont een wandelaar i.p.v. de auto', (tester) async {
+    // De beelden vooraf tekenen (gebeurt in de app op de achtergrond). Start de
+    // widget het tekenen zelf, dan loopt het in de nep-klok van de test en raakt
+    // het nooit klaar.
+    expect(await tester.runAsync(walkingGifFrames), hasLength(kWalkingLoopFrames));
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -203,15 +208,16 @@ void main() {
         ),
       ),
     );
-    // Geen auto; de sneakers spelen beeld per beeld zodra de GIF geladen is.
+    // Geen auto; de sneakers spelen beeld per beeld.
     expect(find.byType(Image), findsNothing);
     expect(find.byType(WalkingSneakers), findsOneWidget);
-    await tester.runAsync(() => walkingGifFrames());
+    // De widget krijgt de (al klare) beelden via een echte microtask.
+    await tester.runAsync(walkingGifFrames);
     await tester.pump();
     final first = tester.widget<RawImage>(find.byType(RawImage)).image;
     expect(find.byIcon(Icons.directions_walk), findsNothing);
     await tester.pump(const Duration(milliseconds: 100));
-    // Het volgende beeld van de GIF.
+    // Een volgend beeld van de cyclus.
     expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNot(same(first)));
     expect(find.text('Wandelen'), findsOneWidget);
     expect(find.text('5 km/u'), findsOneWidget);

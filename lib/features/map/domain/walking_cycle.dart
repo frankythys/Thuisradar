@@ -85,11 +85,7 @@ SneakerPose sneakerPose(double phase) {
   } else {
     pitch = _lerp(kHeelStrikeDegrees, 0, smoothStep((q - 0.8) / 0.2));
   }
-  return (
-    x: -kStride / 2 + kStride * smoothStep(q),
-    lift: math.sin(math.pi * q),
-    pitchDegrees: pitch,
-  );
+  return (x: -kStride / 2 + kStride * smoothStep(q), lift: math.sin(math.pi * q), pitchDegrees: pitch);
 }
 
 /// Hoe ver het laagste punt van de zool onder het midden van de schoen ligt,
