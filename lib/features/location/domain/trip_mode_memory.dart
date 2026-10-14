@@ -2,43 +2,45 @@ import 'member_location.dart';
 import 'motion_filter.dart' show kMovingSpeedMps;
 import 'travel_mode.dart';
 import 'trip_hint.dart';
-import 'trip_status.dart' show kBikeDisplayKmh, travelModeForSpeed;
 
-/// Houdt per lid een rustige weergavestatus bij over meerdere metingen heen,
-/// zodat de kaart niet bij elke GPS-ruis wisselt tussen wandelen, stilstaan,
-/// fietsen en rijden. Enkel weergave: GPS en ritgeschiedenis blijven origineel.
+/// Houdt per lid een rustige weergavestatus bij over meerdere metingen heen.
+/// Enkel weergave: GPS en ritgeschiedenis blijven origineel.
 ///
-/// - Vertrekken of stoppen vraagt twee opeenvolgende metingen.
-/// - Fiets en auto zijn "plakkerig": afremmen of een verkeerslicht (tot een
-///   minuut) blijft onderweg, met hetzelfde vervoermiddel. Pas na
-///   [parkedAfter] stilstand, of als de stappenteller echt stappen telt, kan
-///   het weer wandelen worden.
-/// - Hoger vervoermiddel pas na twee metingen boven de grens (een fietser die
-///   even bergaf 27 km/u gaat, blijft een fietser).
+/// De stappenteller is het sterkste bewijs: lopen de stappen op, dan wandelt
+/// iemand; beweegt iemand zonder stappen, dan zit hij in een voertuig (ook in
+/// de file aan 5 km/u). Gemeten op 14 oktober: in de auto bleef de teller een
+/// uur op hetzelfde getal, te voet liep hij ±8 stappen per 5 s op.
+///
+/// - Onderweg en stilstaand volgen meteen de meting: het toestel bevestigt
+///   beweging zelf al met twee metingen.
+/// - Een voertuig blijft onthouden tijdens verkeerslicht en file, tot iemand
+///   echt uitstapt (stappen) of [parkedAfter] stilstaat.
+/// - Een voertuig is een auto, tenzij de rit [_bikeAfterSamples] metingen
+///   lang onder [_carKmh] blijft aan fietstempo; een auto die al eens
+///   duidelijk snel ging, wordt nooit meer een fiets.
+/// - Zonder stappenteller: zoals vroeger op snelheid ([kBikeAverageKmh]).
 class TripModeMemory {
   final _members = <String, _Trip>{};
 
-  /// Na zo lang stilstaan is een rit of fietstocht voorbij.
-  static const parkedAfter = Duration(seconds: 90);
+  /// Zo lang stilstaan beëindigt een rit (met stappenteller; zonder: korter).
+  static const parkedAfter = Duration(minutes: 5);
+  static const _parkedWithoutSteps = Duration(seconds: 90);
 
   /// Langer zonder meting: de geschiedenis telt niet meer.
-  static const _gapReset = Duration(seconds: 45);
+  static const _gapReset = Duration(seconds: 90);
 
-  /// Zo lang mag een fietser of auto stilstaan en toch onderweg blijven.
-  static const _pauseFor = Duration(seconds: 60);
+  /// Boven deze snelheid (km/u) bewijzen stappen geen wandeling (schokken op
+  /// de fiets of in de auto).
+  static const _maxStepKmh = 20;
 
-  /// Onder deze snelheid (m/s) telt een meting zeker als stilstaan.
-  static const _stopMps = 0.6;
+  /// Eén meting vanaf [_surelyCarKmh], of twee op rij vanaf [_carKmh]: auto.
+  static const _carKmh = 30;
+  static const _surelyCarKmh = 35;
 
-  /// Onder deze snelheid (km/u) tijdens [_slowFor] wordt een fietser een wandelaar.
-  static const _walkKmh = 8;
-  static const _slowFor = Duration(seconds: 20);
-
-  /// Eén meting boven deze snelheid (km/u) is meteen een auto.
-  static const _surelyCarKmh = 40;
-
-  /// Zoveel stappen bij lage snelheid sinds de laatste snelle meting = te voet.
-  static const _onFootSteps = 12;
+  /// Een fiets: zoveel metingen onderweg (±3 min), het grootste deel vanaf
+  /// [_bikeMinKmh], en nooit een auto-snelheid.
+  static const _bikeAfterSamples = 36;
+  static const _bikeMinKmh = 10;
 
   List<MemberLocation> update(List<MemberLocation> locations) {
     final present = locations.map((location) => location.userId).toSet();
@@ -49,107 +51,66 @@ class TripModeMemory {
   MemberLocation _update(MemberLocation location) {
     final trip = _members.putIfAbsent(location.userId, _Trip.new);
     final previous = trip.updatedAt;
-    if (previous != null && !location.updatedAt.isAfter(previous)) {
-      return trip.hint == null ? location : location.copyWith(tripHint: trip.hint);
-    }
+    if (previous != null && !location.updatedAt.isAfter(previous)) return _withHint(location, trip);
     if (previous != null && location.updatedAt.difference(previous) > _gapReset) trip.reset();
     trip.updatedAt = location.updatedAt;
 
     final speed = location.speedMps;
     final valid = speed != null && speed.isFinite && speed >= 0 && speed <= 70;
-    if (valid) _apply(trip, speed, location);
-    return trip.hint == null ? location : location.copyWith(tripHint: trip.hint);
+    final onFoot = trip.steps.onFoot(location.updatedAt, location.steps);
+    if (valid) _apply(trip, speed, location.updatedAt, onFoot);
+    return _withHint(location, trip);
   }
 
-  void _apply(_Trip trip, double speed, MemberLocation location) {
-    final at = location.updatedAt;
-    final kmh = (speed * 3.6).round();
-    final fast = speed >= kMovingSpeedMps;
-    final steps = location.steps;
-    if (trip.moving == null) {
-      // Eerste meting: niets om mee te vergelijken.
-      trip.moving = fast;
-      if (fast) trip.start(travelModeForSpeed(kmh), kmh, steps);
+  MemberLocation _withHint(MemberLocation location, _Trip trip) {
+    final hint = trip.hint;
+    return hint == null ? location : location.copyWith(tripHint: hint);
+  }
+
+  void _apply(_Trip trip, double speed, DateTime at, bool? onFoot) {
+    if (speed < kMovingSpeedMps) {
+      trip.moving = false;
+      trip.stoppedAt ??= at;
+      final parked = at.difference(trip.stoppedAt!) >= (trip.steps.known ? parkedAfter : _parkedWithoutSteps);
+      if (onFoot == true || parked) trip.leaveVehicle();
       return;
     }
-
-    if (trip.moving!) {
-      if (!fast) {
-        trip.slowSamples++;
-        trip.pausedAt ??= at;
-        // Fiets en auto: een verkeerslicht of file is nog geen stop.
-        final sticky = trip.mode == TravelMode.bike || trip.mode == TravelMode.car;
-        final stopped = sticky
-            ? at.difference(trip.pausedAt!) >= _pauseFor
-            : (speed < _stopMps && trip.slowSamples >= 2) || trip.slowSamples >= 3;
-        if (stopped) {
-          trip
-            ..moving = false
-            ..stoppedAt = trip.pausedAt
-            ..pausedAt = null
-            ..fastSamples = 0;
-        } else if (sticky) {
-          trip.speedKmh = kmh;
-        }
-        return;
-      }
+    final kmh = (speed * 3.6).round();
+    trip
+      ..moving = true
+      ..stoppedAt = null
+      ..speedKmh = kmh;
+    if (onFoot == true && kmh < _maxStepKmh) {
       trip
-        ..slowSamples = 0
-        ..pausedAt = null
-        ..speedKmh = kmh;
-    } else {
-      final stoppedFor = trip.stoppedAt == null ? null : at.difference(trip.stoppedAt!);
-      if (stoppedFor != null && stoppedFor >= parkedAfter) trip.mode = null;
-      if (!fast) {
-        trip.fastSamples = 0;
-        return;
-      }
-      trip.fastSamples++;
-      // Na een korte stop (verkeerslicht) rijdt een auto of fiets meteen verder.
-      final resume = trip.mode != null && trip.mode != TravelMode.walk;
-      if (!resume && trip.fastSamples < 2) return;
-      trip.moving = true;
-      trip.slowSamples = 0;
-      trip.stoppedAt = null;
-      if (trip.mode == null) {
-        trip.start(travelModeForSpeed(kmh), kmh, steps);
-        return;
-      }
-      trip.speedKmh = kmh;
+        ..leaveVehicle()
+        ..mode = TravelMode.walk;
+      return;
     }
-    _chooseMode(trip, kmh, steps, at);
+    // Zonder stappen in beweging, of te snel om te wandelen: een voertuig.
+    final inVehicle = trip.vehicle != null || onFoot == false || kmh >= kBikeAverageKmh;
+    if (!inVehicle) {
+      trip.mode = TravelMode.walk;
+      return;
+    }
+    _drive(trip, kmh);
   }
 
-  void _chooseMode(_Trip trip, int kmh, int? steps, DateTime at) {
-    final mode = trip.mode ?? TravelMode.walk;
-    // Stappen bij lage snelheid: uitgestapt of afgestapt.
-    if (kmh < kBikeDisplayKmh) {
-      final base = trip.stepsAtFast;
-      if (steps != null && base != null && steps - base >= _onFootSteps && mode != TravelMode.walk) {
-        trip.setMode(TravelMode.walk, steps);
-        return;
-      }
-      if (steps != null && (base == null || steps < base)) trip.stepsAtFast = steps;
-    } else {
-      trip.stepsAtFast = steps ?? trip.stepsAtFast;
+  void _drive(_Trip trip, int kmh) {
+    trip.vehicle ??= TravelMode.car;
+    trip.vehicleSamples++;
+    if (kmh >= _bikeMinKmh) trip.briskSamples++;
+    if (kmh >= _surelyCarKmh || (kmh >= _carKmh && trip.lastKmh >= _carKmh)) {
+      trip
+        ..carSure = true
+        ..vehicle = TravelMode.car;
+    } else if (!trip.carSure &&
+        trip.vehicleSamples >= _bikeAfterSamples &&
+        trip.briskSamples * 10 >= trip.vehicleSamples * 6) {
+      trip.vehicle = TravelMode.bike;
     }
-
-    final candidate = travelModeForSpeed(kmh);
-    if (candidate.index > mode.index) {
-      trip.upgradeSamples = trip.upgradeTo == candidate ? trip.upgradeSamples + 1 : 1;
-      trip.upgradeTo = candidate;
-      if (trip.upgradeSamples >= 2 || kmh >= _surelyCarKmh) trip.setMode(candidate, steps);
-    } else {
-      trip.upgradeSamples = 0;
-      trip.upgradeTo = null;
-    }
-
-    if (trip.mode == TravelMode.bike && kmh < _walkKmh) {
-      trip.slowSince ??= at;
-      if (at.difference(trip.slowSince!) >= _slowFor) trip.setMode(TravelMode.walk, steps);
-    } else {
-      trip.slowSince = null;
-    }
+    trip
+      ..lastKmh = kmh
+      ..mode = trip.vehicle;
   }
 }
 
@@ -159,33 +120,25 @@ class _Trip {
   TravelMode? mode;
   int? speedKmh;
   DateTime? stoppedAt;
-  DateTime? pausedAt;
-  DateTime? slowSince;
-  int? stepsAtFast;
-  int fastSamples = 0;
-  int slowSamples = 0;
-  TravelMode? upgradeTo;
-  int upgradeSamples = 0;
+  final steps = StepWindow();
+
+  /// Het voertuig van deze rit (auto of fiets), null = te voet of onbekend.
+  TravelMode? vehicle;
+  bool carSure = false;
+  int vehicleSamples = 0;
+  int briskSamples = 0;
+  int lastKmh = 0;
 
   TripHint? get hint => moving == null
       ? null
       : TripHint(moving: moving!, mode: mode ?? TravelMode.walk, speedKmh: moving! ? speedKmh : null);
 
-  void start(TravelMode travel, int kmh, int? steps) {
-    mode = travel;
-    speedKmh = kmh;
-    stepsAtFast = steps;
-    upgradeTo = null;
-    upgradeSamples = 0;
-    slowSince = null;
-  }
-
-  void setMode(TravelMode travel, int? steps) {
-    mode = travel;
-    stepsAtFast = steps;
-    upgradeTo = null;
-    upgradeSamples = 0;
-    slowSince = null;
+  void leaveVehicle() {
+    vehicle = null;
+    carSure = false;
+    vehicleSamples = 0;
+    briskSamples = 0;
+    lastKmh = 0;
   }
 
   void reset() {
@@ -193,12 +146,42 @@ class _Trip {
     mode = null;
     speedKmh = null;
     stoppedAt = null;
-    pausedAt = null;
-    slowSince = null;
-    stepsAtFast = null;
-    fastSamples = 0;
-    slowSamples = 0;
-    upgradeTo = null;
-    upgradeSamples = 0;
+    steps.clear();
+    leaveVehicle();
+  }
+}
+
+/// Zet de stappenteller van de laatste seconden om in "te voet" of niet.
+class StepWindow {
+  /// Vergelijk met een meting tussen [_minGap] en [_window] geleden.
+  static const _window = Duration(seconds: 20);
+  static const _minGap = Duration(seconds: 4);
+
+  /// Zoveel stappen of meer: te voet. Zoveel of minder: niet te voet.
+  static const _onFootSteps = 6;
+  static const _stillSteps = 2;
+
+  final _samples = <({DateTime at, int steps})>[];
+
+  /// Heeft dit toestel een stappenteller (ooit een waarde gestuurd)?
+  bool known = false;
+
+  /// Te voet volgens de stappen tot [at]; null als dat nog niet te zeggen is.
+  bool? onFoot(DateTime at, int? steps) {
+    if (steps == null) return null;
+    known = true;
+    // Een lagere teller (nieuwe dag, herstart) begint opnieuw.
+    _samples.removeWhere((s) => at.difference(s.at) > _window || s.steps > steps);
+    final reference = _samples.where((s) => at.difference(s.at) >= _minGap).firstOrNull;
+    _samples.add((at: at, steps: steps));
+    if (reference == null) return null;
+    final walked = steps - reference.steps;
+    if (walked >= _onFootSteps) return true;
+    return walked <= _stillSteps ? false : null;
+  }
+
+  void clear() {
+    _samples.clear();
+    known = false;
   }
 }
