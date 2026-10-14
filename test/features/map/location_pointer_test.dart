@@ -70,7 +70,7 @@ void main() {
     final tail = tester.getRect(find.byType(MarkerTail));
     final avatar = tester.getRect(find.byType(MemberAvatar));
     expect(tail.center.dx, closeTo(location.dx, 0.5));
-    expect(tail.top, closeTo(avatar.bottom, 0.5));
+    expect(tail.top, closeTo(avatar.bottom - MarkerTail.inset, 0.5));
     expect(tail.bottom, greaterThanOrEqualTo(location.dy - LocationDot.haloSize / 2));
     expect(tail.bottom, lessThan(location.dy - LocationDot.dotSize / 2));
   });

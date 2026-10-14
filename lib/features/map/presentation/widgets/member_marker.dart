@@ -44,6 +44,9 @@ class MemberMarker extends StatelessWidget {
     // Stilstaand: het rondje hangt boven de locatie, met een puntje dat naar
     // een stip op de exacte plek wijst (onderaan midden van dit vak).
     final memberColor = context.tokens.memberColor(entry.member.colorIndex);
+    final avatarHeight = selected ? 2 * MemberMarker.selectedRadius : MemberMarker.avatarSize;
+    // Van onder het rondje tot in de halo rond de stip.
+    final tailHeight = MemberMarker.height - avatarHeight - LocationDot.haloSize / 2 + MarkerTail.overlap;
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.topCenter,
@@ -54,20 +57,26 @@ class MemberMarker extends StatelessWidget {
           bottom: -LocationDot.haloSize / 2,
           child: Center(child: LocationDot(color: memberColor)),
         ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            marker,
-            MarkerTail(
-              color: selected ? AppColors.mapSelection : Colors.white,
-              // Van onder het rondje tot in de halo rond de stip.
-              height:
-                  MemberMarker.height -
-                  (selected ? 2 * MemberMarker.selectedRadius : MemberMarker.avatarSize) -
-                  LocationDot.haloSize / 2 +
-                  MarkerTail.overlap,
-            ),
-          ],
+        SizedBox(
+          width: avatarHeight,
+          height: avatarHeight + tailHeight,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              marker,
+              // Bovenop de schaduw van het rondje; de vorm van het rondje zelf
+              // blijft uit het puntje.
+              Positioned(
+                top: avatarHeight - MarkerTail.inset,
+                child: MarkerTail(
+                  color: selected ? AppColors.mapSelection : Colors.white,
+                  height: tailHeight + MarkerTail.inset,
+                  circleRadius: avatarHeight / 2,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
