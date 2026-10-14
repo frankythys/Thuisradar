@@ -109,5 +109,13 @@ void main() {
     // Boven de gewone stand blijft het paneel waar je het loslaat.
     await dragHandle(-200);
     expect(controller.pixels, greaterThan(rest + 150));
+
+    // Van hoog in één keer ver naar beneden: eerst stoppen op de gewone stand.
+    await dragHandle(600);
+    expect(controller.pixels, moreOrLessEquals(rest, epsilon: 1));
+
+    // Nog eens naar beneden: nu de laagste stand.
+    await dragHandle(rest);
+    expect(controller.pixels, moreOrLessEquals(peekHeight, epsilon: 1));
   });
 }

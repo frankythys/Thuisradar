@@ -22,4 +22,10 @@ void main() {
   test('geen ruimte tussen de standen: niets doen', () {
     expect(sheetSnapTarget(0.1, peek: 0.2, rest: 0.2), isNull);
   });
+
+  test('van hoog naar beneden: eerst stoppen op de gewone stand, ook als het verder zakte', () {
+    expect(sheetSnapTarget(0.08, peek: peek, rest: rest, startedAbove: true), rest);
+    expect(sheetSnapTarget(peek, peek: peek, rest: rest, startedAbove: true), rest);
+    expect(sheetSnapTarget(0.5, peek: peek, rest: rest, startedAbove: true), isNull);
+  });
 }

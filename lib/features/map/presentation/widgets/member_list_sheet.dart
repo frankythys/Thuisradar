@@ -82,6 +82,9 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
   Drag? _headerDrag;
   DraggableScrollableController? _ownController;
 
+  /// De huidige beweging begon boven de gewone stand (zie [sheetSnapTarget]).
+  bool _startedAbove = false;
+
   DraggableScrollableController get _controller =>
       widget.controller ?? (_ownController ??= DraggableScrollableController());
 
@@ -98,7 +101,8 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = _controller;
       if (!mounted || !controller.isAttached) return;
-      final target = sheetSnapTarget(controller.size, peek: peek, rest: rest);
+      final target = sheetSnapTarget(controller.size, peek: peek, rest: rest, startedAbove: _startedAbove);
+      _startedAbove = false;
       if (target == null) return;
       unawaited(
         controller.animateTo(target, duration: const Duration(milliseconds: 220), curve: Curves.easeOut),
@@ -132,9 +136,14 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
         final minimum = (collapsed / constraints.maxHeight).clamp(0.0, 0.94);
         // Nog lager kan ook: dan blijft enkel de greep zichtbaar (meer kaart).
         final peek = (MemberSheetDimensions.peekHeight(context) / constraints.maxHeight).clamp(0.0, minimum);
-        return NotificationListener<ScrollEndNotification>(
-          onNotification: (_) {
-            _settle(peek, minimum);
+        return NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            final controller = _controller;
+            if (notification is ScrollStartNotification && controller.isAttached) {
+              _startedAbove = sheetAboveRest(controller.size, minimum);
+            } else if (notification is ScrollEndNotification) {
+              _settle(peek, minimum);
+            }
             return false;
           },
           child: DraggableScrollableSheet(
