@@ -71,8 +71,9 @@ abstract final class MemberSheetDimensions {
 
   /// Laagste stand: enkel de greep blijft zichtbaar, zodat je weet dat er
   /// een paneel is en het weer omhoog kunt schuiven.
-  /// 22 punten: het streepje met een smal randje eronder.
-  static double peekHeight(BuildContext context) => (context.tokens.spaceSm + _handle - 2).ceilToDouble();
+  /// 28 punten: 4 lager dan de eerste versie (32), met het hele streepje en
+  /// een randje eronder om het paneel met de vinger weer omhoog te nemen.
+  static double peekHeight(BuildContext context) => (2 * context.tokens.spaceSm + _handle - 4).ceilToDouble();
 
   static const _handle = 16.0;
 }
