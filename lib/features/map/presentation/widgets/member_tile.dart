@@ -16,17 +16,9 @@ import '../../domain/member_on_map.dart';
 /// korte statusregel en "Sinds HH:mm". Leden zonder signaal krijgen een rode
 /// staat met een doorgestreept toestelicoon.
 class MemberTile extends ConsumerWidget {
-  const MemberTile({
-    super.key,
-    required this.entry,
-    required this.isMe,
-    required this.now,
-    this.placeStatus,
-    this.onTap,
-  });
+  const MemberTile({super.key, required this.entry, required this.now, this.placeStatus, this.onTap});
 
   final MemberOnMap entry;
-  final bool isMe;
   final DateTime now;
 
   /// Waar dit lid nu is (plaats), indien binnen een zone.
@@ -60,7 +52,7 @@ class MemberTile extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isMe ? '${entry.member.displayName} (jij)' : entry.member.displayName,
+                    entry.member.displayName,
                     style: text.titleMedium?.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
                   ),
                   SizedBox(height: tokens.spaceXs),

@@ -447,7 +447,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             MemberListSheet(
               family: widget.family,
               members: members,
-              currentUserId: myId,
               now: now,
               onSelect: _select,
               selectedUserId: selected?.member.userId,

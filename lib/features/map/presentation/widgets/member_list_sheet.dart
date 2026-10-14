@@ -33,7 +33,6 @@ class MemberListSheet extends ConsumerStatefulWidget {
     super.key,
     required this.family,
     required this.members,
-    required this.currentUserId,
     required this.now,
     required this.onSelect,
     this.selectedUserId,
@@ -49,7 +48,6 @@ class MemberListSheet extends ConsumerStatefulWidget {
 
   final Family family;
   final List<MemberOnMap> members;
-  final String? currentUserId;
   final String? selectedUserId;
   final VoidCallback? onDeselect;
   final Map<String, PlaceStatus> placeByUser;
@@ -315,7 +313,6 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
           for (final entry in widget.members)
             MemberTile(
               entry: entry,
-              isMe: entry.member.userId == widget.currentUserId,
               now: widget.now,
               placeStatus: widget.placeByUser[entry.member.userId],
               onTap: () => widget.onSelect(entry),

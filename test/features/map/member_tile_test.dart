@@ -31,7 +31,7 @@ void main() {
     var taps = 0;
 
     await tester.pumpWidget(
-      _wrap(MemberTile(entry: _entry(), isMe: false, now: DateTime(2026, 1, 2, 10, 5), onTap: () => taps++)),
+      _wrap(MemberTile(entry: _entry(), now: DateTime(2026, 1, 2, 10, 5), onTap: () => taps++)),
     );
 
     await tester.tap(find.text('Papa'));
@@ -39,9 +39,7 @@ void main() {
   });
 
   testWidgets('toont de naam, sinds-tijd en batterijstand', (tester) async {
-    await tester.pumpWidget(
-      _wrap(MemberTile(entry: _entry(), isMe: false, now: DateTime(2026, 1, 2, 10, 0, 20))),
-    );
+    await tester.pumpWidget(_wrap(MemberTile(entry: _entry(), now: DateTime(2026, 1, 2, 10, 0, 20))));
 
     expect(find.text('Papa'), findsOneWidget);
     expect(find.text('Sinds 10:00'), findsOneWidget);

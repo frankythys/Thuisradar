@@ -43,7 +43,6 @@ class _HostState extends State<_Host> {
     family: const Family(id: 'fam', name: 'Gezin', inviteCode: 'ABC12345'),
     controller: widget.controller,
     members: widget.members,
-    currentUserId: 'u1',
     now: DateTime(2026, 10, 9, 12),
     selectedUserId: selected,
     onSelect: (entry) {

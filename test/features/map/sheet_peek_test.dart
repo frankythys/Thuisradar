@@ -70,7 +70,6 @@ void main() {
                   family: const Family(id: 'fam', name: 'Gezin', inviteCode: 'ABC12345'),
                   controller: controller,
                   members: members,
-                  currentUserId: 'u1',
                   now: now,
                   onSelect: (_) {},
                   onInvite: () {},

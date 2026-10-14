@@ -103,7 +103,6 @@ void main() {
               family: _family,
               controller: controller,
               members: members,
-              currentUserId: 'u1',
               now: now,
               selectedUserId: selectedUserId,
               onSelect: (_) {},
@@ -187,7 +186,7 @@ void main() {
     expect(find.text('Voeg een persoon toe'), findsOneWidget);
     expect(find.text('Creve Family'), findsOneWidget);
     expect(find.bySemanticsLabel('Personen'), findsOneWidget);
-    expect(find.text('Liam (jij)'), findsOneWidget);
+    expect(find.text('Liam'), findsOneWidget);
     expect(find.text('Sinds 10:00'), findsOneWidget);
     expect(find.text('85%'), findsOneWidget);
   });
@@ -212,7 +211,7 @@ void main() {
 
     expect(top('Nodig anderen uit, blijf samen veiliger'), lessThan(top('Creve Family')));
     expect(top('Creve Family'), lessThan(chips));
-    expect(chips, lessThan(top('Liam (jij)')));
+    expect(chips, lessThan(top('Liam')));
   });
 
   testWidgets('ingeklapt bij een actief gezin: familienaam en knoppen in beeld', (tester) async {
