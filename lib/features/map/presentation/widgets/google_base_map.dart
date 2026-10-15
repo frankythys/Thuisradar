@@ -10,6 +10,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/presentation/place_icons.dart';
+import '../../../places/presentation/place_images.dart';
 import '../../domain/google_camera.dart';
 import '../../domain/map_style.dart';
 import 'google_member_markers.dart';
@@ -108,7 +109,12 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     _loadIcons();
     // Afbeeldingen in de markers moeten klaar zijn vóór we ze tekenen.
     _assetsReady = Future.wait([
-      for (final image in const <ImageProvider>[bubbleHomeImage, bubbleCarImage, bubbleBikeImage])
+      for (final image in <ImageProvider>[
+        bubbleHomeImage,
+        bubbleCarImage,
+        bubbleBikeImage,
+        ...placeBubbleImages,
+      ])
         precacheImage(image, context),
     ]);
     _onMarkers();
@@ -134,10 +140,12 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     }
     for (final key in widget.places.map((p) => p.icon).toSet()) {
       if (_icons.containsKey(key)) continue;
+      final photo = placeMapAsset(key);
+      final bitmap = photo != null
+          ? placeImageBitmap(photo, width: kPlaceMapImageWidth, pixelRatio: pixelRatio)
+          : placeIconBitmap(placeIcon(key), color: AppColors.primary, size: 20, pixelRatio: pixelRatio);
       unawaited(
-        placeIconBitmap(placeIcon(key), color: AppColors.primary, size: 20, pixelRatio: pixelRatio).then((
-          icon,
-        ) {
+        bitmap.then((icon) {
           if (!mounted || _iconPixelRatio != pixelRatio) return;
           setState(() => _icons[key] = icon);
         }),

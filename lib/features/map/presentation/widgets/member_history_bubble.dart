@@ -7,6 +7,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
+import '../../../places/presentation/place_images.dart';
 import '../../domain/bubble_layout.dart';
 import '../../domain/member_on_map.dart';
 import 'walking_sneakers.dart';
@@ -148,6 +149,8 @@ class MemberHistoryBubble extends StatelessWidget {
                     )
                   else if (atPlace && placeStatus!.icon == 'home')
                     const Image(image: bubbleHomeImage, width: 32, height: 32, fit: BoxFit.contain)
+                  else if ((atPlace ? placeBubbleImage(placeStatus!.icon) : null) case final photo?)
+                    Image(image: photo, width: 38, height: 32, fit: BoxFit.contain)
                   else
                     Icon(icon, color: AppColors.primary, size: 23),
                   const SizedBox(width: 5),
