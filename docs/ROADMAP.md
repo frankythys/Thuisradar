@@ -35,6 +35,8 @@ Beslissingen en werkregels staan in `../CLAUDE.md`; kosten in `KOSTEN.md`.
 
 ## ⏳ Later
 
+- **Meertaligheid** — 8 talen (nl, en, fr, de, es, pt, it, tr), toesteltaal met keuze in Profiel, terugval Engels. Fundament klaar (navigatie, profiel, taalkeuze); de rest per feature volgens `TALEN.md`.
+
 - **Google Maps / satelliet** — overstap van flutter_map/OSM naar Google Maps (SDK for Android, gratis tier) met auto-satelliet en een lagen-knop. Domein-logica (fit-once, selectie, groepering) staat al los van flutter_map, dus de wissel blijft beperkt.
 - **iPhone-versie** — voor Liam en mama, via Codemagic / TestFlight (geen lokale Mac nodig).
 - **Eventueel verkopen** — zie `KOSTEN.md` voor wat gratis moet blijven en wat achter betaalde feature flags gaat.

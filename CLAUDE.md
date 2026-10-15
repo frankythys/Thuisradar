@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Thuisradar is a family-location app (a self-hosted Life360 alternative) built with Flutter + Supabase. Code comments and user-facing strings are in Dutch; keep new strings Dutch to match. See `README.md` and `docs/SETUP.md` for the product overview and full environment setup.
+Thuisradar is a family-location app (a self-hosted Life360 alternative) built with Flutter + Supabase. Code comments are in Dutch. User-facing strings live in `lib/l10n/*.arb` (Dutch is the source language, 8 languages in total — see `docs/TALEN.md`). See `README.md` and `docs/SETUP.md` for the product overview and full environment setup.
 
 ## Commands
 
@@ -57,7 +57,7 @@ Supabase URL + key come in via `--dart-define-from-file=env.json` (copy `env.exa
 - **Feature-first, no god code.** Organise by feature/domain, not by type. Keep files small — **~200 lines typical, split beyond that**. Each file does one thing.
 - **`domain/` is pure Dart** — no Flutter, no Supabase imports. Put testable decision logic there (see the map domain classes).
 - **No hardcoded colours/sizes in widgets.** Use the `ColorScheme` + `AppTokens` `ThemeExtension` (`context.tokens`). Light theme only for now, but built so dark mode is a second scheme.
-- **All UI text in Dutch (Vlaams).**
+- **No hardcoded UI text.** Every user-facing string goes through `context.l10n` (`lib/l10n/l10n.dart`): add the key with a Dutch (Vlaams) text and an `@`-description to `app_nl.arb`, then to **all** other `.arb` files (`arb_completeness_test.dart` fails otherwise). Use placeholders and ICU plurals, never glue sentences together. Screens not yet migrated still have Dutch literals — convert them per feature, see `docs/TALEN.md`.
 - **Before every commit:** `dart format -l 110 lib test`, `flutter analyze` must be **0 issues**, and `flutter test` must be **green**. Write tests for new `domain/` and `application/` logic.
 - **Cross-platform first.** Don't write Android-only code when a cross-platform alternative exists (iPhone comes later — see below).
 - **Commit per logical step** with a clear Dutch message; attribution is disabled (no co-author trailer). **Never push without asking.**
