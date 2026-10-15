@@ -11,6 +11,7 @@ import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../domain/sos_alert.dart';
 import 'widgets/sos_countdown.dart';
+import 'widgets/sos_emergency_line.dart';
 import 'widgets/sos_hold_button.dart';
 import 'widgets/sos_recipients.dart';
 
@@ -122,6 +123,8 @@ class _SosScreenState extends ConsumerState<SosScreen> {
               ),
               SizedBox(height: tokens.spaceMd),
               SosRecipients(members: others),
+              SizedBox(height: tokens.spaceSm),
+              const SosEmergencyLine(),
             ],
           ),
         ),

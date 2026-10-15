@@ -13,6 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/clock.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../auth/application/auth_providers.dart';
+import '../../emergency/application/emergency_providers.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
 import '../../../core/config/feature_flags.dart';
@@ -231,13 +232,39 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       return;
     }
 
+    // Het gezin (internet) en de noodcontacten (sms, ook zonder internet)
+    // tegelijk: een trage verbinding mag de sms niet ophouden.
+    final raising = ref
+        .read(sosRepositoryProvider)
+        .raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng)
+        .then<bool>(
+          (_) => true,
+          onError: (Object error) {
+            debugPrint('SOS naar het gezin mislukt: $error');
+            return false;
+          },
+        );
+    final contacts = await _alertEmergencyContacts(myId, lat, lng);
+    final family = await raising
+        ? 'SOS verzonden naar je gezin.'
+        : 'SOS naar je gezin mislukt. Probeer opnieuw.';
+    _snack([family, ?contacts].join(' '));
+  }
+
+  /// Sms naar de noodcontacten en contact 1 bellen; geeft de uitleg voor de
+  /// melding terug. Een fout hier mag het alarm voor het gezin nooit stoppen.
+  Future<String?> _alertEmergencyContacts(String myId, double lat, double lng) async {
     try {
-      await ref
-          .read(sosRepositoryProvider)
-          .raise(familyId: familyId, userId: myId, latitude: lat, longitude: lng);
-      _snack('SOS verzonden naar je gezin.');
-    } on Exception {
-      _snack('SOS versturen mislukt. Probeer opnieuw.');
+      final members = ref.read(anchoredMembersOnMapProvider(widget.family.id)).value ?? const <MemberOnMap>[];
+      final me = members.where((m) => m.member.userId == myId).firstOrNull;
+      final contacts = await ref.read(myEmergencyContactsProvider.future);
+      final outcome = await ref
+          .read(emergencyAlerterProvider)
+          .alert(contacts: contacts, senderName: me?.member.displayName ?? '', latitude: lat, longitude: lng);
+      return outcome.summary;
+    } on Object catch (error) {
+      debugPrint('Noodcontacten verwittigen mislukt: $error');
+      return 'De noodcontacten verwittigen is niet gelukt.';
     }
   }
 

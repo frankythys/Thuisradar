@@ -22,6 +22,11 @@
     <!-- Het package vraagt minSdk 26, maar enkel voor die voorgronddienst
          (startForegroundService). Zonder dienst werkt het ook op Android 7. -->
     <uses-sdk tools:overrideLibrary="dk.carp.activity_recognition_flutter"/>
+    <!-- Noodcontacten: bij een SOS automatisch een sms sturen en contact 1 bellen. -->
+    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <!-- Ook installeerbaar op een tablet zonder simkaart (dan zonder sms/bellen). -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- Zonebewaking (native_geofence): zones opnieuw aanmelden na herstart -->

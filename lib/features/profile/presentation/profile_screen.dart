@@ -9,6 +9,7 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../auth/data/biometric_login.dart';
 import '../../auth/data/pin_lock.dart';
+import '../../emergency/presentation/emergency_contacts_tile.dart';
 import 'pin_settings_tile.dart';
 import '../../family/application/family_providers.dart';
 import '../../family/domain/family.dart';
@@ -303,6 +304,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           .push(MaterialPageRoute<void>(builder: (_) => InviteScreen(family: widget.family))),
                 ),
               ),
+              EmergencyContactsTile(senderName: me?.displayName ?? ''),
               ProfileTile(
                 icon: Icons.notifications_outlined,
                 title: 'Meldingen',

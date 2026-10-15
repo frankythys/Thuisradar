@@ -19,5 +19,7 @@ class MainActivity : FlutterFragmentActivity() {
                     else -> result.notImplemented()
                 }
             }
+        // Noodcontacten: sms'en en bellen bij een SOS.
+        EmergencyChannel.register(applicationContext, flutterEngine.dartExecutor.binaryMessenger)
     }
 }
