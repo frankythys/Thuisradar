@@ -416,7 +416,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                                 if (placeBubbleImage(key) case final photo?)
                                   Image(image: photo, width: 44, height: 28, fit: BoxFit.contain)
                                 else
-                                  Icon(placeIcon(key), color: _icon == key ? Colors.white : AppColors.primary),
+                                  Icon(
+                                    placeIcon(key),
+                                    color: _icon == key ? Colors.white : AppColors.primary,
+                                  ),
                                 Text(
                                   placeIconLabel(key),
                                   style: TextStyle(
