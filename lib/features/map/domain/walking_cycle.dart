@@ -22,17 +22,17 @@ const kWalkFrameDuration = Duration(microseconds: kWalkCycleMs * 1000 ~/ kWalkin
 /// Deel van de cyclus dat een voet op de grond staat.
 const kStance = 0.6;
 
-/// Schoenlengte t.o.v. B.
-const kShoeLength = 0.40;
+/// Schoenlengte t.o.v. B: zo groot als past naast elkaar in het vak.
+const kShoeLength = 0.60;
 
 /// Afstand die een voet per cyclus heen en terug aflegt, t.o.v. B.
-const kStride = 0.38;
+const kStride = 0.28;
 
 /// Hoogste optilling tijdens de zwaai, t.o.v. H.
-const kLift = 0.11;
+const kLift = 0.16;
 
-/// Grondlijn t.o.v. H (van boven).
-const kGround = 0.84;
+/// Grondlijn t.o.v. H (van boven); zo staan de schoenen mooi in het midden.
+const kGround = 0.88;
 
 /// Laatste stuk van de steunfase waarin de hiel loskomt.
 const kHeelOff = 0.15;

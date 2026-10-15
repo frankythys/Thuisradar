@@ -13,9 +13,10 @@ typedef WalkingGifFrame = ({ui.Image image, Duration duration});
 /// wandelbeweging zelf wordt in code getekend ([paintWalkingSneakers]).
 const walkingSneakerAsset = 'assets/markers/sneaker.webp';
 
-/// Grootte van één beeld in pixels: ruim genoeg voor het vak van de sneakers
-/// in de ballon (52 × 32) op een 3×-scherm.
-const kWalkingFrameWidth = 156;
+/// Grootte van één beeld in pixels: dezelfde verhouding als het vak van de
+/// sneakers in de ballon (52 × 32), zodat de schoenen het hele vak vullen, en
+/// scherp genoeg voor een 3×-scherm.
+const kWalkingFrameWidth = 169;
 const kWalkingFrameHeight = 104;
 
 Future<List<WalkingGifFrame>>? _frames;
