@@ -19,7 +19,7 @@ void main() {
     log = [];
     when(() => phone.sendSms(any(), any())).thenAnswer((call) async {
       log.add('sms ${call.positionalArguments.first}');
-      return true;
+      return SmsResult.sent;
     });
     when(() => phone.call(any())).thenAnswer((call) async {
       log.add('bel ${call.positionalArguments.first}');
@@ -36,14 +36,14 @@ void main() {
   test('automatisch: eerst sms naar allebei, daarna contact 1 bellen', () async {
     final outcome = await alert([jan, oma]);
     expect(log, ['sms 0470123456', 'sms +32471987654', 'bel 0470123456']);
-    expect(outcome.summary, 'Sms naar Oma en Jan, nu bellen naar Oma.');
+    expect(outcome.summary, 'Sms naar Oma en Jan. Nu bellen naar Oma.');
     final text = verify(() => phone.sendSms('0470123456', captureAny())).captured.single as String;
     expect(text, contains('SOS van Papa'));
     expect(text, contains('51.05430,3.71740'));
   });
 
   test('zonder toestemming: de berichten-app opent voor contact 1, niet bellen', () async {
-    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => false);
+    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => SmsResult.notAllowed);
     final outcome = await alert([oma, jan]);
     expect(log, ['open sms 0470123456']);
     verifyNever(() => phone.call(any()));
@@ -63,5 +63,22 @@ void main() {
     final outcome = await alert(const []);
     expect(log, isEmpty);
     expect(outcome.summary, isNull);
+  });
+
+  test('geen simkaart of netwerk: niet doen alsof, en niet bellen', () async {
+    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => SmsResult.noService);
+    final outcome = await alert([oma, jan]);
+    verifyNever(() => phone.call(any()));
+    verifyNever(() => phone.openSms(any(), any()));
+    expect(outcome.texted, isEmpty);
+    expect(outcome.summary, 'Sms naar Oma en Jan niet verstuurd: geen gsm-netwerk of simkaart.');
+  });
+
+  test('één sms mislukt: eerlijk melden, de andere telt wel', () async {
+    when(() => phone.sendSms('+32471987654', any())).thenAnswer((_) async => SmsResult.failed);
+    final outcome = await alert([oma, jan]);
+    expect(outcome.texted, [oma]);
+    expect(outcome.failed, [jan]);
+    expect(outcome.summary, 'Sms naar Oma. Sms naar Jan mislukt. Nu bellen naar Oma.');
   });
 }

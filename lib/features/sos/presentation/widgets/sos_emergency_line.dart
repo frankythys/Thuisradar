@@ -15,9 +15,12 @@ class SosEmergencyLine extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final plan = planFor(ref.watch(myEmergencyContactsProvider).value ?? const []);
     final automatic = ref.watch(emergencyAutomaticProvider).value ?? false;
+    final noSim = ref.watch(emergencySimProvider).value == false;
     final String line;
     if (plan.isEmpty) {
       line = 'Nog geen noodcontacten · instellen via Profiel';
+    } else if (noSim) {
+      line = 'Deze gsm heeft geen simkaart: geen sms of oproep naar je noodcontacten';
     } else if (!automatic) {
       line = 'Noodcontact ${plan.callTo!.name}: de sms staat klaar, zelf versturen';
     } else {
@@ -26,7 +29,7 @@ class SosEmergencyLine extends ConsumerWidget {
     }
     return Text(
       line,
-      style: text.bodySmall?.copyWith(color: AppColors.muted),
+      style: text.bodySmall?.copyWith(color: noSim && !plan.isEmpty ? AppColors.alert : AppColors.muted),
       textAlign: TextAlign.center,
       maxLines: 2,
       overflow: TextOverflow.ellipsis,

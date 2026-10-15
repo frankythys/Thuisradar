@@ -94,15 +94,27 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
     if (plan.isEmpty) return _snack('Vul eerst een noodcontact in.');
     final phone = ref.read(emergencyPhoneProvider);
     final text = testSmsText(widget.senderName);
-    final sent = <String>[];
-    for (final contact in plan.smsTo) {
-      if (await phone.sendSms(dialablePhone(contact.phone), text)) sent.add(contact.name);
+    final results = <String, SmsResult>{
+      for (final contact in plan.smsTo) contact.name: await phone.sendSms(dialablePhone(contact.phone), text),
+    };
+    ref.invalidate(emergencySimProvider);
+    if (results.values.every((result) => result == SmsResult.notAllowed)) {
+      return phone.openSms(dialablePhone(plan.smsTo.first.phone), text);
     }
-    if (sent.isEmpty) {
-      await phone.openSms(dialablePhone(plan.smsTo.first.phone), text);
-    } else {
-      _snack('Test-sms verstuurd naar ${sent.join(' en ')}.');
-    }
+    String names(SmsResult wanted) => [
+      for (final MapEntry(:key, :value) in results.entries)
+        if (value == wanted) key,
+    ].join(' en ');
+    final sent = names(SmsResult.sent);
+    final noService = names(SmsResult.noService);
+    final failed = names(SmsResult.failed);
+    _snack(
+      [
+        if (sent.isNotEmpty) 'Test-sms verstuurd naar $sent.',
+        if (noService.isNotEmpty) 'Niet verstuurd naar $noService: geen gsm-netwerk of simkaart.',
+        if (failed.isNotEmpty) 'Test-sms naar $failed mislukt.',
+      ].join(' '),
+    );
   }
 
   void _snack(String message) {

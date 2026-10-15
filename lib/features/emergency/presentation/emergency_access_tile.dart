@@ -16,8 +16,11 @@ class EmergencyAccessTile extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final automatic = ref.watch(emergencyAutomaticProvider).value ?? false;
     final android = defaultTargetPlatform == TargetPlatform.android;
+    final noSim = ref.watch(emergencySimProvider).value == false;
     final String subtitle;
-    if (automatic) {
+    if (noSim) {
+      subtitle = 'Deze gsm heeft geen simkaart (of geen gsm-netwerk): sms en bellen werken niet';
+    } else if (automatic) {
       subtitle = 'Aan · bij een SOS vertrekken de sms en de oproep vanzelf';
     } else if (android) {
       subtitle = 'Nog geen toestemming · dan opent bij een SOS enkel de berichten-app';
@@ -28,8 +31,8 @@ class EmergencyAccessTile extends ConsumerWidget {
       padding: EdgeInsets.zero,
       child: ListTile(
         leading: Icon(
-          automatic ? Icons.check_circle_outline : Icons.warning_amber_rounded,
-          color: automatic ? AppColors.primary : AppColors.alert,
+          automatic && !noSim ? Icons.check_circle_outline : Icons.warning_amber_rounded,
+          color: automatic && !noSim ? AppColors.primary : AppColors.alert,
         ),
         title: const Text("Automatisch sms'en en bellen"),
         subtitle: Text(subtitle, style: text.bodySmall?.copyWith(color: AppColors.muted)),

@@ -34,9 +34,11 @@ void main() {
     when(() => repository.save(any(), any())).thenAnswer((_) async {});
     when(() => cache.write(any(), any())).thenAnswer((_) async {});
     when(() => phone.canSendAutomatically()).thenAnswer((_) async => true);
+    when(() => phone.simReady()).thenAnswer((_) async => true);
   });
 
-  List<Override> overrides(List<EmergencyContact> contacts, {bool automatic = true}) => [
+  List<Override> overrides(List<EmergencyContact> contacts, {bool automatic = true, bool? sim = true}) => [
+    emergencySimProvider.overrideWith((ref) async => sim),
     currentUserIdProvider.overrideWithValue('me'),
     myEmergencyContactsProvider.overrideWith((ref) async => contacts),
     emergencyAutomaticProvider.overrideWith((ref) async => automatic),
@@ -82,7 +84,7 @@ void main() {
   });
 
   testWidgets('test-sms gaat naar elk ingevuld contact', (tester) async {
-    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => true);
+    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => SmsResult.sent);
     await pumpScreen(tester, const [_oma, _jan]);
     await tester.scrollUntilVisible(
       find.text('Stuur een test-sms'),
@@ -96,15 +98,39 @@ void main() {
     expect(find.text('Test-sms verstuurd naar Oma en Jan.'), findsOneWidget);
   });
 
+  testWidgets('test-sms zonder netwerk: niet verstuurd, en de waarschuwing staat er', (tester) async {
+    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => SmsResult.noService);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides(const [_oma], sim: false),
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const EmergencyContactsScreen(senderName: 'Papa'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Stuur een test-sms'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.textContaining('geen simkaart'), findsOneWidget);
+    await tester.tap(find.text('Stuur een test-sms'));
+    await tester.pumpAndSettle();
+    expect(find.text('Niet verstuurd naar Oma: geen gsm-netwerk of simkaart.'), findsOneWidget);
+  });
+
   group('regel op het SOS-scherm', () {
     Future<void> pumpLine(
       WidgetTester tester,
       List<EmergencyContact> contacts, {
       bool automatic = true,
+      bool? sim = true,
     }) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: overrides(contacts, automatic: automatic),
+          overrides: overrides(contacts, automatic: automatic, sim: sim),
           child: MaterialApp(
             theme: AppTheme.light(),
             home: const Scaffold(body: SosEmergencyLine()),
@@ -127,6 +153,14 @@ void main() {
     testWidgets('zonder contacten: waar je ze instelt', (tester) async {
       await pumpLine(tester, const []);
       expect(find.text('Nog geen noodcontacten · instellen via Profiel'), findsOneWidget);
+    });
+
+    testWidgets('zonder simkaart: duidelijke waarschuwing', (tester) async {
+      await pumpLine(tester, const [_oma], sim: false);
+      expect(
+        find.text('Deze gsm heeft geen simkaart: geen sms of oproep naar je noodcontacten'),
+        findsOneWidget,
+      );
     });
   });
 }

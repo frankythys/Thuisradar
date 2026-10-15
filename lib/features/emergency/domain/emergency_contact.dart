@@ -30,6 +30,21 @@ class EmergencyContact {
   int get hashCode => Object.hash(position, name, phone);
 }
 
+/// Hoe het versturen van één sms afliep.
+enum SmsResult {
+  /// Het netwerk nam de sms aan.
+  sent,
+
+  /// Niet automatisch: geen toestemming, of een iPhone.
+  notAllowed,
+
+  /// Geen simkaart of geen gsm-netwerk.
+  noService,
+
+  /// Iets anders liep mis.
+  failed,
+}
+
 /// Hoeveel noodcontacten je kan instellen.
 const kMaxEmergencyContacts = 2;
 
