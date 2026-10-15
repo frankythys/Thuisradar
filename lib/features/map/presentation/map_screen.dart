@@ -318,7 +318,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     return Scaffold(
       appBar: BrandedAppBar(
-        title: 'Kaart',
+        // De app-naam bovenaan; de tab onderaan blijft "Kaart".
+        title: 'CircleBeacon',
         // SOS naast je avatar: altijd bereikbaar, zonder de kaart te bedekken.
         actions: [
           SosAppBarButton(
