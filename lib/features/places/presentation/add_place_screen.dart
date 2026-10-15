@@ -15,6 +15,7 @@ import '../application/places_providers.dart';
 import 'place_crosshair.dart';
 import 'place_edit_map.dart';
 import 'place_icons.dart';
+import 'place_images.dart';
 import '../domain/place.dart';
 import '../domain/selected_place_location.dart';
 
@@ -412,7 +413,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                             label: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(placeIcon(key), color: _icon == key ? Colors.white : AppColors.primary),
+                                if (placeBubbleImage(key) case final photo?)
+                                  Image(image: photo, width: 44, height: 28, fit: BoxFit.contain)
+                                else
+                                  Icon(placeIcon(key), color: _icon == key ? Colors.white : AppColors.primary),
                                 Text(
                                   placeIconLabel(key),
                                   style: TextStyle(

@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 
 /// Foto's per plaatssoort (sleutel = `places.icon`), klein en uitgeknipt in
-/// `assets/places/`. Thuis houdt zijn eigen huisje, "Andere" het speldje.
-const _withPhoto = {'school', 'work', 'sports', 'store', 'daycare', 'park', 'refinery'};
+/// `assets/places/`. Enkel "Andere" houdt het speldje.
+const _withPhoto = {'home', 'school', 'work', 'sports', 'store', 'daycare', 'park', 'refinery'};
 
 /// Heeft deze plaatssoort een foto?
 bool hasPlacePhoto(String key) => _withPhoto.contains(key);

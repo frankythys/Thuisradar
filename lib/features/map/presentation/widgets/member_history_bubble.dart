@@ -147,8 +147,6 @@ class MemberHistoryBubble extends StatelessWidget {
                       height: 32,
                       fit: BoxFit.contain,
                     )
-                  else if (atPlace && placeStatus!.icon == 'home')
-                    const Image(image: bubbleHomeImage, width: 32, height: 32, fit: BoxFit.contain)
                   else if ((atPlace ? placeBubbleImage(placeStatus!.icon) : null) case final photo?)
                     Image(image: photo, width: 38, height: 32, fit: BoxFit.contain)
                   else

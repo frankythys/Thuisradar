@@ -6,6 +6,7 @@ import '../../../shared/widgets/member_avatar.dart';
 import '../../family/domain/family_member.dart';
 import '../domain/place.dart';
 import 'place_icons.dart';
+import 'place_images.dart';
 
 /// Eén plaats als compacte rij: icoon, naam, adres, straal en welke meldingen
 /// aan staan en wie er nu is. Tik om te bewerken; bewerken en verwijderen
@@ -54,7 +55,13 @@ class PlaceRow extends StatelessWidget {
                 color: AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(tokens.radiusMd),
               ),
-              child: Icon(placeIcon(place.icon), color: AppColors.primary),
+              child: switch (placeBubbleImage(place.icon)) {
+                final photo? => Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: Image(image: photo, fit: BoxFit.contain),
+                ),
+                null => Icon(placeIcon(place.icon), color: AppColors.primary),
+              },
             ),
             SizedBox(width: tokens.spaceMd),
             Expanded(

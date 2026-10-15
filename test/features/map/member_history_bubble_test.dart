@@ -79,7 +79,7 @@ void main() {
         (widget) =>
             widget is Image &&
             widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName == 'assets/markers/huis.png',
+            (widget.image as AssetImage).assetName == 'assets/places/home_ballon.webp',
       ),
       findsOneWidget,
     );

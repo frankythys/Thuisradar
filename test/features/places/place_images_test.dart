@@ -14,12 +14,12 @@ void main() {
     expect(placeIconLabel('refinery'), 'Raffinaderij');
   });
 
-  test('thuis en andere houden hun eigen beeld, de rest krijgt een foto', () {
-    expect(hasPlacePhoto('home'), isFalse);
+  test('enkel "Andere" houdt het speldje, de rest (ook Thuis) krijgt een foto', () {
     expect(hasPlacePhoto('place'), isFalse);
-    expect(placeMapAsset('home'), isNull);
+    expect(placeMapAsset('place'), isNull);
     expect(placeBubbleImage('place'), isNull);
-    for (final key in placeIconKeys.where((k) => k != 'home' && k != 'place')) {
+    expect(placeMapAsset('home'), 'assets/places/home_kaart.webp');
+    for (final key in placeIconKeys.where((k) => k != 'place')) {
       expect(hasPlacePhoto(key), isTrue, reason: key);
     }
   });
