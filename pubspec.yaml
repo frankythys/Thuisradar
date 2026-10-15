@@ -63,6 +63,7 @@ dependencies:
   # Vast op 2.18.1: 2.18.2+ vraagt Flutter 3.47 (project: 3.44).
   google_maps_flutter: ">=2.18.1 <2.18.2"
   pedometer: ^4.2.0
+  activity_recognition_flutter: ^6.1.0
 
 dev_dependencies:
   flutter_test:

@@ -14,6 +14,7 @@ import '../domain/member_location.dart';
 import '../domain/motion_filter.dart';
 import '../domain/pending_uploads.dart';
 import '../domain/upload_throttle.dart';
+import 'activity_watcher.dart';
 import 'location_diagnostics.dart';
 import 'location_providers.dart';
 import 'tracking_status.dart';
@@ -53,6 +54,10 @@ class LocationTracker extends Notifier<TrackingStatus> {
   StreamSubscription<int>? _steps;
   int? _latestSteps;
 
+  /// Activiteitsherkenning (feature flag); bij [build] gelezen zodat [_cancel]
+  /// ook tijdens het opruimen geen `ref` nodig heeft.
+  ActivityWatcher? _activity;
+
   /// Punten die nog naar de server moeten (bv. even geen internet).
   final _pending = PendingUploads();
 
@@ -67,6 +72,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
 
   @override
   TrackingStatus build() {
+    _activity = ref.read(activityWatcherProvider);
     ref.onDispose(_cancel);
     return TrackingStatus.idle;
   }
@@ -100,13 +106,18 @@ class LocationTracker extends Notifier<TrackingStatus> {
     _diagnostics.event('delen gestart');
     _attach();
     unawaited(_attachSteps());
+    unawaited(_activity?.start());
   }
 
   /// Vraagt toestemming voor de stappenteller en telt meteen mee als die er
   /// is. Geeft terug of het gelukt is.
   Future<bool> enableSteps() async {
     if (!await _stepSource.requestAccess()) return false;
-    if (ref.mounted) await _attachSteps();
+    if (ref.mounted) {
+      await _attachSteps();
+      // Dezelfde toestemming "Fysieke activiteit" geldt ook hiervoor.
+      if (_granted) unawaited(_activity?.start());
+    }
     return true;
   }
 
@@ -152,6 +163,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
     }
     // Intussen misschien toestemming gegeven voor de stappenteller.
     unawaited(_attachSteps());
+    unawaited(_activity?.start());
     unawaited(refreshNow());
   }
 
@@ -281,6 +293,7 @@ class LocationTracker extends Notifier<TrackingStatus> {
         battery: battery?.level,
         isCharging: battery?.isCharging,
         steps: _latestSteps,
+        activity: _activity?.current(now),
         updatedAt: accepted.timestamp,
       ),
     );
@@ -358,5 +371,6 @@ class LocationTracker extends Notifier<TrackingStatus> {
     _steps?.cancel();
     _steps = null;
     _latestSteps = null;
+    _activity?.stop();
   }
 }

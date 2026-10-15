@@ -1,5 +1,7 @@
 import 'member_location.dart';
+import 'motion_activity.dart';
 import 'motion_filter.dart' show kMovingSpeedMps;
+import 'step_window.dart';
 import 'travel_mode.dart';
 import 'trip_hint.dart';
 
@@ -19,6 +21,12 @@ import 'trip_hint.dart';
 ///   lang onder [_carKmh] blijft aan fietstempo; een auto die al eens
 ///   duidelijk snel ging, wordt nooit meer een fiets.
 /// - Zonder stappenteller: zoals vroeger op snelheid ([kBikeAverageKmh]).
+/// - Met activiteitsherkenning van het toestel ([MemberLocation.activity],
+///   feature flag): "voertuig" maakt meteen een auto (ook traag in de file),
+///   "fiets" meteen een fiets tot [_maxBikeKmh] (e-bike, speed pedelec,
+///   bergaf). Zonder stappen beslist "te voet" of "voertuig" ook over uit- of
+///   instappen. Het signaal stuurt enkel bij: zonder herkenning blijft alles
+///   zoals hierboven, er wordt nooit op gewacht.
 class TripModeMemory {
   final _members = <String, _Trip>{};
 
@@ -42,6 +50,9 @@ class TripModeMemory {
   static const _bikeAfterSamples = 36;
   static const _bikeMinKmh = 10;
 
+  /// Sneller dan dit (km/u) is geen fiets, ook niet als het toestel dat zegt.
+  static const _maxBikeKmh = 50;
+
   List<MemberLocation> update(List<MemberLocation> locations) {
     final present = locations.map((location) => location.userId).toSet();
     _members.removeWhere((id, _) => !present.contains(id));
@@ -57,8 +68,10 @@ class TripModeMemory {
 
     final speed = location.speedMps;
     final valid = speed != null && speed.isFinite && speed >= 0 && speed <= 70;
-    final onFoot = trip.steps.onFoot(location.updatedAt, location.steps);
-    if (valid) _apply(trip, speed, location.updatedAt, onFoot);
+    // De stappen gaan voor; zonder bruikbare stappen beslist de herkenning.
+    final onFoot =
+        trip.steps.onFoot(location.updatedAt, location.steps) ?? _onFootBySensor(location.activity);
+    if (valid) _apply(trip, speed, location.updatedAt, onFoot, location.activity);
     return _withHint(location, trip);
   }
 
@@ -67,7 +80,13 @@ class TripModeMemory {
     return hint == null ? location : location.copyWith(tripHint: hint);
   }
 
-  void _apply(_Trip trip, double speed, DateTime at, bool? onFoot) {
+  static bool? _onFootBySensor(MotionActivity? activity) => switch (activity) {
+    MotionActivity.foot => true,
+    MotionActivity.vehicle || MotionActivity.bicycle => false,
+    MotionActivity.still || null => null,
+  };
+
+  void _apply(_Trip trip, double speed, DateTime at, bool? onFoot, MotionActivity? activity) {
     if (speed < kMovingSpeedMps) {
       trip.moving = false;
       trip.stoppedAt ??= at;
@@ -80,7 +99,11 @@ class TripModeMemory {
       ..moving = true
       ..stoppedAt = null
       ..speedKmh = kmh;
-    if (onFoot == true && kmh < _maxStepKmh) {
+    // Trappen geeft soms ook stappen: zegt het toestel "fiets" aan fietstempo,
+    // dan wint de fiets. Bij het uitstappen winnen de stappen wel, want de
+    // herkenning loopt dan nog even achter.
+    final pedalling = activity == MotionActivity.bicycle && kmh >= _bikeMinKmh;
+    if (onFoot == true && kmh < _maxStepKmh && !pedalling) {
       trip
         ..leaveVehicle()
         ..mode = TravelMode.walk;
@@ -92,18 +115,33 @@ class TripModeMemory {
       trip.mode = TravelMode.walk;
       return;
     }
-    _drive(trip, kmh);
+    _drive(trip, kmh, activity);
   }
 
-  void _drive(_Trip trip, int kmh) {
+  void _drive(_Trip trip, int kmh, MotionActivity? activity) {
     trip.vehicle ??= TravelMode.car;
     trip.vehicleSamples++;
     if (kmh >= _bikeMinKmh) trip.briskSamples++;
-    if (kmh >= _surelyCarKmh || (kmh >= _carKmh && trip.lastKmh >= _carKmh)) {
+    final bySensor = switch (activity) {
+      MotionActivity.vehicle => TravelMode.car,
+      MotionActivity.bicycle when kmh <= _maxBikeKmh => TravelMode.bike,
+      _ => null,
+    };
+    final carSpeed = kmh >= _surelyCarKmh || (kmh >= _carKmh && trip.lastKmh >= _carKmh);
+    if (bySensor != null) {
+      trip
+        ..sensorVehicle = bySensor
+        ..carSure = bySensor == TravelMode.car
+        ..vehicle = bySensor;
+    } else if (kmh > _maxBikeKmh || (carSpeed && trip.sensorVehicle != TravelMode.bike)) {
+      // Een fiets volgens het toestel blijft een fiets aan 35 km/u; boven
+      // [_maxBikeKmh] wint de snelheid toch.
       trip
         ..carSure = true
+        ..sensorVehicle = null
         ..vehicle = TravelMode.car;
     } else if (!trip.carSure &&
+        trip.sensorVehicle == null &&
         trip.vehicleSamples >= _bikeAfterSamples &&
         trip.briskSamples * 10 >= trip.vehicleSamples * 6) {
       trip.vehicle = TravelMode.bike;
@@ -125,6 +163,9 @@ class _Trip {
   /// Het voertuig van deze rit (auto of fiets), null = te voet of onbekend.
   TravelMode? vehicle;
   bool carSure = false;
+
+  /// Voertuig volgens de activiteitsherkenning van het toestel, null = geen.
+  TravelMode? sensorVehicle;
   int vehicleSamples = 0;
   int briskSamples = 0;
   int lastKmh = 0;
@@ -136,6 +177,7 @@ class _Trip {
   void leaveVehicle() {
     vehicle = null;
     carSure = false;
+    sensorVehicle = null;
     vehicleSamples = 0;
     briskSamples = 0;
     lastKmh = 0;
@@ -148,40 +190,5 @@ class _Trip {
     stoppedAt = null;
     steps.clear();
     leaveVehicle();
-  }
-}
-
-/// Zet de stappenteller van de laatste seconden om in "te voet" of niet.
-class StepWindow {
-  /// Vergelijk met een meting tussen [_minGap] en [_window] geleden.
-  static const _window = Duration(seconds: 20);
-  static const _minGap = Duration(seconds: 4);
-
-  /// Zoveel stappen of meer: te voet. Zoveel of minder: niet te voet.
-  static const _onFootSteps = 6;
-  static const _stillSteps = 2;
-
-  final _samples = <({DateTime at, int steps})>[];
-
-  /// Heeft dit toestel een stappenteller (ooit een waarde gestuurd)?
-  bool known = false;
-
-  /// Te voet volgens de stappen tot [at]; null als dat nog niet te zeggen is.
-  bool? onFoot(DateTime at, int? steps) {
-    if (steps == null) return null;
-    known = true;
-    // Een lagere teller (nieuwe dag, herstart) begint opnieuw.
-    _samples.removeWhere((s) => at.difference(s.at) > _window || s.steps > steps);
-    final reference = _samples.where((s) => at.difference(s.at) >= _minGap).firstOrNull;
-    _samples.add((at: at, steps: steps));
-    if (reference == null) return null;
-    final walked = steps - reference.steps;
-    if (walked >= _onFootSteps) return true;
-    return walked <= _stillSteps ? false : null;
-  }
-
-  void clear() {
-    _samples.clear();
-    known = false;
   }
 }

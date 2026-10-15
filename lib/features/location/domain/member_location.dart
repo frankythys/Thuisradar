@@ -1,3 +1,4 @@
+import 'motion_activity.dart';
 import 'trip_hint.dart';
 
 /// Laatste bekende locatie van één gezinslid (tabel `member_locations`).
@@ -13,6 +14,7 @@ class MemberLocation {
     this.battery,
     this.isCharging,
     this.steps,
+    this.activity,
     this.tripHint,
   });
 
@@ -26,6 +28,7 @@ class MemberLocation {
     battery: json['battery'] as int?,
     isCharging: json['is_charging'] as bool?,
     steps: (json['steps'] as num?)?.toInt(),
+    activity: MotionActivity.fromDb(json['activity']),
     updatedAt: DateTime.parse(json['updated_at'] as String).toLocal(),
   );
 
@@ -41,6 +44,10 @@ class MemberLocation {
   /// Stand van de stappenteller van het toestel; null zonder stappenteller of
   /// toestemming.
   final int? steps;
+
+  /// Wat de bewegingssensoren van het toestel bij deze meting herkenden
+  /// (migratie 020); null zonder herkenning of met de feature flag uit.
+  final MotionActivity? activity;
   final DateTime updatedAt;
 
   /// Status over meerdere metingen heen (zie `TripModeMemory`), enkel voor de
@@ -58,6 +65,7 @@ class MemberLocation {
     battery: battery,
     isCharging: isCharging,
     steps: steps,
+    activity: activity,
     tripHint: tripHint ?? this.tripHint,
     updatedAt: updatedAt,
   );
@@ -74,6 +82,8 @@ class MemberLocation {
     // Enkel meesturen als er stappen zijn: zo blijft uploaden werken tegen een
     // database zonder migratie 019.
     'steps': ?steps,
+    // Idem voor de herkende activiteit (migratie 020).
+    'activity': ?activity?.dbValue,
     'updated_at': updatedAt.toUtc().toIso8601String(),
   };
 }

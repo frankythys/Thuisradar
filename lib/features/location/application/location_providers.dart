@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/supabase/supabase_providers.dart';
 import '../../../core/utils/resilient_stream.dart';
 import '../../../core/utils/resync_signal.dart';
+import '../data/activity_source.dart';
 import '../data/battery_source.dart';
 import '../data/device_location_source.dart';
 import '../data/location_repository.dart';
 import '../data/step_source.dart';
 import '../domain/member_location.dart';
 import '../domain/trip_mode_memory.dart';
+import 'activity_watcher.dart';
 import 'location_tracker.dart';
 import 'tracking_status.dart';
 
@@ -24,6 +26,16 @@ final stepSourceProvider = Provider<StepSource>((ref) => StepSource());
 final stepAccessProvider = FutureProvider.autoDispose<bool>(
   (ref) => ref.watch(stepSourceProvider).hasAccess(),
 );
+
+final activitySourceProvider = Provider<ActivitySource>((ref) => ActivitySource());
+
+/// Laatste activiteitsherkenning van dit toestel; doet niets met de feature
+/// flag `USE_ACTIVITY_RECOGNITION` uit.
+final activityWatcherProvider = Provider<ActivityWatcher>((ref) {
+  final watcher = ActivityWatcher(ref.watch(activitySourceProvider));
+  ref.onDispose(watcher.stop);
+  return watcher;
+});
 
 final locationRepositoryProvider = Provider<LocationRepository>(
   (ref) => LocationRepository(ref.watch(supabaseClientProvider)),

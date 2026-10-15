@@ -4,14 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:thuisradar/features/location/application/activity_watcher.dart';
 import 'package:thuisradar/features/location/application/location_providers.dart';
 import 'package:thuisradar/features/location/application/tracking_status.dart';
+import 'package:thuisradar/features/location/data/activity_source.dart';
 import 'package:thuisradar/features/location/data/battery_source.dart';
 import 'package:thuisradar/features/location/data/device_location_source.dart';
 import 'package:thuisradar/features/location/data/location_repository.dart';
 import 'package:thuisradar/features/location/data/step_source.dart';
 import 'package:thuisradar/features/location/domain/device_reading.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
+import 'package:thuisradar/features/location/domain/motion_activity.dart';
 
 class _MockDevice extends Mock implements DeviceLocationSource {}
 
@@ -20,6 +23,8 @@ class _MockBattery extends Mock implements BatterySource {}
 class _MockRepository extends Mock implements LocationRepository {}
 
 class _MockSteps extends Mock implements StepSource {}
+
+class _MockActivity extends Mock implements ActivitySource {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -115,6 +120,36 @@ void main() {
     final uploaded = verify(() => repository.upload(captureAny())).captured.single as MemberLocation;
     expect(uploaded.steps, 4312);
     expect(uploaded.toJson()['steps'], 4312);
+  });
+
+  test('met de flag aan gaat de herkende activiteit mee', () async {
+    final activity = _MockActivity();
+    final readings = StreamController<ActivityReading>();
+    addTearDown(() => unawaited(readings.close()));
+    when(() => activity.hasAccess()).thenAnswer((_) async => true);
+    when(() => activity.readings()).thenAnswer((_) => readings.stream);
+    container = ProviderContainer(
+      overrides: [
+        deviceLocationSourceProvider.overrideWithValue(device),
+        batterySourceProvider.overrideWithValue(battery),
+        locationRepositoryProvider.overrideWithValue(repository),
+        activityWatcherProvider.overrideWithValue(ActivityWatcher(activity, enabled: true)),
+      ],
+    );
+    addTearDown(container.dispose);
+    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+    when(() => repository.upload(any())).thenAnswer((_) async {});
+
+    await start();
+    await pumpEventQueue();
+    readings.add(ActivityReading(MotionActivity.vehicle, 85, DateTime.now()));
+    await pumpEventQueue();
+    positions.add(position);
+    await pumpEventQueue();
+
+    final uploaded = verify(() => repository.upload(captureAny())).captured.single as MemberLocation;
+    expect(uploaded.activity, MotionActivity.vehicle);
+    expect(uploaded.toJson()['activity'], 'vehicle');
   });
 
   test('zonder stappenteller blijft de kolom weg uit de upload', () {

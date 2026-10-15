@@ -7,20 +7,29 @@ class LocationRepository {
 
   final SupabaseClient _client;
 
-  /// De database kent de kolom `steps` nog niet (migratie 019 niet gedraaid).
-  bool _withoutSteps = false;
+  /// Kolommen die pas met een migratie bestaan: `steps` (019) en `activity`
+  /// (020). Hier staan de kolommen die de database nog niet kent.
+  static const _optionalColumns = ['steps', 'activity'];
+  final _missingColumns = <String>{};
 
-  /// Uploadt de locatie. Kent de database de stappen nog niet, dan opnieuw
-  /// zonder: de locatie delen mag nooit stilvallen door de stappenteller.
+  /// Uploadt de locatie. Kent de database een nieuwe kolom nog niet, dan
+  /// opnieuw zonder: de locatie delen mag nooit stilvallen door de
+  /// stappenteller of de activiteitsherkenning.
   Future<void> upload(MemberLocation location) async {
-    final json = location.toJson();
-    if (_withoutSteps) json.remove('steps');
-    try {
-      await _client.from('member_locations').upsert(json, onConflict: 'user_id');
-    } on PostgrestException catch (error) {
-      if (!json.containsKey('steps') || !isMissingStepsColumn(error)) rethrow;
-      _withoutSteps = true;
-      await _client.from('member_locations').upsert(json..remove('steps'), onConflict: 'user_id');
+    final json = location.toJson()..removeWhere((key, _) => _missingColumns.contains(key));
+    while (true) {
+      try {
+        await _client.from('member_locations').upsert(json, onConflict: 'user_id');
+        return;
+      } on PostgrestException catch (error) {
+        final missing = _optionalColumns
+            .where((column) => json.containsKey(column))
+            .where((column) => isMissingColumn(error, column))
+            .toList();
+        if (missing.isEmpty) rethrow;
+        _missingColumns.addAll(missing);
+        json.removeWhere((key, _) => missing.contains(key));
+      }
     }
   }
 
@@ -34,7 +43,10 @@ class LocationRepository {
   }
 }
 
-/// Fout omdat de kolom `steps` ontbreekt: PostgREST kent hem niet in zijn
-/// schema (PGRST204) of Postgres zelf niet (42703).
-bool isMissingStepsColumn(PostgrestException error) =>
-    (error.code == 'PGRST204' || error.code == '42703') && error.message.contains('steps');
+/// Fout omdat [column] ontbreekt: PostgREST kent hem niet in zijn schema
+/// (PGRST204) of Postgres zelf niet (42703).
+bool isMissingColumn(PostgrestException error, String column) =>
+    (error.code == 'PGRST204' || error.code == '42703') && error.message.contains(column);
+
+/// Fout omdat de kolom `steps` ontbreekt (migratie 019 niet gedraaid).
+bool isMissingStepsColumn(PostgrestException error) => isMissingColumn(error, 'steps');

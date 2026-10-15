@@ -19,6 +19,7 @@ Beslissingen en werkregels staan in `../CLAUDE.md`; kosten in `KOSTEN.md`.
   - Selectie-ring rond geselecteerd lid (op kaart én in lijst).
   - Overlappende leden groeperen in één groepspin met statusballon (pure Dart, getest).
 - **Onderweg: wandelen en fietsen** — tab Rijden heet Onderweg met filter Alles / Auto / Fiets / Wandelen. Elke verplaatsing krijgt een geschat vervoermiddel (GPS-snelheid + gemiddeld tempo); wandelen telt vanaf 3,6 km/u als onderweg en wordt elke 5 s gelogd. Wandelingen tonen route, afstand, duur, gemiddeld tempo en stappen (stappenteller, migratie `019_steps.sql`).
+- **Activiteitsherkenning (achter de vlag `USE_ACTIVITY_RECOGNITION`, standaard uit)** — de bewegingssensoren van het toestel (Android Activity Recognition, Sampling API elke ±5 s; iPhone CoreMotion) zeggen "voertuig", "fiets" of "te voet". Dat stuurt de live status bij waar GPS en stappen twijfelen: traag in de file blijft een auto, een e-bike of speed pedelec tot 50 km/u blijft een fiets. Het zegt niet wélk voertuig (auto, bus of trein zijn allemaal "voertuig"). Migratie `020_activity.sql`; de herkenning wordt ook in `location_history` bewaard, zodat de weekrapporten ze later kunnen gebruiken.
 
 ## ⏳ Nu / volgende
 

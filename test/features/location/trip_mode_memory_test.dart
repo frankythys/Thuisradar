@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
+import 'package:thuisradar/features/location/domain/motion_activity.dart';
 import 'package:thuisradar/features/location/domain/trip_mode_memory.dart';
 import 'package:thuisradar/features/location/domain/trip_status.dart';
 
@@ -7,17 +8,19 @@ void main() {
   final start = DateTime(2026, 10, 12, 12);
   late TripModeMemory memory;
   setUp(() => memory = TripModeMemory());
-  MemberLocation fix(int seconds, double? speed, {int? steps, String id = 'p'}) => MemberLocation(
-    userId: id,
-    familyId: 'f',
-    latitude: 51,
-    longitude: 3,
-    updatedAt: start.add(Duration(seconds: seconds)),
-    speedMps: speed,
-    steps: steps,
-  );
-  TripStatus update(int seconds, double? speed, {int? steps}) {
-    final location = fix(seconds, speed, steps: steps);
+  MemberLocation fix(int seconds, double? speed, {int? steps, String id = 'p', MotionActivity? activity}) =>
+      MemberLocation(
+        userId: id,
+        familyId: 'f',
+        latitude: 51,
+        longitude: 3,
+        updatedAt: start.add(Duration(seconds: seconds)),
+        speedMps: speed,
+        steps: steps,
+        activity: activity,
+      );
+  TripStatus update(int seconds, double? speed, {int? steps, MotionActivity? activity}) {
+    final location = fix(seconds, speed, steps: steps, activity: activity);
     return TripStatus.at(memory.update([location]).single, location.updatedAt);
   }
 
@@ -133,5 +136,61 @@ void main() {
     final again = memory.update([fix(0, kmh(4.5))]).single;
     expect(again.tripHint?.moving, isTrue);
     expect(update(0, 0).walking, isTrue);
+  });
+
+  group('activiteitsherkenning van het toestel', () {
+    const vehicle = MotionActivity.vehicle;
+    const bicycle = MotionActivity.bicycle;
+    const foot = MotionActivity.foot;
+
+    test('voertuig zonder stappenteller: meteen een auto, ook traag in de file', () {
+      // Zonder herkenning en zonder stappen is 7 km/u een wandeling.
+      expect(update(0, kmh(7)).walking, isTrue);
+      memory = TripModeMemory();
+      expect(update(0, kmh(7), activity: vehicle).driving, isTrue);
+      expect(update(5, kmh(4), activity: vehicle).driving, isTrue);
+    });
+
+    test('fiets aan 35 km/u (speed pedelec, bergaf) blijft een fiets', () {
+      expect(update(0, kmh(36)).driving, isTrue);
+      memory = TripModeMemory();
+      for (var second = 0; second <= 30; second += 5) {
+        expect(update(second, kmh(36), steps: 500, activity: bicycle).cycling, isTrue, reason: '${second}s');
+      }
+      // Valt de herkenning even weg, dan blijft het een fiets.
+      expect(update(35, kmh(38), steps: 500).cycling, isTrue);
+    });
+
+    test('boven 50 km/u wint de snelheid, ook als het toestel fiets zegt', () {
+      update(0, kmh(30), activity: bicycle);
+      expect(update(5, kmh(55), activity: bicycle).driving, isTrue);
+      expect(update(10, kmh(40)).driving, isTrue);
+    });
+
+    test('trappen telt soms als stappen: fiets wint aan fietstempo', () {
+      update(0, kmh(15), steps: 1000, activity: bicycle);
+      expect(update(5, kmh(15), steps: 1010, activity: bicycle).cycling, isTrue);
+      // Uitgestapt en te voet aan wandeltempo: de stappen winnen, ook al zegt
+      // de herkenning nog even "fiets".
+      expect(update(10, kmh(5), steps: 1020, activity: bicycle).walking, isTrue);
+    });
+
+    test('voertuig na fiets: auto (fiets op het fietsrek, of verkeerd herkend)', () {
+      update(0, kmh(20), activity: bicycle);
+      expect(update(5, kmh(20), activity: vehicle).driving, isTrue);
+    });
+
+    test('te voet zonder stappenteller beëindigt de rit bij een stop', () {
+      update(0, kmh(50));
+      expect(update(5, 0).state, TripState.stationary);
+      // Zonder herkenning blijft het voertuig 90 s onthouden.
+      expect(update(10, kmh(5), activity: foot).walking, isTrue);
+    });
+
+    test('zonder herkenning werkt alles zoals vroeger', () {
+      update(0, 0, steps: 1394);
+      expect(update(5, kmh(12), steps: 1394).driving, isTrue);
+      expect(update(10, kmh(5), steps: 1394).driving, isTrue);
+    });
   });
 }

@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.3.77"
+  activity_recognition_flutter:
+    dependency: "direct main"
+    description:
+      name: activity_recognition_flutter
+      sha256: e758161d1db2631fcfa49b650796fc154ee85efd57b13826565a0bc137da3a6b
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.0"
   ansicolor:
     dependency: transitive
     description:
@@ -994,10 +1002,10 @@ packages:
     dependency: transitive
     description:
       name: meta
-      sha256: c82594181e3312f3d0695fc95aaaf7758d75b8d4ae2bbecf223b9fd5109a059d
+      sha256: "307249ce4ff29d58a18e97f6345f539382eb9c9c29ecda628900f31de0443dd9"
       url: "https://pub.dev"
     source: hosted
-    version: "1.18.3"
+    version: "1.19.0"
   mgrs_dart:
     dependency: transitive
     description:
