@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/config/env.dart';
 import 'core/utils/startup_diagnostics.dart';
+import 'features/language/application/language_providers.dart';
+import 'features/language/data/language_store.dart';
+import 'features/language/domain/app_language.dart';
 import 'features/location/application/location_diagnostics.dart';
 import 'features/location/data/diagnostics_store.dart';
 
@@ -27,10 +30,16 @@ Future<void> main() async {
   }
   diagnostics.checkpoint('Firebase gereed of overgeslagen');
 
+  // Taalkeuze vóór de eerste frame, zodat de app meteen in die taal opent.
+  final savedLanguage = await LanguageStore().read().then(AppLanguage.fromCode, onError: (_) => null);
+
   diagnostics.watchFirstFrame();
   runApp(
     ProviderScope(
-      overrides: [locationDiagnosticsProvider.overrideWithValue(locationDiagnostics)],
+      overrides: [
+        locationDiagnosticsProvider.overrideWithValue(locationDiagnostics),
+        savedLanguageProvider.overrideWithValue(savedLanguage),
+      ],
       child: const ThuisradarApp(),
     ),
   );

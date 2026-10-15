@@ -1,0 +1,215 @@
+{
+  "@@locale": "nl",
+  "commonCancel": "Annuleren",
+  "@commonCancel": {
+    "description": "Knop: een dialoog annuleren."
+  },
+  "commonTryAgainSaveFailed": "Opslaan mislukt. Probeer opnieuw.",
+  "@commonTryAgainSaveFailed": {
+    "description": "Melding: opslaan is mislukt."
+  },
+  "commonRemoveFailed": "Verwijderen is niet gelukt. Probeer opnieuw.",
+  "@commonRemoveFailed": {
+    "description": "Melding: verwijderen is mislukt."
+  },
+  "navMap": "Kaart",
+  "@navMap": {
+    "description": "Tab onderaan: de kaart."
+  },
+  "navOnTheMove": "Onderweg",
+  "@navOnTheMove": {
+    "description": "Tab onderaan: ritten met auto, fiets en te voet."
+  },
+  "navPlaces": "Plaatsen",
+  "@navPlaces": {
+    "description": "Tab onderaan: bewaarde plaatsen (thuis, school, …)."
+  },
+  "navChat": "Chat",
+  "@navChat": {
+    "description": "Tab onderaan: gezinschat."
+  },
+  "navFamily": "Gezin",
+  "@navFamily": {
+    "description": "Tab onderaan (offline): het gezin."
+  },
+  "navSettings": "Instellingen",
+  "@navSettings": {
+    "description": "Tab onderaan (offline): instellingen."
+  },
+  "profileTitle": "Profiel",
+  "@profileTitle": {
+    "description": "Titel van het profielscherm."
+  },
+  "profileSaved": "Profiel opgeslagen",
+  "@profileSaved": {
+    "description": "Melding na het bewaren van het profiel."
+  },
+  "profileForgetLoginDone": "Opgeslagen login en vingerafdruk verwijderd.",
+  "@profileForgetLoginDone": {
+    "description": "Melding: bewaarde login en vingerafdruk gewist."
+  },
+  "profileSignOutFailed": "Afsluiten is niet gelukt. Probeer opnieuw.",
+  "@profileSignOutFailed": {
+    "description": "Melding: uitloggen of vergrendelen mislukt."
+  },
+  "profileMakeOwnerTitle": "{name} beheerder maken?",
+  "@profileMakeOwnerTitle": {
+    "description": "Dialoogtitel: iemand beheerder van het gezin maken.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMakeOwnerBody": "Jij wordt dan gewoon gezinslid. {name} kan daarna codes vernieuwen, leden verwijderen (ook jou) en het beheer weer overdragen.",
+  "@profileMakeOwnerBody": {
+    "description": "Uitleg bij het overdragen van het beheer.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMakeOwnerConfirm": "Beheerder maken",
+  "@profileMakeOwnerConfirm": {
+    "description": "Knop: beheer overdragen bevestigen."
+  },
+  "profileMakeOwnerDone": "{name} is nu beheerder.",
+  "@profileMakeOwnerDone": {
+    "description": "Melding: beheer is overgedragen.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileMakeOwnerFailed": "Beheer overdragen is niet gelukt. Probeer opnieuw.",
+  "@profileMakeOwnerFailed": {
+    "description": "Melding: beheer overdragen mislukt."
+  },
+  "profileRemoveMemberTitle": "{name} verwijderen?",
+  "@profileRemoveMemberTitle": {
+    "description": "Dialoogtitel: iemand uit het gezin verwijderen.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileRemoveMemberBody": "{name} ziet jullie dan niet meer en verdwijnt van de kaart. De uitnodigingscode wordt vernieuwd, zodat de oude code niet meer werkt.",
+  "@profileRemoveMemberBody": {
+    "description": "Uitleg bij het verwijderen van een gezinslid.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileRemoveMemberConfirm": "Verwijderen",
+  "@profileRemoveMemberConfirm": {
+    "description": "Knop: gezinslid verwijderen bevestigen."
+  },
+  "profileRemoveMemberDone": "{name} is uit het gezin verwijderd.",
+  "@profileRemoveMemberDone": {
+    "description": "Melding: gezinslid is verwijderd.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileLeaveFamily": "Familie verlaten",
+  "@profileLeaveFamily": {
+    "description": "Rij en dialoogknop: het gezin verlaten."
+  },
+  "profileLeaveFamilyTitle": "Familie verlaten?",
+  "@profileLeaveFamilyTitle": {
+    "description": "Dialoogtitel: het gezin verlaten."
+  },
+  "profileLeaveFamilyBody": "Je ziet {family} dan niet meer op de kaart.",
+  "@profileLeaveFamilyBody": {
+    "description": "Uitleg bij het verlaten van het gezin; family = naam van het gezin.",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "profileLeaveFamilyConfirm": "Verlaten",
+  "@profileLeaveFamilyConfirm": {
+    "description": "Knop: het gezin verlaten bevestigen."
+  },
+  "profilePreferenceFailed": "Voorkeur opslaan mislukt. Probeer opnieuw.",
+  "@profilePreferenceFailed": {
+    "description": "Melding: een meldingsvoorkeur bewaren is mislukt."
+  },
+  "profileShareLocation": "Locatie delen",
+  "@profileShareLocation": {
+    "description": "Rij: je locatie met het gezin delen."
+  },
+  "profileShareLocationOn": "Aan · je gezin ziet waar je bent",
+  "@profileShareLocationOn": {
+    "description": "Uitleg wanneer locatie delen aan staat."
+  },
+  "profileShareLocationPaused": "Gepauzeerd · je gezin ziet je niet",
+  "@profileShareLocationPaused": {
+    "description": "Uitleg wanneer locatie delen gepauzeerd is."
+  },
+  "profileFamilySummary": "{count, plural, =1{1 lid} other{{count} leden}} · code {code}",
+  "@profileFamilySummary": {
+    "description": "Onder de gezinsnaam: aantal leden en de uitnodigingscode.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "profileNotifications": "Meldingen",
+  "@profileNotifications": {
+    "description": "Rij: meldingsvoorkeuren."
+  },
+  "profileNotificationsSubtitle": "Aankomst, vertrek en SOS",
+  "@profileNotificationsSubtitle": {
+    "description": "Uitleg bij meldingsvoorkeuren."
+  },
+  "profilePrivacy": "Privacy & beveiliging",
+  "@profilePrivacy": {
+    "description": "Rij: privacy en beveiliging."
+  },
+  "profilePrivacySubtitle": "Wie je ziet, opgeslagen login",
+  "@profilePrivacySubtitle": {
+    "description": "Uitleg bij privacy en beveiliging."
+  },
+  "profileSignOut": "Uitloggen",
+  "@profileSignOut": {
+    "description": "Rij: uitloggen."
+  },
+  "profileSignOutLocked": "Opnieuw inloggen met je toegangscode",
+  "@profileSignOutLocked": {
+    "description": "Uitleg bij uitloggen als de app een toegangscode heeft."
+  },
+  "profileAppVersion": "CircleBeacon · versie {version}",
+  "@profileAppVersion": {
+    "description": "Onderaan het profiel: app-naam en versie.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "languageTitle": "Taal",
+  "@languageTitle": {
+    "description": "Rij en bladtitel: de taal van de app kiezen."
+  },
+  "languageDevice": "Toesteltaal",
+  "@languageDevice": {
+    "description": "Keuze: de taal van het toestel volgen."
+  },
+  "languageDeviceSubtitle": "Volgt de taal van je gsm, anders Engels",
+  "@languageDeviceSubtitle": {
+    "description": "Uitleg bij de keuze toesteltaal."
+  }
+}

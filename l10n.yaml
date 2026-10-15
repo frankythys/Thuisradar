@@ -1,0 +1,9 @@
+# Meertaligheid: Nederlands is de brontaal (app_nl.arb). Elke nieuwe tekst
+# eerst daar, met een @-beschrijving, daarna in de andere .arb-bestanden.
+# `flutter pub get`, `flutter run` en `flutter test` genereren de code opnieuw.
+arb-dir: lib/l10n
+template-arb-file: app_nl.arb
+output-dir: lib/l10n/generated
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+untranslated-messages-file: build/untranslated_messages.json
