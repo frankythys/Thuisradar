@@ -52,7 +52,10 @@ void main() {
     expect(find.text('Familie Thys'), findsOneWidget);
     expect(find.text('2 leden · code K7Q2M9XA'), findsOneWidget);
     expect(find.text('Introductie opnieuw bekijken'), findsOneWidget);
-    expect(find.text('Familie verlaten'), findsOneWidget);
+    expect(find.text('Taal'), findsOneWidget);
+    expect(find.text('Toesteltaal'), findsOneWidget);
+    // Onderaan de lijst, net onder de vouw: wel opgebouwd, niet zichtbaar.
+    expect(find.text('Familie verlaten', skipOffstage: false), findsOneWidget);
     // Geen lang formulier meer op het scherm zelf.
     expect(find.byType(TextField), findsNothing);
 

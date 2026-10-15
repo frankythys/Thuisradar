@@ -16,8 +16,10 @@ import '../../family/domain/family.dart';
 import '../../family/domain/family_member.dart';
 import '../../family/presentation/invite_screen.dart';
 import '../../geofencing/application/geofencing_providers.dart';
+import '../../language/presentation/language_tile.dart';
 import '../../location/application/location_providers.dart';
 import '../../onboarding/presentation/replay_onboarding_button.dart';
+import '../../../l10n/l10n.dart';
 import '../application/profile_providers.dart';
 import 'diagnostics_export_tile.dart';
 import 'profile_edit_sheet.dart';
@@ -68,9 +70,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
       }
       ref.invalidate(familyMembersProvider(widget.family.id));
-      if (mounted) _snack('Profiel opgeslagen');
+      if (mounted) _snack(context.l10n.profileSaved);
     } on Exception {
-      if (mounted) _snack('Opslaan mislukt. Probeer opnieuw.');
+      if (mounted) _snack(context.l10n.commonTryAgainSaveFailed);
     }
   }
 
@@ -86,9 +88,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         await ref.read(pinLockProvider).disable(userId);
         ref.invalidate(pinEnabledProvider(userId));
       }
-      if (mounted) _snack('Opgeslagen login en vingerafdruk verwijderd.');
+      if (mounted) _snack(context.l10n.profileForgetLoginDone);
     } catch (_) {
-      if (mounted) _snack('Verwijderen is niet gelukt. Probeer opnieuw.');
+      if (mounted) _snack(context.l10n.commonRemoveFailed);
     }
   }
 
@@ -105,7 +107,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         await _signOut();
       }
     } catch (_) {
-      if (mounted) _snack('Afsluiten is niet gelukt. Probeer opnieuw.');
+      if (mounted) _snack(context.l10n.profileSignOutFailed);
     }
   }
 
@@ -136,14 +138,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${member.displayName} beheerder maken?'),
-        content: Text(
-          'Jij wordt dan gewoon gezinslid. ${member.displayName} kan daarna codes vernieuwen, '
-          'leden verwijderen (ook jou) en het beheer weer overdragen.',
-        ),
+        title: Text(context.l10n.profileMakeOwnerTitle(member.displayName)),
+        content: Text(context.l10n.profileMakeOwnerBody(member.displayName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Beheerder maken')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.commonCancel)),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.l10n.profileMakeOwnerConfirm),
+          ),
         ],
       ),
     );
@@ -153,10 +155,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       // De ledenlijst ververst via realtime; meteen opnieuw laden voor de
       // zekerheid, zodat de beheerknoppen meteen verdwijnen.
       ref.invalidate(familyMembersProvider(widget.family.id));
-      if (mounted) _snack('${member.displayName} is nu beheerder.');
+      if (mounted) _snack(context.l10n.profileMakeOwnerDone(member.displayName));
     } on Exception catch (error) {
       debugPrint('Beheer overdragen mislukt: $error');
-      if (mounted) _snack('Beheer overdragen is niet gelukt. Probeer opnieuw.');
+      if (mounted) _snack(context.l10n.profileMakeOwnerFailed);
     }
   }
 
@@ -166,17 +168,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${member.displayName} verwijderen?'),
-        content: Text(
-          '${member.displayName} ziet jullie dan niet meer en verdwijnt van de kaart. '
-          'De uitnodigingscode wordt vernieuwd, zodat de oude code niet meer werkt.',
-        ),
+        title: Text(context.l10n.profileRemoveMemberTitle(member.displayName)),
+        content: Text(context.l10n.profileRemoveMemberBody(member.displayName)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.commonCancel)),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.alert),
-            child: const Text('Verwijderen'),
+            child: Text(context.l10n.profileRemoveMemberConfirm),
           ),
         ],
       ),
@@ -185,10 +184,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       await ref.read(familyRepositoryProvider).removeMember(widget.family.id, member.userId);
       ref.invalidate(familyInviteProvider(widget.family.id));
-      if (mounted) _snack('${member.displayName} is uit het gezin verwijderd.');
+      if (mounted) _snack(context.l10n.profileRemoveMemberDone(member.displayName));
     } on Exception catch (error) {
       debugPrint('Lid verwijderen mislukt: $error');
-      if (mounted) _snack('Verwijderen is niet gelukt. Probeer opnieuw.');
+      if (mounted) _snack(context.l10n.commonRemoveFailed);
     }
   }
 
@@ -196,14 +195,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Familie verlaten?'),
-        content: Text('Je ziet ${widget.family.name} dan niet meer op de kaart.'),
+        title: Text(context.l10n.profileLeaveFamilyTitle),
+        content: Text(context.l10n.profileLeaveFamilyBody(widget.family.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.commonCancel)),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.alert),
-            child: const Text('Verlaten'),
+            child: Text(context.l10n.profileLeaveFamilyConfirm),
           ),
         ],
       ),
@@ -245,7 +244,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     } on Exception {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Voorkeur opslaan mislukt. Probeer opnieuw.')));
+            .showSnackBar(SnackBar(content: Text(context.l10n.profilePreferenceFailed)));
       }
     }
   }
@@ -253,6 +252,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final l10n = context.l10n;
     final members = ref.watch(familyMembersProvider(widget.family.id)).value ?? const <FamilyMember>[];
     final userId = ref.watch(currentUserIdProvider);
     final me = members.where((m) => m.userId == userId).firstOrNull;
@@ -267,7 +267,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Profiel'),
+      appBar: BrandedAppBar(title: l10n.profileTitle),
       body: SafeArea(
         child: ListView(
           padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceMd, tokens.spaceLg),
@@ -277,10 +277,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             group([
               ProfileTile(
                 icon: Icons.share_location,
-                title: 'Locatie delen',
-                subtitle: _sharing
-                    ? 'Aan · je gezin ziet waar je bent'
-                    : 'Gepauzeerd · je gezin ziet je niet',
+                title: l10n.profileShareLocation,
+                subtitle: _sharing ? l10n.profileShareLocationOn : l10n.profileShareLocationPaused,
                 trailing: Switch(value: _sharing, onChanged: _share),
                 onTap: () => _share(!_sharing),
               ),
@@ -291,8 +289,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ProfileTile(
                 icon: Icons.groups_outlined,
                 title: widget.family.name,
-                subtitle:
-                    '${members.length} ${members.length == 1 ? 'lid' : 'leden'} · code ${invite.inviteCode}',
+                subtitle: l10n.profileFamilySummary(members.length, invite.inviteCode),
                 onTap: () => showFamilySheet(
                   context,
                   family: invite,
@@ -307,16 +304,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               EmergencyContactsTile(senderName: me?.displayName ?? ''),
               ProfileTile(
                 icon: Icons.notifications_outlined,
-                title: 'Meldingen',
-                subtitle: 'Aankomst, vertrek en SOS',
+                title: l10n.profileNotifications,
+                subtitle: l10n.profileNotificationsSubtitle,
                 onTap: () => showNotificationsSheet(context, onChanged: _notification),
               ),
               ProfileTile(
                 icon: Icons.shield_outlined,
-                title: 'Privacy & beveiliging',
-                subtitle: 'Wie je ziet, opgeslagen login',
+                title: l10n.profilePrivacy,
+                subtitle: l10n.profilePrivacySubtitle,
                 onTap: () => showPrivacySheet(context, onForgetLogin: _forgetLogin),
               ),
+              const LanguageTile(),
               const ReplayOnboardingButton(),
               const DiagnosticsExportTile(),
             ]),
@@ -326,22 +324,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: userId != null && ref.watch(appLockEnabledProvider(userId)).value == true
                     ? Icons.lock_outline
                     : Icons.logout,
-                title: 'Uitloggen',
+                title: l10n.profileSignOut,
                 subtitle: userId != null && ref.watch(appLockEnabledProvider(userId)).value == true
-                    ? 'Opnieuw inloggen met je toegangscode'
+                    ? l10n.profileSignOutLocked
                     : null,
                 onTap: _lockOrSignOut,
               ),
               ProfileTile(
                 icon: Icons.exit_to_app,
-                title: 'Familie verlaten',
+                title: l10n.profileLeaveFamily,
                 danger: true,
                 onTap: _leaveFamily,
               ),
             ]),
             SizedBox(height: tokens.spaceMd),
             Text(
-              'CircleBeacon · versie 1.0.0',
+              l10n.profileAppVersion('1.0.0'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.muted),
               textAlign: TextAlign.center,
             ),
