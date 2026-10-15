@@ -14,6 +14,8 @@ import '../application/driving_providers.dart';
 import '../domain/driving_activity.dart';
 import 'driving_activity_card.dart';
 import 'driving_summary.dart';
+import '../../../l10n/l10n.dart';
+import '../../location/presentation/trip_text.dart';
 
 /// Dagoverzicht van één gezinslid: per dag de activiteiten (verplaatsingen
 /// met hun route en verblijven), nieuwste eerst.
@@ -112,7 +114,11 @@ class DrivingMemberScreen extends ConsumerWidget {
       );
     } else {
       body = Center(
-        child: Text(mode == null ? 'Geen locatiegeschiedenis deze week.' : 'Geen ${mode!.plural} deze week.'),
+        child: Text(
+          mode == null
+              ? context.l10n.drivingNoHistoryWeek
+              : context.l10n.drivingNoneThisWeek(mode!.noun(context.l10n, 2)),
+        ),
       );
     }
 

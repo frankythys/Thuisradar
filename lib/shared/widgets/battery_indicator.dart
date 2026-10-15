@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/l10n.dart';
 
 class BatteryIndicator extends StatelessWidget {
   const BatteryIndicator({super.key, required this.level, this.isCharging});
@@ -19,7 +20,7 @@ class BatteryIndicator extends StatelessWidget {
     final color = isLow ? AppColors.alert : AppColors.primary;
 
     return Semantics(
-      label: 'Batterij $value procent${isCharging == true ? ', aan het opladen' : ''}',
+      label: isCharging == true ? context.l10n.batteryLabelCharging(value) : context.l10n.batteryLabel(value),
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,

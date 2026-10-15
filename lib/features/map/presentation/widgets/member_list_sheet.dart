@@ -25,6 +25,7 @@ import 'member_sheet_dimensions.dart';
 import 'member_tile.dart';
 import 'member_places_prompt.dart';
 import 'create_circle_card.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Uitschuifbaar paneel onder de kaart: familienaam, een keuzerij
 /// Personen/Plaatsen, de ledenkaart en het plaatsenblok. De uitnodigingskaart
@@ -279,9 +280,9 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                   // De keuzeknoppen staan in de vaste kop zodat ze blijven
                   // staan tijdens het scrollen van de ledenlijst.
                   IconFilterChips(
-                    items: const [
-                      IconFilterItem(icon: Icons.people_alt, label: 'Personen'),
-                      IconFilterItem(icon: Icons.place_outlined, label: 'Plaatsen'),
+                    items: [
+                      IconFilterItem(icon: Icons.people_alt, label: context.l10n.mapPeople),
+                      IconFilterItem(icon: Icons.place_outlined, label: context.l10n.navPlaces),
                     ],
                     selectedIndex: _filter,
                     onSelected: _selectFilter,
@@ -331,7 +332,7 @@ class _MemberListSheetState extends ConsumerState<MemberListSheet> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
                   ),
-                  child: const Text('Voeg een persoon toe'),
+                  child: Text(context.l10n.mapAddPerson),
                 ),
               ),
             ),
@@ -418,9 +419,12 @@ class _InviteBanner extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Nodig anderen uit, blijf samen veiliger', style: text.titleMedium),
+                      Text(context.l10n.mapInviteOthers, style: text.titleMedium),
                       SizedBox(height: tokens.spaceXs),
-                      Text('Dierbaren toevoegen', style: text.labelLarge?.copyWith(color: AppColors.primary)),
+                      Text(
+                        context.l10n.mapAddLovedOnes,
+                        style: text.labelLarge?.copyWith(color: AppColors.primary),
+                      ),
                     ],
                   ),
                 ),

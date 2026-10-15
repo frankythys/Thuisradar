@@ -19,6 +19,7 @@ import '../../places/application/places_providers.dart';
 import '../application/events_providers.dart';
 import '../domain/family_event.dart';
 import '../domain/unread.dart';
+import '../../../l10n/l10n.dart';
 
 /// Scherm 15: feed van aankomst, vertrek en SOS.
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -151,7 +152,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               Padding(
                 padding: EdgeInsets.fromLTRB(tokens.spaceXs, tokens.spaceSm, 0, tokens.spaceSm),
                 child: Text(
-                  formatDayLabel(day.first.createdAt, now: now).toUpperCase(),
+                  formatDayLabel(context.l10n, day.first.createdAt, now: now).toUpperCase(),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.muted),
                 ),
               ),

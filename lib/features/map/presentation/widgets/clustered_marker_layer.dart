@@ -25,6 +25,7 @@ import 'member_marker.dart';
 import 'member_history_bubble.dart';
 import 'walker_marker_spec.dart';
 import 'walking_gif_frames.dart';
+import '../../../../l10n/l10n.dart';
 
 typedef _Coord = ({double lat, double lng});
 
@@ -380,7 +381,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
         markers.add(
           MapMarkerSpec(
             id: 'group_${groupMembers.first.member.userId}',
-            imageKey: (Theme.of(context), MediaQuery.textScalerOf(context), pin.imageKey),
+            imageKey: (Theme.of(context), MediaQuery.textScalerOf(context), pin.imageKey(context.l10n)),
             point: point,
             width: GroupPin.width,
             height: GroupPin.height,

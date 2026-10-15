@@ -3,7 +3,8 @@ import 'motion_filter.dart' show kMovingSpeedMps;
 import 'travel_mode.dart';
 
 /// Hoe een gezinslid zich verplaatst: één bron van waarheid voor de kaart,
-/// de ledenlijst, het info-kaartje en het detailscherm.
+/// de ledenlijst, het info-kaartje en het detailscherm. De tekst erbij staat
+/// in `location/presentation/trip_text.dart` (vertaald).
 enum TripState { missing, unknown, moving, stationary, stale }
 
 /// Vanaf deze snelheid (km/u) toont één losse meting zonder geschiedenis een
@@ -52,45 +53,6 @@ class TripStatus {
   bool get driving => state == TripState.moving && mode == TravelMode.car;
 
   bool get canFollow => state != TripState.missing && state != TripState.stale;
-
-  String get label => switch (state) {
-    TripState.missing => 'Nog geen locatie gedeeld',
-    TripState.unknown => 'Beweging onbekend',
-    TripState.moving => 'Onderweg',
-    TripState.stationary => 'Stilstaand',
-    TripState.stale => 'Locatie niet actueel',
-  };
-
-  /// Korte statusregel voor de ledenlijst: enkel wat er speelt, zonder tijd.
-  /// "Thuis", "Onderweg · 42 km/u" of "Rijden in de buurt van N106".
-  String shortDescription(MemberLocation? location, DateTime now, {String? place, String? address}) {
-    if (location == null) return label;
-    if (state == TripState.moving) {
-      if (address != null && address.isNotEmpty) {
-        return '${mode?.label ?? label} in de buurt van $address';
-      }
-      if (place != null) return 'Onderweg · nabij $place';
-      return speedKmh == null ? 'Onderweg' : 'Onderweg · $speedKmh km/u';
-    }
-    if (place != null) return place;
-    if (address != null && address.isNotEmpty) return address;
-    return label;
-  }
-
-  /// Eén statusregel voor overal in de app: status, waar (plaats of adres),
-  /// snelheid en hoe lang geleden.
-  String description(MemberLocation? location, DateTime now, {String? place, String? address}) {
-    if (location == null) return label;
-    final seconds = now.difference(location.updatedAt).inSeconds.clamp(0, 99999999);
-    final age = seconds < 60 ? '$seconds s geleden' : '${seconds ~/ 60} min geleden';
-    final where = switch ((place, address)) {
-      (final p?, _) => ' nabij $p',
-      (_, final a?) when a.isNotEmpty => ' · $a',
-      _ => '',
-    };
-    final velocity = speedKmh == null ? '' : ' · $speedKmh km/u';
-    return '$label$where$velocity · bijgewerkt $age';
-  }
 }
 
 /// Vervoermiddel bij één losse snelheid (km/u), zonder geschiedenis.

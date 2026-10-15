@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/app_colors.dart';
 import 'app_map_tiles.dart';
+import '../../l10n/l10n.dart';
 
 /// Werkelijke kaartpositie, gedeeld door detail, chat en het SOS-scherm.
 class LocationPreview extends StatefulWidget {
@@ -94,7 +95,7 @@ class _LocationPreviewState extends State<LocationPreview> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => Scaffold(
-          appBar: AppBar(title: const Text('Ritkaart')),
+          appBar: AppBar(title: Text(context.l10n.routeMap)),
           body: Padding(
             padding: const EdgeInsets.all(12),
             child: SizedBox.expand(
@@ -203,11 +204,11 @@ class _LocationPreviewState extends State<LocationPreview> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => launchUrl(Uri.https('www.openstreetmap.org', '/copyright')),
-                child: const Padding(
-                  padding: EdgeInsets.fromLTRB(8, 4, 6, 4),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 6, 4),
                   child: Text(
-                    '© OpenStreetMap-bijdragers',
-                    style: TextStyle(fontSize: 9, color: AppColors.muted),
+                    '© ${context.l10n.osmContributors}',
+                    style: const TextStyle(fontSize: 9, color: AppColors.muted),
                   ),
                 ),
               ),
@@ -222,7 +223,7 @@ class _LocationPreviewState extends State<LocationPreview> {
                     elevation: 2,
                     borderRadius: BorderRadius.circular(12),
                     child: IconButton(
-                      tooltip: 'Ritkaart vergroten',
+                      tooltip: context.l10n.routeMapEnlarge,
                       onPressed: _fullscreen,
                       icon: const Icon(Icons.fullscreen, color: AppColors.primary),
                     ),
@@ -258,7 +259,6 @@ Future<void> openDirections(BuildContext context, double latitude, double longit
     /* Toon een herstelbare fout in de app. */
   }
   if (context.mounted) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Route-app openen mislukt. Probeer opnieuw.')));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.routeAppFailed)));
   }
 }

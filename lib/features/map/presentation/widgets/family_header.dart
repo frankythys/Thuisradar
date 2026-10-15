@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../family/domain/family.dart';
+import '../../../../l10n/l10n.dart';
 
 enum _HeaderAction { copyInvite, profile, signOut }
 
@@ -16,15 +17,14 @@ class FamilyHeader extends StatelessWidget {
   Future<void> _copyInvite(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: family.inviteCode));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Code ${family.inviteCode} gekopieerd. Stuur hem naar je gezinslid.')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(context.l10n.mapCodeCopiedSend(family.inviteCode))));
   }
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<_HeaderAction>(
-      tooltip: 'Familiemenu',
+      tooltip: context.l10n.mapFamilyMenu,
       position: PopupMenuPosition.under,
       onSelected: (action) => switch (action) {
         _HeaderAction.copyInvite => _copyInvite(context),
@@ -36,17 +36,17 @@ class FamilyHeader extends StatelessWidget {
           value: _HeaderAction.copyInvite,
           child: ListTile(
             leading: const Icon(Icons.person_add_alt),
-            title: const Text('Gezinslid uitnodigen'),
-            subtitle: Text('Code: ${family.inviteCode}'),
+            title: Text(context.l10n.mapInviteMember),
+            subtitle: Text(context.l10n.mapCode(family.inviteCode)),
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: _HeaderAction.profile,
-          child: ListTile(leading: Icon(Icons.person_outline), title: Text('Profiel')),
+          child: ListTile(leading: const Icon(Icons.person_outline), title: Text(context.l10n.profileTitle)),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: _HeaderAction.signOut,
-          child: ListTile(leading: Icon(Icons.logout), title: Text('Uitloggen')),
+          child: ListTile(leading: const Icon(Icons.logout), title: Text(context.l10n.profileSignOut)),
         ),
       ],
       child: Material(

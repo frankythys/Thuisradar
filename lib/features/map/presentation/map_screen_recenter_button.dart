@@ -15,9 +15,13 @@ class _RecenterButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const Tooltip(
-          message: 'Toon iedereen',
-          child: SizedBox(width: 48, height: 48, child: Icon(Icons.my_location, color: AppColors.primary)),
+        child: Tooltip(
+          message: context.l10n.mapShowEveryone,
+          child: const SizedBox(
+            width: 48,
+            height: 48,
+            child: Icon(Icons.my_location, color: AppColors.primary),
+          ),
         ),
       ),
     );

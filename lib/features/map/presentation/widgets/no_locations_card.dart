@@ -5,6 +5,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/radar_logo.dart';
 import '../../../family/domain/family.dart';
 import '../../../family/presentation/invite_screen.dart';
+import '../../../../l10n/l10n.dart';
 
 class NoLocationsCard extends StatelessWidget {
   const NoLocationsCard({super.key, required this.family, required this.onSettings});
@@ -22,13 +23,13 @@ class NoLocationsCard extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Nog geen actieve locaties',
+          context.l10n.mapNoActiveTitle,
           style: Theme.of(context).textTheme.headlineMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
-          'Niemand in ${family.name} deelt momenteel actief een signaal. Nodig je gezinsleden uit of schakel je gps in.',
+          context.l10n.mapNoActiveBody(family.name),
           style: Theme.of(context).textTheme.bodySmall,
           textAlign: TextAlign.center,
         ),
@@ -38,16 +39,16 @@ class NoLocationsCard extends StatelessWidget {
               Navigator.of(context)
                   .push(MaterialPageRoute<void>(builder: (_) => InviteScreen(family: family))),
           icon: const Icon(Icons.group_add_outlined, size: 18),
-          label: const Text('Gezinslid uitnodigen'),
+          label: Text(context.l10n.mapInviteMember),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
           onPressed: onSettings,
           icon: const Icon(Icons.gps_fixed, size: 18),
-          label: const Text('Controleer gps-instellingen'),
+          label: Text(context.l10n.mapCheckGps),
         ),
         const SizedBox(height: 10),
-        Text('Gezinscode: ${family.inviteCode}', style: Theme.of(context).textTheme.bodySmall),
+        Text(context.l10n.mapFamilyCode(family.inviteCode), style: Theme.of(context).textTheme.bodySmall),
       ],
     ),
   );

@@ -56,7 +56,7 @@ class _CurrentStayCard extends ConsumerWidget {
     final String title;
     final IconData icon;
     if (moving) {
-      title = status.mode?.label ?? 'Onderweg';
+      title = status.mode?.label(context.l10n) ?? context.l10n.tripMoving;
       icon = travelModeIcon(status.mode ?? TravelMode.car);
     } else if (here != null) {
       title = here.name;
@@ -65,15 +65,15 @@ class _CurrentStayCard extends ConsumerWidget {
       final address = ref
           .watch(placeAddressProvider(snapToAddressGrid(location.latitude, location.longitude)))
           .value;
-      title = address == null || address.isEmpty ? 'Onbekend' : address.label;
+      title = address == null || address.isEmpty ? context.l10n.memberUnknownPlace : address.label;
       icon = Icons.location_on;
     }
 
     final subtitle = stale
-        ? 'Laatst gezien om ${formatClock(location.updatedAt.toLocal())} · locatie niet actueel'
+        ? context.l10n.memberLastSeenStale(formatClock(location.updatedAt.toLocal()))
         : ongoing
         ? '${formatClock(since)} – ${formatClock(now)}'
-        : status.description(location, now);
+        : status.description(context.l10n, location, now);
 
     return Container(
       decoration: BoxDecoration(
@@ -116,7 +116,7 @@ class _CurrentStayCard extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: save,
               icon: const Icon(Icons.add_location_alt_outlined, size: 20),
-              label: const Text('Deze plek opslaan als plaats'),
+              label: Text(context.l10n.memberSaveSpotAsPlace),
             ),
           ],
           Padding(
@@ -128,13 +128,13 @@ class _CurrentStayCard extends ConsumerWidget {
               if (ongoing) ...[
                 const Icon(Icons.schedule, size: 16, color: AppColors.muted),
                 const SizedBox(width: 6),
-                Text('Nu aan de gang', style: text.bodyMedium),
+                Text(context.l10n.memberOngoing, style: text.bodyMedium),
               ],
               const Spacer(),
               TextButton.icon(
                 onPressed: onRefresh,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Verversen'),
+                label: Text(context.l10n.memberRefresh),
               ),
             ],
           ),

@@ -11,6 +11,8 @@ import '../../../location/domain/place_address.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../location/presentation/trip_text.dart';
 
 /// Compact kaartje dat verschijnt wanneer je een lid kiest (lijst of marker):
 /// avatar, naam, status (straat + gemeente) en batterij, met een knop naar de
@@ -68,14 +70,17 @@ class MemberInfoCard extends ConsumerWidget {
                     ],
                   ),
                   SizedBox(height: tokens.spaceXs),
-                  Text(_status(address), style: text.bodySmall?.copyWith(color: AppColors.muted)),
+                  Text(
+                    _status(context.l10n, address),
+                    style: text.bodySmall?.copyWith(color: AppColors.muted),
+                  ),
                   SizedBox(height: tokens.spaceSm),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: FilledButton.icon(
                       onPressed: onHistory,
                       icon: const Icon(Icons.history, size: 18),
-                      label: const Text('Geschiedenis'),
+                      label: Text(context.l10n.mapHistory),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primarySoft,
                         foregroundColor: AppColors.primary,
@@ -87,23 +92,23 @@ class MemberInfoCard extends ConsumerWidget {
                 ],
               ),
             ),
-            IconButton(onPressed: onClose, tooltip: 'Sluiten', icon: const Icon(Icons.close)),
+            IconButton(onPressed: onClose, tooltip: context.l10n.commonClose, icon: const Icon(Icons.close)),
           ],
         ),
       ),
     );
   }
 
-  String _status(PlaceAddress? address) {
+  String _status(AppLocalizations l10n, PlaceAddress? address) {
     final location = entry.location;
-    if (location == null) return 'Nog geen locatie gedeeld';
+    if (location == null) return l10n.tripMissing;
 
     final place = placeStatus;
     if (place != null) {
-      return place.since == null ? place.name : '${place.name} · sinds ${formatClock(place.since!)}';
+      return place.since == null ? place.name : l10n.mapPlaceSince(place.name, formatClock(place.since!));
     }
 
     // Straat + gemeente waar het lid nu is (indien beschikbaar).
-    return TripStatus.at(location, now).description(location, now, address: address?.label);
+    return TripStatus.at(location, now).description(l10n, location, now, address: address?.label);
   }
 }

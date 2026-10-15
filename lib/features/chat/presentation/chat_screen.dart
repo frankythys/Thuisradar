@@ -27,6 +27,7 @@ import '../application/chat_providers.dart';
 import '../domain/chat_days.dart';
 import '../domain/message.dart';
 import '../../family/domain/family_member.dart';
+import '../../../l10n/l10n.dart';
 
 part 'chat_screen_bubble.dart';
 part 'chat_screen_composer.dart';
@@ -344,7 +345,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _DayLabel(chatDayLabel(message.createdAt, now: now)),
+                            _DayLabel(formatDayLabel(context.l10n, message.createdAt, now: now)),
                             bubble,
                           ],
                         );

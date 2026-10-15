@@ -4,6 +4,7 @@ import '../../core/theme/app_tokens.dart';
 import 'radar_logo.dart';
 import 'notifications_action.dart';
 import 'profile_action.dart';
+import '../../l10n/l10n.dart';
 
 /// Rustige app-balk: logotegel en titel, rechts het belletje, eventuele
 /// eigen acties en anders je eigen avatar. Hergebruikt op bijna elk scherm.
@@ -30,7 +31,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
         (Navigator.of(context).canPop()
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                tooltip: 'Terug',
+                tooltip: context.l10n.commonBack,
                 onPressed: () => Navigator.of(context).maybePop(),
               )
             : null);
@@ -51,7 +52,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         const NotificationsAction(),
         ...actions,
-        if (actions.isEmpty && title != 'Profiel') const ProfileAction(),
+        if (actions.isEmpty && title != context.l10n.profileTitle) const ProfileAction(),
         SizedBox(width: tokens.spaceSm),
       ],
     );

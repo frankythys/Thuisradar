@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
+
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.message, this.onRetry});
 
@@ -19,7 +21,7 @@ class ErrorView extends StatelessWidget {
             Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 12),
-              OutlinedButton(onPressed: onRetry, child: const Text('Opnieuw proberen')),
+              OutlinedButton(onPressed: onRetry, child: Text(context.l10n.commonTryAgain)),
             ],
           ],
         ),

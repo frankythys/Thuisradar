@@ -16,6 +16,7 @@ import 'google_base_map.dart';
 import 'google_map_stack.dart';
 import 'map_gestures.dart';
 import 'map_marker_spec.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Kaart met een marker (of groepspin) per gezinslid met locatie. Ondergrond:
 /// OpenStreetMap, of Google Maps als [useGoogleMaps] aanstaat.
@@ -180,7 +181,8 @@ class FamilyMap extends StatelessWidget {
           myUserId: myUserId,
           onNativeMarkers: onNativeMarkers,
         ),
-        if (!useGoogleMaps) const SimpleAttributionWidget(source: Text('OpenStreetMap-bijdragers')),
+        if (!useGoogleMaps)
+          Builder(builder: (context) => SimpleAttributionWidget(source: Text(context.l10n.osmContributors))),
       ],
     );
   }

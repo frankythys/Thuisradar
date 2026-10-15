@@ -32,7 +32,9 @@ class _Header extends ConsumerWidget {
               ),
               SizedBox(height: tokens.spaceXs),
               Text(
-                location == null ? 'Nog geen locatie' : trip.description(location, now),
+                location == null
+                    ? context.l10n.memberNoLocation
+                    : trip.description(context.l10n, location, now),
                 style: text.bodyMedium?.copyWith(color: AppColors.muted),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

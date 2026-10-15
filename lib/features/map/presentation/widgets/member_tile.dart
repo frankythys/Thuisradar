@@ -11,6 +11,8 @@ import '../../../location/domain/place_address.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
 import '../../domain/member_on_map.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../location/presentation/trip_text.dart';
 
 /// Eén rij in de ledenkaart: afgeronde avatar met batterijpil, de naam, een
 /// korte statusregel en "Sinds HH:mm". Leden zonder signaal krijgen een rode
@@ -57,23 +59,23 @@ class MemberTile extends ConsumerWidget {
                   ),
                   SizedBox(height: tokens.spaceXs),
                   Text(
-                    _status(status, address, offline),
+                    _status(context.l10n, status, address, offline),
                     style: text.bodySmall?.copyWith(color: offline ? AppColors.alert : AppColors.muted),
                   ),
                   if (location != null && !offline)
                     Text(
-                      'Sinds ${formatSince(location.updatedAt, now: now)}',
+                      context.l10n.mapSinceCapital(formatSince(context.l10n, location.updatedAt, now: now)),
                       style: text.bodySmall?.copyWith(color: AppColors.muted),
                     ),
                 ],
               ),
             ),
             if (offline)
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
                 child: Tooltip(
-                  message: 'Geen netwerk of telefoon uit',
-                  child: Icon(Icons.phonelink_off, color: AppColors.alert, size: 22),
+                  message: context.l10n.mapOffline,
+                  child: const Icon(Icons.phonelink_off, color: AppColors.alert, size: 22),
                 ),
               ),
           ],
@@ -85,11 +87,17 @@ class MemberTile extends ConsumerWidget {
   /// Geen signaal: al even niets ontvangen of nog nooit gedeeld.
   bool _isOffline(TripStatus status) => status.state == TripState.stale || status.state == TripState.missing;
 
-  String _status(TripStatus status, PlaceAddress? address, bool offline) {
-    if (status.state == TripState.missing) return 'Nog geen locatie gedeeld';
-    if (offline) return 'Geen netwerk of telefoon uit';
+  String _status(AppLocalizations l10n, TripStatus status, PlaceAddress? address, bool offline) {
+    if (status.state == TripState.missing) return l10n.tripMissing;
+    if (offline) return l10n.mapOffline;
 
-    return status.shortDescription(entry.location, now, place: placeStatus?.name, address: address?.label);
+    return status.shortDescription(
+      l10n,
+      entry.location,
+      now,
+      place: placeStatus?.name,
+      address: address?.label,
+    );
   }
 }
 

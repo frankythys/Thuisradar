@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../features/family/application/family_providers.dart';
 import '../../features/notifications/application/events_providers.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// Belletje in de app-balk dat de meldingen opent, met een badge zodra er
 /// ongelezen meldingen zijn. Verbergt zich tot er een familie is.
@@ -20,7 +21,7 @@ class NotificationsAction extends ConsumerWidget {
     const bell = Icon(Icons.notifications_outlined, color: AppColors.primary);
 
     return IconButton(
-      tooltip: 'Meldingen',
+      tooltip: context.l10n.profileNotifications,
       icon: unread > 0 ? Badge(label: Text('$unread'), child: bell) : bell,
       onPressed: () {
         // Openen = alles als gelezen markeren (badge verdwijnt).

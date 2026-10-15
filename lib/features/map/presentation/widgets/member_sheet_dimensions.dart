@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/widgets/icon_filter_chips.dart';
 import '../../../../shared/widgets/sheet_handle.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Hoogtes volgen de beschikbare breedte en de tekstgrootte van het toestel.
 abstract final class MemberSheetDimensions {
@@ -22,9 +23,9 @@ abstract final class MemberSheetDimensions {
     }
 
     final labels =
-        height('Nodig anderen uit, blijf samen veiliger', text.titleMedium) +
+        height(context.l10n.mapInviteOthers, text.titleMedium) +
         tokens.spaceXs +
-        height('Dierbaren toevoegen', text.labelLarge);
+        height(context.l10n.mapAddLovedOnes, text.labelLarge);
     return labels.clamp(48.0, double.infinity) + 2 * tokens.spaceMd;
   }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 import '../../domain/map_rotation.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Kompas zoals in Google Maps: verschijnt zodra de kaart gedraaid is, wijst
 /// naar het noorden en draait de kaart bij een tik vloeiend terug.
@@ -72,7 +73,7 @@ class _MapCompassButtonState extends State<MapCompassButton> with SingleTickerPr
               onTap: _toNorth,
               customBorder: const CircleBorder(),
               child: Tooltip(
-                message: 'Noorden boven',
+                message: context.l10n.mapNorthUp,
                 child: SizedBox(
                   width: 48,
                   height: 48,

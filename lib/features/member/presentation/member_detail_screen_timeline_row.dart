@@ -12,12 +12,13 @@ class _TimelineRow extends StatelessWidget {
     final tokens = context.tokens;
     final isStop = entry.kind == TimelineKind.stop;
 
+    final l10n = context.l10n;
     final title = isStop
-        ? (entry.placeName == null ? 'Stilgestaan' : 'Aangekomen op ${entry.placeName}')
-        : 'Onderweg · ${formatDistance(entry.distanceMeters ?? 0)}';
+        ? (entry.placeName == null ? l10n.memberStopped : l10n.memberArrivedAt(entry.placeName!))
+        : '${l10n.tripMoving} · ${formatDistance(l10n, entry.distanceMeters ?? 0)}';
     final subtitle = isStop
-        ? '${formatClock(entry.start)}–${formatClock(entry.end)} · ${formatDuration(entry.duration)}'
-        : '${formatClock(entry.start)}–${formatClock(entry.end)} · ${formatDuration(entry.duration)}';
+        ? '${formatClock(entry.start)}–${formatClock(entry.end)} · ${formatDuration(l10n, entry.duration)}'
+        : '${formatClock(entry.start)}–${formatClock(entry.end)} · ${formatDuration(l10n, entry.duration)}';
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: tokens.spaceMd),
@@ -47,7 +48,7 @@ class _TimelineRow extends StatelessWidget {
           ),
           if (isStop && entry.placeName == null && onSaveAsPlace != null)
             IconButton(
-              tooltip: 'Plek opslaan als plaats',
+              tooltip: l10n.memberSaveAsPlace,
               onPressed: onSaveAsPlace,
               icon: const Icon(Icons.add_location_alt_outlined, color: AppColors.primary),
             ),

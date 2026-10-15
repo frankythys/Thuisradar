@@ -45,6 +45,7 @@ import 'widgets/member_sheet_dimensions.dart';
 import 'widgets/tracking_banner.dart';
 import 'widgets/no_locations_card.dart';
 import 'widgets/sheet_scrim.dart';
+import '../../../l10n/l10n.dart';
 
 part 'map_screen_recenter_button.dart';
 part 'map_screen_own_sos_banner.dart';
@@ -208,9 +209,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   Future<void> _raiseSos() async {
     final familyId = widget.family.id;
+    final l10n = context.l10n;
     final myId = ref.read(currentUserIdProvider);
     if (myId == null) {
-      _snack('Je locatie is nog niet beschikbaar. Probeer het zo opnieuw.');
+      _snack(l10n.mapLocationNotReady);
       return;
     }
 
@@ -228,7 +230,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       }
     }
     if (lat == null || lng == null) {
-      _snack('Je locatie is nog niet beschikbaar. Probeer het zo opnieuw.');
+      _snack(l10n.mapLocationNotReady);
       return;
     }
 
@@ -245,9 +247,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           },
         );
     final contacts = await _alertEmergencyContacts(myId, lat, lng);
-    final family = await raising
-        ? 'SOS verzonden naar je gezin.'
-        : 'SOS naar je gezin mislukt. Probeer opnieuw.';
+    if (!mounted) return;
+    final family = await raising ? l10n.mapSosSent : l10n.mapSosFailed;
     _snack([family, ?contacts].join(' '));
   }
 
@@ -426,7 +427,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     _OwnSosBanner(
                       onResolve: () async {
                         await ref.read(sosRepositoryProvider).resolve(alert.id);
-                        if (context.mounted) _snack('SOS opgelost.');
+                        if (context.mounted) _snack(context.l10n.mapSosResolved);
                       },
                     ),
                   ],
@@ -458,7 +459,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           if (membersAsync.hasError)
             ErrorView(
-              message: 'Familie kon niet geladen worden.',
+              message: context.l10n.mapFamilyLoadFailed,
               onRetry: () {
                 ref.invalidate(familyMembersProvider(familyId));
                 ref.invalidate(familyLocationsProvider(familyId));

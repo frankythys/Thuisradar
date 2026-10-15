@@ -1,8 +1,12 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/group_pin.dart';
+import 'package:thuisradar/l10n/l10n.dart';
+
+final _nl = lookupAppLocalizations(const Locale('nl'));
 
 void main() {
   final now = DateTime(2026, 10, 13, 12);
@@ -13,7 +17,7 @@ void main() {
 
   test('groepspin: zelfde inhoud geeft dezelfde sleutel, echte wijziging een andere', () {
     String key(List<MemberOnMap> members, {DateTime? at, String? selected}) =>
-        GroupPin(members: members, now: at ?? now, selectedUserId: selected).imageKey;
+        GroupPin(members: members, now: at ?? now, selectedUserId: selected).imageKey(_nl);
     final family = [member('Franky'), member('Liam')];
     expect(key(family), key([member('Franky'), member('Liam')]));
     expect(key(family, selected: 'Liam'), isNot(key(family)));

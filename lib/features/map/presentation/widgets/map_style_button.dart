@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 import '../../domain/map_style.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Zwevende knop: wisselen tussen gewone kaart en satelliet (Google Maps).
 ///
@@ -56,7 +57,7 @@ class _MapStyleButtonState extends State<MapStyleButton> {
         onTap: () => widget.onChoose(satellite: !satellite),
         customBorder: const CircleBorder(),
         child: Tooltip(
-          message: satellite ? 'Gewone kaart' : 'Satelliet',
+          message: satellite ? context.l10n.mapNormal : context.l10n.mapSatellite,
           child: SizedBox(
             width: 48,
             height: 48,

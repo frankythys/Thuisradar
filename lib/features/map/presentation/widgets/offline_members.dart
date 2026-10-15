@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../domain/member_on_map.dart';
+import '../../../../l10n/l10n.dart';
 
 class OfflineMembers extends StatelessWidget {
   const OfflineMembers({super.key, required this.members, required this.onDetails});
@@ -13,11 +14,8 @@ class OfflineMembers extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Familie · ${members.length} leden', style: Theme.of(context).textTheme.titleMedium),
-        const Text(
-          'Laatste bekende locaties verschijnen zodra ze beschikbaar zijn.',
-          style: TextStyle(fontSize: 11, color: AppColors.muted),
-        ),
+        Text(context.l10n.mapOfflineFamily(members.length), style: Theme.of(context).textTheme.titleMedium),
+        Text(context.l10n.mapOfflineHint, style: TextStyle(fontSize: 11, color: AppColors.muted)),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -45,7 +43,10 @@ class OfflineMembers extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 11),
                         ),
-                        const Text('Geen signaal', style: TextStyle(fontSize: 10, color: AppColors.muted)),
+                        Text(
+                          context.l10n.mapNoSignal,
+                          style: const TextStyle(fontSize: 10, color: AppColors.muted),
+                        ),
                       ],
                     ),
                   ),
@@ -54,10 +55,7 @@ class OfflineMembers extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        const Text(
-          '♧ Privacy gewaarborgd met een besloten gezinskring',
-          style: TextStyle(fontSize: 10, color: AppColors.muted),
-        ),
+        Text(context.l10n.mapPrivacyNote, style: const TextStyle(fontSize: 10, color: AppColors.muted)),
       ],
     ),
   );

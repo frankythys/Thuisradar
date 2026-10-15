@@ -13,7 +13,7 @@ class _Stats extends StatelessWidget {
     final distance = timeline
         .where((e) => e.kind == TimelineKind.move)
         .fold<double>(0, (sum, e) => sum + (e.distanceMeters ?? 0));
-    final seen = location == null ? '—' : formatRelative(location!.updatedAt, now: now);
+    final seen = location == null ? '—' : formatRelative(context.l10n, location!.updatedAt, now: now);
 
     return Row(
       children: [
@@ -21,16 +21,20 @@ class _Stats extends StatelessWidget {
           child: _StatCard(
             icon: Icons.battery_full,
             value: location?.battery == null ? '—' : '${location!.battery}%',
-            label: location?.isCharging == true ? 'Opladen' : 'Batterij',
+            label: location?.isCharging == true ? context.l10n.memberCharging : context.l10n.memberBattery,
           ),
         ),
         SizedBox(width: tokens.spaceMd),
         Expanded(
-          child: _StatCard(icon: Icons.route_outlined, value: formatDistance(distance), label: 'Afstand'),
+          child: _StatCard(
+            icon: Icons.route_outlined,
+            value: formatDistance(context.l10n, distance),
+            label: context.l10n.memberDistance,
+          ),
         ),
         SizedBox(width: tokens.spaceMd),
         Expanded(
-          child: _StatCard(icon: Icons.schedule, value: seen, label: 'Laatst gezien'),
+          child: _StatCard(icon: Icons.schedule, value: seen, label: context.l10n.memberLastSeen),
         ),
       ],
     );

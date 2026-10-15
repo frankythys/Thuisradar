@@ -1,9 +1,13 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/features/location/presentation/trip_text.dart';
+import 'package:thuisradar/l10n/l10n.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/location/domain/travel_mode.dart';
 import 'package:thuisradar/features/location/domain/trip_hint.dart';
 import 'package:thuisradar/features/location/domain/trip_status.dart';
 
+final _nl = lookupAppLocalizations(const Locale('nl'));
 final _now = DateTime(2026, 10, 2, 18, 5);
 
 MemberLocation _location({double? speedMps, Duration age = Duration.zero}) => MemberLocation(
@@ -20,7 +24,7 @@ void main() {
     final trip = TripStatus.at(null, _now);
     expect(trip.state, TripState.missing);
     expect(trip.speedKmh, isNull);
-    expect(trip.label, 'Nog geen locatie gedeeld');
+    expect(trip.label(_nl), 'Nog geen locatie gedeeld');
   });
 
   test('stilstaan (of onbekend) toont nooit een snelheid', () {
@@ -37,7 +41,7 @@ void main() {
     final trip = TripStatus.at(_location(speedMps: 11.7), _now);
     expect(trip.state, TripState.moving);
     expect(trip.speedKmh, 42);
-    expect(trip.label, 'Onderweg');
+    expect(trip.label(_nl), 'Onderweg');
   });
 
   test('te oude metingen zijn niet actueel', () {
@@ -50,7 +54,10 @@ void main() {
 
   test('beschrijving bevat straat, gemeente, snelheid en leeftijd', () {
     final location = _location(speedMps: 11.7, age: const Duration(seconds: 30));
-    final text = TripStatus.at(location, _now).description(location, _now, address: 'Kerkstraat 42, Gent');
+    final text = TripStatus.at(
+      location,
+      _now,
+    ).description(_nl, location, _now, address: 'Kerkstraat 42, Gent');
     expect(text, 'Onderweg · Kerkstraat 42, Gent · 42 km/u · bijgewerkt 30 s geleden');
   });
 
@@ -59,7 +66,7 @@ void main() {
     final text = TripStatus.at(
       location,
       _now,
-    ).description(location, _now, place: 'Thuis', address: 'Kerkstraat 42, Gent');
+    ).description(_nl, location, _now, place: 'Thuis', address: 'Kerkstraat 42, Gent');
     expect(text, contains('nabij Thuis'));
     expect(text, isNot(contains('Kerkstraat')));
   });
@@ -70,7 +77,7 @@ void main() {
     expect(trip.state, TripState.moving);
     expect(trip.walking, isTrue);
     expect(
-      trip.shortDescription(location, _now, address: 'Kerkstraat'),
+      trip.shortDescription(_nl, location, _now, address: 'Kerkstraat'),
       'Wandelen in de buurt van Kerkstraat',
     );
   });
@@ -79,7 +86,7 @@ void main() {
     final location = _location(speedMps: 11.7);
     final trip = TripStatus.at(location, _now);
     expect(trip.walking, isFalse);
-    expect(trip.shortDescription(location, _now, address: 'N106'), 'Rijden in de buurt van N106');
+    expect(trip.shortDescription(_nl, location, _now, address: 'N106'), 'Rijden in de buurt van N106');
   });
 
   test('fietstempo zonder geschiedenis is fietsen', () {
@@ -88,7 +95,7 @@ void main() {
     expect(trip.cycling, isTrue);
     expect(trip.driving, isFalse);
     expect(
-      trip.shortDescription(location, _now, address: 'Kerkstraat'),
+      trip.shortDescription(_nl, location, _now, address: 'Kerkstraat'),
       'Fietsen in de buurt van Kerkstraat',
     );
   });

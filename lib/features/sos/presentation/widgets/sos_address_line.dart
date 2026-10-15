@@ -8,6 +8,7 @@ import '../../../location/application/address_providers.dart';
 import '../../../location/domain/place_address.dart';
 import '../../../places/application/places_providers.dart';
 import '../../../places/domain/place_timeline.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Waar het alarm vandaan komt: een eigen plaats of het adres (gratis reverse
 /// geocoding van het toestel), nooit kale coördinaten.
@@ -45,7 +46,7 @@ class SosAddressLine extends ConsumerWidget {
             : 'Adres onbekend');
     final subtitle = [
       if (place != null && street.isNotEmpty) street,
-      'Gedeeld ${formatRelative(sharedAt, now: now)}',
+      'Gedeeld ${formatRelative(context.l10n, sharedAt, now: now)}',
     ].join(' · ');
 
     return Row(

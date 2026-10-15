@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../location/application/tracking_status.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Waarschuwing bovenaan wanneer je eigen locatie niet gedeeld wordt.
 class TrackingBanner extends StatelessWidget {
@@ -18,18 +19,16 @@ class TrackingBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final (message, action) = switch (status) {
-      TrackingStatus.permissionDenied => ('Geef toestemming voor je locatie.', ('Toestaan', onRetry)),
+      TrackingStatus.permissionDenied => (l10n.mapTrackingPermission, (l10n.commonAllow, onRetry)),
       TrackingStatus.permissionDeniedForever => (
-        'Locatie is geblokkeerd. Zet het aan in de instellingen.',
-        ('Instellingen', onOpenSettings),
+        l10n.mapTrackingBlocked,
+        (l10n.commonSettings, onOpenSettings),
       ),
-      TrackingStatus.serviceDisabled => ('Zet locatie (GPS) aan op je telefoon.', ('Opnieuw', onRetry)),
-      TrackingStatus.offline => (
-        'Geen internetverbinding · je locatie wordt bijgewerkt zodra je weer online bent.',
-        ('Opnieuw proberen', onRetry),
-      ),
-      TrackingStatus.error => ('Je locatie kon niet gelezen worden.', ('Opnieuw', onRetry)),
+      TrackingStatus.serviceDisabled => (l10n.mapTrackingGpsOff, (l10n.commonAgain, onRetry)),
+      TrackingStatus.offline => (l10n.mapTrackingOffline, (l10n.commonTryAgain, onRetry)),
+      TrackingStatus.error => (l10n.mapTrackingError, (l10n.commonAgain, onRetry)),
       _ => (null, null),
     };
     if (message == null) return const SizedBox.shrink();

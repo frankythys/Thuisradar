@@ -50,6 +50,8 @@ import '../../driving/domain/day_driving.dart';
 import '../../driving/presentation/driving_activity_card.dart';
 import '../../driving/presentation/travel_mode_filter.dart' show travelModeIcon;
 import '../../location/domain/travel_mode.dart';
+import '../../../l10n/l10n.dart';
+import '../../location/presentation/trip_text.dart';
 
 part 'member_detail_screen_header.dart';
 part 'member_detail_screen_current.dart';
@@ -93,7 +95,11 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
     super.dispose();
   }
 
-  static const _dayLabels = ['Vandaag', 'Gisteren', '30 dagen'];
+  static List<String> _dayLabels(AppLocalizations l10n) => [
+    l10n.dayToday,
+    l10n.dayYesterday,
+    l10n.memberDays30,
+  ];
 
   /// Lokale middernacht van de gekozen dag. Zonder tijdscomponent, zodat de
   /// provider-sleutel stabiel blijft tussen rebuilds (anders: oneindig laden).
@@ -144,9 +150,9 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
       unawaited(ref.read(locationTrackerProvider.notifier).refreshNow());
     }
     ref.invalidate(dayHistoryProvider(query));
-    ScaffoldMessenger.maybeOf(
-      context,
-    )?.showSnackBar(const SnackBar(content: Text('Locatie wordt ververst…'), duration: Duration(seconds: 2)));
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(content: Text(context.l10n.memberRefreshing), duration: const Duration(seconds: 2)),
+    );
   }
 
   @override
@@ -214,10 +220,10 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                   const SizedBox(width: 8),
                   Text(
                     recent
-                        ? 'Locatie'
+                        ? context.l10n.permLocation
                         : _dayOffset == 0
-                        ? 'Route vandaag'
-                        : 'Route gisteren',
+                        ? context.l10n.memberRouteToday
+                        : context.l10n.memberRouteYesterday,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ],
@@ -249,10 +255,11 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
                             placeAddressProvider(snapToAddressGrid(location.latitude, location.longitude)),
                           )
                           .when(
-                            data: (address) =>
-                                address == null || address.isEmpty ? 'Adres niet beschikbaar' : address.label,
-                            loading: () => 'Adres ophalen…',
-                            error: (_, _) => 'Adres niet beschikbaar',
+                            data: (address) => address == null || address.isEmpty
+                                ? context.l10n.memberAddressUnavailable
+                                : address.label,
+                            loading: () => context.l10n.memberAddressLoading,
+                            error: (_, _) => context.l10n.memberAddressUnavailable,
                           ),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -265,7 +272,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         const SizedBox(height: 20),
       ],
       Text(
-        _dayOffset == 2 ? 'Locatiegeschiedenis · 30 dagen' : 'Locatiegeschiedenis',
+        _dayOffset == 2 ? context.l10n.memberHistory30 : context.l10n.memberHistory,
         style: Theme.of(context).textTheme.titleLarge,
       ),
       SizedBox(height: tokens.spaceSm),
@@ -302,7 +309,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
             child: Center(child: CircularProgressIndicator()),
           ),
           error: (e, _) => ErrorView(
-            message: 'Geschiedenis laden mislukt.\n$e',
+            message: '${context.l10n.memberHistoryFailed}\n$e',
             onRetry: () => ref.invalidate(
               recent ? recentTimelineProvider(widget.member.userId) : dayHistoryProvider(query),
             ),
@@ -313,7 +320,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
         FilledButton.icon(
           onPressed: () => openDirections(context, location.latitude, location.longitude),
           icon: const Icon(Icons.navigation_outlined, size: 20),
-          label: Text('Routebeschrijving naar ${widget.member.displayName}'),
+          label: Text(context.l10n.memberDirectionsTo(widget.member.displayName)),
         ),
       ],
       const SizedBox(height: 10),
@@ -329,12 +336,12 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
               }
             },
             icon: const Icon(Icons.chat_bubble_outline, size: 16),
-            label: const Text('Stuur bericht'),
+            label: Text(context.l10n.memberSendMessage),
           ),
           TextButton.icon(
             onPressed: () => callMember(context, widget.member),
             icon: const Icon(Icons.call_outlined, size: 16),
-            label: const Text('Bellen'),
+            label: Text(context.l10n.memberCall),
           ),
           TextButton.icon(
             onPressed: () async {
@@ -347,7 +354,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
               }
             },
             icon: const Icon(Icons.notifications_outlined, size: 16),
-            label: const Text('Meldingen'),
+            label: Text(context.l10n.profileNotifications),
           ),
         ],
       ),
@@ -378,7 +385,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
               child: TextButton.icon(
                 onPressed: widget.onBack,
                 icon: const Icon(Icons.arrow_back),
-                label: const Text('Terug naar personen'),
+                label: Text(context.l10n.memberBackToPeople),
               ),
             ),
           ],
@@ -425,7 +432,7 @@ class _MemberDetailScreenState extends ConsumerState<MemberDetailScreen> {
       );
     }
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Gezinslid Detail'),
+      appBar: BrandedAppBar(title: context.l10n.memberDetailTitle),
       body: SafeArea(
         child: ListView(
           padding: EdgeInsets.all(tokens.spaceLg),

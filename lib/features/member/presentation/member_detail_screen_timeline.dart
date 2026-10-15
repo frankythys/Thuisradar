@@ -11,10 +11,10 @@ class _Timeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.history,
-        title: 'Geen geschiedenis',
-        message: 'Voor deze dag is er nog geen locatiegeschiedenis.',
+        title: context.l10n.memberNoHistory,
+        message: context.l10n.memberNoHistoryDay,
       );
     }
 

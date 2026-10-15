@@ -20,13 +20,13 @@ class _OwnSosBanner extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'SOS actief · je gezin is gewaarschuwd',
+                context.l10n.mapOwnSosActive,
                 style: text.bodyMedium?.copyWith(color: Colors.white),
               ),
             ),
             TextButton(
               onPressed: onResolve,
-              child: const Text('Oplossen', style: TextStyle(color: Colors.white)),
+              child: Text(context.l10n.mapResolve, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),

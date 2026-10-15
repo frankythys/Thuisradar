@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../l10n/l10n.dart';
 
 /// Batterij-weergave zoals in de mockups: gewoon icoon + percentage, maar bij
 /// een lage stand een opvallende oranje pil. Los van [BatteryIndicator], die de
@@ -20,7 +21,7 @@ class BatteryBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final value = level;
     if (value == null) return const SizedBox.shrink();
-    if (compact) return _compact(value);
+    if (compact) return _compact(context, value);
 
     final isLow = value <= lowThreshold && isCharging != true;
     final color = isLow ? AppColors.alert : AppColors.primary;
@@ -36,7 +37,7 @@ class BatteryBadge extends StatelessWidget {
     );
 
     return Semantics(
-      label: 'Batterij $value procent${isCharging == true ? ', aan het opladen' : ''}',
+      label: isCharging == true ? context.l10n.batteryLabelCharging(value) : context.l10n.batteryLabel(value),
       excludeSemantics: true,
       child: isLow
           ? Container(
@@ -50,12 +51,12 @@ class BatteryBadge extends StatelessWidget {
 
   /// Kleine witte pil met batterij-icoon + percentage, zoals over de avatar in
   /// de ledenlijst ("▮ 65%").
-  Widget _compact(int value) {
+  Widget _compact(BuildContext context, int value) {
     final isLow = value <= lowThreshold && isCharging != true;
     final color = isLow ? AppColors.alert : AppColors.primary;
 
     return Semantics(
-      label: 'Batterij $value procent${isCharging == true ? ', aan het opladen' : ''}',
+      label: isCharging == true ? context.l10n.batteryLabelCharging(value) : context.l10n.batteryLabel(value),
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),

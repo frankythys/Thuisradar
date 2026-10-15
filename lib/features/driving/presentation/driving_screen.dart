@@ -16,6 +16,8 @@ import 'driving_summary.dart';
 import 'driving_week_picker.dart';
 import 'steps_opt_in_card.dart';
 import 'travel_mode_filter.dart';
+import '../../../l10n/l10n.dart';
+import '../../location/presentation/trip_text.dart';
 
 /// Weekoverzicht van de verplaatsingen: week en vervoermiddel kiezen, drie
 /// kerncijfers en per gezinslid een rij die naar diens dagen leidt.
@@ -146,15 +148,16 @@ class _MemberRow extends StatelessWidget {
     final tokens = context.tokens;
     final report = item.report;
     final count = report.of(mode).length;
-    final noun = switch (mode) {
-      final mode? => count == 1 ? mode.singular : mode.plural,
-      null => count == 1 ? 'verplaatsing' : 'verplaatsingen',
-    };
+    final l10n = context.l10n;
     final subtitle = !report.hasHistory
-        ? 'Geen locatiegeschiedenis'
+        ? l10n.drivingNoHistory
         : count == 0
-        ? 'Geen $noun'
-        : '$count $noun · ${drivingNumber(report.kilometersOf(mode))} km';
+        ? l10n.drivingNoneOf(travelNoun(l10n, mode, 2))
+        : l10n.drivingCountDistance(
+            count,
+            travelNoun(l10n, mode, count),
+            drivingNumber(report.kilometersOf(mode)),
+          );
     return InkWell(
       onTap: onTap,
       child: Padding(

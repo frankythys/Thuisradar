@@ -11,6 +11,8 @@ import '../../../places/presentation/place_images.dart';
 import '../../domain/bubble_layout.dart';
 import '../../domain/member_on_map.dart';
 import 'walking_sneakers.dart';
+import '../../../../l10n/l10n.dart';
+import '../../../location/presentation/trip_text.dart';
 
 /// Afbeeldingen in de ballon. Precies deze sleutels worden vooraf geladen
 /// (`GoogleBaseMap`): een andere sleutel (bv. zonder `width`) laadt niet
@@ -86,6 +88,7 @@ class MemberHistoryBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final status = TripStatus.at(entry.location, now);
     final isMoving = status.state == TripState.moving && status.speedKmh != null;
     final placeSince = placeStatus?.since;
@@ -100,17 +103,17 @@ class MemberHistoryBubble extends StatelessWidget {
     final sinceTime = atPlace ? placeSince : (stopped ? stationarySince : null);
     final duration = sinceTime == null ? null : now.difference(sinceTime);
     final title = isMoving
-        ? status.mode!.label
+        ? status.mode!.label(l10n)
         : atPlace
         ? placeStatus!.name
         : stopped
-        ? 'Stilstaand'
-        : status.label;
+        ? l10n.tripStationary
+        : status.label(l10n);
     final subtitle = isMoving
-        ? '${status.speedKmh} km/u'
+        ? l10n.speedKmh(status.speedKmh!)
         : duration != null
-        ? 'sinds ${_formatSince(duration)}'
-        : _formatUpdated(entry.location?.updatedAt, now);
+        ? l10n.mapSince(_formatStay(l10n, duration))
+        : _formatUpdated(l10n, entry.location?.updatedAt, now);
     final icon = atPlace ? placeIcon(placeStatus!.icon) : Icons.location_on;
     final radius = BorderRadius.only(
       topLeft: const Radius.circular(15),
@@ -120,7 +123,7 @@ class MemberHistoryBubble extends StatelessWidget {
     );
     return Semantics(
       button: true,
-      label: 'Geschiedenis van ${entry.member.displayName}',
+      label: l10n.mapHistoryOf(entry.member.displayName),
       // Zelfde schaduw als de rondjes, plus een lichte rand die de ballon
       // laat loskomen van een lichte kaart.
       child: DecoratedBox(
@@ -203,14 +206,13 @@ const _walkerWidth = 52.0;
 const _walkerHeight = 32.0;
 const _paddingX = 8.0;
 
-String _formatSince(Duration duration) => duration.inHours > 0
-    ? '${duration.inHours} uur, ${duration.inMinutes.remainder(60)} min'
-    : '${duration.inMinutes} min';
+String _formatStay(AppLocalizations l10n, Duration duration) => duration.inHours > 0
+    ? l10n.mapStayHoursMinutes(duration.inHours, duration.inMinutes.remainder(60))
+    : l10n.durationMinutes(duration.inMinutes);
 
 /// Terugval als er geen verblijfsduur is (bv. verouderde meting): hoelang
 /// geleden de laatste positie binnenkwam, i.p.v. een nietszeggende tekst.
-String _formatUpdated(DateTime? updatedAt, DateTime now) {
+String _formatUpdated(AppLocalizations l10n, DateTime? updatedAt, DateTime now) {
   if (updatedAt == null) return '';
-  final seconds = now.difference(updatedAt).inSeconds.clamp(0, 99999999);
-  return seconds < 60 ? 'bijgewerkt $seconds s geleden' : 'bijgewerkt ${seconds ~/ 60} min geleden';
+  return updatedAgo(l10n, now.difference(updatedAt).inSeconds.clamp(0, 99999999));
 }

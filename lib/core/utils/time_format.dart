@@ -1,70 +1,57 @@
+import 'package:intl/intl.dart';
+
+import '../../l10n/l10n.dart';
 import 'calendar.dart';
 
-/// Korte, Nederlandstalige tijdsaanduiding: "zonet", "5 min geleden",
+export 'calendar.dart' show formatClock, isOtherDay;
+
+/// Korte tijdsaanduiding in de taal van de app: "zonet", "5 min geleden",
 /// "2 u geleden" of een datum.
-String formatRelative(DateTime moment, {required DateTime now}) {
+String formatRelative(AppLocalizations l10n, DateTime moment, {required DateTime now}) {
   final diff = now.difference(moment);
-  if (diff.inMinutes < 1) return 'zonet';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} min geleden';
-  if (diff.inHours < 24) return '${diff.inHours} u geleden';
-
-  final day = moment.day.toString().padLeft(2, '0');
-  final month = moment.month.toString().padLeft(2, '0');
-  return 'op $day/$month';
-}
-
-/// Kloktijd als "HH:mm".
-String formatClock(DateTime moment) {
-  final hour = moment.hour.toString().padLeft(2, '0');
-  final minute = moment.minute.toString().padLeft(2, '0');
-  return '$hour:$minute';
+  if (diff.inMinutes < 1) return l10n.timeJustNow;
+  if (diff.inMinutes < 60) return l10n.timeMinutesAgo(diff.inMinutes);
+  if (diff.inHours < 24) return l10n.timeHoursAgo(diff.inHours);
+  return l10n.timeOnDate(_dayMonth(moment));
 }
 
 /// Sinds-tijd voor de ledenlijst: "13:03", "16:49 gisteren" of "14:02 op
 /// 28/09". Kort genoeg voor een tweede regel naast de status.
-String formatSince(DateTime moment, {required DateTime now}) {
+String formatSince(AppLocalizations l10n, DateTime moment, {required DateTime now}) {
   final day = DateTime(moment.year, moment.month, moment.day);
   final today = DateTime(now.year, now.month, now.day);
   final days = calendarDaysBetween(day, today);
   final clock = formatClock(moment);
   if (days <= 0) return clock;
-  if (days == 1) return '$clock gisteren';
-
-  final date = moment.day.toString().padLeft(2, '0');
-  final month = moment.month.toString().padLeft(2, '0');
-  return '$clock op $date/$month';
+  if (days == 1) return l10n.timeClockYesterday(clock);
+  return l10n.timeClockOnDate(clock, _dayMonth(moment));
 }
 
-/// Duur in het Nederlands: "25 min", "1 u", "2 u 15 min".
-String formatDuration(Duration duration) {
+/// Duur: "25 min", "1 u", "2 u 15 min".
+String formatDuration(AppLocalizations l10n, Duration duration) {
   final hours = duration.inHours;
   final minutes = duration.inMinutes.remainder(60);
-  if (hours == 0) return '$minutes min';
-  if (minutes == 0) return '$hours u';
-  return '$hours u $minutes min';
+  if (hours == 0) return l10n.durationMinutes(minutes);
+  if (minutes == 0) return l10n.durationHours(hours);
+  return l10n.durationHoursMinutes(hours, minutes);
 }
 
-/// Afstand: "850 m" of "2,4 km" (komma als decimaalteken).
-String formatDistance(double meters) {
-  if (meters < 1000) return '${meters.round()} m';
-  return '${(meters / 1000).toStringAsFixed(1).replaceAll('.', ',')} km';
+/// Afstand: "850 m" of "2,4 km" (decimaalteken van de taal).
+String formatDistance(AppLocalizations l10n, double meters) {
+  if (meters < 1000) return l10n.distanceMeters(meters.round());
+  return l10n.distanceKm(NumberFormat('0.0', l10n.localeName).format(meters / 1000));
 }
-
-const _weekdays = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
 /// "Vandaag", "Gisteren" of "ma 6/10": dagkop boven berichten of meldingen.
-String formatDayLabel(DateTime day, {required DateTime now}) {
+String formatDayLabel(AppLocalizations l10n, DateTime day, {required DateTime now}) {
   final today = DateTime(now.year, now.month, now.day);
   final target = DateTime(day.year, day.month, day.day);
   final difference = calendarDaysBetween(target, today);
-  if (difference == 0) return 'Vandaag';
-  if (difference == 1) return 'Gisteren';
-  return '${_weekdays[target.weekday - 1]} ${target.day}/${target.month}';
+  if (difference == 0) return l10n.dayToday;
+  if (difference == 1) return l10n.dayYesterday;
+  return l10n.dayShort(l10n.weekdayShort('${target.weekday}'), '${target.day}/${target.month}');
 }
 
-/// Valt [current] op een andere kalenderdag dan [previous]?
-bool isOtherDay(DateTime? previous, DateTime current) =>
-    previous == null ||
-    previous.year != current.year ||
-    previous.month != current.month ||
-    previous.day != current.day;
+/// "28/09": dag en maand met voorloopnul.
+String _dayMonth(DateTime moment) =>
+    '${moment.day.toString().padLeft(2, '0')}/${moment.month.toString().padLeft(2, '0')}';

@@ -1222,5 +1222,793 @@
   "onboardingDemoAlarm": "Alarm naar 3 gezinsleden",
   "@onboardingDemoAlarm": {
     "description": "Demo SOS: alarm verstuurd."
+  },
+  "timeJustNow": "zonet",
+  "@timeJustNow": {
+    "description": "Zojuist (minder dan een minuut)."
+  },
+  "timeMinutesAgo": "{minutes} min geleden",
+  "@timeMinutesAgo": {
+    "description": "Minuten geleden.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "timeHoursAgo": "{hours} u geleden",
+  "@timeHoursAgo": {
+    "description": "Uren geleden.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "timeOnDate": "op {date}",
+  "@timeOnDate": {
+    "description": "Op een datum (dag/maand).",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "timeClockYesterday": "{clock} gisteren",
+  "@timeClockYesterday": {
+    "description": "Kloktijd gisteren.",
+    "placeholders": {
+      "clock": {
+        "type": "String"
+      }
+    }
+  },
+  "timeClockOnDate": "{clock} op {date}",
+  "@timeClockOnDate": {
+    "description": "Kloktijd op een datum.",
+    "placeholders": {
+      "clock": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "durationMinutes": "{minutes} min",
+  "@durationMinutes": {
+    "description": "Duur in minuten.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHours": "{hours} u",
+  "@durationHours": {
+    "description": "Duur in uren.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHoursMinutes": "{hours} u {minutes} min",
+  "@durationHoursMinutes": {
+    "description": "Duur in uren en minuten.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "distanceMeters": "{meters} m",
+  "@distanceMeters": {
+    "description": "Afstand in meter.",
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "distanceKm": "{km} km",
+  "@distanceKm": {
+    "description": "Afstand in km (getal al opgemaakt).",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "speedKmh": "{speed} km/u",
+  "@speedKmh": {
+    "description": "Snelheid.",
+    "placeholders": {
+      "speed": {
+        "type": "int"
+      }
+    }
+  },
+  "dayToday": "Vandaag",
+  "@dayToday": {
+    "description": "Dagkop: vandaag."
+  },
+  "dayYesterday": "Gisteren",
+  "@dayYesterday": {
+    "description": "Dagkop: gisteren."
+  },
+  "dayShort": "{weekday} {date}",
+  "@dayShort": {
+    "description": "Dagkop: weekdag en datum.",
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "weekdayShort": "{day, select, 1{ma} 2{di} 3{wo} 4{do} 5{vr} 6{za} other{zo}}",
+  "@weekdayShort": {
+    "description": "Korte weekdag; day = 1 (maandag) … 7 (zondag).",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "tripMissing": "Nog geen locatie gedeeld",
+  "@tripMissing": {
+    "description": "Status: nog geen locatie."
+  },
+  "tripUnknown": "Beweging onbekend",
+  "@tripUnknown": {
+    "description": "Status: beweging onbekend."
+  },
+  "tripMoving": "Onderweg",
+  "@tripMoving": {
+    "description": "Status: onderweg."
+  },
+  "tripStationary": "Stilstaand",
+  "@tripStationary": {
+    "description": "Status: stilstaand."
+  },
+  "tripStale": "Locatie niet actueel",
+  "@tripStale": {
+    "description": "Status: locatie niet actueel."
+  },
+  "tripModeNear": "{mode} in de buurt van {address}",
+  "@tripModeNear": {
+    "description": "Bv. \"Rijden in de buurt van N106\".",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "tripMovingNearPlace": "Onderweg · nabij {place}",
+  "@tripMovingNearPlace": {
+    "description": "Onderweg bij een plaats.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "tripMovingSpeed": "Onderweg · {speed} km/u",
+  "@tripMovingSpeed": {
+    "description": "Onderweg met snelheid.",
+    "placeholders": {
+      "speed": {
+        "type": "int"
+      }
+    }
+  },
+  "tripLabelNearPlace": "{label} nabij {place}",
+  "@tripLabelNearPlace": {
+    "description": "Status bij een plaats, bv. \"Onderweg nabij Thuis\".",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "tripUpdatedSecondsAgo": "bijgewerkt {seconds} s geleden",
+  "@tripUpdatedSecondsAgo": {
+    "description": "Laatste update in seconden.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "tripUpdatedMinutesAgo": "bijgewerkt {minutes} min geleden",
+  "@tripUpdatedMinutesAgo": {
+    "description": "Laatste update in minuten.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "travelWalk": "Wandelen",
+  "@travelWalk": {
+    "description": "Vervoermiddel: wandelen."
+  },
+  "travelBike": "Fietsen",
+  "@travelBike": {
+    "description": "Vervoermiddel: fietsen."
+  },
+  "travelCar": "Rijden",
+  "@travelCar": {
+    "description": "Vervoermiddel: rijden."
+  },
+  "travelWalkNoun": "{count, plural, =1{wandeling} other{wandelingen}}",
+  "@travelWalkNoun": {
+    "description": "Zelfstandig naamwoord, enkelvoud of meervoud.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "travelBikeNoun": "{count, plural, =1{fietstocht} other{fietstochten}}",
+  "@travelBikeNoun": {
+    "description": "Zelfstandig naamwoord, enkelvoud of meervoud.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "travelCarNoun": "{count, plural, =1{rit} other{ritten}}",
+  "@travelCarNoun": {
+    "description": "Zelfstandig naamwoord, enkelvoud of meervoud.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "travelAnyNoun": "{count, plural, =1{verplaatsing} other{verplaatsingen}}",
+  "@travelAnyNoun": {
+    "description": "Verplaatsing(en) ongeacht vervoermiddel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "drivingAll": "Alles",
+  "@drivingAll": {
+    "description": "Filter: alle vervoermiddelen."
+  },
+  "drivingNoHistory": "Geen locatiegeschiedenis",
+  "@drivingNoHistory": {
+    "description": "Geen locatiegeschiedenis."
+  },
+  "drivingNoneOf": "Geen {noun}",
+  "@drivingNoneOf": {
+    "description": "\"Geen ritten\".",
+    "placeholders": {
+      "noun": {
+        "type": "String"
+      }
+    }
+  },
+  "drivingCountDistance": "{count} {noun} · {km} km",
+  "@drivingCountDistance": {
+    "description": "Aantal en afstand, bv. \"3 ritten · 12,4 km\".",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "noun": {
+        "type": "String"
+      },
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "drivingNoHistoryWeek": "Geen locatiegeschiedenis deze week.",
+  "@drivingNoHistoryWeek": {
+    "description": "Geen geschiedenis deze week."
+  },
+  "drivingNoneThisWeek": "Geen {noun} deze week.",
+  "@drivingNoneThisWeek": {
+    "description": "\"Geen ritten deze week\".",
+    "placeholders": {
+      "noun": {
+        "type": "String"
+      }
+    }
+  },
+  "batteryLabel": "Batterij {percent} procent",
+  "@batteryLabel": {
+    "description": "Schermlezer: batterij.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "batteryLabelCharging": "Batterij {percent} procent, aan het opladen",
+  "@batteryLabelCharging": {
+    "description": "Schermlezer: batterij, aan het laden.",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "contactNoPhone": "{name} heeft nog geen telefoonnummer gedeeld. Dit kan via Profiel.",
+  "@contactNoPhone": {
+    "description": "Melding: gezinslid heeft geen nummer.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contactDialerFailed": "De telefoon-app kon niet worden geopend.",
+  "@contactDialerFailed": {
+    "description": "Fout: telefoon-app openen mislukt."
+  },
+  "contactCallMember": "Bel een gezinslid",
+  "@contactCallMember": {
+    "description": "Titel: een gezinslid bellen."
+  },
+  "contactNoPhoneShort": "Nog geen telefoonnummer",
+  "@contactNoPhoneShort": {
+    "description": "Nog geen telefoonnummer."
+  },
+  "routeMap": "Ritkaart",
+  "@routeMap": {
+    "description": "Titel: kaart van een rit."
+  },
+  "routeMapEnlarge": "Ritkaart vergroten",
+  "@routeMapEnlarge": {
+    "description": "Knopuitleg: ritkaart groter."
+  },
+  "osmContributors": "OpenStreetMap-bijdragers",
+  "@osmContributors": {
+    "description": "Bronvermelding van de kaart."
+  },
+  "routeAppFailed": "Route-app openen mislukt. Probeer opnieuw.",
+  "@routeAppFailed": {
+    "description": "Fout: route-app openen mislukt."
+  },
+  "profileNeedFamily": "Stel eerst je familie in om je gezinsprofiel te openen.",
+  "@profileNeedFamily": {
+    "description": "Melding: eerst een gezin instellen."
+  },
+  "profileLoadFailed": "Profiel laden mislukt. Probeer opnieuw.",
+  "@profileLoadFailed": {
+    "description": "Fout: profiel laden mislukt."
+  },
+  "memberDays30": "30 dagen",
+  "@memberDays30": {
+    "description": "Dagkeuze: 30 dagen."
+  },
+  "memberRefreshing": "Locatie wordt ververst…",
+  "@memberRefreshing": {
+    "description": "Melding: locatie wordt ververst."
+  },
+  "memberRouteToday": "Route vandaag",
+  "@memberRouteToday": {
+    "description": "Titel: route vandaag."
+  },
+  "memberRouteYesterday": "Route gisteren",
+  "@memberRouteYesterday": {
+    "description": "Titel: route gisteren."
+  },
+  "memberAddressUnavailable": "Adres niet beschikbaar",
+  "@memberAddressUnavailable": {
+    "description": "Adres niet beschikbaar."
+  },
+  "memberAddressLoading": "Adres ophalen…",
+  "@memberAddressLoading": {
+    "description": "Adres wordt opgehaald."
+  },
+  "memberHistory": "Locatiegeschiedenis",
+  "@memberHistory": {
+    "description": "Titel: locatiegeschiedenis."
+  },
+  "memberHistory30": "Locatiegeschiedenis · 30 dagen",
+  "@memberHistory30": {
+    "description": "Titel: geschiedenis 30 dagen."
+  },
+  "memberHistoryFailed": "Geschiedenis laden mislukt.",
+  "@memberHistoryFailed": {
+    "description": "Fout: geschiedenis laden mislukt."
+  },
+  "memberDirectionsTo": "Routebeschrijving naar {name}",
+  "@memberDirectionsTo": {
+    "description": "Knop: routebeschrijving naar iemand.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberSendMessage": "Stuur bericht",
+  "@memberSendMessage": {
+    "description": "Knop: bericht sturen."
+  },
+  "memberCall": "Bellen",
+  "@memberCall": {
+    "description": "Knop: bellen."
+  },
+  "memberBackToPeople": "Terug naar personen",
+  "@memberBackToPeople": {
+    "description": "Knop: terug naar personen."
+  },
+  "memberDetailTitle": "Gezinslid",
+  "@memberDetailTitle": {
+    "description": "Titel: gezinslid-detail."
+  },
+  "memberUnknownPlace": "Onbekend",
+  "@memberUnknownPlace": {
+    "description": "Onbekende plek."
+  },
+  "memberLastSeenStale": "Laatst gezien om {clock} · locatie niet actueel",
+  "@memberLastSeenStale": {
+    "description": "Laatst gezien, locatie niet actueel.",
+    "placeholders": {
+      "clock": {
+        "type": "String"
+      }
+    }
+  },
+  "memberSaveSpotAsPlace": "Deze plek opslaan als plaats",
+  "@memberSaveSpotAsPlace": {
+    "description": "Knop: deze plek bewaren als plaats."
+  },
+  "memberOngoing": "Nu aan de gang",
+  "@memberOngoing": {
+    "description": "Nu aan de gang."
+  },
+  "memberRefresh": "Verversen",
+  "@memberRefresh": {
+    "description": "Knop: verversen."
+  },
+  "memberNoHistory": "Geen geschiedenis",
+  "@memberNoHistory": {
+    "description": "Lege staat: geen geschiedenis."
+  },
+  "memberNoHistoryDay": "Voor deze dag is er nog geen locatiegeschiedenis.",
+  "@memberNoHistoryDay": {
+    "description": "Lege staat: uitleg."
+  },
+  "memberNoLocation": "Nog geen locatie",
+  "@memberNoLocation": {
+    "description": "Nog geen locatie."
+  },
+  "memberCharging": "Opladen",
+  "@memberCharging": {
+    "description": "Statkaart: opladen."
+  },
+  "memberBattery": "Batterij",
+  "@memberBattery": {
+    "description": "Statkaart: batterij."
+  },
+  "memberDistance": "Afstand",
+  "@memberDistance": {
+    "description": "Statkaart: afstand."
+  },
+  "memberLastSeen": "Laatst gezien",
+  "@memberLastSeen": {
+    "description": "Statkaart: laatst gezien."
+  },
+  "memberStopped": "Stilgestaan",
+  "@memberStopped": {
+    "description": "Tijdlijn: stilgestaan."
+  },
+  "memberArrivedAt": "Aangekomen op {place}",
+  "@memberArrivedAt": {
+    "description": "Tijdlijn: aangekomen op een plaats.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "memberSaveAsPlace": "Plek opslaan als plaats",
+  "@memberSaveAsPlace": {
+    "description": "Knopuitleg: plek als plaats bewaren."
+  },
+  "mapLocationNotReady": "Je locatie is nog niet beschikbaar. Probeer het zo opnieuw.",
+  "@mapLocationNotReady": {
+    "description": "Melding: eigen locatie nog niet beschikbaar."
+  },
+  "mapSosSent": "SOS verzonden naar je gezin.",
+  "@mapSosSent": {
+    "description": "Melding: SOS verzonden."
+  },
+  "mapSosFailed": "SOS naar je gezin mislukt. Probeer opnieuw.",
+  "@mapSosFailed": {
+    "description": "Melding: SOS mislukt."
+  },
+  "mapSosResolved": "SOS opgelost.",
+  "@mapSosResolved": {
+    "description": "Melding: SOS opgelost."
+  },
+  "mapFamilyLoadFailed": "Familie kon niet geladen worden.",
+  "@mapFamilyLoadFailed": {
+    "description": "Fout: familie kon niet geladen worden."
+  },
+  "mapOwnSosActive": "SOS actief · je gezin is gewaarschuwd",
+  "@mapOwnSosActive": {
+    "description": "Banner: eigen SOS actief."
+  },
+  "mapResolve": "Oplossen",
+  "@mapResolve": {
+    "description": "Knop: SOS oplossen."
+  },
+  "mapShowEveryone": "Toon iedereen",
+  "@mapShowEveryone": {
+    "description": "Knopuitleg: iedereen tonen."
+  },
+  "mapCreateCircleTitle": "Start een Circle voor je familie of vrienden",
+  "@mapCreateCircleTitle": {
+    "description": "Kaart: een kring maken."
+  },
+  "mapCreateCircleBody": "Houd elke groep beschermd, zonder dingen door elkaar te halen.",
+  "@mapCreateCircleBody": {
+    "description": "Kaart: uitleg kring."
+  },
+  "mapCreateCircle": "Nieuwe Circle aanmaken",
+  "@mapCreateCircle": {
+    "description": "Knop: nieuwe kring."
+  },
+  "mapCodeCopiedSend": "Code {code} gekopieerd. Stuur hem naar je gezinslid.",
+  "@mapCodeCopiedSend": {
+    "description": "Melding: code gekopieerd.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "mapFamilyMenu": "Familiemenu",
+  "@mapFamilyMenu": {
+    "description": "Knopuitleg: familiemenu."
+  },
+  "mapInviteMember": "Gezinslid uitnodigen",
+  "@mapInviteMember": {
+    "description": "Knop: gezinslid uitnodigen."
+  },
+  "mapCode": "Code: {code}",
+  "@mapCode": {
+    "description": "Code (kort).",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "mapFamilyCode": "Gezinscode: {code}",
+  "@mapFamilyCode": {
+    "description": "Gezinscode.",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "mapGroupMembers": "{count} gezinsleden",
+  "@mapGroupMembers": {
+    "description": "Groepspin: aantal leden.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mapArrived": "{name} is aangekomen",
+  "@mapArrived": {
+    "description": "Groepspin: iemand is aangekomen.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mapOnTheWay": "{name} is onderweg",
+  "@mapOnTheWay": {
+    "description": "Groepspin: iemand is onderweg.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mapNorthUp": "Noorden boven",
+  "@mapNorthUp": {
+    "description": "Knopuitleg: kompas."
+  },
+  "mapNormal": "Gewone kaart",
+  "@mapNormal": {
+    "description": "Knopuitleg: gewone kaart."
+  },
+  "mapSatellite": "Satelliet",
+  "@mapSatellite": {
+    "description": "Knopuitleg: satelliet."
+  },
+  "mapSince": "sinds {since}",
+  "@mapSince": {
+    "description": "Sinds (duur of tijd).",
+    "placeholders": {
+      "since": {
+        "type": "String"
+      }
+    }
+  },
+  "mapSinceCapital": "Sinds {since}",
+  "@mapSinceCapital": {
+    "description": "Sinds, aan het begin van een regel.",
+    "placeholders": {
+      "since": {
+        "type": "String"
+      }
+    }
+  },
+  "mapHistoryOf": "Geschiedenis van {name}",
+  "@mapHistoryOf": {
+    "description": "Schermlezer: geschiedenis van iemand.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "mapHistory": "Geschiedenis",
+  "@mapHistory": {
+    "description": "Knop: geschiedenis."
+  },
+  "commonClose": "Sluiten",
+  "@commonClose": {
+    "description": "Knopuitleg: sluiten."
+  },
+  "mapPlaceSince": "{place} · sinds {clock}",
+  "@mapPlaceSince": {
+    "description": "Plaats sinds kloktijd.",
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "clock": {
+        "type": "String"
+      }
+    }
+  },
+  "mapPeople": "Personen",
+  "@mapPeople": {
+    "description": "Filter: personen."
+  },
+  "mapAddPerson": "Voeg een persoon toe",
+  "@mapAddPerson": {
+    "description": "Knop: persoon toevoegen."
+  },
+  "mapInviteOthers": "Nodig anderen uit, blijf samen veiliger",
+  "@mapInviteOthers": {
+    "description": "Uitnodigen: titel."
+  },
+  "mapAddLovedOnes": "Dierbaren toevoegen",
+  "@mapAddLovedOnes": {
+    "description": "Uitnodigen: actie."
+  },
+  "mapPlacesPromptTitle": "Sla de plaatsen op die het belangrijkst zijn",
+  "@mapPlacesPromptTitle": {
+    "description": "Prompt: belangrijke plaatsen."
+  },
+  "mapPlacesPromptBody": "Weet wanneer ze aankomen",
+  "@mapPlacesPromptBody": {
+    "description": "Prompt: uitleg."
+  },
+  "mapManagePlaces": "Beheer plaatsen",
+  "@mapManagePlaces": {
+    "description": "Knop: plaatsen beheren."
+  },
+  "mapManage": "Beheer",
+  "@mapManage": {
+    "description": "Knop: beheren."
+  },
+  "mapNoPlaces": "Nog geen plaatsen. Voeg Thuis of School toe om te weten wanneer iemand aankomt.",
+  "@mapNoPlaces": {
+    "description": "Lege staat plaatsen."
+  },
+  "mapAddPlace": "Plaats toevoegen",
+  "@mapAddPlace": {
+    "description": "Knop: plaats toevoegen."
+  },
+  "mapOffline": "Geen netwerk of telefoon uit",
+  "@mapOffline": {
+    "description": "Geen netwerk of telefoon uit."
+  },
+  "mapNoActiveTitle": "Nog geen actieve locaties",
+  "@mapNoActiveTitle": {
+    "description": "Lege kaart: titel."
+  },
+  "mapNoActiveBody": "Niemand in {family} deelt momenteel actief een signaal. Nodig je gezinsleden uit of schakel je gps in.",
+  "@mapNoActiveBody": {
+    "description": "Lege kaart: uitleg.",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "mapCheckGps": "Controleer gps-instellingen",
+  "@mapCheckGps": {
+    "description": "Knop: gps-instellingen."
+  },
+  "mapOfflineFamily": "Familie · {count, plural, =1{1 lid} other{{count} leden}}",
+  "@mapOfflineFamily": {
+    "description": "Offline lijst: titel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mapOfflineHint": "Laatste bekende locaties verschijnen zodra ze beschikbaar zijn.",
+  "@mapOfflineHint": {
+    "description": "Offline lijst: uitleg."
+  },
+  "mapNoSignal": "Geen signaal",
+  "@mapNoSignal": {
+    "description": "Geen signaal."
+  },
+  "mapPrivacyNote": "♧ Privacy gewaarborgd met een besloten gezinskring",
+  "@mapPrivacyNote": {
+    "description": "Offline lijst: privacy."
+  },
+  "mapTrackingPermission": "Geef toestemming voor je locatie.",
+  "@mapTrackingPermission": {
+    "description": "Banner: toestemming nodig."
+  },
+  "mapTrackingBlocked": "Locatie is geblokkeerd. Zet het aan in de instellingen.",
+  "@mapTrackingBlocked": {
+    "description": "Banner: locatie geblokkeerd."
+  },
+  "mapTrackingGpsOff": "Zet locatie (GPS) aan op je telefoon.",
+  "@mapTrackingGpsOff": {
+    "description": "Banner: gps uit."
+  },
+  "mapTrackingOffline": "Geen internetverbinding · je locatie wordt bijgewerkt zodra je weer online bent.",
+  "@mapTrackingOffline": {
+    "description": "Banner: geen internet."
+  },
+  "mapTrackingError": "Je locatie kon niet gelezen worden.",
+  "@mapTrackingError": {
+    "description": "Banner: locatie lezen mislukt."
+  },
+  "commonAgain": "Opnieuw",
+  "@commonAgain": {
+    "description": "Knop: opnieuw."
+  },
+  "mapStayHoursMinutes": "{hours} uur, {minutes} min",
+  "@mapStayHoursMinutes": {
+    "description": "Verblijfsduur in de kaartballon.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
   }
 }

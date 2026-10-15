@@ -1,21 +1,7 @@
 /// Hoe iemand zich verplaatste. Enkel een schatting op basis van GPS-snelheid:
-/// een trage autorit in de file of een snelle e-bike kan verkeerd vallen.
-enum TravelMode {
-  walk('Wandelen', 'wandeling', 'wandelingen'),
-  bike('Fietsen', 'fietstocht', 'fietstochten'),
-  car('Rijden', 'rit', 'ritten');
-
-  const TravelMode(this.label, this.singular, this.plural);
-
-  /// "Wandelen", "Fietsen" of "Rijden".
-  final String label;
-
-  /// "wandeling", "fietstocht" of "rit".
-  final String singular;
-  final String plural;
-
-  String count(int n) => '$n ${n == 1 ? singular : plural}';
-}
+/// een trage autorit in de file of een snelle e-bike kan verkeerd vallen. De
+/// woorden ("Wandelen", "3 ritten") staan in `location/presentation/trip_text.dart`.
+enum TravelMode { walk, bike, car }
 
 /// Vanaf deze snelheid (km/u) telt een meting als "snel" voor de auto.
 const kCarSpeedKmh = 25.0;

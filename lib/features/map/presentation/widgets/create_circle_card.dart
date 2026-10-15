@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Kaart onder de personenlijst om een aparte groep te starten.
 class CreateCircleCard extends StatelessWidget {
@@ -38,7 +39,7 @@ class CreateCircleCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Start een Circle voor je familie of vrienden',
+                      context.l10n.mapCreateCircleTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontSize: 20,
                         height: 1.2,
@@ -48,7 +49,7 @@ class CreateCircleCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Houd elke groep beschermd, zonder dingen door elkaar te halen.',
+                      context.l10n.mapCreateCircleBody,
                       style: Theme.of(context).textTheme.bodyLarge
                           ?.copyWith(fontSize: 17, height: 1.4, color: AppColors.muted),
                     ),
@@ -71,7 +72,7 @@ class CreateCircleCard extends StatelessWidget {
               textStyle: Theme.of(context).textTheme.titleMedium
                   ?.copyWith(fontSize: 18, fontWeight: FontWeight.w800),
             ),
-            child: const Text('Nieuwe Circle aanmaken', textAlign: TextAlign.center),
+            child: Text(context.l10n.mapCreateCircle, textAlign: TextAlign.center),
           ),
         ],
       ),

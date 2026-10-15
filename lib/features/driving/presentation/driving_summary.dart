@@ -6,6 +6,8 @@ import '../../../shared/widgets/app_card.dart';
 import '../../location/domain/travel_mode.dart';
 import '../application/driving_providers.dart';
 import '../../../core/utils/calendar.dart';
+import '../../../l10n/l10n.dart';
+import '../../location/presentation/trip_text.dart';
 
 String drivingNumber(double value) => value.toStringAsFixed(1).replaceAll('.', ',');
 
@@ -72,10 +74,7 @@ class DrivingSummary extends StatelessWidget {
       },
       null => (_hours(duration), 'onderweg'),
     };
-    final countLabel = switch (mode) {
-      final mode? => count == 1 ? mode.singular : mode.plural,
-      null => count == 1 ? 'verplaatsing' : 'verplaatsingen',
-    };
+    final countLabel = travelNoun(context.l10n, mode, count);
     // Even hoge tegels, ook als de naam bij de snelheid op twee regels valt.
     return IntrinsicHeight(
       child: Row(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/icon_filter_chips.dart';
 import '../../location/domain/travel_mode.dart';
+import '../../../l10n/l10n.dart';
+import '../../location/presentation/trip_text.dart';
 
 /// Icoon per vervoermiddel.
 IconData travelModeIcon(TravelMode mode) => switch (mode) {
@@ -32,8 +34,8 @@ class TravelModeFilter extends StatelessWidget {
     items: [
       for (final filter in travelModeFilters)
         filter == null
-            ? const IconFilterItem(icon: Icons.route, label: 'Alles')
-            : IconFilterItem(icon: travelModeIcon(filter), label: filter.label),
+            ? IconFilterItem(icon: Icons.route, label: context.l10n.drivingAll)
+            : IconFilterItem(icon: travelModeIcon(filter), label: filter.label(context.l10n)),
     ],
     selectedIndex: travelModeFilters.indexOf(mode),
     onSelected: (index) => onChanged(travelModeFilters[index]),

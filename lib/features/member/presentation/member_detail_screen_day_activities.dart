@@ -11,11 +11,11 @@ List<Widget> _dayActivities(
   required void Function(double latitude, double longitude) onSaveAsPlace,
 }) {
   if (day.activities.isEmpty) {
-    return const [
+    return [
       EmptyState(
         icon: Icons.history,
-        title: 'Geen geschiedenis',
-        message: 'Voor deze dag is er nog geen locatiegeschiedenis.',
+        title: context.l10n.memberNoHistory,
+        message: context.l10n.memberNoHistoryDay,
       ),
     ];
   }

@@ -1,9 +1,14 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/features/location/presentation/trip_text.dart';
+import 'package:thuisradar/l10n/l10n.dart';
 import 'package:thuisradar/features/driving/domain/driving_activity.dart';
 import 'package:thuisradar/features/driving/domain/driving_report.dart';
 import 'package:thuisradar/features/location/domain/travel_mode.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
 import 'package:thuisradar/features/location/domain/track_point.dart';
+
+final _nl = lookupAppLocalizations(const Locale('nl'));
 
 void main() {
   group('classifyTravel', () {
@@ -53,9 +58,9 @@ void main() {
     });
 
     test('Nederlandse telwoorden', () {
-      expect(TravelMode.walk.count(1), '1 wandeling');
-      expect(TravelMode.bike.count(2), '2 fietstochten');
-      expect(TravelMode.car.count(3), '3 ritten');
+      expect(TravelMode.walk.count(_nl, 1), '1 wandeling');
+      expect(TravelMode.bike.count(_nl, 2), '2 fietstochten');
+      expect(TravelMode.car.count(_nl, 3), '3 ritten');
     });
   });
 

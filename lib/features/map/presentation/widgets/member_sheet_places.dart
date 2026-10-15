@@ -8,6 +8,7 @@ import '../../../places/domain/confirmed_presence.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/domain/place_presence.dart';
 import '../../../places/presentation/place_row.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Plaatsenblok in het kaartpaneel: dezelfde rijen als het Plaatsen-scherm
 /// (icoon, naam, adres, meldingen, wie er is), plus "nieuwe cirkel" en
@@ -44,8 +45,8 @@ class MemberSheetPlaces extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text('Plaatsen', style: text.titleLarge)),
-            if (onManage != null) TextButton(onPressed: onManage, child: const Text('Beheer')),
+            Expanded(child: Text(context.l10n.navPlaces, style: text.titleLarge)),
+            if (onManage != null) TextButton(onPressed: onManage, child: Text(context.l10n.mapManage)),
           ],
         ),
         SizedBox(height: tokens.spaceSm),
@@ -65,8 +66,7 @@ class MemberSheetPlaces extends StatelessWidget {
                   Padding(
                     padding: EdgeInsets.all(tokens.spaceMd),
                     child: Text(
-                      'Nog geen plaatsen. Voeg Thuis of School toe om te weten '
-                      'wanneer iemand aankomt.',
+                      context.l10n.mapNoPlaces,
                       style: text.bodySmall?.copyWith(color: AppColors.muted),
                     ),
                   ),
@@ -118,7 +118,10 @@ class _AddRow extends StatelessWidget {
             ),
             SizedBox(width: tokens.spaceMd),
             Expanded(
-              child: Text('Plaats toevoegen', style: text.titleMedium?.copyWith(color: AppColors.primary)),
+              child: Text(
+                context.l10n.mapAddPlace,
+                style: text.titleMedium?.copyWith(color: AppColors.primary),
+              ),
             ),
           ],
         ),

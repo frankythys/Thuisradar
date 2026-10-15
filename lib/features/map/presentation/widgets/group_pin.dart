@@ -11,6 +11,7 @@ import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../domain/member_on_map.dart';
 import 'group_pin_backdrop.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Groepspin voor leden die op het scherm dicht bij elkaar staan: overlappende
 /// avatars (max 3 + "+N"), een statusballon met de meest recente status, en een
@@ -55,8 +56,8 @@ class GroupPin extends StatelessWidget {
 
   /// Alles wat het getekende beeld bepaalt, als vergelijkbare sleutel: Google
   /// tekent de groepspin enkel opnieuw als die verandert.
-  String get imageKey {
-    final info = _info();
+  String imageKey(AppLocalizations l10n) {
+    final info = _info(l10n);
     return [
       for (final member in members.take(_maxShown))
         '${member.member.userId}:${member.member.initial}:${member.member.colorIndex}:'
@@ -64,7 +65,7 @@ class GroupPin extends StatelessWidget {
       members.length,
       info.icon.codePoint,
       info.title,
-      if (info.at != null) formatRelative(info.at!, now: now),
+      if (info.at != null) formatRelative(l10n, info.at!, now: now),
     ].join('|');
   }
 
@@ -77,7 +78,7 @@ class GroupPin extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _Bubble(info: _info(), now: now),
+        _Bubble(info: _info(context.l10n), now: now),
         const SizedBox(height: 4),
         SizedBox(
           width: clusterWidth,
@@ -155,7 +156,7 @@ class GroupPin extends StatelessWidget {
   }
 
   /// Meest recente status binnen de groep: icoon, titel en tijd.
-  ({IconData icon, String title, DateTime? at}) _info() {
+  ({IconData icon, String title, DateTime? at}) _info(AppLocalizations l10n) {
     MemberOnMap? latest;
     for (final member in members) {
       final location = member.location;
@@ -165,7 +166,7 @@ class GroupPin extends StatelessWidget {
       }
     }
     if (latest == null) {
-      return (icon: Icons.group, title: '${members.length} gezinsleden', at: null);
+      return (icon: Icons.group, title: l10n.mapGroupMembers(members.length), at: null);
     }
 
     final name = latest.member.displayName;
@@ -173,7 +174,7 @@ class GroupPin extends StatelessWidget {
     if (place != null) {
       return (
         icon: placeIcon(place.icon),
-        title: '$name is aangekomen',
+        title: l10n.mapArrived(name),
         at: place.since ?? latest.location!.updatedAt,
       );
     }
@@ -181,7 +182,7 @@ class GroupPin extends StatelessWidget {
     if (trip.speedKmh != null) {
       return (
         icon: travelModeIcon(trip.mode ?? TravelMode.car),
-        title: '$name is onderweg',
+        title: l10n.mapOnTheWay(name),
         at: latest.location!.updatedAt,
       );
     }
@@ -229,7 +230,7 @@ class _Bubble extends StatelessWidget {
                 ),
                 if (info.at != null)
                   Text(
-                    formatRelative(info.at!, now: now),
+                    formatRelative(context.l10n, info.at!, now: now),
                     style: text.labelSmall?.copyWith(color: AppColors.muted),
                   ),
               ],

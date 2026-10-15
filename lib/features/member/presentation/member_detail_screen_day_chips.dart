@@ -14,7 +14,7 @@ class _DayChips extends StatelessWidget {
     return Wrap(
       runSpacing: 8,
       children: [
-        for (final (index, label) in _MemberDetailScreenState._dayLabels.indexed)
+        for (final (index, label) in _MemberDetailScreenState._dayLabels(context.l10n).indexed)
           Padding(
             padding: EdgeInsets.only(right: tokens.spaceSm),
             child: Material(
