@@ -62,21 +62,24 @@ class BiometricLogin {
   Future<bool> get enabled => _storage.containsKey(key: _key);
   Future<void> disable() => _storage.delete(key: _key);
 
-  Future<bool> signIn(AuthRepository auth, {String? email, String? password, bool? remember}) async {
+  Future<bool> signIn(
+    AuthRepository auth, {
+    String? email,
+    String? password,
+    bool? remember,
+    String reason = 'Bevestig dat jij inlogt bij CircleBeacon',
+  }) async {
     if ((await _local.getAvailableBiometrics()).isEmpty) {
-      throw StateError('Stel eerst een vingerafdruk of gezichtsherkenning in op je toestel.');
+      throw BiometricLoginError(BiometricLoginErrorKind.noBiometrics);
     }
-    final accepted = await _local.authenticate(
-      localizedReason: 'Bevestig dat jij inlogt bij CircleBeacon',
-      biometricOnly: true,
-    );
+    final accepted = await _local.authenticate(localizedReason: reason, biometricOnly: true);
     if (!accepted) return false;
     final stored = await _storage.read(key: _key);
     final credentials = stored == null ? null : jsonDecode(stored) as Map<String, dynamic>;
     final loginEmail = credentials?['email'] as String? ?? email;
     final loginPassword = credentials?['password'] as String? ?? password;
     if (loginEmail == null || loginPassword == null) {
-      throw StateError('Vul eerst je e-mailadres en wachtwoord in.');
+      throw BiometricLoginError(BiometricLoginErrorKind.missingCredentials);
     }
     await auth.signIn(email: loginEmail, password: loginPassword);
     if (stored == null) {
@@ -87,4 +90,13 @@ class BiometricLogin {
     }
     return true;
   }
+}
+
+/// Waarom biometrisch inloggen niet kan; de tekst komt uit de vertalingen.
+enum BiometricLoginErrorKind { noBiometrics, missingCredentials }
+
+class BiometricLoginError extends StateError {
+  BiometricLoginError(this.kind) : super(kind.name);
+
+  final BiometricLoginErrorKind kind;
 }

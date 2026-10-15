@@ -43,15 +43,17 @@ class PinLock {
   }
 
   Future<bool> verify(String id, String pin) async {
-    if (_checking) throw StateError('Een controle is al bezig.');
+    if (_checking) throw PinLockError(PinLockErrorKind.busy);
     _checking = true;
     try {
       final stored = await _storage.read(key: _key(id));
-      if (stored == null) throw StateError('Stel eerst een toegangscode in via je profiel.');
+      if (stored == null) throw PinLockError(PinLockErrorKind.notSet);
       final data = jsonDecode(stored) as Map<String, dynamic>;
       final now = _now().millisecondsSinceEpoch;
       final until = data['until'] as int;
-      if (until > now) throw StateError('Te veel pogingen. Wacht ${((until - now) / 1000).ceil()} seconden.');
+      if (until > now) {
+        throw PinLockError(PinLockErrorKind.tooManyAttempts, waitSeconds: ((until - now) / 1000).ceil());
+      }
       final digest = RegExp(r'^\d{6}$').hasMatch(pin)
           ? await compute(derivePin, (pin, data['salt'] as String))
           : '';
@@ -89,3 +91,16 @@ class PinLockRequest extends Notifier<int> {
 }
 
 final pinLockRequestProvider = NotifierProvider<PinLockRequest, int>(PinLockRequest.new);
+
+/// Waarom de toegangscode niet gecontroleerd kon worden; de tekst komt uit de
+/// vertalingen. Blijft een [StateError] voor bestaande aanroepers.
+enum PinLockErrorKind { busy, notSet, tooManyAttempts }
+
+class PinLockError extends StateError {
+  PinLockError(this.kind, {this.waitSeconds = 0}) : super(kind.name);
+
+  final PinLockErrorKind kind;
+
+  /// Bij [PinLockErrorKind.tooManyAttempts]: hoelang nog wachten.
+  final int waitSeconds;
+}

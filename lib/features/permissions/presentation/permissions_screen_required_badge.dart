@@ -9,7 +9,7 @@ class _RequiredBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: const ShapeDecoration(color: AppColors.primarySoft, shape: StadiumBorder()),
       child: Text(
-        'VEREIST',
+        context.l10n.permRequired,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.primary),
       ),
     );

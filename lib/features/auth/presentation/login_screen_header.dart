@@ -12,7 +12,7 @@ class _LoginHeader extends StatelessWidget {
     return Row(
       children: [
         if (onBack != null)
-          IconButton(tooltip: 'Terug', onPressed: onBack, icon: const Icon(Icons.arrow_back))
+          IconButton(tooltip: context.l10n.commonBack, onPressed: onBack, icon: const Icon(Icons.arrow_back))
         else ...[
           const RadarLogo(size: 44),
           SizedBox(width: tokens.spaceSm + tokens.spaceXs),

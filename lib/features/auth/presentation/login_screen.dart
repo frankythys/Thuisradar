@@ -10,6 +10,7 @@ import '../../location/application/location_diagnostics.dart';
 import '../application/auth_providers.dart';
 import '../data/biometric_login.dart';
 import 'google_sign_in_button.dart';
+import '../../../l10n/l10n.dart';
 
 part 'login_screen_actions.dart';
 part 'login_screen_field.dart';
@@ -57,7 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (email != null && _email.text.isEmpty) _email.text = email;
     } catch (_) {
       if (mounted) {
-        setState(() => _message = 'Opgeslagen inloggegevens konden niet worden geladen. Vul ze opnieuw in.');
+        setState(() => _message = context.l10n.authSavedLoadFailed);
       }
     } finally {
       if (mounted) setState(() => _loadingSaved = false);
@@ -75,7 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _message = 'De opgeslagen login kon niet worden verwijderd. Probeer opnieuw.');
+        setState(() => _message = context.l10n.authSavedRemoveFailed);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -100,7 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authRepositoryProvider).signInWithGoogle();
     } catch (_) {
       if (mounted) {
-        setState(() => _message = 'Google-login kon niet worden gestart. Probeer opnieuw.');
+        setState(() => _message = context.l10n.authGoogleFailed);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -132,16 +133,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           displayName: _name.text.trim(),
         );
         if (!signedIn && mounted) {
-          setState(() => _message = 'Bevestig je e-mailadres en log daarna in.');
+          setState(() => _message = context.l10n.authConfirmEmail);
         }
       }
     } on AuthException catch (e) {
       if (mounted) setState(() => _message = e.message);
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _message = 'Inloggen of het onthouden van je gegevens is niet gelukt. Probeer opnieuw.',
-        );
+        setState(() => _message = context.l10n.authSignInFailed);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -155,17 +154,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _resetPassword() async {
     if (!_email.text.contains('@')) {
-      setState(() => _message = 'Vul eerst je e-mailadres in.');
+      setState(() => _message = context.l10n.authEnterEmailFirst);
       return;
     }
     try {
       await ref.read(authRepositoryProvider).resetPassword(_email.text.trim());
       if (mounted) {
-        setState(() => _message = 'Controleer je e-mail om je wachtwoord opnieuw in te stellen.');
+        setState(() => _message = context.l10n.authResetSent);
       }
     } on Exception {
       if (mounted) {
-        setState(() => _message = 'De herstelmail kon niet worden verstuurd. Probeer opnieuw.');
+        setState(() => _message = context.l10n.authResetFailed);
       }
     }
   }
@@ -183,13 +182,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final allow = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Biometrie inschakelen'),
-            content: const Text(
-              'Bewaar je login versleuteld op dit toestel om voortaan met je vingerafdruk of gezicht in te loggen. Je kunt dit verwijderen in je profiel.',
-            ),
+            title: Text(context.l10n.authBiometricTitle),
+            content: Text(context.l10n.authBiometricBody),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Inschakelen')),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(context.l10n.commonCancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(context.l10n.authBiometricEnable),
+              ),
             ],
           ),
         );
@@ -199,13 +202,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _busy = true;
         _message = null;
       });
-      await service.signIn(auth, email: _email.text.trim(), password: _password.text, remember: _remember);
+      await service.signIn(
+        auth,
+        email: _email.text.trim(),
+        password: _password.text,
+        remember: _remember,
+        reason: context.l10n.authBiometricReason,
+      );
     } catch (error) {
       if (mounted) {
         setState(
-          () => _message = error is StateError
-              ? error.message.toString()
-              : 'Biometrisch inloggen lukt niet. Gebruik je e-mailadres en wachtwoord.',
+          () => _message = switch (error) {
+            BiometricLoginError(kind: BiometricLoginErrorKind.noBiometrics) => context.l10n.authBiometricNone,
+            BiometricLoginError(kind: BiometricLoginErrorKind.missingCredentials) =>
+              context.l10n.authBiometricMissing,
+            _ => context.l10n.authBiometricFailed,
+          },
         );
       }
     } finally {
@@ -216,6 +228,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final isRegister = _mode == _Mode.register;
+    final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
     return Scaffold(
@@ -238,50 +251,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         SizedBox(height: tokens.spaceXl),
                         // Verdeel vrije ruimte boven en onder het formulier.
                         const Spacer(),
-                        Text(isRegister ? 'Maak je account' : 'Welkom terug', style: text.headlineLarge),
+                        Text(
+                          isRegister ? l10n.authCreateAccountTitle : l10n.authWelcomeBack,
+                          style: text.headlineLarge,
+                        ),
                         SizedBox(height: tokens.spaceXs),
                         Text(
-                          isRegister
-                              ? 'Een veilige en besloten cirkel voor jouw gezin.'
-                              : 'Log in om te zien waar je gezin is.',
+                          isRegister ? l10n.authRegisterIntro : l10n.authLoginIntro,
                           style: text.bodyMedium?.copyWith(color: AppColors.muted),
                         ),
                         SizedBox(height: tokens.spaceLg),
                         if (isRegister) ...[
                           _Field(
-                            label: 'Naam',
-                            helper: 'Zo zien je gezinsleden je, bv. Papa',
+                            label: l10n.commonName,
+                            helper: l10n.authNameHelper,
                             controller: _name,
                             icon: Icons.person_outline,
                             textInputAction: TextInputAction.next,
-                            validator: (v) => v == null || v.trim().isEmpty ? 'Vul een naam in' : null,
+                            validator: (v) => v == null || v.trim().isEmpty ? l10n.authNameRequired : null,
                           ),
                           SizedBox(height: tokens.spaceMd),
                         ],
                         _Field(
-                          label: 'E-mailadres',
+                          label: l10n.authEmail,
                           controller: _email,
                           icon: Icons.mail_outline,
                           keyboardType: TextInputType.emailAddress,
                           autofillHints: const [AutofillHints.email],
                           textInputAction: TextInputAction.next,
-                          validator: (v) => v == null || !v.contains('@') ? 'Ongeldig e-mailadres' : null,
+                          validator: (v) => v == null || !v.contains('@') ? l10n.authEmailInvalid : null,
                         ),
                         SizedBox(height: tokens.spaceMd),
                         _Field(
-                          label: 'Wachtwoord',
-                          helper: isRegister ? 'Minimaal 8 tekens' : null,
+                          label: l10n.authPassword,
+                          helper: isRegister ? l10n.authPasswordHelper : null,
                           controller: _password,
                           icon: Icons.lock_outline,
                           obscureText: _obscure,
                           autofillHints: const [AutofillHints.password],
                           onFieldSubmitted: (_) => _submit(),
                           suffix: IconButton(
-                            tooltip: _obscure ? 'Wachtwoord tonen' : 'Wachtwoord verbergen',
+                            tooltip: _obscure ? l10n.authShowPassword : l10n.authHidePassword,
                             onPressed: () => setState(() => _obscure = !_obscure),
                             icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                           ),
-                          validator: (v) => v == null || v.length < 8 ? 'Minstens 8 tekens' : null,
+                          validator: (v) => v == null || v.length < 8 ? l10n.authPasswordTooShort : null,
                         ),
                         if (!isRegister)
                           _RememberRow(
@@ -299,7 +313,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         if (isRegister) ...[SizedBox(height: tokens.spaceLg), const _PrivacyNote()],
                         SizedBox(height: tokens.spaceLg),
                         _LoginActions(
-                          label: isRegister ? 'Account aanmaken' : 'Inloggen',
+                          label: isRegister ? l10n.authCreateAccount : l10n.authSignIn,
                           busy: _busy,
                           onSubmit: _submit,
                         ),
@@ -312,7 +326,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         SizedBox(height: tokens.spaceMd),
                         TextButton(
                           onPressed: _busy ? null : _toggleMode,
-                          child: Text(isRegister ? 'Ik heb al een account' : 'Nieuw? Maak een account'),
+                          child: Text(isRegister ? l10n.authHaveAccount : l10n.authNewAccount),
                         ),
                         const Spacer(),
                       ],

@@ -15,7 +15,7 @@ class _RememberRow extends StatelessWidget {
       child: Row(
         children: [
           Tooltip(
-            message: 'Je e-mailadres onthouden op dit toestel (nooit je wachtwoord)',
+            message: context.l10n.authRememberTooltip,
             child: InkWell(
               borderRadius: BorderRadius.circular(context.tokens.radiusSm),
               onTap: onChanged == null ? null : () => onChanged!(!value),
@@ -23,7 +23,7 @@ class _RememberRow extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Checkbox(value: value, onChanged: onChanged),
-                  const Text('Onthouden'),
+                  Text(context.l10n.authRemember),
                 ],
               ),
             ),
@@ -33,7 +33,7 @@ class _RememberRow extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: onForgot,
-                child: const Text('Wachtwoord vergeten?', overflow: TextOverflow.ellipsis),
+                child: Text(context.l10n.authForgotPassword, overflow: TextOverflow.ellipsis),
               ),
             ),
           ),
@@ -81,7 +81,7 @@ class _BiometricButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: IconButton.filledTonal(
-        tooltip: 'Inloggen met biometrie',
+        tooltip: context.l10n.authBiometricButton,
         style: IconButton.styleFrom(
           fixedSize: const Size.square(56),
           backgroundColor: AppColors.primarySoft,

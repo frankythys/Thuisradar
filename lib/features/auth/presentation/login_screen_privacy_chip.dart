@@ -15,7 +15,7 @@ class _PrivacyChip extends StatelessWidget {
           children: [
             const Icon(Icons.shield_outlined, size: 16, color: AppColors.primary),
             const SizedBox(width: 6),
-            Text('PRIVACY EERST', style: text.labelSmall?.copyWith(color: AppColors.primary)),
+            Text(context.l10n.authPrivacyFirst, style: text.labelSmall?.copyWith(color: AppColors.primary)),
           ],
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import 'scene_bits.dart';
+import '../../../../../l10n/l10n.dart';
 
 /// Schild in het midden van een besloten kring gezinsleden.
 class PrivacyScene extends AnimatedScene {
@@ -90,8 +91,8 @@ class PrivacyScene extends AnimatedScene {
           right: 8,
           child: Opacity(
             opacity: pills,
-            child: const Center(
-              child: ScenePill(icon: Icons.lock_outline_rounded, label: 'Versleuteld'),
+            child: Center(
+              child: ScenePill(icon: Icons.lock_outline_rounded, label: context.l10n.onboardingDemoEncrypted),
             ),
           ),
         ),
@@ -101,10 +102,10 @@ class PrivacyScene extends AnimatedScene {
           right: 8,
           child: Opacity(
             opacity: pills,
-            child: const Center(
+            child: Center(
               child: ScenePill(
                 icon: Icons.block_rounded,
-                label: 'Geen advertenties · nooit verkocht',
+                label: context.l10n.onboardingDemoNoAds,
                 muted: true,
               ),
             ),

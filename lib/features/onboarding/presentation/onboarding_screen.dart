@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../application/onboarding_providers.dart';
 import '../domain/onboarding_slide.dart';
+import 'onboarding_slides.dart';
 import 'widgets/onboarding_parts.dart';
 import 'widgets/onboarding_stage.dart';
 import 'widgets/scenes/scene_bits.dart';
+import '../../../l10n/l10n.dart';
 
 /// Toont de intro-slides; enkel de eerste keer (zie onboarding-gate).
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -20,7 +22,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _controller = PageController();
   int _index = 0;
 
-  static final _lastIndex = onboardingSlides.length - 1;
+  static final _lastIndex = OnboardingScene.values.length - 1;
 
   @override
   void dispose() {
@@ -43,6 +45,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final slides = onboardingSlides(context.l10n);
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -52,17 +55,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Expanded(
               child: PageView.builder(
                 controller: _controller,
-                itemCount: onboardingSlides.length,
+                itemCount: slides.length,
                 onPageChanged: (i) => setState(() => _index = i),
-                itemBuilder: (context, i) => _SlidePage(slide: onboardingSlides[i], active: i == _index),
+                itemBuilder: (context, i) => _SlidePage(slide: slides[i], active: i == _index),
               ),
             ),
-            OnboardingFooter(
-              count: onboardingSlides.length,
-              index: _index,
-              onNext: _next,
-              onHaveCode: _finish,
-            ),
+            OnboardingFooter(count: slides.length, index: _index, onNext: _next, onHaveCode: _finish),
           ],
         ),
       ),

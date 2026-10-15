@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import 'scene_bits.dart';
+import '../../../../../l10n/l10n.dart';
 
 /// Noodknop die vastgehouden wordt tot het alarm vertrekt naar het gezin.
 class SosScene extends AnimatedScene {
@@ -57,7 +58,7 @@ class SosScene extends AnimatedScene {
                 children: [
                   Text('SOS', style: text.headlineLarge?.copyWith(color: Colors.white, letterSpacing: 2)),
                   Text(
-                    sent ? 'Verstuurd' : 'Houd 3 sec. vast',
+                    sent ? context.l10n.onboardingDemoSent : context.l10n.onboardingDemoHold,
                     style: text.labelMedium?.copyWith(color: Colors.white),
                   ),
                 ],
@@ -106,7 +107,7 @@ class SosScene extends AnimatedScene {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          'Alarm naar 3 gezinsleden',
+                          context.l10n.onboardingDemoAlarm,
                           style: text.labelMedium,
                           overflow: TextOverflow.ellipsis,
                         ),

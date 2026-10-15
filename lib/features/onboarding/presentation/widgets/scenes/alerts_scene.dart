@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import 'scene_bits.dart';
+import '../../../../../l10n/l10n.dart';
 
 /// Drie meldingen die na elkaar binnenschuiven, zoals op het vergrendelscherm.
 class AlertsScene extends AnimatedScene {
@@ -10,23 +11,23 @@ class AlertsScene extends AnimatedScene {
   @override
   Widget build(BuildContext context) {
     final notes = [
-      const _Note(
+      _Note(
         icon: Icons.school_rounded,
         color: AppColors.primary,
         time: '08:12',
-        message: 'Liam is op School',
+        message: context.l10n.onboardingDemoSchool,
       ),
       _Note(
         icon: Icons.work_rounded,
         color: AppColors.forMemberIndex(4),
         time: '17:04',
-        message: 'Mama vertrekt van Werk',
+        message: context.l10n.onboardingDemoWork,
       ),
       _Note(
         icon: Icons.home_rounded,
         color: AppColors.forMemberIndex(0),
         time: '17:31',
-        message: 'Papa is thuis',
+        message: context.l10n.onboardingDemoHome,
       ),
     ];
     return Padding(

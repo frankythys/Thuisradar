@@ -22,10 +22,10 @@ class _PrivacyNote extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Alleen voor genodigden', style: text.titleMedium),
+                Text(context.l10n.authInviteOnly, style: text.titleMedium),
                 SizedBox(height: tokens.spaceXs),
                 Text(
-                  'Jouw locatiegegevens worden nooit verkocht of gedeeld buiten je gezinskring.',
+                  context.l10n.authInviteOnlyText,
                   style: text.bodyMedium?.copyWith(color: AppColors.muted),
                 ),
               ],

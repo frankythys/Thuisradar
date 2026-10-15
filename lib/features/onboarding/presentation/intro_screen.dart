@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Lokale intro voor de onboarding. Een videofout blokkeert nooit.
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key, required this.onFinished, this.controller});
@@ -114,7 +116,7 @@ class _IntroScreenState extends State<IntroScreen> {
                       backgroundColor: Colors.black.withValues(alpha: 0.35),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
-                    child: const Text('Overslaan'),
+                    child: Text(context.l10n.commonSkip),
                   ),
                 ),
               ),
@@ -126,7 +128,7 @@ class _IntroScreenState extends State<IntroScreen> {
                   alignment: Alignment.bottomRight,
                   child: IconButton.filledTonal(
                     onPressed: _toggleSound,
-                    tooltip: _muted ? 'Geluid aan' : 'Geluid uit',
+                    tooltip: _muted ? context.l10n.introSoundOn : context.l10n.introSoundOff,
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.black.withValues(alpha: 0.35),
                       foregroundColor: Colors.white,

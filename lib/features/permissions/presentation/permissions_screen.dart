@@ -6,6 +6,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../application/permissions_providers.dart';
+import '../../../l10n/l10n.dart';
 
 part 'permissions_screen_permission_card.dart';
 part 'permissions_screen_required_badge.dart';
@@ -44,8 +45,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
     if (!locationGranted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Locatie staat nog uit. Je kunt dit later aanzetten via Instellingen.'),
-          action: SnackBarAction(label: 'Instellingen', onPressed: service.openSettings),
+          content: Text(context.l10n.permLocationOff),
+          action: SnackBarAction(label: context.l10n.commonSettings, onPressed: service.openSettings),
         ),
       );
     }
@@ -56,9 +57,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final tokens = context.tokens;
+    final l10n = context.l10n;
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Toestemmingen'),
+      appBar: BrandedAppBar(title: l10n.permTitle),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -74,28 +76,27 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
                 ),
               ),
               SizedBox(height: tokens.spaceMd),
-              Text('Toestemmingen voor gemoedsrust', style: text.headlineLarge, textAlign: TextAlign.center),
+              Text(l10n.permHeadline, style: text.headlineLarge, textAlign: TextAlign.center),
               SizedBox(height: tokens.spaceSm),
               Text(
-                'CircleBeacon heeft enkele rechten nodig om stil en betrouwbaar op de '
-                'achtergrond voor je gezin te zorgen.',
+                l10n.permIntro,
                 style: text.bodyLarge?.copyWith(color: AppColors.muted),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
               _PermissionCard(
                 icon: Icons.location_on_outlined,
-                title: 'Locatie',
-                subtitle: 'Om je locatie met je familie te delen',
-                note: 'Kies straks voor "Altijd toestaan" voor betrouwbare aankomstmeldingen.',
+                title: l10n.permLocation,
+                subtitle: l10n.permLocationSubtitle,
+                note: l10n.permLocationNote,
                 trailing: const _RequiredBadge(),
               ),
               SizedBox(height: tokens.spaceMd),
               _PermissionCard(
                 icon: Icons.notifications_outlined,
-                title: 'Meldingen',
-                subtitle: 'Voor aankomst, vertrek en SOS',
-                note: 'Zodat je weet wanneer je zoon veilig op school aankomt.',
+                title: l10n.profileNotifications,
+                subtitle: l10n.permNotificationsSubtitle,
+                note: l10n.permNotificationsNote,
                 trailing: Switch(
                   value: _wantNotifications,
                   onChanged: _busy ? null : (v) => setState(() => _wantNotifications = v),
@@ -104,9 +105,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
               SizedBox(height: tokens.spaceMd),
               _PermissionCard(
                 icon: Icons.battery_charging_full_outlined,
-                title: 'Batterij-optimalisatie uitzetten',
-                subtitle: 'Zodat delen op de achtergrond blijft werken',
-                note: 'Voorkomt dat Android de app onbedoeld uitschakelt.',
+                title: l10n.permBattery,
+                subtitle: l10n.permBatterySubtitle,
+                note: l10n.permBatteryNote,
                 trailing: Switch(
                   value: _wantBattery,
                   onChanged: _busy ? null : (v) => setState(() => _wantBattery = v),
@@ -115,9 +116,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
               SizedBox(height: tokens.spaceMd),
               _PermissionCard(
                 icon: Icons.directions_walk,
-                title: 'Stappen tellen',
-                subtitle: 'Voor je stappen bij een wandeling',
-                note: 'Android noemt dit "Fysieke activiteit".',
+                title: l10n.permSteps,
+                subtitle: l10n.permStepsSubtitle,
+                note: l10n.permStepsNote,
                 trailing: Switch(
                   value: _wantSteps,
                   onChanged: _busy ? null : (v) => setState(() => _wantSteps = v),
@@ -138,10 +139,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Privacy-belofte', style: text.titleMedium),
+                          Text(l10n.permPrivacyPromise, style: text.titleMedium),
                           SizedBox(height: tokens.spaceXs),
                           Text(
-                            'Geen trackers, geen advertenties. Je data verlaat nooit je gezinskring.',
+                            l10n.permPrivacyPromiseText,
                             style: text.bodyMedium?.copyWith(color: AppColors.muted),
                           ),
                         ],
@@ -161,13 +162,13 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('Toestaan'),
+                          Text(l10n.commonAllow),
                           SizedBox(width: tokens.spaceSm),
                           const Icon(Icons.arrow_forward, size: 20),
                         ],
                       ),
               ),
-              TextButton(onPressed: _busy ? null : _finish, child: const Text('Later instellen')),
+              TextButton(onPressed: _busy ? null : _finish, child: Text(l10n.permLater)),
             ],
           ),
         ),

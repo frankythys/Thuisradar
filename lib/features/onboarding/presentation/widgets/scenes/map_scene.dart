@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import 'scene_bits.dart';
+import '../../../../../l10n/l10n.dart';
 
 /// Liam rijdt over de kaart naar huis; de melding telt af en meldt de aankomst.
 class MapScene extends AnimatedScene {
@@ -165,13 +166,15 @@ class _Toast extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    arrived ? 'Liam is thuis aangekomen' : 'Liam rijdt naar huis',
+                    arrived ? context.l10n.onboardingDemoArrived : context.l10n.onboardingDemoDriving,
                     style: text.labelLarge,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    arrived ? 'Zojuist' : 'Nog $minutes min · $km km',
+                    arrived
+                        ? context.l10n.onboardingDemoJustNow
+                        : context.l10n.onboardingDemoEta(minutes, km),
                     style: text.bodySmall?.copyWith(color: AppColors.muted),
                   ),
                 ],

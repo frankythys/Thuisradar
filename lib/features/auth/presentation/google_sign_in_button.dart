@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../l10n/l10n.dart';
+
 /// Light Google button: https://developers.google.com/identity/branding-guidelines
 class GoogleSignInButton extends StatelessWidget {
   const GoogleSignInButton({super.key, required this.onPressed});
@@ -40,7 +42,7 @@ class GoogleSignInButton extends StatelessWidget {
             excludeFromSemantics: true,
           ),
           SizedBox(width: isIos ? 12 : 10),
-          const Flexible(child: Text('Doorgaan met Google')),
+          Flexible(child: Text(context.l10n.authGoogle)),
         ],
       ),
     );

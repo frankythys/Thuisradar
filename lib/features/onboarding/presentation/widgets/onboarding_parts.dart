@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/widgets/radar_logo.dart';
 import '../../domain/onboarding_slide.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Merk links, "Overslaan" rechts (niet op de laatste slide).
 class OnboardingTopBar extends StatelessWidget {
@@ -33,7 +34,7 @@ class OnboardingTopBar extends StatelessWidget {
               TextButton(
                 onPressed: onSkip,
                 style: TextButton.styleFrom(foregroundColor: AppColors.muted),
-                child: const Text('Overslaan'),
+                child: Text(context.l10n.commonSkip),
               ),
           ],
         ),
@@ -98,7 +99,7 @@ class OnboardingProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Stap ${index + 1} van $count',
+      label: context.l10n.onboardingStep(index + 1, count),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -148,7 +149,7 @@ class OnboardingFooter extends StatelessWidget {
             progress,
             const Spacer(),
             IconButton.filled(
-              tooltip: 'Volgende',
+              tooltip: context.l10n.onboardingNext,
               onPressed: onNext,
               style: IconButton.styleFrom(fixedSize: const Size.square(56)),
               icon: const Icon(Icons.arrow_forward_rounded),
@@ -169,13 +170,13 @@ class OnboardingFooter extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Aan de slag'),
+                Text(context.l10n.onboardingStart),
                 SizedBox(width: tokens.spaceSm),
                 const Icon(Icons.arrow_forward_rounded, size: 20),
               ],
             ),
           ),
-          TextButton(onPressed: onHaveCode, child: const Text('Ik heb al een gezinscode')),
+          TextButton(onPressed: onHaveCode, child: Text(context.l10n.onboardingHaveCode)),
         ],
       ),
     );

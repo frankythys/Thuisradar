@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/auth_providers.dart';
 import '../data/pin_lock.dart';
+import '../../../l10n/l10n.dart';
 
 /// Bedekt de volledige navigator, ook als een profiel/detailpagina open staat.
 /// De sessie en achtergrondlocatie blijven actief terwijl de UI vergrendeld is.
@@ -23,9 +24,7 @@ class AppPinLock extends ConsumerWidget {
       );
     }
     if (session.hasError) {
-      return const Material(
-        child: Center(child: Text('Je sessie kon niet worden geladen. Open de app opnieuw.')),
-      );
+      return Material(child: Center(child: Text(context.l10n.authSessionFailed)));
     }
     if (userId == null) return child;
     return _SessionLock(key: ValueKey(userId), userId: userId, onSignedOut: onSignedOut, child: child);
@@ -82,14 +81,19 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
       if (mounted) {
         setState(() {
           _locked = !accepted;
-          _message = accepted ? null : 'Onjuiste toegangscode.';
+          _message = accepted ? null : context.l10n.authPinWrong;
         });
       }
     } catch (error) {
       if (mounted) {
         setState(
-          () =>
-              _message = error is StateError ? error.message.toString() : 'Code controleren is niet gelukt.',
+          () => _message = switch (error) {
+            PinLockError(kind: PinLockErrorKind.busy) => context.l10n.authPinBusy,
+            PinLockError(kind: PinLockErrorKind.notSet) => context.l10n.authPinNotSet,
+            PinLockError(kind: PinLockErrorKind.tooManyAttempts, :final waitSeconds) =>
+              context.l10n.authPinTooMany(waitSeconds),
+            _ => context.l10n.authPinCheckFailed,
+          },
         );
       }
     } finally {
@@ -109,7 +113,7 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
       await container.read(pinLockProvider).disable(widget.userId);
       container.invalidate(pinEnabledProvider(widget.userId));
     } catch (_) {
-      if (mounted) setState(() => _message = 'Opnieuw inloggen starten is niet gelukt. Probeer opnieuw.');
+      if (mounted) setState(() => _message = context.l10n.authReloginFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -145,7 +149,10 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('CircleBeacon ontgrendelen', style: Theme.of(context).textTheme.headlineSmall),
+                          Text(
+                            context.l10n.authUnlockTitle,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
                           const SizedBox(height: 24),
                           if (preference.isLoading)
                             const CircularProgressIndicator()
@@ -160,32 +167,35 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
                                 keyboardType: TextInputType.number,
                                 maxLength: 6,
                                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                decoration: const InputDecoration(labelText: 'Toegangscode', counterText: ''),
+                                decoration: InputDecoration(
+                                  labelText: context.l10n.pinTitle,
+                                  counterText: '',
+                                ),
                                 onSubmitted: (_) => _unlockPin(),
                               ),
                               const SizedBox(height: 12),
                               FilledButton(
                                 onPressed: _busy ? null : _unlockPin,
-                                child: const Text('Ontgrendelen'),
+                                child: Text(context.l10n.authUnlock),
                               ),
                             ],
                             const SizedBox(height: 16),
                             Text(
                               _message ??
                                   (preference.hasError
-                                      ? 'Toegangscode-instelling kon niet worden geladen.'
-                                      : 'Ontgrendel om verder te gaan.'),
+                                      ? context.l10n.authLockLoadFailed
+                                      : context.l10n.authUnlockToContinue),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
                             if (preference.hasError)
                               TextButton(
                                 onPressed: () => ref.invalidate(appLockEnabledProvider(widget.userId)),
-                                child: const Text('Opnieuw proberen'),
+                                child: Text(context.l10n.commonTryAgain),
                               ),
                             TextButton(
                               onPressed: _busy ? null : _signOut,
-                              child: const Text('Opnieuw inloggen'),
+                              child: Text(context.l10n.authSignInAgain),
                             ),
                           ],
                         ],

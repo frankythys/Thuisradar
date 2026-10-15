@@ -765,5 +765,462 @@
   "welcomeActive": "• Actief",
   "@welcomeActive": {
     "description": "Klein label bij de welkomstafbeelding."
+  },
+  "commonTryAgain": "Opnieuw proberen",
+  "@commonTryAgain": {
+    "description": "Knop: opnieuw proberen."
+  },
+  "commonSkip": "Overslaan",
+  "@commonSkip": {
+    "description": "Knop: overslaan."
+  },
+  "commonBack": "Terug",
+  "@commonBack": {
+    "description": "Knopuitleg: terug."
+  },
+  "commonSettings": "Instellingen",
+  "@commonSettings": {
+    "description": "Knop: instellingen van het toestel openen."
+  },
+  "authSessionFailed": "Je sessie kon niet worden geladen. Open de app opnieuw.",
+  "@authSessionFailed": {
+    "description": "Fout: sessie laden mislukt."
+  },
+  "authPinWrong": "Onjuiste toegangscode.",
+  "@authPinWrong": {
+    "description": "Fout: verkeerde toegangscode."
+  },
+  "authPinCheckFailed": "Code controleren is niet gelukt.",
+  "@authPinCheckFailed": {
+    "description": "Fout: code controleren mislukt."
+  },
+  "authPinBusy": "Een controle is al bezig.",
+  "@authPinBusy": {
+    "description": "Fout: er loopt al een controle."
+  },
+  "authPinNotSet": "Stel eerst een toegangscode in via je profiel.",
+  "@authPinNotSet": {
+    "description": "Fout: nog geen toegangscode."
+  },
+  "authPinTooMany": "Te veel pogingen. Wacht {seconds} seconden.",
+  "@authPinTooMany": {
+    "description": "Fout: te veel pogingen; seconds = wachttijd.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "authReloginFailed": "Opnieuw inloggen starten is niet gelukt. Probeer opnieuw.",
+  "@authReloginFailed": {
+    "description": "Fout: opnieuw inloggen starten mislukt."
+  },
+  "authUnlockTitle": "CircleBeacon ontgrendelen",
+  "@authUnlockTitle": {
+    "description": "Titel van het vergrendelscherm."
+  },
+  "authUnlock": "Ontgrendelen",
+  "@authUnlock": {
+    "description": "Knop: ontgrendelen."
+  },
+  "authLockLoadFailed": "Toegangscode-instelling kon niet worden geladen.",
+  "@authLockLoadFailed": {
+    "description": "Fout: instelling toegangscode laden mislukt."
+  },
+  "authUnlockToContinue": "Ontgrendel om verder te gaan.",
+  "@authUnlockToContinue": {
+    "description": "Uitleg op het vergrendelscherm."
+  },
+  "authSignInAgain": "Opnieuw inloggen",
+  "@authSignInAgain": {
+    "description": "Knop: opnieuw inloggen."
+  },
+  "authGoogle": "Doorgaan met Google",
+  "@authGoogle": {
+    "description": "Knop: inloggen met Google."
+  },
+  "authSavedLoadFailed": "Opgeslagen inloggegevens konden niet worden geladen. Vul ze opnieuw in.",
+  "@authSavedLoadFailed": {
+    "description": "Fout: bewaarde gegevens laden mislukt."
+  },
+  "authSavedRemoveFailed": "De opgeslagen login kon niet worden verwijderd. Probeer opnieuw.",
+  "@authSavedRemoveFailed": {
+    "description": "Fout: bewaarde login wissen mislukt."
+  },
+  "authGoogleFailed": "Google-login kon niet worden gestart. Probeer opnieuw.",
+  "@authGoogleFailed": {
+    "description": "Fout: Google-login starten mislukt."
+  },
+  "authConfirmEmail": "Bevestig je e-mailadres en log daarna in.",
+  "@authConfirmEmail": {
+    "description": "Melding: e-mailadres bevestigen."
+  },
+  "authSignInFailed": "Inloggen of het onthouden van je gegevens is niet gelukt. Probeer opnieuw.",
+  "@authSignInFailed": {
+    "description": "Fout: inloggen mislukt."
+  },
+  "authEnterEmailFirst": "Vul eerst je e-mailadres in.",
+  "@authEnterEmailFirst": {
+    "description": "Fout: eerst e-mailadres invullen."
+  },
+  "authResetSent": "Controleer je e-mail om je wachtwoord opnieuw in te stellen.",
+  "@authResetSent": {
+    "description": "Melding: herstelmail verstuurd."
+  },
+  "authResetFailed": "De herstelmail kon niet worden verstuurd. Probeer opnieuw.",
+  "@authResetFailed": {
+    "description": "Fout: herstelmail mislukt."
+  },
+  "authBiometricTitle": "Biometrie inschakelen",
+  "@authBiometricTitle": {
+    "description": "Dialoogtitel: biometrie inschakelen."
+  },
+  "authBiometricBody": "Bewaar je login versleuteld op dit toestel om voortaan met je vingerafdruk of gezicht in te loggen. Je kunt dit verwijderen in je profiel.",
+  "@authBiometricBody": {
+    "description": "Uitleg bij biometrie."
+  },
+  "authBiometricEnable": "Inschakelen",
+  "@authBiometricEnable": {
+    "description": "Knop: biometrie inschakelen."
+  },
+  "authBiometricFailed": "Biometrisch inloggen lukt niet. Gebruik je e-mailadres en wachtwoord.",
+  "@authBiometricFailed": {
+    "description": "Fout: biometrisch inloggen mislukt."
+  },
+  "authBiometricNone": "Stel eerst een vingerafdruk of gezichtsherkenning in op je toestel.",
+  "@authBiometricNone": {
+    "description": "Fout: geen vingerafdruk of gezicht ingesteld."
+  },
+  "authBiometricMissing": "Vul eerst je e-mailadres en wachtwoord in.",
+  "@authBiometricMissing": {
+    "description": "Fout: e-mail en wachtwoord ontbreken."
+  },
+  "authBiometricReason": "Bevestig dat jij inlogt bij CircleBeacon",
+  "@authBiometricReason": {
+    "description": "Uitleg in de systeemprompt voor vingerafdruk."
+  },
+  "authCreateAccountTitle": "Maak je account",
+  "@authCreateAccountTitle": {
+    "description": "Kop: account maken."
+  },
+  "authWelcomeBack": "Welkom terug",
+  "@authWelcomeBack": {
+    "description": "Kop: inloggen."
+  },
+  "authRegisterIntro": "Een veilige en besloten cirkel voor jouw gezin.",
+  "@authRegisterIntro": {
+    "description": "Uitleg bij account maken."
+  },
+  "authLoginIntro": "Log in om te zien waar je gezin is.",
+  "@authLoginIntro": {
+    "description": "Uitleg bij inloggen."
+  },
+  "authNameHelper": "Zo zien je gezinsleden je, bv. Papa",
+  "@authNameHelper": {
+    "description": "Hulptekst bij de naam."
+  },
+  "authNameRequired": "Vul een naam in",
+  "@authNameRequired": {
+    "description": "Fout: naam ontbreekt."
+  },
+  "authEmail": "E-mailadres",
+  "@authEmail": {
+    "description": "Veldlabel: e-mailadres."
+  },
+  "authEmailInvalid": "Ongeldig e-mailadres",
+  "@authEmailInvalid": {
+    "description": "Fout: ongeldig e-mailadres."
+  },
+  "authPassword": "Wachtwoord",
+  "@authPassword": {
+    "description": "Veldlabel: wachtwoord."
+  },
+  "authPasswordHelper": "Minimaal 8 tekens",
+  "@authPasswordHelper": {
+    "description": "Hulptekst: minimale lengte wachtwoord."
+  },
+  "authPasswordTooShort": "Minstens 8 tekens",
+  "@authPasswordTooShort": {
+    "description": "Fout: wachtwoord te kort."
+  },
+  "authShowPassword": "Wachtwoord tonen",
+  "@authShowPassword": {
+    "description": "Knopuitleg: wachtwoord tonen."
+  },
+  "authHidePassword": "Wachtwoord verbergen",
+  "@authHidePassword": {
+    "description": "Knopuitleg: wachtwoord verbergen."
+  },
+  "authCreateAccount": "Account aanmaken",
+  "@authCreateAccount": {
+    "description": "Knop: account aanmaken."
+  },
+  "authSignIn": "Inloggen",
+  "@authSignIn": {
+    "description": "Knop: inloggen."
+  },
+  "authHaveAccount": "Ik heb al een account",
+  "@authHaveAccount": {
+    "description": "Knop: ik heb al een account."
+  },
+  "authNewAccount": "Nieuw? Maak een account",
+  "@authNewAccount": {
+    "description": "Knop: account maken."
+  },
+  "authRememberTooltip": "Je e-mailadres onthouden op dit toestel (nooit je wachtwoord)",
+  "@authRememberTooltip": {
+    "description": "Uitleg bij onthouden."
+  },
+  "authRemember": "Onthouden",
+  "@authRemember": {
+    "description": "Selectievakje: onthouden."
+  },
+  "authForgotPassword": "Wachtwoord vergeten?",
+  "@authForgotPassword": {
+    "description": "Knop: wachtwoord vergeten."
+  },
+  "authBiometricButton": "Inloggen met biometrie",
+  "@authBiometricButton": {
+    "description": "Knopuitleg: inloggen met biometrie."
+  },
+  "authPrivacyFirst": "PRIVACY EERST",
+  "@authPrivacyFirst": {
+    "description": "Label (hoofdletters): privacy eerst."
+  },
+  "authInviteOnly": "Alleen voor genodigden",
+  "@authInviteOnly": {
+    "description": "Titel: alleen voor genodigden."
+  },
+  "authInviteOnlyText": "Jouw locatiegegevens worden nooit verkocht of gedeeld buiten je gezinskring.",
+  "@authInviteOnlyText": {
+    "description": "Uitleg: gegevens nooit verkocht."
+  },
+  "permLocationOff": "Locatie staat nog uit. Je kunt dit later aanzetten via Instellingen.",
+  "@permLocationOff": {
+    "description": "Melding: locatie staat nog uit."
+  },
+  "permTitle": "Toestemmingen",
+  "@permTitle": {
+    "description": "Titel: toestemmingen."
+  },
+  "permHeadline": "Toestemmingen voor gemoedsrust",
+  "@permHeadline": {
+    "description": "Kop op het toestemmingenscherm."
+  },
+  "permIntro": "CircleBeacon heeft enkele rechten nodig om stil en betrouwbaar op de achtergrond voor je gezin te zorgen.",
+  "@permIntro": {
+    "description": "Uitleg op het toestemmingenscherm."
+  },
+  "permLocation": "Locatie",
+  "@permLocation": {
+    "description": "Kaart: locatie."
+  },
+  "permLocationSubtitle": "Om je locatie met je familie te delen",
+  "@permLocationSubtitle": {
+    "description": "Waarom locatie."
+  },
+  "permLocationNote": "Kies straks voor \"Altijd toestaan\" voor betrouwbare aankomstmeldingen.",
+  "@permLocationNote": {
+    "description": "Tip bij locatie."
+  },
+  "permNotificationsSubtitle": "Voor aankomst, vertrek en SOS",
+  "@permNotificationsSubtitle": {
+    "description": "Waarom meldingen."
+  },
+  "permNotificationsNote": "Zodat je weet wanneer je zoon veilig op school aankomt.",
+  "@permNotificationsNote": {
+    "description": "Tip bij meldingen."
+  },
+  "permBattery": "Batterij-optimalisatie uitzetten",
+  "@permBattery": {
+    "description": "Kaart: batterij-optimalisatie."
+  },
+  "permBatterySubtitle": "Zodat delen op de achtergrond blijft werken",
+  "@permBatterySubtitle": {
+    "description": "Waarom batterij."
+  },
+  "permBatteryNote": "Voorkomt dat Android de app onbedoeld uitschakelt.",
+  "@permBatteryNote": {
+    "description": "Tip bij batterij."
+  },
+  "permSteps": "Stappen tellen",
+  "@permSteps": {
+    "description": "Kaart: stappen tellen."
+  },
+  "permStepsSubtitle": "Voor je stappen bij een wandeling",
+  "@permStepsSubtitle": {
+    "description": "Waarom stappen."
+  },
+  "permStepsNote": "Android noemt dit \"Fysieke activiteit\".",
+  "@permStepsNote": {
+    "description": "Tip bij stappen."
+  },
+  "permPrivacyPromise": "Privacy-belofte",
+  "@permPrivacyPromise": {
+    "description": "Titel: privacybelofte."
+  },
+  "permPrivacyPromiseText": "Geen trackers, geen advertenties. Je data verlaat nooit je gezinskring.",
+  "@permPrivacyPromiseText": {
+    "description": "Tekst van de privacybelofte."
+  },
+  "permLater": "Later instellen",
+  "@permLater": {
+    "description": "Knop: later instellen."
+  },
+  "permRequired": "VEREIST",
+  "@permRequired": {
+    "description": "Label (hoofdletters): verplicht."
+  },
+  "introSoundOn": "Geluid aan",
+  "@introSoundOn": {
+    "description": "Knopuitleg: geluid aan."
+  },
+  "introSoundOff": "Geluid uit",
+  "@introSoundOff": {
+    "description": "Knopuitleg: geluid uit."
+  },
+  "onboardingStep": "Stap {step} van {count}",
+  "@onboardingStep": {
+    "description": "Schermlezer: stap x van y.",
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingNext": "Volgende",
+  "@onboardingNext": {
+    "description": "Knopuitleg: volgende."
+  },
+  "onboardingStart": "Aan de slag",
+  "@onboardingStart": {
+    "description": "Knop: aan de slag."
+  },
+  "onboardingHaveCode": "Ik heb al een gezinscode",
+  "@onboardingHaveCode": {
+    "description": "Knop: ik heb al een gezinscode."
+  },
+  "onboardingMapEyebrow": "Live kaart",
+  "@onboardingMapEyebrow": {
+    "description": "Slide 1: label."
+  },
+  "onboardingMapTitle": "Zie in één oogopslag waar iedereen is",
+  "@onboardingMapTitle": {
+    "description": "Slide 1: titel."
+  },
+  "onboardingMapBody": "Jullie gezin op één kaart, live bijgewerkt. Geen telefoontjes meer om te vragen waar iemand is.",
+  "@onboardingMapBody": {
+    "description": "Slide 1: uitleg."
+  },
+  "onboardingMapReassurance": "Zuinig voor je batterij",
+  "@onboardingMapReassurance": {
+    "description": "Slide 1: geruststelling."
+  },
+  "onboardingPrivacyEyebrow": "Privacy",
+  "@onboardingPrivacyEyebrow": {
+    "description": "Slide 2: label."
+  },
+  "onboardingPrivacyTitle": "Alleen jullie gezin kijkt mee",
+  "@onboardingPrivacyTitle": {
+    "description": "Slide 2: titel."
+  },
+  "onboardingPrivacyBody": "Locaties zijn enkel zichtbaar binnen jullie eigen kring. Niemand anders, ook wij niet.",
+  "@onboardingPrivacyBody": {
+    "description": "Slide 2: uitleg."
+  },
+  "onboardingPrivacyReassurance": "Je bepaalt zelf wie in je kring zit",
+  "@onboardingPrivacyReassurance": {
+    "description": "Slide 2: geruststelling."
+  },
+  "onboardingAlertsEyebrow": "Meldingen",
+  "@onboardingAlertsEyebrow": {
+    "description": "Slide 3: label."
+  },
+  "onboardingAlertsTitle": "Een seintje als iemand aankomt",
+  "@onboardingAlertsTitle": {
+    "description": "Slide 3: titel."
+  },
+  "onboardingAlertsBody": "Automatisch bericht bij vertrek en aankomst op vertrouwde plekken zoals Thuis, School of Werk.",
+  "@onboardingAlertsBody": {
+    "description": "Slide 3: uitleg."
+  },
+  "onboardingAlertsReassurance": "Per plek aan of uit te zetten",
+  "@onboardingAlertsReassurance": {
+    "description": "Slide 3: geruststelling."
+  },
+  "onboardingSosEyebrow": "Noodknop",
+  "@onboardingSosEyebrow": {
+    "description": "Slide 4: label."
+  },
+  "onboardingSosTitle": "Hulp met één knop",
+  "@onboardingSosTitle": {
+    "description": "Slide 4: titel."
+  },
+  "onboardingSosBody": "Houd de noodknop 3 seconden vast en het hele gezin krijgt meteen een alarm met je live-locatie.",
+  "@onboardingSosBody": {
+    "description": "Slide 4: uitleg."
+  },
+  "onboardingSosReassurance": "Geen vals alarm door per ongeluk tikken",
+  "@onboardingSosReassurance": {
+    "description": "Slide 4: geruststelling."
+  },
+  "onboardingDemoSchool": "Liam is op School",
+  "@onboardingDemoSchool": {
+    "description": "Demo-melding (voorbeeldnamen)."
+  },
+  "onboardingDemoWork": "Mama vertrekt van Werk",
+  "@onboardingDemoWork": {
+    "description": "Demo-melding (voorbeeldnamen)."
+  },
+  "onboardingDemoHome": "Papa is thuis",
+  "@onboardingDemoHome": {
+    "description": "Demo-melding (voorbeeldnamen)."
+  },
+  "onboardingDemoArrived": "Liam is thuis aangekomen",
+  "@onboardingDemoArrived": {
+    "description": "Demo: Liam thuis."
+  },
+  "onboardingDemoDriving": "Liam rijdt naar huis",
+  "@onboardingDemoDriving": {
+    "description": "Demo: Liam onderweg."
+  },
+  "onboardingDemoJustNow": "Zojuist",
+  "@onboardingDemoJustNow": {
+    "description": "Demo: zojuist."
+  },
+  "onboardingDemoEta": "Nog {minutes} min · {km} km",
+  "@onboardingDemoEta": {
+    "description": "Demo: resterende tijd en afstand.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "onboardingDemoEncrypted": "Versleuteld",
+  "@onboardingDemoEncrypted": {
+    "description": "Demo-pil: versleuteld."
+  },
+  "onboardingDemoNoAds": "Geen advertenties · nooit verkocht",
+  "@onboardingDemoNoAds": {
+    "description": "Demo-pil: geen advertenties."
+  },
+  "onboardingDemoSent": "Verstuurd",
+  "@onboardingDemoSent": {
+    "description": "Demo SOS: verstuurd."
+  },
+  "onboardingDemoHold": "Houd 3 sec. vast",
+  "@onboardingDemoHold": {
+    "description": "Demo SOS: vasthouden."
+  },
+  "onboardingDemoAlarm": "Alarm naar 3 gezinsleden",
+  "@onboardingDemoAlarm": {
+    "description": "Demo SOS: alarm verstuurd."
   }
 }

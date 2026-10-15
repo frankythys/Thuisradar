@@ -1,15 +1,19 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/features/language/domain/app_language.dart';
 import 'package:thuisradar/features/onboarding/domain/onboarding_slide.dart';
+import 'package:thuisradar/features/onboarding/presentation/onboarding_slides.dart';
+import 'package:thuisradar/l10n/l10n.dart';
 
 void main() {
-  test('vier slides, elk met een eigen illustratie', () {
-    expect(onboardingSlides, hasLength(4));
-    expect(onboardingSlides.map((s) => s.scene).toSet(), OnboardingScene.values.toSet());
-  });
-
-  test('elke slide heeft label, titel, uitleg en geruststelling', () {
-    for (final s in onboardingSlides) {
-      expect([s.eyebrow, s.title, s.body, s.reassurance], everyElement(isNotEmpty));
-    }
-  });
+  for (final language in AppLanguage.values) {
+    test('${language.code}: vier slides, elk met eigen illustratie en volledige tekst', () {
+      final slides = onboardingSlides(lookupAppLocalizations(Locale(language.code)));
+      expect(slides, hasLength(4));
+      expect(slides.map((s) => s.scene).toList(), OnboardingScene.values);
+      for (final s in slides) {
+        expect([s.eyebrow, s.title, s.body, s.reassurance], everyElement(isNotEmpty));
+      }
+    });
+  }
 }
