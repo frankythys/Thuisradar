@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/l10n.dart';
 
 /// One accessible input, eight visual cells; supports paste and autofill.
 class InviteCodeInput extends StatelessWidget {
@@ -51,10 +52,10 @@ class InviteCodeInput extends StatelessWidget {
               FilteringTextInputFormatter.allow(RegExp('[a-zA-Z0-9]')),
               LengthLimitingTextInputFormatter(8),
             ],
-            decoration: const InputDecoration(
-              labelText: 'Toegangscode',
+            decoration: InputDecoration(
+              labelText: context.l10n.familyInviteCodeField,
               floatingLabelBehavior: FloatingLabelBehavior.never,
-              labelStyle: TextStyle(color: Colors.transparent),
+              labelStyle: const TextStyle(color: Colors.transparent),
               filled: false,
               counterText: '',
               border: InputBorder.none,

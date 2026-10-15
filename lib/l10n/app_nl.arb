@@ -211,5 +211,559 @@
   "languageDeviceSubtitle": "Volgt de taal van je gsm, anders Engels",
   "@languageDeviceSubtitle": {
     "description": "Uitleg bij de keuze toesteltaal."
+  },
+  "commonSave": "Opslaan",
+  "@commonSave": {
+    "description": "Knop: opslaan."
+  },
+  "commonSaving": "Opslaan…",
+  "@commonSaving": {
+    "description": "Knop tijdens het opslaan."
+  },
+  "commonOwner": "Beheerder",
+  "@commonOwner": {
+    "description": "Rol: beheerder van het gezin."
+  },
+  "commonMember": "Gezinslid",
+  "@commonMember": {
+    "description": "Rol: gewoon gezinslid."
+  },
+  "commonYou": "Jij",
+  "@commonYou": {
+    "description": "Aanduiding van jezelf in een ledenlijst."
+  },
+  "commonName": "Naam",
+  "@commonName": {
+    "description": "Veldlabel: naam."
+  },
+  "commonCopyCode": "Code kopiëren",
+  "@commonCopyCode": {
+    "description": "Knopuitleg: de uitnodigingscode kopiëren."
+  },
+  "commonCodeCopied": "Code gekopieerd",
+  "@commonCodeCopied": {
+    "description": "Melding: code gekopieerd."
+  },
+  "commonNoConnection": "Geen verbinding. Controleer je internet en probeer opnieuw.",
+  "@commonNoConnection": {
+    "description": "Fout: geen internet."
+  },
+  "commonAllow": "Toestaan",
+  "@commonAllow": {
+    "description": "Knop: toestemming geven."
+  },
+  "profileEdit": "Bewerken",
+  "@profileEdit": {
+    "description": "Knop: profiel bewerken."
+  },
+  "profileYourProfile": "Jouw profiel",
+  "@profileYourProfile": {
+    "description": "Titel als je naam nog niet geladen is."
+  },
+  "profileEditTitle": "Profiel bewerken",
+  "@profileEditTitle": {
+    "description": "Titel van het blad om je profiel te bewerken."
+  },
+  "profilePhoneLabel": "Telefoonnummer voor je gezin",
+  "@profilePhoneLabel": {
+    "description": "Veldlabel: telefoonnummer dat het gezin ziet."
+  },
+  "profileMapColor": "Kaartkleur",
+  "@profileMapColor": {
+    "description": "Titel: kleur van je pin op de kaart."
+  },
+  "profileMapColorNumber": "Kaartkleur {number}",
+  "@profileMapColorNumber": {
+    "description": "Schermlezer: kaartkleur met volgnummer.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "profileErrorName": "Vul je naam in.",
+  "@profileErrorName": {
+    "description": "Fout: naam is leeg."
+  },
+  "profileErrorPhone": "Dat telefoonnummer klopt niet.",
+  "@profileErrorPhone": {
+    "description": "Fout: ongeldig telefoonnummer."
+  },
+  "profileMemberOptions": "Opties voor {name}",
+  "@profileMemberOptions": {
+    "description": "Knopuitleg: menu met acties voor een gezinslid.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileRemoveFromFamily": "Verwijderen uit gezin",
+  "@profileRemoveFromFamily": {
+    "description": "Menu: iemand uit het gezin verwijderen."
+  },
+  "profileInviteSomeone": "Iemand uitnodigen",
+  "@profileInviteSomeone": {
+    "description": "Knop: iemand uitnodigen."
+  },
+  "profileArrival": "Aankomst",
+  "@profileArrival": {
+    "description": "Meldingsvoorkeur: aankomst."
+  },
+  "profileArrivalSubtitle": "Als iemand bij een plaats aankomt",
+  "@profileArrivalSubtitle": {
+    "description": "Uitleg bij aankomstmeldingen."
+  },
+  "profileDeparture": "Vertrek",
+  "@profileDeparture": {
+    "description": "Meldingsvoorkeur: vertrek."
+  },
+  "profileDepartureSubtitle": "Als iemand een plaats verlaat",
+  "@profileDepartureSubtitle": {
+    "description": "Uitleg bij vertrekmeldingen."
+  },
+  "profileSosNotifications": "Noodberichten (SOS)",
+  "@profileSosNotifications": {
+    "description": "Meldingsvoorkeur: noodberichten."
+  },
+  "profileSosNotificationsSubtitle": "Altijd aanlaten is aangeraden",
+  "@profileSosNotificationsSubtitle": {
+    "description": "Uitleg bij SOS-meldingen."
+  },
+  "profilePrivacyText": "Alleen leden van jouw gezin zien je locatie, plaatsen en berichten. De verbinding is versleuteld. Je kunt locatie delen altijd pauzeren in je profiel.",
+  "@profilePrivacyText": {
+    "description": "Uitleg in het privacyblad."
+  },
+  "profileForgetLogin": "Opgeslagen login verwijderen",
+  "@profileForgetLogin": {
+    "description": "Knop: bewaarde login wissen."
+  },
+  "profileReplayIntro": "Introductie opnieuw bekijken",
+  "@profileReplayIntro": {
+    "description": "Rij: de introductie opnieuw bekijken."
+  },
+  "profileDiagnosticsTitle": "Locatiediagnose exporteren",
+  "@profileDiagnosticsTitle": {
+    "description": "Rij: locatielogboek exporteren (voor foutzoeken)."
+  },
+  "profileDiagnosticsSubtitle": "Logboek van GPS, filter en upload delen",
+  "@profileDiagnosticsSubtitle": {
+    "description": "Uitleg bij het exporteren van de diagnose."
+  },
+  "profileDiagnosticsSubject": "Locatiediagnose",
+  "@profileDiagnosticsSubject": {
+    "description": "Onderwerp bij het delen van de diagnose."
+  },
+  "profileDiagnosticsEmpty": "Nog geen locatiediagnose opgeslagen.",
+  "@profileDiagnosticsEmpty": {
+    "description": "Melding: nog geen diagnose."
+  },
+  "profileExportFailed": "Exporteren is niet gelukt. Probeer opnieuw.",
+  "@profileExportFailed": {
+    "description": "Melding: exporteren mislukt."
+  },
+  "pinTitle": "Toegangscode",
+  "@pinTitle": {
+    "description": "Rij en dialoogtitel: toegangscode van de app."
+  },
+  "pinOnSubtitle": "Aan · wijzigen of uitschakelen",
+  "@pinOnSubtitle": {
+    "description": "Uitleg als de toegangscode aan staat."
+  },
+  "pinOffSubtitle": "Stel een code van 6 cijfers in",
+  "@pinOffSubtitle": {
+    "description": "Uitleg als er nog geen toegangscode is."
+  },
+  "pinNew": "Nieuwe code (6 cijfers)",
+  "@pinNew": {
+    "description": "Veldlabel: nieuwe toegangscode."
+  },
+  "pinRepeat": "Herhaal de code",
+  "@pinRepeat": {
+    "description": "Veldlabel: toegangscode herhalen."
+  },
+  "pinMismatch": "Vul twee keer dezelfde code van 6 cijfers in.",
+  "@pinMismatch": {
+    "description": "Fout: codes verschillen of zijn geen 6 cijfers."
+  },
+  "pinDisable": "Uitschakelen",
+  "@pinDisable": {
+    "description": "Knop: toegangscode uitschakelen."
+  },
+  "familyInviteCodeLabel": "UITNODIGINGSCODE",
+  "@familyInviteCodeLabel": {
+    "description": "Label boven de uitnodigingscode (hoofdletters)."
+  },
+  "familyCodeLabel": "JULLIE GEZINSCODE",
+  "@familyCodeLabel": {
+    "description": "Label boven de gezinscode (hoofdletters)."
+  },
+  "familyCodeValidUntil": "Geldig tot {date} om {time}",
+  "@familyCodeValidUntil": {
+    "description": "Geldigheid van de code; date = dag/maand, time = uur.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "familyCodeExpiredOwner": "Deze code is verlopen. Maak een nieuwe code.",
+  "@familyCodeExpiredOwner": {
+    "description": "Code verlopen (beheerder)."
+  },
+  "familyCodeExpiredMember": "Deze code is verlopen. Vraag de beheerder een nieuwe code.",
+  "@familyCodeExpiredMember": {
+    "description": "Code verlopen (gewoon lid)."
+  },
+  "familyRenewTitle": "Nieuwe code maken?",
+  "@familyRenewTitle": {
+    "description": "Dialoogtitel: nieuwe uitnodigingscode."
+  },
+  "familyRenewBody": "De huidige code werkt dan niet meer. Wie al lid is, blijft lid. De nieuwe code is 7 dagen geldig.",
+  "@familyRenewBody": {
+    "description": "Uitleg bij een nieuwe uitnodigingscode."
+  },
+  "familyRenewConfirm": "Nieuwe code",
+  "@familyRenewConfirm": {
+    "description": "Knop: nieuwe code bevestigen."
+  },
+  "familyRenewDone": "Nieuwe code gemaakt. De oude werkt niet meer.",
+  "@familyRenewDone": {
+    "description": "Melding: nieuwe code gemaakt."
+  },
+  "familyRenewFailed": "Nieuwe code maken is niet gelukt. Probeer opnieuw.",
+  "@familyRenewFailed": {
+    "description": "Melding: nieuwe code mislukt."
+  },
+  "familyRenewButton": "Nieuwe code maken",
+  "@familyRenewButton": {
+    "description": "Knop: nieuwe uitnodigingscode maken."
+  },
+  "familyInviteTitle": "Gezin uitnodigen",
+  "@familyInviteTitle": {
+    "description": "Titel van het uitnodigscherm."
+  },
+  "familyCreatedHeadline": "Familie aangemaakt!",
+  "@familyCreatedHeadline": {
+    "description": "Kop net na het aanmaken van een gezin."
+  },
+  "familyInviteHeadline": "Nodig je gezin uit",
+  "@familyInviteHeadline": {
+    "description": "Kop op het uitnodigscherm."
+  },
+  "familyInviteIntro": "Stuur de code. Wie ze invult, ziet jullie meteen op de kaart.",
+  "@familyInviteIntro": {
+    "description": "Uitleg op het uitnodigscherm."
+  },
+  "familyInviteShareText": "Kom bij \"{family}\" op CircleBeacon.\nOpen de app, kies \"Ik heb een uitnodigingscode\" en vul in: {code}",
+  "@familyInviteShareText": {
+    "description": "Tekst van de gedeelde uitnodiging.",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      },
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "familyInviteShareSubject": "Uitnodiging voor CircleBeacon",
+  "@familyInviteShareSubject": {
+    "description": "Onderwerp van de gedeelde uitnodiging."
+  },
+  "familyInviteShareFailed": "Verzenden lukt niet. Probeer opnieuw of kopieer de code.",
+  "@familyInviteShareFailed": {
+    "description": "Melding: delen mislukt."
+  },
+  "familyInviteSend": "Uitnodiging versturen",
+  "@familyInviteSend": {
+    "description": "Knop: uitnodiging delen."
+  },
+  "familyContinueToApp": "Doorgaan naar app",
+  "@familyContinueToApp": {
+    "description": "Knop: door naar de app."
+  },
+  "familyHowItWorks": "Zo werkt het",
+  "@familyHowItWorks": {
+    "description": "Titel: zo werkt uitnodigen."
+  },
+  "familyStepInstall": "Installeer CircleBeacon",
+  "@familyStepInstall": {
+    "description": "Stap 1 van uitnodigen."
+  },
+  "familyStepChoose": "Kies \"Ik heb een uitnodigingscode\"",
+  "@familyStepChoose": {
+    "description": "Stap 2 van uitnodigen."
+  },
+  "familyStepEnter": "Vul de code in, klaar",
+  "@familyStepEnter": {
+    "description": "Stap 3 van uitnodigen."
+  },
+  "familySetupTitle": "Jouw familie",
+  "@familySetupTitle": {
+    "description": "Titel van het scherm gezin maken/joinen."
+  },
+  "familySetupHeadline": "Hoe wil je starten?",
+  "@familySetupHeadline": {
+    "description": "Kop: hoe wil je starten."
+  },
+  "familySetupIntro": "Maak een nieuwe familie of sluit aan met een code.",
+  "@familySetupIntro": {
+    "description": "Uitleg: nieuw gezin of code."
+  },
+  "familyNew": "Nieuwe familie",
+  "@familyNew": {
+    "description": "Keuze: nieuw gezin."
+  },
+  "familyHaveCode": "Ik heb een code",
+  "@familyHaveCode": {
+    "description": "Keuze: ik heb een code."
+  },
+  "familySetupPrivacy": "Alleen wie je uitnodigt, ziet je op de kaart.",
+  "@familySetupPrivacy": {
+    "description": "Privacyzin onderaan het startscherm."
+  },
+  "familyNameLabel": "Familienaam",
+  "@familyNameLabel": {
+    "description": "Veldlabel: naam van het gezin."
+  },
+  "familyNameHint": "Familie Thys",
+  "@familyNameHint": {
+    "description": "Voorbeeld van een gezinsnaam."
+  },
+  "familyCreate": "Familie aanmaken",
+  "@familyCreate": {
+    "description": "Knop: gezin aanmaken."
+  },
+  "familyInviteCodeField": "Uitnodigingscode",
+  "@familyInviteCodeField": {
+    "description": "Veldlabel: uitnodigingscode."
+  },
+  "familyPaste": "Plakken",
+  "@familyPaste": {
+    "description": "Knop: code plakken."
+  },
+  "familyJoin": "Deelnemen aan familie",
+  "@familyJoin": {
+    "description": "Knop: bij een gezin aansluiten."
+  },
+  "familyErrorUnknownCode": "Deze uitnodigingscode bestaat niet. Controleer de code.",
+  "@familyErrorUnknownCode": {
+    "description": "Fout: onbekende uitnodigingscode."
+  },
+  "familyErrorExpiredCode": "Deze uitnodigingscode is verlopen. Vraag een nieuwe code.",
+  "@familyErrorExpiredCode": {
+    "description": "Fout: uitnodigingscode verlopen."
+  },
+  "familyErrorGeneric": "Dat lukte niet. Probeer opnieuw.",
+  "@familyErrorGeneric": {
+    "description": "Fout: iets ging mis op de server."
+  },
+  "welcomeTitle": "Gezinsoverzicht",
+  "@welcomeTitle": {
+    "description": "Titel van het welkomscherm na aansluiten."
+  },
+  "welcomeHeadline": "Welkom bij {family}!",
+  "@welcomeHeadline": {
+    "description": "Welkomstkop; family = naam van het gezin.",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      }
+    }
+  },
+  "welcomeConnected": "Je bent nu verbonden met de veilige familiekring.",
+  "@welcomeConnected": {
+    "description": "Uitleg onder de welkomstkop."
+  },
+  "welcomeMembersFailed": "Leden laden mislukt.",
+  "@welcomeMembersFailed": {
+    "description": "Fout: leden laden mislukt."
+  },
+  "welcomeToMap": "Naar de kaart",
+  "@welcomeToMap": {
+    "description": "Knop: naar de kaart."
+  },
+  "welcomeCurrentMembers": "Huidige gezinsleden",
+  "@welcomeCurrentMembers": {
+    "description": "Titel: huidige gezinsleden."
+  },
+  "welcomePrivacy": "Locaties worden enkel binnen deze kring gedeeld. Je gegevens blijven privé.",
+  "@welcomePrivacy": {
+    "description": "Privacyzin op het welkomscherm."
+  },
+  "emergencyTitle": "Noodcontacten",
+  "@emergencyTitle": {
+    "description": "Titel en rij: noodcontacten."
+  },
+  "emergencyTileEmpty": "Nog niemand · krijgen een sms bij SOS",
+  "@emergencyTileEmpty": {
+    "description": "Uitleg als er nog geen noodcontacten zijn."
+  },
+  "emergencyTileSet": "{names} · sms bij SOS",
+  "@emergencyTileSet": {
+    "description": "Uitleg met de namen van de noodcontacten.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencyIntro": "Bij een SOS krijgen je noodcontacten automatisch een sms met je locatie, ook als ze de app niet hebben. Contact 1 wordt daarna ook gebeld. De sms gaat van je eigen gsm en werkt ook zonder internet.",
+  "@emergencyIntro": {
+    "description": "Uitleg bovenaan het noodcontactenscherm."
+  },
+  "emergencyContactNumber": "Contact {number}",
+  "@emergencyContactNumber": {
+    "description": "Titel van een noodcontact-kaart.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "emergencyRoleFirst": "Krijgt een sms en wordt gebeld",
+  "@emergencyRoleFirst": {
+    "description": "Wat contact 1 krijgt."
+  },
+  "emergencyRoleSecond": "Krijgt een sms",
+  "@emergencyRoleSecond": {
+    "description": "Wat contact 2 krijgt."
+  },
+  "emergencyNameHint": "bv. Oma",
+  "@emergencyNameHint": {
+    "description": "Voorbeeld van een noodcontact."
+  },
+  "emergencyPhoneLabel": "Gsm-nummer",
+  "@emergencyPhoneLabel": {
+    "description": "Veldlabel: gsm-nummer."
+  },
+  "emergencyPhoneHint": "bv. 0470 12 34 56",
+  "@emergencyPhoneHint": {
+    "description": "Voorbeeld van een gsm-nummer."
+  },
+  "emergencySave": "Bewaren",
+  "@emergencySave": {
+    "description": "Knop: noodcontacten bewaren."
+  },
+  "emergencySendTest": "Stuur een test-sms",
+  "@emergencySendTest": {
+    "description": "Knop: test-sms versturen."
+  },
+  "emergencyCleared": "Noodcontacten gewist.",
+  "@emergencyCleared": {
+    "description": "Melding: noodcontacten gewist."
+  },
+  "emergencySaved": "Noodcontacten bewaard.",
+  "@emergencySaved": {
+    "description": "Melding: noodcontacten bewaard."
+  },
+  "emergencyFillFirst": "Vul eerst een noodcontact in.",
+  "@emergencyFillFirst": {
+    "description": "Melding: eerst een contact invullen."
+  },
+  "emergencyTestSent": "Test-sms verstuurd naar {names}.",
+  "@emergencyTestSent": {
+    "description": "Melding: test-sms verstuurd.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencyTestNoService": "Niet verstuurd naar {names}: geen gsm-netwerk of simkaart.",
+  "@emergencyTestNoService": {
+    "description": "Melding: geen netwerk of simkaart.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencyTestFailed": "Test-sms naar {names} mislukt.",
+  "@emergencyTestFailed": {
+    "description": "Melding: test-sms mislukt.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencyTestSms": "Test van {name}: je bent ingesteld als noodcontact. Bij een SOS krijg je een sms met de locatie. Je hoeft niets te doen.",
+  "@emergencyTestSms": {
+    "description": "Inhoud van de test-sms; name = jouw naam.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencyYourContact": "je contact",
+  "@emergencyYourContact": {
+    "description": "Naam in de test-sms als je naam leeg is."
+  },
+  "emergencyErrorName": "Geef een naam.",
+  "@emergencyErrorName": {
+    "description": "Fout: naam ontbreekt."
+  },
+  "emergencyErrorPhone": "Geef een telefoonnummer.",
+  "@emergencyErrorPhone": {
+    "description": "Fout: telefoonnummer ontbreekt."
+  },
+  "emergencyErrorInvalidPhone": "Dit telefoonnummer klopt niet.",
+  "@emergencyErrorInvalidPhone": {
+    "description": "Fout: ongeldig telefoonnummer."
+  },
+  "emergencyAutoTitle": "Automatisch sms'en en bellen",
+  "@emergencyAutoTitle": {
+    "description": "Titel: automatisch sms en bellen."
+  },
+  "emergencyAutoNoSim": "Deze gsm heeft geen simkaart (of geen gsm-netwerk): sms en bellen werken niet",
+  "@emergencyAutoNoSim": {
+    "description": "Uitleg: geen simkaart."
+  },
+  "emergencyAutoOn": "Aan · bij een SOS vertrekken de sms en de oproep vanzelf",
+  "@emergencyAutoOn": {
+    "description": "Uitleg: automatisch staat aan."
+  },
+  "emergencyAutoNoPermission": "Nog geen toestemming · dan opent bij een SOS enkel de berichten-app",
+  "@emergencyAutoNoPermission": {
+    "description": "Uitleg: nog geen toestemming (Android)."
+  },
+  "emergencyAutoIphone": "Op iPhone kan een app niet zelf sms'en of bellen; de berichten-app opent met de sms klaar",
+  "@emergencyAutoIphone": {
+    "description": "Uitleg op iPhone."
+  },
+  "commonListAnd": "{start} en {last}",
+  "@commonListAnd": {
+    "description": "Twee of meer namen: start = de eerste namen (met komma), last = de laatste.",
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
+    }
+  },
+  "familyLoadFailed": "Familie laden mislukt.",
+  "@familyLoadFailed": {
+    "description": "Fout: gezin laden mislukt."
+  },
+  "familyMemberCount": "{count, plural, =1{1 lid} other{{count} leden}}",
+  "@familyMemberCount": {
+    "description": "Aantal leden in een pil.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "welcomeActive": "• Actief",
+  "@welcomeActive": {
+    "description": "Klein label bij de welkomstafbeelding."
   }
 }

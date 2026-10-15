@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/data/pin_lock.dart';
 import 'profile_tile.dart';
+import '../../../l10n/l10n.dart';
 
 class PinSettingsTile extends ConsumerWidget {
   const PinSettingsTile({super.key, required this.userId});
@@ -13,8 +14,8 @@ class PinSettingsTile extends ConsumerWidget {
     final enabled = ref.watch(pinEnabledProvider(userId));
     return ProfileTile(
       icon: Icons.pin_outlined,
-      title: 'Toegangscode',
-      subtitle: enabled.value == true ? 'Aan · wijzigen of uitschakelen' : 'Stel een code van 6 cijfers in',
+      title: context.l10n.pinTitle,
+      subtitle: enabled.value == true ? context.l10n.pinOnSubtitle : context.l10n.pinOffSubtitle,
       onTap: enabled.isLoading
           ? null
           : () => showDialog<void>(
@@ -48,7 +49,7 @@ class _PinSettingsState extends ConsumerState<_PinSettings> {
   Future<void> _save({bool remove = false}) async {
     if (_busy) return;
     if (!remove && (_pin.text.length != 6 || _pin.text != _confirm.text)) {
-      setState(() => _error = 'Vul twee keer dezelfde code van 6 cijfers in.');
+      setState(() => _error = context.l10n.pinMismatch);
       return;
     }
     setState(() {
@@ -65,7 +66,7 @@ class _PinSettingsState extends ConsumerState<_PinSettings> {
       ref.invalidate(pinEnabledProvider(widget.userId));
       if (mounted) Navigator.pop(context);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Opslaan is niet gelukt. Probeer opnieuw.');
+      if (mounted) setState(() => _error = context.l10n.commonTryAgainSaveFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -82,21 +83,27 @@ class _PinSettingsState extends ConsumerState<_PinSettings> {
   );
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Toegangscode'),
+    title: Text(context.l10n.pinTitle),
     content: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _field(_pin, 'Nieuwe code (6 cijfers)'),
+        _field(_pin, context.l10n.pinNew),
         const SizedBox(height: 16),
-        _field(_confirm, 'Herhaal de code'),
+        _field(_confirm, context.l10n.pinRepeat),
         if (_error != null) Text(_error!),
       ],
     ),
     actions: [
       if (widget.enabled)
-        TextButton(onPressed: _busy ? null : () => _save(remove: true), child: const Text('Uitschakelen')),
-      TextButton(onPressed: _busy ? null : () => Navigator.pop(context), child: const Text('Annuleren')),
-      FilledButton(onPressed: _busy ? null : _save, child: Text(_busy ? 'Opslaan…' : 'Opslaan')),
+        TextButton(onPressed: _busy ? null : () => _save(remove: true), child: Text(context.l10n.pinDisable)),
+      TextButton(
+        onPressed: _busy ? null : () => Navigator.pop(context),
+        child: Text(context.l10n.commonCancel),
+      ),
+      FilledButton(
+        onPressed: _busy ? null : _save,
+        child: Text(_busy ? context.l10n.commonSaving : context.l10n.commonSave),
+      ),
     ],
   );
 }

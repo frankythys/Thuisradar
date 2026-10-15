@@ -5,6 +5,7 @@ import '../../../shared/widgets/error_view.dart';
 import '../../home/presentation/home_shell.dart';
 import '../application/family_providers.dart';
 import 'family_setup_screen.dart';
+import '../../../l10n/l10n.dart';
 
 /// Toont de familie-instelling zolang de gebruiker nog geen familie heeft.
 class FamilyGate extends ConsumerWidget {
@@ -19,7 +20,7 @@ class FamilyGate extends ConsumerWidget {
           loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, _) => Scaffold(
             body: ErrorView(
-              message: 'Familie laden mislukt.\n$error',
+              message: '${context.l10n.familyLoadFailed}\n$error',
               onRetry: () => ref.invalidate(myFamilyProvider),
             ),
           ),

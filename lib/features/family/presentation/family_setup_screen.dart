@@ -10,9 +10,11 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../../auth/application/auth_providers.dart';
 import '../application/family_providers.dart';
 import '../domain/family.dart';
+import '../domain/family_error.dart';
 import 'invite_screen.dart';
 import 'invite_code_input.dart';
 import 'welcome_screen.dart';
+import '../../../l10n/l10n.dart';
 
 part 'family_setup_screen_choice_tile.dart';
 part 'family_setup_screen_field_label.dart';
@@ -56,14 +58,24 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
       if (!mounted) return;
       await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => next(family)));
     } on PostgrestException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _error = _serverError(e.message));
     } on Exception catch (e) {
       // Geen verbinding of time-out: zeg het, in plaats van stil niets te doen.
       debugPrint('Gezin aanmaken/joinen mislukt: $e');
-      if (mounted) setState(() => _error = 'Geen verbinding. Controleer je internet en probeer opnieuw.');
+      if (mounted) setState(() => _error = context.l10n.commonNoConnection);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Foutmeldingen van de server zijn Nederlands; toon ze in de taal van de app.
+  String _serverError(String message) {
+    final l10n = context.l10n;
+    return switch (classifyFamilyError(message)) {
+      FamilyError.unknownCode => l10n.familyErrorUnknownCode,
+      FamilyError.expiredCode => l10n.familyErrorExpiredCode,
+      FamilyError.other => l10n.familyErrorGeneric,
+    };
   }
 
   void _create() {
@@ -104,11 +116,11 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
 
     return Scaffold(
       appBar: BrandedAppBar(
-        title: 'Jouw familie',
+        title: context.l10n.familySetupTitle,
         actions: [
           TextButton(
             onPressed: () => ref.read(authRepositoryProvider).signOut(),
-            child: const Text('Uitloggen'),
+            child: Text(context.l10n.profileSignOut),
           ),
         ],
       ),
@@ -118,12 +130,9 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Hoe wil je starten?', style: text.headlineMedium),
+              Text(context.l10n.familySetupHeadline, style: text.headlineMedium),
               SizedBox(height: tokens.spaceXs),
-              Text(
-                'Maak een nieuwe familie of sluit aan met een code.',
-                style: text.bodyMedium?.copyWith(color: AppColors.muted),
-              ),
+              Text(context.l10n.familySetupIntro, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
               SizedBox(height: tokens.spaceMd),
               IntrinsicHeight(
                 child: Row(
@@ -132,7 +141,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                     Expanded(
                       child: _ChoiceTile(
                         icon: Icons.home_rounded,
-                        label: 'Nieuwe familie',
+                        label: context.l10n.familyNew,
                         selected: creating,
                         onTap: () => _choose(SetupChoice.create),
                       ),
@@ -141,7 +150,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                     Expanded(
                       child: _ChoiceTile(
                         icon: Icons.vpn_key_outlined,
-                        label: 'Ik heb een code',
+                        label: context.l10n.familyHaveCode,
                         selected: !creating,
                         onTap: () => _choose(SetupChoice.join),
                       ),
@@ -167,7 +176,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
                   SizedBox(width: tokens.spaceSm),
                   Expanded(
                     child: Text(
-                      'Alleen wie je uitnodigt, ziet je op de kaart.',
+                      context.l10n.familySetupPrivacy,
                       style: text.bodySmall?.copyWith(color: AppColors.muted),
                     ),
                   ),

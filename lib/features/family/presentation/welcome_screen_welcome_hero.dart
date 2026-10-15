@@ -13,10 +13,10 @@ class _WelcomeHero extends StatelessWidget {
         children: [
           _ring(160, 0.08),
           _ring(118, 0.16),
-          const Positioned(
+          Positioned(
             top: 0,
             child: Chip(
-              label: Text('• Actief', style: TextStyle(fontSize: 10)),
+              label: Text(context.l10n.welcomeActive, style: const TextStyle(fontSize: 10)),
               visualDensity: VisualDensity.compact,
             ),
           ),

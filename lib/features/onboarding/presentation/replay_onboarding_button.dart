@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../profile/presentation/profile_tile.dart';
 import '../application/onboarding_providers.dart';
+import '../../../l10n/l10n.dart';
 
 /// Rij in het profiel om de introductie opnieuw te bekijken, zonder uit te loggen.
 class ReplayOnboardingButton extends ConsumerWidget {
@@ -12,7 +13,7 @@ class ReplayOnboardingButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ProfileTile(
       icon: Icons.play_circle_outline,
-      title: 'Introductie opnieuw bekijken',
+      title: context.l10n.profileReplayIntro,
       onTap: () async {
         await ref.read(onboardingStoreProvider).reset();
         ref.invalidate(onboardingSeenProvider);

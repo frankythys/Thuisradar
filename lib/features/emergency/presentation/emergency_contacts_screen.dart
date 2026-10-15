@@ -9,6 +9,7 @@ import '../application/emergency_providers.dart';
 import '../domain/emergency_contact.dart';
 import 'emergency_access_tile.dart';
 import 'emergency_contact_fields.dart';
+import '../../../l10n/l10n.dart';
 
 /// Twee noodcontacten instellen: bij een SOS krijgen ze een sms met je
 /// locatie, en contact 1 wordt daarna gebeld.
@@ -25,7 +26,7 @@ class EmergencyContactsScreen extends ConsumerStatefulWidget {
 class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScreen> {
   final _names = [TextEditingController(), TextEditingController()];
   final _phones = [TextEditingController(), TextEditingController()];
-  final _errors = <String?>[null, null];
+  final _errors = <EmergencyContactProblem?>[null, null];
   bool _loaded = false;
   bool _busy = false;
 
@@ -69,6 +70,7 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
     final contacts = _validated();
     final userId = ref.read(currentUserIdProvider);
     if (contacts == null || userId == null) return;
+    final l10n = context.l10n;
     setState(() => _busy = true);
     try {
       await ref.read(emergencyContactRepositoryProvider).save(userId, contacts);
@@ -78,10 +80,10 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
         await ref.read(emergencyPhoneProvider).requestAccess();
         ref.invalidate(emergencyAutomaticProvider);
       }
-      _snack(contacts.isEmpty ? 'Noodcontacten gewist.' : 'Noodcontacten bewaard.');
+      _snack(contacts.isEmpty ? l10n.emergencyCleared : l10n.emergencySaved);
     } on Exception catch (error) {
       debugPrint('Noodcontacten bewaren mislukt: $error');
-      _snack('Bewaren is niet gelukt. Probeer opnieuw.');
+      _snack(l10n.commonTryAgainSaveFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -91,9 +93,11 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
     final contacts = _validated();
     if (contacts == null) return;
     final plan = planFor(contacts);
-    if (plan.isEmpty) return _snack('Vul eerst een noodcontact in.');
+    final l10n = context.l10n;
+    if (plan.isEmpty) return _snack(l10n.emergencyFillFirst);
     final phone = ref.read(emergencyPhoneProvider);
-    final text = testSmsText(widget.senderName);
+    final sender = widget.senderName.trim();
+    final text = l10n.emergencyTestSms(sender.isEmpty ? l10n.emergencyYourContact : sender);
     final results = <String, SmsResult>{
       for (final contact in plan.smsTo) contact.name: await phone.sendSms(dialablePhone(contact.phone), text),
     };
@@ -101,21 +105,28 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
     if (results.values.every((result) => result == SmsResult.notAllowed)) {
       return phone.openSms(dialablePhone(plan.smsTo.first.phone), text);
     }
-    String names(SmsResult wanted) => [
+    String names(SmsResult wanted) => l10n.joinNames([
       for (final MapEntry(:key, :value) in results.entries)
         if (value == wanted) key,
-    ].join(' en ');
+    ]);
     final sent = names(SmsResult.sent);
     final noService = names(SmsResult.noService);
     final failed = names(SmsResult.failed);
     _snack(
       [
-        if (sent.isNotEmpty) 'Test-sms verstuurd naar $sent.',
-        if (noService.isNotEmpty) 'Niet verstuurd naar $noService: geen gsm-netwerk of simkaart.',
-        if (failed.isNotEmpty) 'Test-sms naar $failed mislukt.',
+        if (sent.isNotEmpty) l10n.emergencyTestSent(sent),
+        if (noService.isNotEmpty) l10n.emergencyTestNoService(noService),
+        if (failed.isNotEmpty) l10n.emergencyTestFailed(failed),
       ].join(' '),
     );
   }
+
+  String? _problemText(AppLocalizations l10n, EmergencyContactProblem? problem) => switch (problem) {
+    null => null,
+    EmergencyContactProblem.missingName => l10n.emergencyErrorName,
+    EmergencyContactProblem.missingPhone => l10n.emergencyErrorPhone,
+    EmergencyContactProblem.invalidPhone => l10n.emergencyErrorInvalidPhone,
+  };
 
   void _snack(String message) {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
@@ -125,48 +136,44 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final text = Theme.of(context).textTheme;
+    final l10n = context.l10n;
     final contacts = ref.watch(myEmergencyContactsProvider);
     if (contacts.hasValue) _fill(contacts.requireValue);
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Noodcontacten'),
+      appBar: BrandedAppBar(title: l10n.emergencyTitle),
       body: SafeArea(
         child: !contacts.hasValue && contacts.isLoading
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: EdgeInsets.all(tokens.spaceMd),
                 children: [
-                  Text(
-                    'Bij een SOS krijgen je noodcontacten automatisch een sms met je locatie, ook als ze '
-                    'de app niet hebben. Contact 1 wordt daarna ook gebeld. De sms gaat van je eigen gsm '
-                    'en werkt ook zonder internet.',
-                    style: text.bodyMedium?.copyWith(color: AppColors.muted),
-                  ),
+                  Text(l10n.emergencyIntro, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
                   SizedBox(height: tokens.spaceMd),
                   EmergencyContactFields(
-                    title: 'Contact 1',
-                    role: 'Krijgt een sms en wordt gebeld',
+                    title: l10n.emergencyContactNumber(1),
+                    role: l10n.emergencyRoleFirst,
                     name: _names[0],
                     phone: _phones[0],
-                    error: _errors[0],
+                    error: _problemText(l10n, _errors[0]),
                   ),
                   SizedBox(height: tokens.spaceSm),
                   EmergencyContactFields(
-                    title: 'Contact 2',
-                    role: 'Krijgt een sms',
+                    title: l10n.emergencyContactNumber(2),
+                    role: l10n.emergencyRoleSecond,
                     name: _names[1],
                     phone: _phones[1],
-                    error: _errors[1],
+                    error: _problemText(l10n, _errors[1]),
                   ),
                   SizedBox(height: tokens.spaceMd),
                   const EmergencyAccessTile(),
                   SizedBox(height: tokens.spaceMd),
-                  FilledButton(onPressed: _busy ? null : _save, child: const Text('Bewaren')),
+                  FilledButton(onPressed: _busy ? null : _save, child: Text(l10n.emergencySave)),
                   SizedBox(height: tokens.spaceSm),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : _test,
                     icon: const Icon(Icons.sms_outlined),
-                    label: const Text('Stuur een test-sms'),
+                    label: Text(l10n.emergencySendTest),
                   ),
                 ],
               ),

@@ -11,6 +11,7 @@ import '../../permissions/presentation/permissions_screen.dart';
 import '../application/family_providers.dart';
 import '../domain/family.dart';
 import 'invite_code_controls.dart';
+import '../../../l10n/l10n.dart';
 
 part 'invite_screen_success_hero.dart';
 part 'invite_screen_code_card.dart';
@@ -32,18 +33,15 @@ class InviteScreen extends ConsumerWidget {
     try {
       await SharePlus.instance.share(
         ShareParams(
-          text:
-              'Kom bij "${family.name}" op CircleBeacon.\n'
-              'Open de app, kies "Ik heb een uitnodigingscode" en vul in: ${family.inviteCode}',
-          subject: 'Uitnodiging voor CircleBeacon',
+          text: context.l10n.familyInviteShareText(family.name, family.inviteCode),
+          subject: context.l10n.familyInviteShareSubject,
           sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
         ),
       );
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verzenden lukt niet. Probeer opnieuw of kopieer de code.')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(context.l10n.familyInviteShareFailed)));
       }
     }
   }
@@ -51,7 +49,7 @@ class InviteScreen extends ConsumerWidget {
   Future<void> _copy(BuildContext context, Family family) async {
     await Clipboard.setData(ClipboardData(text: family.inviteCode));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code gekopieerd')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.commonCodeCopied)));
     }
   }
 
@@ -69,7 +67,7 @@ class InviteScreen extends ConsumerWidget {
     final isOwner = ref.watch(isFamilyOwnerProvider(family.id));
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Gezin uitnodigen'),
+      appBar: BrandedAppBar(title: context.l10n.familyInviteTitle),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(tokens.spaceLg, tokens.spaceSm, tokens.spaceLg, tokens.spaceLg),
@@ -79,13 +77,13 @@ class InviteScreen extends ConsumerWidget {
               _SuccessHero(justCreated: justCreated),
               SizedBox(height: tokens.spaceMd),
               Text(
-                justCreated ? 'Familie aangemaakt!' : 'Nodig je gezin uit',
+                justCreated ? context.l10n.familyCreatedHeadline : context.l10n.familyInviteHeadline,
                 style: text.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: tokens.spaceXs),
               Text(
-                'Stuur de code. Wie ze invult, ziet jullie meteen op de kaart.',
+                context.l10n.familyInviteIntro,
                 style: text.bodyMedium?.copyWith(color: AppColors.muted),
                 textAlign: TextAlign.center,
               ),
@@ -98,7 +96,7 @@ class InviteScreen extends ConsumerWidget {
                 builder: (buttonContext) => FilledButton.icon(
                   onPressed: () => _share(buttonContext, family),
                   icon: const Icon(Icons.share, size: 20),
-                  label: const Text('Uitnodiging versturen'),
+                  label: Text(context.l10n.familyInviteSend),
                 ),
               ),
               if (isOwner) ...[SizedBox(height: tokens.spaceSm), RenewInviteCodeButton(familyId: family.id)],
@@ -106,7 +104,10 @@ class InviteScreen extends ConsumerWidget {
               const _HowItWorks(),
               if (justCreated) ...[
                 SizedBox(height: tokens.spaceMd),
-                TextButton(onPressed: () => _continue(context), child: const Text('Doorgaan naar app')),
+                TextButton(
+                  onPressed: () => _continue(context),
+                  child: Text(context.l10n.familyContinueToApp),
+                ),
               ],
             ],
           ),

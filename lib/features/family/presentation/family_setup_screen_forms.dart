@@ -13,17 +13,17 @@ class _CreateForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _FieldLabel(label: 'Familienaam'),
+        _FieldLabel(label: context.l10n.familyNameLabel),
         SizedBox(height: tokens.spaceSm),
         TextField(
           controller: controller,
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => onSubmit(),
-          decoration: const InputDecoration(
-            hintText: 'Familie Thys',
+          decoration: InputDecoration(
+            hintText: context.l10n.familyNameHint,
             fillColor: AppColors.surfaceLow,
-            prefixIcon: Icon(Icons.groups_outlined, color: AppColors.primary),
+            prefixIcon: const Icon(Icons.groups_outlined, color: AppColors.primary),
           ),
         ),
         SizedBox(height: tokens.spaceMd),
@@ -31,7 +31,7 @@ class _CreateForm extends StatelessWidget {
           onPressed: busy ? null : onSubmit,
           icon: const Icon(Icons.arrow_forward, size: 20),
           iconAlignment: IconAlignment.end,
-          label: const Text('Familie aanmaken'),
+          label: Text(context.l10n.familyCreate),
         ),
       ],
     );
@@ -59,11 +59,11 @@ class _JoinForm extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Expanded(child: _FieldLabel(label: 'Uitnodigingscode')),
+            Expanded(child: _FieldLabel(label: context.l10n.familyInviteCodeField)),
             TextButton.icon(
               onPressed: onPaste,
               icon: const Icon(Icons.content_paste, size: 18),
-              label: const Text('Plakken'),
+              label: Text(context.l10n.familyPaste),
             ),
           ],
         ),
@@ -73,7 +73,7 @@ class _JoinForm extends StatelessWidget {
         FilledButton.icon(
           onPressed: busy ? null : onSubmit,
           icon: const Icon(Icons.group_add_outlined, size: 20),
-          label: const Text('Deelnemen aan familie'),
+          label: Text(context.l10n.familyJoin),
         ),
       ],
     );

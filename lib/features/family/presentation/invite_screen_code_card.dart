@@ -15,7 +15,7 @@ class _CodeCard extends StatelessWidget {
     return AppCard(
       child: Column(
         children: [
-          Text('JULLIE GEZINSCODE', style: text.labelSmall?.copyWith(color: AppColors.muted)),
+          Text(context.l10n.familyCodeLabel, style: text.labelSmall?.copyWith(color: AppColors.muted)),
           SizedBox(height: tokens.spaceSm),
           Container(
             padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceXs, tokens.spaceSm),
@@ -35,7 +35,7 @@ class _CodeCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Code kopiëren',
+                  tooltip: context.l10n.commonCopyCode,
                   onPressed: onCopy,
                   icon: const Icon(Icons.content_copy, color: AppColors.primary),
                 ),

@@ -102,20 +102,17 @@ String sosSmsText({required String senderName, required double latitude, require
       '(automatisch bericht, ik kan misschien niet antwoorden)';
 }
 
-/// Een proefbericht om te kijken of sms'en werkt.
-String testSmsText(String senderName) {
-  final name = senderName.trim().isEmpty ? 'je contact' : senderName.trim();
-  return 'Test van $name: je bent ingesteld als noodcontact. Bij een SOS krijg je een sms met de '
-      'locatie. Je hoeft niets te doen.';
-}
+/// Waarom een noodcontact (nog) niet bewaard kan worden.
+enum EmergencyContactProblem { missingName, missingPhone, invalidPhone }
 
-/// Waarom een noodcontact (nog) niet bewaard kan worden, of null als het goed is.
-String? emergencyContactError(String name, String phone) {
+/// Het probleem met een ingevuld noodcontact, of null als het goed is (of
+/// helemaal leeg). De tekst erbij komt uit de vertalingen.
+EmergencyContactProblem? emergencyContactError(String name, String phone) {
   final hasName = name.trim().isNotEmpty;
   final hasPhone = phone.trim().isNotEmpty;
   if (!hasName && !hasPhone) return null;
-  if (!hasName) return 'Geef een naam.';
-  if (!hasPhone) return 'Geef een telefoonnummer.';
-  if (!isValidPhone(phone)) return 'Dit telefoonnummer klopt niet.';
+  if (!hasName) return EmergencyContactProblem.missingName;
+  if (!hasPhone) return EmergencyContactProblem.missingPhone;
+  if (!isValidPhone(phone)) return EmergencyContactProblem.invalidPhone;
   return null;
 }

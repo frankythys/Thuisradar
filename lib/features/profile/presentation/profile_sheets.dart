@@ -8,6 +8,7 @@ import '../../family/domain/family.dart';
 import '../../family/domain/family_member.dart';
 import '../../family/presentation/invite_code_controls.dart';
 import '../application/profile_providers.dart';
+import '../../../l10n/l10n.dart';
 
 Future<void> _sheet(BuildContext context, String title, Widget child) {
   return showModalBottomSheet<void>(
@@ -61,11 +62,11 @@ Future<void> showFamilySheet(
             contentPadding: EdgeInsets.zero,
             leading: MemberAvatar(member: member, size: 36),
             title: Text(member.displayName),
-            subtitle: Text(member.isOwner ? 'Beheerder' : 'Gezinslid'),
+            subtitle: Text(member.isOwner ? context.l10n.commonOwner : context.l10n.commonMember),
             trailing: (onRemove == null && onMakeOwner == null) || member.isOwner
                 ? null
                 : PopupMenuButton<void Function(FamilyMember)>(
-                    tooltip: 'Opties voor ${member.displayName}',
+                    tooltip: context.l10n.profileMemberOptions(member.displayName),
                     icon: const Icon(Icons.more_vert),
                     onSelected: (action) {
                       Navigator.pop(context);
@@ -75,19 +76,19 @@ Future<void> showFamilySheet(
                       if (onMakeOwner != null)
                         PopupMenuItem(
                           value: onMakeOwner,
-                          child: const ListTile(
+                          child: ListTile(
                             contentPadding: EdgeInsets.zero,
-                            leading: Icon(Icons.admin_panel_settings_outlined),
-                            title: Text('Beheerder maken'),
+                            leading: const Icon(Icons.admin_panel_settings_outlined),
+                            title: Text(context.l10n.profileMakeOwnerConfirm),
                           ),
                         ),
                       if (onRemove != null)
                         PopupMenuItem(
                           value: onRemove,
-                          child: const ListTile(
+                          child: ListTile(
                             contentPadding: EdgeInsets.zero,
-                            leading: Icon(Icons.person_remove_outlined, color: AppColors.alert),
-                            title: Text('Verwijderen uit gezin'),
+                            leading: const Icon(Icons.person_remove_outlined, color: AppColors.alert),
+                            title: Text(context.l10n.profileRemoveFromFamily),
                           ),
                         ),
                     ],
@@ -100,7 +101,7 @@ Future<void> showFamilySheet(
             onInvite();
           },
           icon: const Icon(Icons.person_add_alt_1_outlined),
-          label: const Text('Iemand uitnodigen'),
+          label: Text(context.l10n.profileInviteSomeone),
         ),
       ],
     ),
@@ -114,16 +115,16 @@ Future<void> showNotificationsSheet(
 }) {
   return _sheet(
     context,
-    'Meldingen',
+    context.l10n.profileNotifications,
     Consumer(
       builder: (context, ref, _) {
         final prefs = ref.watch(notificationPreferencesProvider).value ?? const <String, dynamic>{};
         return Column(
           children: [
-            for (final (key, title, subtitle) in const [
-              ('arrival', 'Aankomst', 'Als iemand bij een plaats aankomt'),
-              ('departure', 'Vertrek', 'Als iemand een plaats verlaat'),
-              ('sos', 'Noodberichten (SOS)', 'Altijd aanlaten is aangeraden'),
+            for (final (key, title, subtitle) in [
+              ('arrival', context.l10n.profileArrival, context.l10n.profileArrivalSubtitle),
+              ('departure', context.l10n.profileDeparture, context.l10n.profileDepartureSubtitle),
+              ('sos', context.l10n.profileSosNotifications, context.l10n.profileSosNotificationsSubtitle),
             ])
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -145,15 +146,11 @@ Future<void> showPrivacySheet(BuildContext context, {required Future<void> Funct
   final tokens = context.tokens;
   return _sheet(
     context,
-    'Privacy & beveiliging',
+    context.l10n.profilePrivacy,
     Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Alleen leden van jouw gezin zien je locatie, plaatsen en berichten. De verbinding is '
-          'versleuteld. Je kunt locatie delen altijd pauzeren in je profiel.',
-          style: text.bodyMedium,
-        ),
+        Text(context.l10n.profilePrivacyText, style: text.bodyMedium),
         SizedBox(height: tokens.spaceLg),
         OutlinedButton.icon(
           onPressed: () async {
@@ -161,7 +158,7 @@ Future<void> showPrivacySheet(BuildContext context, {required Future<void> Funct
             await onForgetLogin();
           },
           icon: const Icon(Icons.fingerprint),
-          label: const Text('Opgeslagen login verwijderen'),
+          label: Text(context.l10n.profileForgetLogin),
         ),
       ],
     ),

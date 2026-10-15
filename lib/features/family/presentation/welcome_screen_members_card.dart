@@ -18,7 +18,7 @@ class _MembersCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('Huidige gezinsleden', style: text.titleLarge),
+              Text(context.l10n.welcomeCurrentMembers, style: text.titleLarge),
               const Spacer(),
               _CountPill(count: members.length),
             ],
@@ -37,7 +37,9 @@ class _MembersCard extends StatelessWidget {
                       children: [
                         Text(member.displayName, style: text.titleMedium),
                         Text(
-                          member.userId == myId ? 'Jij' : (member.isOwner ? 'Beheerder' : 'Gezinslid'),
+                          member.userId == myId
+                              ? context.l10n.commonYou
+                              : (member.isOwner ? context.l10n.commonOwner : context.l10n.commonMember),
                           style: text.bodySmall?.copyWith(color: AppColors.muted),
                         ),
                       ],
@@ -61,7 +63,7 @@ class _MembersCard extends StatelessWidget {
                 SizedBox(width: tokens.spaceMd),
                 Expanded(
                   child: Text(
-                    'Locaties worden enkel binnen deze kring gedeeld. Je gegevens blijven privé.',
+                    context.l10n.welcomePrivacy,
                     style: text.bodyMedium?.copyWith(color: AppColors.muted),
                   ),
                 ),

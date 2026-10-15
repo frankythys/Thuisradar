@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../l10n/l10n.dart';
 
 /// Resultaat van het bewerk-venster.
 typedef ProfileEdit = ({String name, String phone, int colorIndex});
@@ -48,9 +49,9 @@ class _EditSheetState extends State<_EditSheet> {
   void _save() {
     final name = _name.text.trim();
     final phone = _phone.text.trim();
-    if (name.isEmpty) return setState(() => _error = 'Vul je naam in.');
+    if (name.isEmpty) return setState(() => _error = context.l10n.profileErrorName);
     if (phone.isNotEmpty && !RegExp(r'^\+?[0-9 ()-]{6,24}$').hasMatch(phone)) {
-      return setState(() => _error = 'Dat telefoonnummer klopt niet.');
+      return setState(() => _error = context.l10n.profileErrorPhone);
     }
     Navigator.pop<ProfileEdit>(context, (name: name, phone: phone, colorIndex: _color));
   }
@@ -70,28 +71,28 @@ class _EditSheetState extends State<_EditSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Profiel bewerken', style: text.titleLarge),
+          Text(context.l10n.profileEditTitle, style: text.titleLarge),
           SizedBox(height: tokens.spaceMd),
           TextField(
             controller: _name,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Naam'),
+            decoration: InputDecoration(labelText: context.l10n.commonName),
           ),
           SizedBox(height: tokens.spaceSm),
           TextField(
             controller: _phone,
             keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(labelText: 'Telefoonnummer voor je gezin', hintText: '+32 …'),
+            decoration: InputDecoration(labelText: context.l10n.profilePhoneLabel, hintText: '+32 …'),
           ),
           SizedBox(height: tokens.spaceMd),
-          Text('Kaartkleur', style: text.titleSmall),
+          Text(context.l10n.profileMapColor, style: text.titleSmall),
           SizedBox(height: tokens.spaceSm),
           Wrap(
             spacing: tokens.spaceSm,
             children: [
               for (var i = 0; i < tokens.memberColors.length; i++)
                 Semantics(
-                  label: 'Kaartkleur ${i + 1}',
+                  label: context.l10n.profileMapColorNumber(i + 1),
                   selected: _color == i,
                   child: InkWell(
                     onTap: () => setState(() => _color = i),
@@ -112,7 +113,7 @@ class _EditSheetState extends State<_EditSheet> {
             Text(_error!, style: text.bodySmall?.copyWith(color: AppColors.alert)),
           ],
           SizedBox(height: tokens.spaceLg),
-          FilledButton(onPressed: _save, child: const Text('Opslaan')),
+          FilledButton(onPressed: _save, child: Text(context.l10n.commonSave)),
         ],
       ),
     );

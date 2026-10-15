@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/auth/application/auth_providers.dart';
@@ -12,6 +13,8 @@ import 'package:thuisradar/features/family/presentation/invite_code_controls.dar
 import 'package:thuisradar/features/family/presentation/invite_screen.dart';
 
 class _Repo extends Mock implements FamilyRepository {}
+
+final _nl = lookupAppLocalizations(const Locale('nl'));
 
 void main() {
   final now = DateTime(2026, 10, 11, 16);
@@ -34,11 +37,14 @@ void main() {
   });
 
   test('geldigheid: datum, verlopen (beheerder of lid) of onbekend', () {
-    expect(inviteValidity(valid, now, isOwner: true), 'Geldig tot 18/10 om 14:05');
+    expect(inviteValidity(_nl, valid, now, isOwner: true), 'Geldig tot 18/10 om 14:05');
     final expired = Family(id: 'f', name: 'G', inviteCode: 'X', inviteExpiresAt: DateTime(2026, 10, 1));
-    expect(inviteValidity(expired, now, isOwner: true), contains('Maak een nieuwe code'));
-    expect(inviteValidity(expired, now, isOwner: false), contains('Vraag de beheerder'));
-    expect(inviteValidity(const Family(id: 'f', name: 'G', inviteCode: 'X'), now, isOwner: true), isNull);
+    expect(inviteValidity(_nl, expired, now, isOwner: true), contains('Maak een nieuwe code'));
+    expect(inviteValidity(_nl, expired, now, isOwner: false), contains('Vraag de beheerder'));
+    expect(
+      inviteValidity(_nl, const Family(id: 'f', name: 'G', inviteCode: 'X'), now, isOwner: true),
+      isNull,
+    );
   });
 
   Future<_Repo> pump(WidgetTester tester, {required bool owner}) async {

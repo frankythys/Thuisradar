@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/member_avatar.dart';
 import '../../family/domain/family_member.dart';
+import '../../../l10n/l10n.dart';
 
 /// Bovenaan het profiel: avatar in je kaartkleur, naam, rol + telefoon en
 /// één knop "Bewerken" (naam, telefoon en kleur).
@@ -19,7 +20,7 @@ class ProfileHeader extends StatelessWidget {
     final tokens = context.tokens;
     final member = me;
     final details = [
-      if (member != null) member.isOwner ? 'Beheerder' : 'Gezinslid',
+      if (member != null) member.isOwner ? context.l10n.commonOwner : context.l10n.commonMember,
       if (member?.phone case final phone? when phone.isNotEmpty) phone,
     ].join(' · ');
     return Row(
@@ -31,7 +32,7 @@ class ProfileHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                member?.displayName ?? 'Jouw profiel',
+                member?.displayName ?? context.l10n.profileYourProfile,
                 style: text.headlineMedium,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -44,7 +45,7 @@ class ProfileHeader extends StatelessWidget {
           onPressed: onEdit,
           style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40)),
           icon: const Icon(Icons.edit_outlined, size: 18),
-          label: const Text('Bewerken'),
+          label: Text(context.l10n.profileEdit),
         ),
       ],
     );

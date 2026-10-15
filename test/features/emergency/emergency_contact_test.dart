@@ -61,9 +61,9 @@ void main() {
 
   test('foutmeldingen bij het invullen', () {
     expect(emergencyContactError('', ''), isNull);
-    expect(emergencyContactError('Oma', ''), 'Geef een telefoonnummer.');
-    expect(emergencyContactError('', '0470123456'), 'Geef een naam.');
-    expect(emergencyContactError('Oma', 'abc'), 'Dit telefoonnummer klopt niet.');
+    expect(emergencyContactError('Oma', ''), EmergencyContactProblem.missingPhone);
+    expect(emergencyContactError('', '0470123456'), EmergencyContactProblem.missingName);
+    expect(emergencyContactError('Oma', 'abc'), EmergencyContactProblem.invalidPhone);
     expect(emergencyContactError('Oma', '0470 12 34 56'), isNull);
   });
 

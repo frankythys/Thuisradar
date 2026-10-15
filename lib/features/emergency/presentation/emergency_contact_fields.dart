@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../l10n/l10n.dart';
 
 /// Naam en telefoonnummer van één noodcontact, met uitleg wat die krijgt.
 class EmergencyContactFields extends StatelessWidget {
@@ -39,15 +40,18 @@ class EmergencyContactFields extends StatelessWidget {
             controller: name,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Naam', hintText: 'bv. Oma'),
+            decoration: InputDecoration(
+              labelText: context.l10n.commonName,
+              hintText: context.l10n.emergencyNameHint,
+            ),
           ),
           SizedBox(height: tokens.spaceSm),
           TextField(
             controller: phone,
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
-              labelText: 'Gsm-nummer',
-              hintText: 'bv. 0470 12 34 56',
+              labelText: context.l10n.emergencyPhoneLabel,
+              hintText: context.l10n.emergencyPhoneHint,
               errorText: error,
             ),
           ),

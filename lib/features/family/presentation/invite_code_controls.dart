@@ -7,18 +7,17 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/time_format.dart';
 import '../application/family_providers.dart';
 import '../domain/family.dart';
+import '../../../l10n/l10n.dart';
 
 /// "Geldig tot 18/10 om 14:05", of dat de code verlopen is. Null als de
 /// vervaldatum onbekend is (migratie 017 nog niet uitgevoerd).
-String? inviteValidity(Family family, DateTime now, {required bool isOwner}) {
+String? inviteValidity(AppLocalizations l10n, Family family, DateTime now, {required bool isOwner}) {
   final expiresAt = family.inviteExpiresAt;
   if (expiresAt == null) return null;
   if (family.inviteExpiredAt(now)) {
-    return isOwner
-        ? 'Deze code is verlopen. Maak een nieuwe code.'
-        : 'Deze code is verlopen. Vraag de beheerder een nieuwe code.';
+    return isOwner ? l10n.familyCodeExpiredOwner : l10n.familyCodeExpiredMember;
   }
-  return 'Geldig tot ${expiresAt.day}/${expiresAt.month} om ${formatClock(expiresAt)}';
+  return l10n.familyCodeValidUntil('${expiresAt.day}/${expiresAt.month}', formatClock(expiresAt));
 }
 
 /// De geldigheid van de code als kleine regel, rood als ze verlopen is.
@@ -32,7 +31,7 @@ class InviteValidityText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final validity = inviteValidity(family, now, isOwner: isOwner);
+    final validity = inviteValidity(context.l10n, family, now, isOwner: isOwner);
     if (validity == null) return const SizedBox.shrink();
     return Text(
       validity,
@@ -72,20 +71,23 @@ class InviteCodePanel extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('UITNODIGINGSCODE', style: text.labelSmall?.copyWith(color: AppColors.muted)),
+                    Text(
+                      context.l10n.familyInviteCodeLabel,
+                      style: text.labelSmall?.copyWith(color: AppColors.muted),
+                    ),
                     Text(invite.inviteCode, style: text.titleLarge?.copyWith(color: AppColors.primary)),
                     InviteValidityText(family: invite, isOwner: isOwner),
                   ],
                 ),
               ),
               IconButton(
-                tooltip: 'Code kopiëren',
+                tooltip: context.l10n.commonCopyCode,
                 icon: const Icon(Icons.content_copy, color: AppColors.primary),
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: invite.inviteCode));
                   if (context.mounted) {
                     ScaffoldMessenger.of(context)
-                        .showSnackBar(const SnackBar(content: Text('Code gekopieerd')));
+                        .showSnackBar(SnackBar(content: Text(context.l10n.commonCodeCopied)));
                   }
                 },
               ),
@@ -116,28 +118,28 @@ class _RenewInviteCodeButtonState extends ConsumerState<RenewInviteCodeButton> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nieuwe code maken?'),
-        content: const Text(
-          'De huidige code werkt dan niet meer. Wie al lid is, blijft lid. De nieuwe code is 7 dagen geldig.',
-        ),
+        title: Text(context.l10n.familyRenewTitle),
+        content: Text(context.l10n.familyRenewBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Nieuwe code')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.commonCancel)),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.l10n.familyRenewConfirm),
+          ),
         ],
       ),
     );
     if (confirm != true || !mounted) return;
     setState(() => _busy = true);
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     try {
       await ref.read(familyRepositoryProvider).rotateInviteCode(widget.familyId);
       ref.invalidate(familyInviteProvider(widget.familyId));
-      messenger.showSnackBar(const SnackBar(content: Text('Nieuwe code gemaakt. De oude werkt niet meer.')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.familyRenewDone)));
     } on Exception catch (error) {
       debugPrint('Nieuwe uitnodigingscode mislukt: $error');
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Nieuwe code maken is niet gelukt. Probeer opnieuw.')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.familyRenewFailed)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -147,6 +149,6 @@ class _RenewInviteCodeButtonState extends ConsumerState<RenewInviteCodeButton> {
   Widget build(BuildContext context) => OutlinedButton.icon(
     onPressed: _busy ? null : _renew,
     icon: const Icon(Icons.autorenew, size: 20),
-    label: const Text('Nieuwe code maken'),
+    label: Text(context.l10n.familyRenewButton),
   );
 }
