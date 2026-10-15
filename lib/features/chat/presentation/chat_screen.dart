@@ -70,11 +70,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Chat wissen?'),
-        content: const Text('Je wist de berichten op dit toestel. Voor de anderen blijft de chat bestaan.'),
+        title: Text(context.l10n.chatClearTitle),
+        content: Text(context.l10n.chatClearBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Wissen')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.commonClear)),
         ],
       ),
     );
@@ -91,7 +91,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       builder: (context) => AlertDialog(
         title: Text(widget.family.name),
         content: Text(names.join('\n')),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Sluiten'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.commonClose))],
       ),
     );
   }
@@ -107,8 +107,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } on Exception {
       if (mounted) {
         _input.text = body;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Bericht versturen mislukt.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.chatSendFailed)));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -131,7 +130,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } on Exception {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Locatie delen mislukt. Probeer opnieuw.')));
+            .showSnackBar(SnackBar(content: Text(context.l10n.chatShareLocationFailed)));
       }
     }
   }
@@ -148,11 +147,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Foto delen met je gezin?'),
+          title: Text(context.l10n.chatSharePhotoTitle),
           content: Image.file(File(photo.path), height: 220, fit: BoxFit.contain),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Versturen')),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(context.l10n.commonCancel),
+            ),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.commonSend)),
           ],
         ),
       );
@@ -176,11 +178,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           final confirmed = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Spraakbericht versturen?'),
-              content: const Text('De opname is gestopt. Deel deze met je gezin of verwijder ze.'),
+              title: Text(context.l10n.chatSendVoiceTitle),
+              content: Text(context.l10n.chatSendVoiceBody),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Verwijderen')),
-                FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Versturen')),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(context.l10n.commonDelete),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text(context.l10n.commonSend),
+                ),
               ],
             ),
           );
@@ -189,8 +197,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           if (await file.exists()) await file.delete();
         }
       } else {
+        final micMessage = context.l10n.chatMicPermission;
         if (!await _recorder.hasPermission()) {
-          _mediaError('Geef microfoontoestemming om een spraakbericht op te nemen.');
+          _mediaError(micMessage);
           return;
         }
         final dir = await getTemporaryDirectory();
@@ -234,10 +243,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  void _mediaError([
-    String message = 'Bijlage kon niet worden verstuurd. Controleer je verbinding en probeer opnieuw.',
-  ]) {
+  void _mediaError([String? message]) {
     if (mounted) {
+      message ??= context.l10n.chatAttachmentFailed;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
@@ -255,7 +263,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       for (final m in members) {
         if (m.userId == userId) return m.displayName;
       }
-      return 'Gezinslid';
+      return context.l10n.commonMember;
     }
 
     final all = messages.value ?? const <Message>[];
@@ -269,12 +277,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     return Scaffold(
       appBar: BrandedAppBar(
-        title: 'Chat',
+        title: context.l10n.chatTitle,
         actions: [
           // Bellen, groepsinfo en wissen samen in één menu: wissen staat niet
           // meer los in de balk, waar je het per ongeluk aantikt.
           PopupMenuButton<String>(
-            tooltip: 'Meer opties',
+            tooltip: context.l10n.commonMoreOptions,
             icon: const Icon(Icons.more_vert, color: AppColors.primary),
             onSelected: (action) {
               if (action == 'call') {
@@ -286,12 +294,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'call',
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.phone_outlined),
-                  title: Text('Bel een gezinslid'),
+                  leading: const Icon(Icons.phone_outlined),
+                  title: Text(context.l10n.contactCallMember),
                 ),
               ),
               PopupMenuItem(
@@ -299,16 +307,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.info_outline),
-                  title: Text('${widget.family.name} · ${members.length} leden'),
+                  title: Text(context.l10n.chatGroupInfo(widget.family.name, members.length)),
                 ),
               ),
               if (visible.isNotEmpty)
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'clear',
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.delete_outline, color: AppColors.alert),
-                    title: Text('Chat wissen'),
+                    leading: const Icon(Icons.delete_outline, color: AppColors.alert),
+                    title: Text(context.l10n.chatClear),
                   ),
                 ),
             ],
@@ -320,10 +328,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           Expanded(
             child: messages.when(
               data: (_) => visible.isEmpty
-                  ? const EmptyState(
+                  ? EmptyState(
                       icon: Icons.chat_bubble_outline,
-                      title: 'Nog geen berichten',
-                      message: 'Stuur het eerste bericht naar je gezin.',
+                      title: context.l10n.chatEmptyTitle,
+                      message: context.l10n.chatEmptyBody,
                     )
                   : ListView.builder(
                       reverse: true,
@@ -353,18 +361,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => ErrorView(
-                message: 'Chat laden mislukt.\n$e',
+                message: '${context.l10n.chatLoadFailed}\n$e',
                 onRetry: () => ref.invalidate(familyMessagesProvider(widget.family.id)),
               ),
             ),
           ),
           if (_recording)
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: Text(
-                '● Opname actief · tik op stop om af te ronden',
-                style: TextStyle(color: AppColors.alert),
-              ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(context.l10n.chatRecording, style: const TextStyle(color: AppColors.alert)),
             ),
           _Composer(
             onPhoto: _photo,

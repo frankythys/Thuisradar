@@ -18,6 +18,7 @@ import '../domain/confirmed_presence.dart';
 import '../domain/place.dart';
 import 'add_place_screen.dart';
 import 'place_row.dart';
+import '../../../l10n/l10n.dart';
 
 /// Scherm 13: lijst van veilige zones met wie er nu is.
 class PlacesScreen extends ConsumerStatefulWidget {
@@ -41,14 +42,14 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Plaats verwijderen?'),
-        content: Text('"${place.name}" wordt verwijderd voor het hele gezin.'),
+        title: Text(context.l10n.placesDeleteTitle),
+        content: Text(context.l10n.placesDeleteBody(place.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.commonCancel)),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: AppColors.alert),
-            child: const Text('Verwijderen'),
+            child: Text(context.l10n.commonDelete),
           ),
         ],
       ),
@@ -66,14 +67,10 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     } on Object catch (error) {
       debugPrint('Plaats verwijderen mislukt: $error');
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Verwijderen mislukt. Probeer opnieuw.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.placesDeleteFailed)));
       }
     }
   }
-
-  /// "3 plaatsen".
-  static String _summary(int places) => '$places ${places == 1 ? 'plaats' : 'plaatsen'}';
 
   @override
   Widget build(BuildContext context) {
@@ -94,22 +91,22 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
     Set<String> presentIds(Place place) => presentUserIdsAt(place, presence, locations, now);
 
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Plaatsen'),
+      appBar: BrandedAppBar(title: context.l10n.navPlaces),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _add(context),
         backgroundColor: AppColors.primary,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
         icon: const Icon(Icons.add_location_alt_outlined),
-        label: const Text('Plaats toevoegen'),
+        label: Text(context.l10n.mapAddPlace),
       ),
       body: places.when(
         data: (rows) {
           final list = rows.where((p) => !_deletedIds.contains(p.id)).toList();
           return list.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   icon: Icons.place_outlined,
-                  title: 'Nog geen plaatsen',
-                  message: 'Voeg veilige zones toe zoals Thuis of School om aankomst- en vertrekmeldingen te krijgen.',
+                  title: context.l10n.placesEmptyTitle,
+                  message: context.l10n.placesEmptyBody,
                 )
               : ListView(
                   padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceMd, 96),
@@ -117,7 +114,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                     Padding(
                       padding: EdgeInsets.fromLTRB(tokens.spaceXs, 0, tokens.spaceXs, tokens.spaceSm),
                       child: Text(
-                        _summary(list.length),
+                        context.l10n.placesCount(list.length),
                         style: text.bodyMedium?.copyWith(color: AppColors.muted),
                       ),
                     ),
@@ -149,7 +146,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
                         SizedBox(width: tokens.spaceSm),
                         Expanded(
                           child: Text(
-                            'Meldingen enkel voor de plaatsen die jullie zelf instellen. Dat spaart batterij.',
+                            context.l10n.placesBatteryNote,
                             style: text.bodySmall?.copyWith(color: AppColors.muted),
                           ),
                         ),
@@ -160,7 +157,7 @@ class _PlacesScreenState extends ConsumerState<PlacesScreen> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorView(
-          message: 'Plaatsen laden mislukt.\n$e',
+          message: '${context.l10n.placesLoadFailed}\n$e',
           onRetry: () => ref.invalidate(familyPlacesProvider(family.id)),
         ),
       ),

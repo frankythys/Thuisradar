@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/chat_providers.dart';
 import '../domain/attachment.dart';
+import '../../../l10n/l10n.dart';
 
 final attachmentUrlProvider = FutureProvider.autoDispose.family<String, String>(
   (ref, path) => ref.watch(chatRepositoryProvider).attachmentUrl(path),
@@ -40,7 +41,7 @@ class _AttachmentViewState extends ConsumerState<AttachmentView> {
         loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
         error: (_, _) => TextButton(
           onPressed: () => ref.invalidate(attachmentUrlProvider(widget.attachment.path)),
-          child: const Text('Bijlage opnieuw laden'),
+          child: Text(context.l10n.chatReloadAttachment),
         ),
         data: (url) => widget.attachment.kind == 'image'
             ? ClipRRect(
@@ -49,7 +50,7 @@ class _AttachmentViewState extends ConsumerState<AttachmentView> {
                   url,
                   height: 180,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const Text('Foto niet beschikbaar'),
+                  errorBuilder: (context, _, _) => Text(context.l10n.chatPhotoUnavailable),
                 ),
               )
             : TextButton.icon(
@@ -64,12 +65,12 @@ class _AttachmentViewState extends ConsumerState<AttachmentView> {
                   } catch (_) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(content: Text('Afspelen mislukt. Probeer opnieuw.')));
+                          .showSnackBar(SnackBar(content: Text(context.l10n.chatPlaybackFailed)));
                     }
                   }
                 },
                 icon: Icon(_playing ? Icons.pause : Icons.play_arrow),
-                label: const Text('Spraakbericht'),
+                label: Text(context.l10n.chatVoiceMessage),
               ),
       );
 }

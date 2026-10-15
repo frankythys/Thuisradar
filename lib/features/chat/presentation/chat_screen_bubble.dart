@@ -49,14 +49,14 @@ class _Bubble extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Gedeelde locatie',
+              context.l10n.chatSharedLocation,
               style: text.titleMedium?.copyWith(
                 color: mine ? Theme.of(context).colorScheme.onPrimary : AppColors.ink,
               ),
             ),
             TextButton(
               onPressed: () => openDirections(context, lat, lng),
-              child: const Text('Bekijk op kaart →'),
+              child: Text(context.l10n.chatViewOnMap),
             ),
           ] else
             Text(

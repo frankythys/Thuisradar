@@ -7,6 +7,7 @@ import '../../family/domain/family_member.dart';
 import '../domain/place.dart';
 import 'place_icons.dart';
 import 'place_images.dart';
+import '../../../l10n/l10n.dart';
 
 /// Eén plaats als compacte rij: icoon, naam, adres, straal en welke meldingen
 /// aan staan en wie er nu is. Tik om te bewerken; bewerken en verwijderen
@@ -83,7 +84,7 @@ class PlaceRow extends StatelessWidget {
                       SizedBox(width: tokens.spaceXs),
                       Flexible(
                         child: Text(
-                          '${place.radiusMeters} m · ${notificationSummary(place)}',
+                          '${context.l10n.distanceMeters(place.radiusMeters)} · ${notificationSummary(context.l10n, place)}',
                           style: muted,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -95,28 +96,31 @@ class PlaceRow extends StatelessWidget {
               ),
             ),
             SizedBox(width: tokens.spaceSm),
-            if (present.isEmpty) Text('Leeg', style: muted) else _PresentStack(people: present),
+            if (present.isEmpty)
+              Text(context.l10n.placesEmpty, style: muted)
+            else
+              _PresentStack(people: present),
             if (onDelete case final delete?)
               PopupMenuButton<String>(
-                tooltip: 'Opties',
+                tooltip: context.l10n.commonOptions,
                 icon: const Icon(Icons.more_vert, color: AppColors.muted),
                 // Na het sluiten van het menu, zodat de bevestiging erbovenop komt.
                 onSelected: (action) => action == 'edit' ? onEdit() : delete(),
                 itemBuilder: (context) => [
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'edit',
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.edit_outlined, color: AppColors.primary),
-                      title: Text('Bewerken'),
+                      leading: const Icon(Icons.edit_outlined, color: AppColors.primary),
+                      title: Text(context.l10n.profileEdit),
                     ),
                   ),
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'delete',
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.delete_outline, color: AppColors.alert),
-                      title: Text('Verwijderen'),
+                      leading: const Icon(Icons.delete_outline, color: AppColors.alert),
+                      title: Text(context.l10n.commonDelete),
                     ),
                   ),
                 ],
@@ -129,16 +133,17 @@ class PlaceRow extends StatelessWidget {
 }
 
 /// "Aankomst & vertrek", "Enkel aankomst", … plus voor wie, als dat beperkt is.
-String notificationSummary(Place place) {
+String notificationSummary(AppLocalizations l10n, Place place) {
+  final off = !place.notifyArrival && !place.notifyDeparture;
   final kind = switch ((place.notifyArrival, place.notifyDeparture)) {
-    (true, true) => 'Aankomst & vertrek',
-    (true, false) => 'Enkel aankomst',
-    (false, true) => 'Enkel vertrek',
-    (false, false) => 'Meldingen uit',
+    (true, true) => l10n.placesBoth,
+    (true, false) => l10n.placesArrivalOnly,
+    (false, true) => l10n.placesDepartureOnly,
+    (false, false) => l10n.placesAlertsOff,
   };
   final watched = place.watchedMembers;
-  if (watched == null || watched.isEmpty || kind == 'Meldingen uit') return kind;
-  return '$kind · voor ${watched.length} ${watched.length == 1 ? 'lid' : 'leden'}';
+  if (watched == null || watched.isEmpty || off) return kind;
+  return l10n.placesForMembers(kind, watched.length);
 }
 
 /// Wie er bij een plaats getoond wordt (op de plek waar anders "Leeg" staat):
@@ -180,8 +185,8 @@ class _PresentStack extends StatelessWidget {
               // Dunne witte rand zonder kaartschaduw: dit is een lijst, geen kaart.
               child: Tooltip(
                 message: person.here
-                    ? '${person.member.displayName} is hier'
-                    : '${person.member.displayName} is er nu niet',
+                    ? context.l10n.placesPersonHere(person.member.displayName)
+                    : context.l10n.placesPersonAway(person.member.displayName),
                 // Altijd de eigen kleur van de persoon, ook als die er nu niet is.
                 child: DecoratedBox(
                   decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),

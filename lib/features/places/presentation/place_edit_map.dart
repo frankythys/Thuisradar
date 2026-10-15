@@ -6,6 +6,7 @@ import '../../../core/config/feature_flags.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_map_tiles.dart';
 import '../../map/presentation/widgets/google_base_map.dart';
+import '../../../l10n/l10n.dart';
 
 /// De kaart van het plaatsscherm (toevoegen of bewerken, bv. "Werk"): je
 /// verschuift de kaart onder het vaste kruis. Zelfde ondergrond als de
@@ -66,13 +67,13 @@ class PlaceEditMap extends StatelessWidget {
         // Verplichte naamsvermelding van de gratis OpenStreetMap-tegels, klein
         // tussen de sleep-hint (links) en de locatieknop (rechts).
         if (!useGoogleMaps)
-          const Align(
+          Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.only(bottom: 4),
               child: Text(
-                '© OpenStreetMap-bijdragers',
-                style: TextStyle(fontSize: 9, color: AppColors.muted),
+                '© ${context.l10n.osmContributors}',
+                style: const TextStyle(fontSize: 9, color: AppColors.muted),
               ),
             ),
           ),

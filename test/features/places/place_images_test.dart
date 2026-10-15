@@ -1,7 +1,11 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/l10n/l10n.dart';
 import 'package:thuisradar/features/places/presentation/place_icons.dart';
 import 'package:thuisradar/features/places/presentation/place_images.dart';
+
+final _nl = lookupAppLocalizations(const Locale('nl'));
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -9,9 +13,9 @@ void main() {
   test('nieuwe soorten met Vlaamse naam', () {
     expect(placeIconKeys, containsAll(['daycare', 'park', 'refinery']));
     expect(placeIconKeys.last, 'place', reason: '"Andere" blijft achteraan');
-    expect(placeIconLabel('daycare'), 'Kinderopvang');
-    expect(placeIconLabel('park'), 'Park');
-    expect(placeIconLabel('refinery'), 'Raffinaderij');
+    expect(placeIconLabel(_nl, 'daycare'), 'Kinderopvang');
+    expect(placeIconLabel(_nl, 'park'), 'Park');
+    expect(placeIconLabel(_nl, 'refinery'), 'Raffinaderij');
   });
 
   test('enkel "Andere" houdt het speldje, de rest (ook Thuis) krijgt een foto', () {

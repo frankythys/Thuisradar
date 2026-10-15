@@ -415,7 +415,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       onRetry: _startTracking,
                       onOpenSettings: () => ref.read(locationTrackerProvider.notifier).openSettings(),
                     ),
-                  if (GeofenceBanner.messageFor(ref.watch(geofenceSyncProvider)) != null) ...[
+                  if (GeofenceBanner.messageFor(context.l10n, ref.watch(geofenceSyncProvider)) != null) ...[
                     const SizedBox(height: 12),
                     GeofenceBanner(
                       status: ref.watch(geofenceSyncProvider),

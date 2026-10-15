@@ -31,12 +31,12 @@ class _Composer extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_outlined, color: AppColors.primary),
-              title: const Text('Foto delen'),
+              title: Text(context.l10n.chatSharePhoto),
               onTap: () => Navigator.pop(context, 'photo'),
             ),
             ListTile(
               leading: const Icon(Icons.my_location, color: AppColors.primary),
-              title: const Text('Mijn locatie delen'),
+              title: Text(context.l10n.chatShareMyLocation),
               onTap: () => Navigator.pop(context, 'location'),
             ),
           ],
@@ -59,7 +59,7 @@ class _Composer extends StatelessWidget {
         child: Row(
           children: [
             IconButton.filledTonal(
-              tooltip: 'Foto of locatie delen',
+              tooltip: context.l10n.chatAttachTooltip,
               onPressed: sending || recording ? null : () => _showExtras(context),
               style: IconButton.styleFrom(
                 backgroundColor: AppColors.primarySoft,
@@ -75,7 +75,7 @@ class _Composer extends StatelessWidget {
                 maxLines: 4,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => onSend(),
-                decoration: const InputDecoration(hintText: 'Bericht…'),
+                decoration: InputDecoration(hintText: context.l10n.chatMessageHint),
               ),
             ),
             SizedBox(width: tokens.spaceXs),
@@ -85,10 +85,10 @@ class _Composer extends StatelessWidget {
                 final hasText = value.text.trim().isNotEmpty;
                 return IconButton.filled(
                   tooltip: hasText
-                      ? 'Versturen'
+                      ? context.l10n.commonSend
                       : recording
-                      ? 'Opname stoppen'
-                      : 'Spraakbericht opnemen',
+                      ? context.l10n.chatStopRecording
+                      : context.l10n.chatRecordVoice,
                   onPressed: sending ? null : (hasText ? onSend : onVoice),
                   style: IconButton.styleFrom(
                     backgroundColor: recording ? AppColors.alert : AppColors.primary,

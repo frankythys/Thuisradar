@@ -48,11 +48,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Meldingen wissen?'),
-        content: const Text('Je wist je meldingen op dit toestel. Nieuwe meldingen verschijnen gewoon weer.'),
+        title: Text(context.l10n.notificationsClearTitle),
+        content: Text(context.l10n.notificationsClearBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuleren')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Wissen')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.commonClear)),
         ],
       ),
     );
@@ -78,7 +78,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       for (final m in members) {
         if (m.userId == userId) return m.displayName;
       }
-      return 'Een gezinslid';
+      return context.l10n.commonSomeone;
     }
 
     String? placeOf(String? placeId) {
@@ -96,25 +96,25 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           e,
     ];
 
-    final filterIndex = _filters.indexWhere((f) => f.type == _filter);
+    final filterIndex = _filters.indexOf(_filter);
 
     return Scaffold(
       appBar: BrandedAppBar(
-        title: 'Meldingen',
+        title: context.l10n.profileNotifications,
         actions: [
           // Openen markeert al alles als gelezen; wissen staat in het menu.
           PopupMenuButton<String>(
-            tooltip: 'Meer opties',
+            tooltip: context.l10n.commonMoreOptions,
             icon: const Icon(Icons.more_vert, color: AppColors.primary),
             enabled: visible.isNotEmpty,
             onSelected: (_) => _clear(),
-            itemBuilder: (context) => const [
+            itemBuilder: (context) => [
               PopupMenuItem(
                 value: 'clear',
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.delete_outline, color: AppColors.alert),
-                  title: Text('Meldingen wissen'),
+                  leading: const Icon(Icons.delete_outline, color: AppColors.alert),
+                  title: Text(context.l10n.notificationsClear),
                 ),
               ),
             ],
@@ -126,9 +126,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           padding: EdgeInsets.fromLTRB(tokens.spaceMd, tokens.spaceSm, tokens.spaceMd, tokens.spaceLg),
           children: [
             FilterChips(
-              labels: [for (final f in _filters) f.label],
+              labels: [for (final f in _filters) _filterLabel(context.l10n, f)],
               selectedIndex: filterIndex < 0 ? 0 : filterIndex,
-              onSelected: (i) => setState(() => _filter = _filters[i].type),
+              onSelected: (i) => setState(() => _filter = _filters[i]),
             ),
             SizedBox(height: tokens.spaceMd),
             if (_filter == null || _filter == FamilyEventType.unknown)
@@ -143,10 +143,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 ),
             if (visible.isEmpty &&
                 (_filter != null && _filter != FamilyEventType.unknown || lowBatteries.isEmpty))
-              const EmptyState(
+              EmptyState(
                 icon: Icons.notifications_outlined,
-                title: 'Geen meldingen',
-                message: 'Nieuwe gezinsactiviteiten verschijnen hier.',
+                title: context.l10n.notificationsEmptyTitle,
+                message: context.l10n.notificationsEmptyBody,
               ),
             for (final day in _byDay(visible)) ...[
               Padding(
@@ -179,7 +179,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 SizedBox(width: tokens.spaceSm),
                 Expanded(
                   child: Text(
-                    'Alleen je gezin ziet deze meldingen.',
+                    context.l10n.notificationsPrivacy,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.muted),
                   ),
                 ),
@@ -189,20 +189,29 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorView(
-          message: 'Meldingen laden mislukt.\n$e',
+          message: '${context.l10n.notificationsLoadFailed}\n$e',
           onRetry: () => ref.invalidate(familyEventsProvider(widget.family.id)),
         ),
       ),
     );
   }
 
-  static const _filters = <({String label, FamilyEventType? type})>[
-    (label: 'Alles', type: null),
-    (label: 'Aankomst', type: FamilyEventType.arrival),
-    (label: 'Vertrek', type: FamilyEventType.departure),
-    (label: 'Batterij', type: FamilyEventType.unknown),
-    (label: 'SOS', type: FamilyEventType.sos),
+  /// Filters in volgorde; "Batterij" toont de batterijwaarschuwingen.
+  static const _filters = <FamilyEventType?>[
+    null,
+    FamilyEventType.arrival,
+    FamilyEventType.departure,
+    FamilyEventType.unknown,
+    FamilyEventType.sos,
   ];
+
+  static String _filterLabel(AppLocalizations l10n, FamilyEventType? type) => switch (type) {
+    null => l10n.drivingAll,
+    FamilyEventType.arrival => l10n.profileArrival,
+    FamilyEventType.departure => l10n.profileDeparture,
+    FamilyEventType.unknown => l10n.memberBattery,
+    FamilyEventType.sos => 'SOS',
+  };
 
   /// Meldingen per kalenderdag, in de volgorde waarin ze binnenkwamen.
   static List<List<FamilyEvent>> _byDay(List<FamilyEvent> events) {
@@ -218,12 +227,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   String _describe(FamilyEvent event, String name, String? place) {
-    final where = place ?? 'een plaats';
+    final l10n = context.l10n;
+    final where = place ?? l10n.notificationsAPlace;
     return switch (event.type) {
-      FamilyEventType.sos => '$name heeft SOS gestuurd',
-      FamilyEventType.arrival => '$name is aangekomen op $where',
-      FamilyEventType.departure => '$name is vertrokken van $where',
-      FamilyEventType.unknown => 'Gebeurtenis',
+      FamilyEventType.sos => l10n.notificationsSos(name),
+      FamilyEventType.arrival => l10n.notificationsArrival(name, where),
+      FamilyEventType.departure => l10n.notificationsDeparture(name, where),
+      FamilyEventType.unknown => l10n.notificationsEvent,
     };
   }
 }
@@ -300,8 +310,11 @@ class _BatteryRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$name: batterij $level%', style: text.titleSmall),
-                Text('Live-locatie kan wegvallen', style: text.bodySmall?.copyWith(color: AppColors.muted)),
+                Text(context.l10n.notificationsLowBattery(name, level), style: text.titleSmall),
+                Text(
+                  context.l10n.notificationsLowBatteryHint,
+                  style: text.bodySmall?.copyWith(color: AppColors.muted),
+                ),
               ],
             ),
           ),
@@ -310,7 +323,7 @@ class _BatteryRow extends StatelessWidget {
               onPressed: () => callMember(context, who),
               style: TextButton.styleFrom(foregroundColor: AppColors.alert),
               icon: const Icon(Icons.call_outlined, size: 18),
-              label: const Text('Bel'),
+              label: Text(context.l10n.notificationsCall),
             ),
         ],
       ),

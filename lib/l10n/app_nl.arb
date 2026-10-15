@@ -2010,5 +2010,537 @@
         "type": "int"
       }
     }
+  },
+  "commonSomeone": "Een gezinslid",
+  "@commonSomeone": {
+    "description": "Iemand van het gezin (naam onbekend)."
+  },
+  "commonDelete": "Verwijderen",
+  "@commonDelete": {
+    "description": "Knop: verwijderen."
+  },
+  "commonClear": "Wissen",
+  "@commonClear": {
+    "description": "Knop: wissen."
+  },
+  "commonSend": "Versturen",
+  "@commonSend": {
+    "description": "Knop: versturen."
+  },
+  "commonMoreOptions": "Meer opties",
+  "@commonMoreOptions": {
+    "description": "Knopuitleg: meer opties."
+  },
+  "commonOptions": "Opties",
+  "@commonOptions": {
+    "description": "Knopuitleg: opties."
+  },
+  "placesAddressNotFound": "Adres niet gevonden. Verschuif de kaart of probeer een ander adres.",
+  "@placesAddressNotFound": {
+    "description": "Fout: adres niet gevonden."
+  },
+  "placesNameFirst": "Vul eerst een naam voor de plaats in.",
+  "@placesNameFirst": {
+    "description": "Fout: eerst een naam."
+  },
+  "placesSaved": "{name} opgeslagen\n{address}",
+  "@placesSaved": {
+    "description": "Melding: plaats opgeslagen met adres.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "placesUpdated": "{name} bijgewerkt\n{address}",
+  "@placesUpdated": {
+    "description": "Melding: plaats bijgewerkt met adres.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "placesSavedNoAddress": "{name} opgeslagen — adres niet beschikbaar",
+  "@placesSavedNoAddress": {
+    "description": "Melding: plaats opgeslagen zonder adres.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "placesUpdatedNoAddress": "{name} bijgewerkt — adres niet beschikbaar",
+  "@placesUpdatedNoAddress": {
+    "description": "Melding: plaats bijgewerkt zonder adres.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "placesUpdateFailed": "Wijzigingen opslaan mislukt. Probeer opnieuw.",
+  "@placesUpdateFailed": {
+    "description": "Fout: wijzigingen opslaan mislukt."
+  },
+  "placesSaveFailed": "Plaats opslaan mislukt. Mogelijk zijn er al 20.",
+  "@placesSaveFailed": {
+    "description": "Fout: plaats opslaan mislukt."
+  },
+  "placesEditTitle": "Plaats bewerken",
+  "@placesEditTitle": {
+    "description": "Titel: plaats bewerken."
+  },
+  "placesSaveChanges": "Wijzigingen opslaan",
+  "@placesSaveChanges": {
+    "description": "Knop: wijzigingen opslaan."
+  },
+  "placesSave": "Plaats opslaan",
+  "@placesSave": {
+    "description": "Knop: plaats opslaan."
+  },
+  "placesSearchHint": "Zoek een adres of plaats",
+  "@placesSearchHint": {
+    "description": "Zoekveld: adres of plaats."
+  },
+  "placesDragHint": "Sleep de kaart om de positie te wijzigen",
+  "@placesDragHint": {
+    "description": "Hint op de kaart."
+  },
+  "placesMyLocation": "Mijn locatie",
+  "@placesMyLocation": {
+    "description": "Knopuitleg: mijn locatie."
+  },
+  "placesRadius": "Straalzone",
+  "@placesRadius": {
+    "description": "Titel: straalzone."
+  },
+  "placesRadiusMeters": "{meters} meter",
+  "@placesRadiusMeters": {
+    "description": "Straal in meter.",
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "placesRadiusMin": "50 m (compact)",
+  "@placesRadiusMin": {
+    "description": "Kleinste straal."
+  },
+  "placesRadiusMax": "500 m (ruim)",
+  "@placesRadiusMax": {
+    "description": "Grootste straal."
+  },
+  "placesRadiusHint": "Meldingen worden verzonden zodra iemand deze cirkel binnenrijdt of verlaat.",
+  "@placesRadiusHint": {
+    "description": "Uitleg bij de straal."
+  },
+  "placesNameLabel": "Naam van de plaats",
+  "@placesNameLabel": {
+    "description": "Titel: naam van de plaats."
+  },
+  "placesNameHint": "Thuis",
+  "@placesNameHint": {
+    "description": "Voorbeeldnaam van een plaats."
+  },
+  "placesOwnerTitle": "Van wie is deze plaats?",
+  "@placesOwnerTitle": {
+    "description": "Titel: van wie is de plaats."
+  },
+  "placesOwnerHint": "Bv. Werk van Franky. Die persoon staat altijd bij deze plaats in de lijst.",
+  "@placesOwnerHint": {
+    "description": "Uitleg: eigenaar van de plaats."
+  },
+  "placesWatchedTitle": "Voor wie gelden meldingen?",
+  "@placesWatchedTitle": {
+    "description": "Titel: voor wie gelden meldingen."
+  },
+  "placesWatchedHint": "Kies welke gezinsleden meldingen activeren",
+  "@placesWatchedHint": {
+    "description": "Uitleg: voor wie gelden meldingen."
+  },
+  "placesEveryone": "Iedereen",
+  "@placesEveryone": {
+    "description": "Keuze: iedereen."
+  },
+  "placesNotificationPrefs": "Meldingsvoorkeuren",
+  "@placesNotificationPrefs": {
+    "description": "Titel: meldingsvoorkeuren."
+  },
+  "placesArrivalAlert": "Melding bij aankomst",
+  "@placesArrivalAlert": {
+    "description": "Schakelaar: melding bij aankomst."
+  },
+  "placesArrivalAlertHint": "Wanneer iemand de cirkel binnenkomt",
+  "@placesArrivalAlertHint": {
+    "description": "Uitleg: aankomst."
+  },
+  "placesDepartureAlert": "Melding bij vertrek",
+  "@placesDepartureAlert": {
+    "description": "Schakelaar: melding bij vertrek."
+  },
+  "placesDepartureAlertHint": "Wanneer iemand de cirkel verlaat",
+  "@placesDepartureAlertHint": {
+    "description": "Uitleg: vertrek."
+  },
+  "placeIconHome": "Thuis",
+  "@placeIconHome": {
+    "description": "Soort plaats."
+  },
+  "placeIconSchool": "School",
+  "@placeIconSchool": {
+    "description": "Soort plaats."
+  },
+  "placeIconWork": "Werk",
+  "@placeIconWork": {
+    "description": "Soort plaats."
+  },
+  "placeIconSports": "Sport",
+  "@placeIconSports": {
+    "description": "Soort plaats."
+  },
+  "placeIconStore": "Winkel",
+  "@placeIconStore": {
+    "description": "Soort plaats."
+  },
+  "placeIconDaycare": "Kinderopvang",
+  "@placeIconDaycare": {
+    "description": "Soort plaats."
+  },
+  "placeIconPark": "Park",
+  "@placeIconPark": {
+    "description": "Soort plaats."
+  },
+  "placeIconRefinery": "Raffinaderij",
+  "@placeIconRefinery": {
+    "description": "Soort plaats."
+  },
+  "placeIconOther": "Andere",
+  "@placeIconOther": {
+    "description": "Soort plaats."
+  },
+  "placesEmpty": "Leeg",
+  "@placesEmpty": {
+    "description": "Niemand bij de plaats."
+  },
+  "placesBoth": "Aankomst & vertrek",
+  "@placesBoth": {
+    "description": "Meldingen: aankomst en vertrek."
+  },
+  "placesArrivalOnly": "Enkel aankomst",
+  "@placesArrivalOnly": {
+    "description": "Meldingen: enkel aankomst."
+  },
+  "placesDepartureOnly": "Enkel vertrek",
+  "@placesDepartureOnly": {
+    "description": "Meldingen: enkel vertrek."
+  },
+  "placesAlertsOff": "Meldingen uit",
+  "@placesAlertsOff": {
+    "description": "Meldingen uit."
+  },
+  "placesForMembers": "{kind} · voor {count, plural, =1{1 lid} other{{count} leden}}",
+  "@placesForMembers": {
+    "description": "Meldingen enkel voor een aantal leden.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "placesPersonHere": "{name} is hier",
+  "@placesPersonHere": {
+    "description": "Knopuitleg: persoon is hier.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "placesPersonAway": "{name} is er nu niet",
+  "@placesPersonAway": {
+    "description": "Knopuitleg: persoon is er niet.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "placesDeleteTitle": "Plaats verwijderen?",
+  "@placesDeleteTitle": {
+    "description": "Dialoogtitel: plaats verwijderen."
+  },
+  "placesDeleteBody": "\"{name}\" wordt verwijderd voor het hele gezin.",
+  "@placesDeleteBody": {
+    "description": "Uitleg: plaats verwijderen.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "placesDeleteFailed": "Verwijderen mislukt. Probeer opnieuw.",
+  "@placesDeleteFailed": {
+    "description": "Fout: verwijderen mislukt."
+  },
+  "placesCount": "{count, plural, =1{1 plaats} other{{count} plaatsen}}",
+  "@placesCount": {
+    "description": "Aantal plaatsen.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "placesEmptyTitle": "Nog geen plaatsen",
+  "@placesEmptyTitle": {
+    "description": "Lege staat: titel."
+  },
+  "placesEmptyBody": "Voeg veilige zones toe zoals Thuis of School om aankomst- en vertrekmeldingen te krijgen.",
+  "@placesEmptyBody": {
+    "description": "Lege staat: uitleg."
+  },
+  "placesBatteryNote": "Meldingen enkel voor de plaatsen die jullie zelf instellen. Dat spaart batterij.",
+  "@placesBatteryNote": {
+    "description": "Uitleg onderaan plaatsen."
+  },
+  "placesLoadFailed": "Plaatsen laden mislukt.",
+  "@placesLoadFailed": {
+    "description": "Fout: plaatsen laden mislukt."
+  },
+  "geofenceUnavailable": "Zones staan uit: zet \"Google-locatienauwkeurigheid\" aan (Instellingen › Locatie › Locatieservices).",
+  "@geofenceUnavailable": {
+    "description": "Banner: zones staan uit."
+  },
+  "geofenceError": "Zones staan niet aan bij Android. Aankomst en vertrek kunnen later komen.",
+  "@geofenceError": {
+    "description": "Banner: zones staan niet aan."
+  },
+  "chatReloadAttachment": "Bijlage opnieuw laden",
+  "@chatReloadAttachment": {
+    "description": "Knop: bijlage opnieuw laden."
+  },
+  "chatPhotoUnavailable": "Foto niet beschikbaar",
+  "@chatPhotoUnavailable": {
+    "description": "Foto niet beschikbaar."
+  },
+  "chatPlaybackFailed": "Afspelen mislukt. Probeer opnieuw.",
+  "@chatPlaybackFailed": {
+    "description": "Fout: afspelen mislukt."
+  },
+  "chatVoiceMessage": "Spraakbericht",
+  "@chatVoiceMessage": {
+    "description": "Spraakbericht."
+  },
+  "chatClearTitle": "Chat wissen?",
+  "@chatClearTitle": {
+    "description": "Dialoogtitel: chat wissen."
+  },
+  "chatClearBody": "Je wist de berichten op dit toestel. Voor de anderen blijft de chat bestaan.",
+  "@chatClearBody": {
+    "description": "Uitleg: chat wissen."
+  },
+  "chatSendFailed": "Bericht versturen mislukt.",
+  "@chatSendFailed": {
+    "description": "Fout: bericht versturen mislukt."
+  },
+  "chatShareLocationFailed": "Locatie delen mislukt. Probeer opnieuw.",
+  "@chatShareLocationFailed": {
+    "description": "Fout: locatie delen mislukt."
+  },
+  "chatSharePhotoTitle": "Foto delen met je gezin?",
+  "@chatSharePhotoTitle": {
+    "description": "Dialoogtitel: foto delen."
+  },
+  "chatSendVoiceTitle": "Spraakbericht versturen?",
+  "@chatSendVoiceTitle": {
+    "description": "Dialoogtitel: spraakbericht versturen."
+  },
+  "chatSendVoiceBody": "De opname is gestopt. Deel deze met je gezin of verwijder ze.",
+  "@chatSendVoiceBody": {
+    "description": "Uitleg: spraakbericht."
+  },
+  "chatMicPermission": "Geef microfoontoestemming om een spraakbericht op te nemen.",
+  "@chatMicPermission": {
+    "description": "Fout: geen microfoontoestemming."
+  },
+  "chatAttachmentFailed": "Bijlage kon niet worden verstuurd. Controleer je verbinding en probeer opnieuw.",
+  "@chatAttachmentFailed": {
+    "description": "Fout: bijlage niet verstuurd."
+  },
+  "chatTitle": "Chat",
+  "@chatTitle": {
+    "description": "Titel: chat."
+  },
+  "chatGroupInfo": "{family} · {count, plural, =1{1 lid} other{{count} leden}}",
+  "@chatGroupInfo": {
+    "description": "Menu: groepsinfo.",
+    "placeholders": {
+      "family": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatClear": "Chat wissen",
+  "@chatClear": {
+    "description": "Menu: chat wissen."
+  },
+  "chatEmptyTitle": "Nog geen berichten",
+  "@chatEmptyTitle": {
+    "description": "Lege staat: titel."
+  },
+  "chatEmptyBody": "Stuur het eerste bericht naar je gezin.",
+  "@chatEmptyBody": {
+    "description": "Lege staat: uitleg."
+  },
+  "chatLoadFailed": "Chat laden mislukt.",
+  "@chatLoadFailed": {
+    "description": "Fout: chat laden mislukt."
+  },
+  "chatRecording": "● Opname actief · tik op stop om af te ronden",
+  "@chatRecording": {
+    "description": "Opname actief."
+  },
+  "chatSharedLocation": "Gedeelde locatie",
+  "@chatSharedLocation": {
+    "description": "Bericht: gedeelde locatie."
+  },
+  "chatViewOnMap": "Bekijk op kaart →",
+  "@chatViewOnMap": {
+    "description": "Knop: op kaart bekijken."
+  },
+  "chatSharePhoto": "Foto delen",
+  "@chatSharePhoto": {
+    "description": "Menu: foto delen."
+  },
+  "chatShareMyLocation": "Mijn locatie delen",
+  "@chatShareMyLocation": {
+    "description": "Menu: eigen locatie delen."
+  },
+  "chatAttachTooltip": "Foto of locatie delen",
+  "@chatAttachTooltip": {
+    "description": "Knopuitleg: foto of locatie."
+  },
+  "chatMessageHint": "Bericht…",
+  "@chatMessageHint": {
+    "description": "Invoerveld: bericht."
+  },
+  "chatStopRecording": "Opname stoppen",
+  "@chatStopRecording": {
+    "description": "Knopuitleg: opname stoppen."
+  },
+  "chatRecordVoice": "Spraakbericht opnemen",
+  "@chatRecordVoice": {
+    "description": "Knopuitleg: spraakbericht opnemen."
+  },
+  "notificationsClearTitle": "Meldingen wissen?",
+  "@notificationsClearTitle": {
+    "description": "Dialoogtitel: meldingen wissen."
+  },
+  "notificationsClearBody": "Je wist je meldingen op dit toestel. Nieuwe meldingen verschijnen gewoon weer.",
+  "@notificationsClearBody": {
+    "description": "Uitleg: meldingen wissen."
+  },
+  "notificationsClear": "Meldingen wissen",
+  "@notificationsClear": {
+    "description": "Menu: meldingen wissen."
+  },
+  "notificationsEmptyTitle": "Geen meldingen",
+  "@notificationsEmptyTitle": {
+    "description": "Lege staat: titel."
+  },
+  "notificationsEmptyBody": "Nieuwe gezinsactiviteiten verschijnen hier.",
+  "@notificationsEmptyBody": {
+    "description": "Lege staat: uitleg."
+  },
+  "notificationsPrivacy": "Alleen je gezin ziet deze meldingen.",
+  "@notificationsPrivacy": {
+    "description": "Privacyzin."
+  },
+  "notificationsLoadFailed": "Meldingen laden mislukt.",
+  "@notificationsLoadFailed": {
+    "description": "Fout: meldingen laden mislukt."
+  },
+  "notificationsAPlace": "een plaats",
+  "@notificationsAPlace": {
+    "description": "Plaatsnaam als die onbekend is."
+  },
+  "notificationsSos": "{name} heeft SOS gestuurd",
+  "@notificationsSos": {
+    "description": "Gebeurtenis: SOS.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsArrival": "{name} is aangekomen op {place}",
+  "@notificationsArrival": {
+    "description": "Gebeurtenis: aankomst.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsDeparture": "{name} is vertrokken van {place}",
+  "@notificationsDeparture": {
+    "description": "Gebeurtenis: vertrek.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationsEvent": "Gebeurtenis",
+  "@notificationsEvent": {
+    "description": "Gebeurtenis zonder soort."
+  },
+  "notificationsLowBattery": "{name}: batterij {level}%",
+  "@notificationsLowBattery": {
+    "description": "Batterij bijna leeg.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsLowBatteryHint": "Live-locatie kan wegvallen",
+  "@notificationsLowBatteryHint": {
+    "description": "Uitleg bij lage batterij."
+  },
+  "notificationsCall": "Bel",
+  "@notificationsCall": {
+    "description": "Knop: bellen (kort)."
+  },
+  "placesChooseIcon": "Kies een herkenbaar icoon",
+  "@placesChooseIcon": {
+    "description": "Titel: icoon kiezen."
+  },
+  "geofenceNotConfigured": "Zones zijn nog niet ingesteld op de server (migratie 014).",
+  "@geofenceNotConfigured": {
+    "description": "Banner: zones nog niet op de server."
   }
 }

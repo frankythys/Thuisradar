@@ -18,6 +18,7 @@ import 'place_icons.dart';
 import 'place_images.dart';
 import '../domain/place.dart';
 import '../domain/selected_place_location.dart';
+import '../../../l10n/l10n.dart';
 
 /// Scherm 14: plaats toevoegen door de kaart te verschuiven (vaste pin in het
 /// midden), een adres te zoeken en de meldingen per gezinslid in te stellen.
@@ -130,11 +131,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       }
     } on Exception {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Adres niet gevonden. Verschuif de kaart of probeer een ander adres.'),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(context.l10n.placesAddressNotFound)));
       }
     } finally {
       if (mounted) setState(() => _searching = false);
@@ -145,8 +143,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     final name = _name.text.trim();
     if (_busy || _searching) return;
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Vul eerst een naam voor de plaats in.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.placesNameFirst)));
       return;
     }
     // Adres getypt maar nog niet gezocht (bv. huisnummer 34 -> 36): eerst
@@ -156,6 +153,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       if (!mounted || _selection.address == null) return;
     }
     setState(() => _busy = true);
+    final l10n = context.l10n;
     final center = _center;
     final radius = _radius.round();
     final icon = _icon;
@@ -227,8 +225,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               duration: const Duration(seconds: 5),
               content: Text(
                 address != null && address.isNotEmpty
-                    ? '$name ${_editing ? 'bijgewerkt' : 'opgeslagen'}\n$address'
-                    : '$name ${_editing ? 'bijgewerkt' : 'opgeslagen'} — adres niet beschikbaar',
+                    ? (_editing ? l10n.placesUpdated(name, address) : l10n.placesSaved(name, address))
+                    : (_editing ? l10n.placesUpdatedNoAddress(name) : l10n.placesSavedNoAddress(name)),
               ),
             ),
           );
@@ -236,15 +234,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     } on Exception {
       if (mounted) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _editing
-                  ? 'Wijzigingen opslaan mislukt. Probeer opnieuw.'
-                  : 'Plaats opslaan mislukt. Mogelijk zijn er al 20.',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_editing ? l10n.placesUpdateFailed : l10n.placesSaveFailed)));
       }
     }
   }
@@ -252,7 +244,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BrandedAppBar(title: _editing ? 'Plaats bewerken' : 'Plaats toevoegen'),
+      appBar: BrandedAppBar(title: _editing ? context.l10n.placesEditTitle : context.l10n.mapAddPlace),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
@@ -261,7 +253,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
             children: [
               TextButton(
                 onPressed: _busy ? null : () => Navigator.pop(context),
-                child: const Text('Annuleren'),
+                child: Text(context.l10n.commonCancel),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -270,10 +262,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   icon: const Icon(Icons.check, size: 18),
                   label: Text(
                     _busy
-                        ? 'Opslaan…'
+                        ? context.l10n.commonSaving
                         : _editing
-                        ? 'Wijzigingen opslaan'
-                        : 'Plaats opslaan',
+                        ? context.l10n.placesSaveChanges
+                        : context.l10n.placesSave,
                   ),
                 ),
               ),
@@ -307,7 +299,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     onSubmitted: (_) => _findAddress(),
                     onChanged: (_) => _selection.editAddress(),
                     decoration: InputDecoration(
-                      hintText: 'Zoek een adres of plaats',
+                      hintText: context.l10n.placesSearchHint,
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: IconButton(
                         onPressed: _searching ? null : _findAddress,
@@ -322,10 +314,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                    child: const Text(
-                      'Sleep de kaart om de positie te wijzigen',
-                      style: TextStyle(fontSize: 10),
-                    ),
+                    child: Text(context.l10n.placesDragHint, style: const TextStyle(fontSize: 10)),
                   ),
                 ),
                 // Kruis precies in het midden: het stipje is het punt dat bewaard
@@ -342,9 +331,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     child: InkWell(
                       onTap: _goToCurrentLocation,
                       customBorder: const CircleBorder(),
-                      child: const Tooltip(
-                        message: 'Mijn locatie',
-                        child: SizedBox(
+                      child: Tooltip(
+                        message: context.l10n.placesMyLocation,
+                        child: const SizedBox(
                           width: 48,
                           height: 48,
                           child: Icon(Icons.my_location, color: AppColors.primary),
@@ -369,9 +358,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       children: [
                         const Icon(Icons.radar, size: 20, color: AppColors.primary),
                         const SizedBox(width: 8),
-                        Text('Straalzone', style: Theme.of(context).textTheme.titleMedium),
+                        Text(context.l10n.placesRadius, style: Theme.of(context).textTheme.titleMedium),
                         const Spacer(),
-                        Text('${_radius.round()} meter'),
+                        Text(context.l10n.placesRadiusMeters(_radius.round())),
                       ],
                     ),
                     Slider(
@@ -381,24 +370,27 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       divisions: 45,
                       onChanged: (value) => setState(() => _radius = value),
                     ),
-                    const Row(
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [Text('50 m (compact)'), Text('500 m (ruim)')],
+                      children: [Text(context.l10n.placesRadiusMin), Text(context.l10n.placesRadiusMax)],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Meldingen worden verzonden zodra iemand deze cirkel binnenrijdt of verlaat.',
-                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    Text(
+                      context.l10n.placesRadiusHint,
+                      style: const TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                     const SizedBox(height: 24),
-                    Text('Naam van de plaats', style: Theme.of(context).textTheme.titleMedium),
+                    Text(context.l10n.placesNameLabel, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _name,
-                      decoration: const InputDecoration(hintText: 'Thuis', fillColor: AppColors.surfaceLow),
+                      decoration: InputDecoration(
+                        hintText: context.l10n.placesNameHint,
+                        fillColor: AppColors.surfaceLow,
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    Text('Kies een herkenbaar icoon', style: Theme.of(context).textTheme.titleMedium),
+                    Text(context.l10n.placesChooseIcon, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -421,7 +413,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                                     color: _icon == key ? Colors.white : AppColors.primary,
                                   ),
                                 Text(
-                                  placeIconLabel(key),
+                                  placeIconLabel(context.l10n, key),
                                   style: TextStyle(
                                     fontSize: 10,
                                     color: _icon == key ? Colors.white : AppColors.primary,
@@ -433,10 +425,10 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text('Van wie is deze plaats?', style: Theme.of(context).textTheme.titleMedium),
-                    const Text(
-                      'Bv. Werk van Franky. Die persoon staat altijd bij deze plaats in de lijst.',
-                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    Text(context.l10n.placesOwnerTitle, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      context.l10n.placesOwnerHint,
+                      style: const TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -453,17 +445,17 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text('Voor wie gelden meldingen?', style: Theme.of(context).textTheme.titleMedium),
-                    const Text(
-                      'Kies welke gezinsleden meldingen activeren',
-                      style: TextStyle(fontSize: 12, color: AppColors.muted),
+                    Text(context.l10n.placesWatchedTitle, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      context.l10n.placesWatchedHint,
+                      style: const TextStyle(fontSize: 12, color: AppColors.muted),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       children: [
                         FilterChip(
-                          label: const Text('Iedereen'),
+                          label: Text(context.l10n.placesEveryone),
                           selected: _watchedMembers.isEmpty,
                           onSelected: (_) => setState(_watchedMembers.clear),
                         ),
@@ -482,14 +474,17 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Text('Meldingsvoorkeuren', style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      context.l10n.placesNotificationPrefs,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
                     SwitchListTile(
                       tileColor: AppColors.surfaceLow,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       secondary: const Icon(Icons.login, color: AppColors.primary),
-                      title: const Text('Melding bij aankomst'),
-                      subtitle: const Text('Wanneer iemand de cirkel binnenkomt'),
+                      title: Text(context.l10n.placesArrivalAlert),
+                      subtitle: Text(context.l10n.placesArrivalAlertHint),
                       value: _arrival,
                       onChanged: (v) => setState(() => _arrival = v),
                     ),
@@ -498,8 +493,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                       tileColor: AppColors.surfaceLow,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       secondary: const Icon(Icons.logout, color: AppColors.primary),
-                      title: const Text('Melding bij vertrek'),
-                      subtitle: const Text('Wanneer iemand de cirkel verlaat'),
+                      title: Text(context.l10n.placesDepartureAlert),
+                      subtitle: Text(context.l10n.placesDepartureAlertHint),
                       value: _departure,
                       onChanged: (v) => setState(() => _departure = v),
                     ),

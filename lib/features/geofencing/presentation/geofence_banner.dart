@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../application/geofence_status.dart';
+import '../../../l10n/l10n.dart';
 
 /// Melding op de kaart wanneer Android de zones (aankomst/vertrek met de app
 /// dicht) niet bewaakt. Toestemming "Altijd toestaan" valt hier buiten.
@@ -12,18 +13,16 @@ class GeofenceBanner extends StatelessWidget {
   final VoidCallback onRetry;
 
   /// Tekst per stand; null = niets tonen.
-  static String? messageFor(GeofenceStatus status) => switch (status) {
-    GeofenceStatus.unavailable =>
-      'Zones staan uit: zet "Google-locatienauwkeurigheid" aan '
-          '(Instellingen › Locatie › Locatieservices).',
-    GeofenceStatus.error => 'Zones staan niet aan bij Android. Aankomst en vertrek kunnen later komen.',
-    GeofenceStatus.notConfigured => 'Zones zijn nog niet ingesteld op de server (migratie 014).',
+  static String? messageFor(AppLocalizations l10n, GeofenceStatus status) => switch (status) {
+    GeofenceStatus.unavailable => l10n.geofenceUnavailable,
+    GeofenceStatus.error => l10n.geofenceError,
+    GeofenceStatus.notConfigured => l10n.geofenceNotConfigured,
     GeofenceStatus.idle || GeofenceStatus.active || GeofenceStatus.permissionMissing => null,
   };
 
   @override
   Widget build(BuildContext context) {
-    final message = messageFor(status);
+    final message = messageFor(context.l10n, status);
     if (message == null) return const SizedBox.shrink();
     return Material(
       color: AppColors.alertSoft,
@@ -36,7 +35,7 @@ class GeofenceBanner extends StatelessWidget {
             const Icon(Icons.wrong_location_outlined, color: AppColors.alert),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
-            TextButton(onPressed: onRetry, child: const Text('Opnieuw')),
+            TextButton(onPressed: onRetry, child: Text(context.l10n.commonAgain)),
           ],
         ),
       ),
