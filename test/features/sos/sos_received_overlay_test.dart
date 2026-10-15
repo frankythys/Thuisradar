@@ -18,7 +18,7 @@ void main() {
     expect(find.textContaining('51.05430'), findsNothing);
   });
 
-  testWidgets('Navigeer en Bel naast elkaar, 112 en Toon op kaart onderaan', (tester) async {
+  testWidgets('Navigeer en Bel naast elkaar, Toon op kaart onderaan, geen Bel 112', (tester) async {
     tester.view.physicalSize = const Size(360, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -37,11 +37,10 @@ void main() {
     expect((navigate.dy - call.dy).abs(), lessThan(1));
     expect(find.text('Ik ben onderweg'), findsOneWidget);
     expect(find.text('Mama is onderweg'), findsOneWidget);
-    for (final label in ['Bel 112', 'Toon op kaart']) {
-      final bottom = tester.getBottomLeft(find.text(label)).dy;
-      expect(bottom, greaterThan(tester.getBottomLeft(find.text('Ik ben onderweg')).dy));
-      expect(bottom, lessThan(640));
-    }
+    final bottom = tester.getBottomLeft(find.text('Toon op kaart')).dy;
+    expect(bottom, greaterThan(tester.getBottomLeft(find.text('Ik ben onderweg')).dy));
+    expect(bottom, lessThan(640));
+    expect(find.textContaining('112'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

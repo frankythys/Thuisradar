@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
@@ -80,7 +79,6 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
     final longitude = location?.longitude ?? alert.longitude;
     final now = ref.watch(clockProvider).value ?? DateTime.now();
     final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
     final tokens = context.tokens;
 
     final seen = [
@@ -157,24 +155,12 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
                 label: const Text('Ik ben onderweg'),
               ),
               SizedBox(height: tokens.spaceXs),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton.icon(
-                      onPressed: () => launchUrl(Uri(scheme: 'tel', path: '112')),
-                      style: TextButton.styleFrom(foregroundColor: scheme.error),
-                      icon: const Icon(Icons.emergency_outlined, size: 20),
-                      label: const Text('Bel 112'),
-                    ),
-                  ),
-                  Expanded(
-                    child: TextButton.icon(
-                      onPressed: widget.onShowOnMap,
-                      icon: const Icon(Icons.map_outlined, size: 20),
-                      label: const Text('Toon op kaart'),
-                    ),
-                  ),
-                ],
+              // Geen knop "Bel 112": per ongeluk een noodnummer bellen is te
+              // gevaarlijk. Wie hulp moet bellen, doet dat zelf.
+              TextButton.icon(
+                onPressed: widget.onShowOnMap,
+                icon: const Icon(Icons.map_outlined, size: 20),
+                label: const Text('Toon op kaart'),
               ),
             ],
           ),

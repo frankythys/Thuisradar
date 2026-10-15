@@ -1,25 +1,49 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../family/application/family_providers.dart';
+import '../domain/sos_alert.dart';
+import 'widgets/sos_countdown.dart';
 import 'widgets/sos_hold_button.dart';
 import 'widgets/sos_recipients.dart';
 
-/// Rustig noodscherm: enkel een kruisje, één grote knop om in te houden,
-/// wie gewaarschuwd wordt en een knop om 112 te bellen.
-class SosScreen extends ConsumerWidget {
+/// Rustig noodscherm: enkel een kruisje, één grote knop om in te houden en
+/// wie gewaarschuwd wordt. Na het vasthouden telt het [kSosCancelDuration]
+/// af met een grote knop Annuleren; pas daarna vertrekt het alarm. Geen knop
+/// "Bel 112": per ongeluk tikken op een noodnummer is te gevaarlijk.
+class SosScreen extends ConsumerStatefulWidget {
   const SosScreen({super.key, required this.familyId, required this.onActivate});
   final String familyId;
   final Future<void> Function() onActivate;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SosScreen> createState() => _SosScreenState();
+}
+
+class _SosScreenState extends ConsumerState<SosScreen> {
+  bool _counting = false;
+
+  void _startCountdown() => setState(() => _counting = true);
+
+  void _cancel() => setState(() => _counting = false);
+
+  void _send() {
+    setState(() => _counting = false);
+    HapticFeedback.heavyImpact();
+    // Niet wachten: de melding "verzonden" komt van wie het alarm verstuurt.
+    unawaited(widget.onActivate());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final familyId = widget.familyId;
     final members = ref.watch(familyMembersProvider(familyId)).value ?? const [];
     final myId = ref.watch(currentUserIdProvider);
     final others = [
@@ -48,7 +72,9 @@ class SosScreen extends ConsumerWidget {
               Text('Hulp nodig?', style: text.headlineMedium, textAlign: TextAlign.center),
               SizedBox(height: tokens.spaceXs),
               Text(
-                'Houd de knop 3 seconden in. Je gezin krijgt meteen een alarm met je locatie.',
+                _counting
+                    ? 'Per ongeluk? Tik op Annuleren. Anders krijgt je gezin zo een alarm met je locatie.'
+                    : 'Houd de knop 3 seconden in. Daarna heb je nog 10 seconden om te annuleren.',
                 style: text.bodyMedium?.copyWith(color: AppColors.muted),
                 textAlign: TextAlign.center,
               ),
@@ -56,6 +82,16 @@ class SosScreen extends ConsumerWidget {
                 child: LayoutBuilder(
                   builder: (context, box) {
                     final ring = math.min(280.0, math.min(box.maxWidth, box.maxHeight));
+                    if (_counting) {
+                      return Center(
+                        child: SosCountdown(
+                          duration: kSosCancelDuration,
+                          onDone: _send,
+                          onCancel: _cancel,
+                          size: ring * .57,
+                        ),
+                      );
+                    }
                     return Center(
                       child: SizedBox.square(
                         dimension: ring,
@@ -71,7 +107,7 @@ class SosScreen extends ConsumerWidget {
                                   color: scheme.errorContainer.withValues(alpha: .5),
                                 ),
                               ),
-                            SosHoldButton(onActivate: onActivate, size: ring * .57),
+                            SosHoldButton(onActivate: () async => _startCountdown(), size: ring * .57),
                           ],
                         ),
                       ),
@@ -80,22 +116,12 @@ class SosScreen extends ConsumerWidget {
                 ),
               ),
               Text(
-                'Vals alarm? Laat los voor de cirkel vol is.',
+                _counting ? 'Sluiten of terug annuleert ook.' : 'Vals alarm? Laat los voor de cirkel vol is.',
                 style: text.bodySmall?.copyWith(color: AppColors.muted),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: tokens.spaceMd),
               SosRecipients(members: others),
-              SizedBox(height: tokens.spaceMd),
-              OutlinedButton.icon(
-                onPressed: () => launchUrl(Uri(scheme: 'tel', path: '112')),
-                icon: const Icon(Icons.phone_outlined, size: 20),
-                label: const Text('Bel 112'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: scheme.error,
-                  side: BorderSide(color: scheme.error, width: 1.5),
-                ),
-              ),
             ],
           ),
         ),

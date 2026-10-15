@@ -46,8 +46,8 @@ class _SosHoldButtonState extends State<SosHoldButton> with SingleTickerProvider
   }
 
   Future<void> _activate() async {
-    // Niet op de tril wachten: het alarm gaat meteen weg.
-    unawaited(HapticFeedback.heavyImpact());
+    // Niet op de tril wachten.
+    unawaited(HapticFeedback.mediumImpact());
     await widget.onActivate();
     if (mounted) _controller.reverse();
     _fired = false;
@@ -69,7 +69,9 @@ class _SosHoldButtonState extends State<SosHoldButton> with SingleTickerProvider
 
   void _cancel([PointerEvent? _]) {
     _start = null;
-    if (!_fired) _controller.reverse();
+    // Na de activatie kan de knop al weg zijn (het aftellen neemt zijn plaats
+    // in) terwijl de vinger nog op het scherm ligt.
+    if (!_fired && mounted) _controller.reverse();
   }
 
   @override

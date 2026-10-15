@@ -1,6 +1,9 @@
 /// Hoelang de noodknop ingedrukt moet blijven voor een SOS afgaat.
 const kSosHoldDuration = Duration(seconds: 3);
 
+/// Na het vasthouden: zo lang kan je nog annuleren voor het alarm vertrekt.
+const kSosCancelDuration = Duration(seconds: 10);
+
 /// Een noodoproep (tabel `sos_alerts`).
 class SosAlert {
   const SosAlert({
