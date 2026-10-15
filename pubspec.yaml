@@ -127,7 +127,9 @@ flutter:
     - assets/Intro/intro_poster.jpg
     - assets/icon/CircleBeakon_icon.png
     - assets/icon/Rijdende auto.png
-    - assets/illustrations/
+    # Enkel wat de app gebruikt: in deze map staan ook grote bronbestanden.
+    - assets/illustrations/google_g.svg
+    - assets/places/
     - assets/markers/
 
   fonts:

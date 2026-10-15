@@ -46,4 +46,15 @@ void main() {
     expect(icon, isA<gm.BytesMapBitmap>());
     expect((icon! as gm.BytesMapBitmap).byteData, isNotEmpty);
   });
+
+  testWidgets('werk-foto wordt als bitmap getekend, breedte vast, hoogte volgt de foto', (tester) async {
+    final icon = await tester.runAsync(
+      () => placeImageBitmap('assets/places/work_kaart.webp', width: 46, pixelRatio: 2),
+    );
+    expect(icon, isA<gm.BytesMapBitmap>());
+    final bitmap = icon! as gm.BytesMapBitmap;
+    expect(bitmap.byteData, isNotEmpty);
+    expect(bitmap.width, 46);
+    expect(bitmap.height, inExclusiveRange(20, 46));
+  });
 }

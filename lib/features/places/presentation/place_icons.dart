@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Vaste set plaats-iconen (sleutel = `places.icon`).
-const placeIconKeys = ['home', 'school', 'work', 'sports', 'store', 'place'];
+const placeIconKeys = ['home', 'school', 'work', 'sports', 'store', 'daycare', 'park', 'refinery', 'place'];
 
 IconData placeIcon(String key) => switch (key) {
   'home' => Icons.home_rounded,
@@ -9,6 +9,9 @@ IconData placeIcon(String key) => switch (key) {
   'work' => Icons.work_outline,
   'sports' => Icons.sports_soccer,
   'store' => Icons.store_outlined,
+  'daycare' => Icons.child_care,
+  'park' => Icons.park_outlined,
+  'refinery' => Icons.factory_outlined,
   _ => Icons.place_outlined,
 };
 
@@ -18,5 +21,8 @@ String placeIconLabel(String key) => switch (key) {
   'work' => 'Werk',
   'sports' => 'Sport',
   'store' => 'Winkel',
+  'daycare' => 'Kinderopvang',
+  'park' => 'Park',
+  'refinery' => 'Raffinaderij',
   _ => 'Andere',
 };

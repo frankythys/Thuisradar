@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_map_tiles.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
+import '../../../places/presentation/place_images.dart';
 import '../../domain/map_focus.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
@@ -146,12 +147,20 @@ class FamilyMap extends StatelessWidget {
           MarkerLayer(
             markers: [
               for (final place in places)
-                Marker(
-                  point: LatLng(place.latitude, place.longitude),
-                  width: 32,
-                  height: 32,
-                  child: Icon(placeIcon(place.icon), size: 20, color: AppColors.primary),
-                ),
+                if (placeMapAsset(place.icon) case final photo?)
+                  Marker(
+                    point: LatLng(place.latitude, place.longitude),
+                    width: kPlaceMapImageWidth,
+                    height: kPlaceMapImageWidth,
+                    child: Image.asset(photo, fit: BoxFit.contain),
+                  )
+                else
+                  Marker(
+                    point: LatLng(place.latitude, place.longitude),
+                    width: 32,
+                    height: 32,
+                    child: Icon(placeIcon(place.icon), size: 20, color: AppColors.primary),
+                  ),
             ],
           ),
         ],

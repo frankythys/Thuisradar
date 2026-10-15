@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 
 import '../../../places/domain/place.dart';
@@ -64,4 +65,24 @@ Future<gm.BitmapDescriptor> placeIconBitmap(
   final data = await image.toByteData(format: ui.ImageByteFormat.png);
   image.dispose();
   return gm.BitmapDescriptor.bytes(Uint8List.view(data!.buffer), width: size, height: size);
+}
+
+/// Een plaatsfoto (asset) als marker, [width] logische pixels breed en
+/// scherp op dit scherm; de hoogte volgt de foto.
+Future<gm.BitmapDescriptor> placeImageBitmap(
+  String asset, {
+  required double width,
+  required double pixelRatio,
+}) async {
+  final data = await rootBundle.load(asset);
+  final codec = await ui.instantiateImageCodec(
+    data.buffer.asUint8List(),
+    targetWidth: (width * pixelRatio).round(),
+  );
+  final image = (await codec.getNextFrame()).image;
+  codec.dispose();
+  final height = image.height / pixelRatio;
+  final png = await image.toByteData(format: ui.ImageByteFormat.png);
+  image.dispose();
+  return gm.BitmapDescriptor.bytes(Uint8List.view(png!.buffer), width: width, height: height);
 }
