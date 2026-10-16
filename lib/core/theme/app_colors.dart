@@ -19,8 +19,9 @@ abstract final class AppColors {
   static const surfaceLow = Color(0xFFE8F0F3);
   static const border = Color(0xFFCFDDE2);
 
-  /// Alleen voor kaartselectie; bewust geen kiesbare profielkleur.
-  static const mapSelection = Color(0xFF762EEA);
+  /// Kaartselectie: de app-kleur (ring + gloed rond het gekozen lid).
+  /// Bewust geen kiesbare profielkleur.
+  static const mapSelection = primary;
 
   /// Vaste kleur per gezinslid, op volgorde van toetreden.
   static const members = [

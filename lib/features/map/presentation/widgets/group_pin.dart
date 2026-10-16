@@ -119,17 +119,25 @@ class GroupPin extends StatelessWidget {
     final isSelected = member.member.userId == selectedUserId;
     const inner = _avatar - 2 * _inset;
     // Binnen de witte vorm: een dun wit lijntje scheidt overlappende cirkels;
-    // de gekozen persoon krijgt de paarse rand met gloed.
+    // de gekozen persoon krijgt een rand in de app-kleur met gloed (en een
+    // wit lijntje binnenin, zodat hij loskomt van een blauwgroene avatar).
+    final avatar = MemberAvatar(member: member.member, size: inner - (isSelected ? 8 : 4));
     final child = Container(
       width: inner,
       height: inner,
-      padding: EdgeInsets.all(isSelected ? 4 : 2),
+      padding: EdgeInsets.all(isSelected ? 3 : 2),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: isSelected ? AppColors.mapSelection : Colors.white,
         boxShadow: isSelected ? context.tokens.glowSelection : null,
       ),
-      child: MemberAvatar(member: member.member, size: inner - (isSelected ? 8 : 4)),
+      child: isSelected
+          ? Container(
+              padding: const EdgeInsets.all(1),
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+              child: avatar,
+            )
+          : avatar,
     );
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

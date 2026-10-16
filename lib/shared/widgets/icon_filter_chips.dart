@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 
 /// Eén keuze in een [IconFilterChips]-rij.
@@ -13,7 +12,8 @@ class IconFilterItem {
   final String label;
 }
 
-/// Rij ronde icoon-chips; de gekozen chip is donker gevuld, de rest wit.
+/// Rij ronde icoon-chips in de app-kleur: de gekozen chip is gevuld, de rest
+/// wit met een rand in de app-kleur (zoals de ronde kaartknoppen).
 /// Gecontroleerd: de ouder houdt de gekozen index bij.
 class IconFilterChips extends StatelessWidget {
   const IconFilterChips({
@@ -56,7 +56,8 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final color = selected ? Colors.white : AppColors.ink;
+    final primary = Theme.of(context).colorScheme.primary;
+    final color = selected ? Theme.of(context).colorScheme.onPrimary : primary;
 
     return Tooltip(
       message: item.label,
@@ -65,8 +66,10 @@ class _Chip extends StatelessWidget {
         selected: selected,
         button: true,
         child: Material(
-          color: selected ? AppColors.ink : Colors.white,
-          shape: StadiumBorder(side: selected ? BorderSide.none : const BorderSide(color: AppColors.border)),
+          color: selected ? primary : Theme.of(context).colorScheme.surface,
+          shape: StadiumBorder(
+            side: BorderSide(color: primary, width: tokens.spaceXs / 2),
+          ),
           child: InkWell(
             onTap: onTap,
             customBorder: const StadiumBorder(),
