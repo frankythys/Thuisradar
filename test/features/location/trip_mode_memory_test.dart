@@ -175,9 +175,27 @@ void main() {
       expect(update(10, kmh(5), steps: 1020, activity: bicycle).walking, isTrue);
     });
 
-    test('voertuig na fiets: auto (fiets op het fietsrek, of verkeerd herkend)', () {
+    test('voertuig na fiets aan fietstempo: blijft een fiets (herkenning vergist zich)', () {
       update(0, kmh(20), activity: bicycle);
-      expect(update(5, kmh(20), activity: vehicle).driving, isTrue);
+      expect(update(5, kmh(20), activity: vehicle).cycling, isTrue);
+      expect(update(10, kmh(12), activity: vehicle).cycling, isTrue);
+    });
+
+    test('voertuig na fiets aan autosnelheid: auto (fiets op het fietsrek)', () {
+      update(0, kmh(20), activity: bicycle);
+      expect(update(5, kmh(40), activity: vehicle).driving, isTrue);
+      expect(update(10, kmh(20), activity: vehicle).driving, isTrue);
+    });
+
+    test('stappen aan fietstempo met "voertuig": trappen, dus een fiets', () {
+      update(0, kmh(12), steps: 1000, activity: vehicle);
+      expect(update(5, kmh(12), steps: 1012, activity: vehicle).cycling, isTrue);
+    });
+
+    test('een auto die op snelheid reed, wordt geen fiets door een losse "fiets"', () {
+      update(0, kmh(60), activity: vehicle);
+      update(5, kmh(60), activity: vehicle);
+      expect(update(10, kmh(20), activity: bicycle).driving, isTrue);
     });
 
     test('te voet zonder stappenteller beëindigt de rit bij een stop', () {

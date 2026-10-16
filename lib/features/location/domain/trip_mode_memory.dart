@@ -27,6 +27,11 @@ import 'trip_hint.dart';
 ///   bergaf). Zonder stappen beslist "te voet" of "voertuig" ook over uit- of
 ///   instappen. Het signaal stuurt enkel bij: zonder herkenning blijft alles
 ///   zoals hierboven, er wordt nooit op gewacht.
+/// - De herkenning verwart fietsen geregeld met "voertuig" (gemeten op
+///   16 oktober: anderhalve minuut "voertuig" aan 11 km/u). Een fiets wordt
+///   daarom pas een auto bij een auto-snelheid; stappen aan fietstempo zijn
+///   trappen (een auto zet geen stappen); en een auto die al op snelheid
+///   reed, wordt geen fiets door een losse "fiets"-herkenning.
 class TripModeMemory {
   final _members = <String, _Trip>{};
 
@@ -52,6 +57,9 @@ class TripModeMemory {
 
   /// Sneller dan dit (km/u) is geen fiets, ook niet als het toestel dat zegt.
   static const _maxBikeKmh = 50;
+
+  /// Al op de fiets: trappen telt ook trager (bergop, afremmen), tot hier.
+  static const _slowBikeKmh = 7;
 
   List<MemberLocation> update(List<MemberLocation> locations) {
     final present = locations.map((location) => location.userId).toSet();
@@ -99,10 +107,14 @@ class TripModeMemory {
       ..moving = true
       ..stoppedAt = null
       ..speedKmh = kmh;
-    // Trappen geeft soms ook stappen: zegt het toestel "fiets" aan fietstempo,
-    // dan wint de fiets. Bij het uitstappen winnen de stappen wel, want de
-    // herkenning loopt dan nog even achter.
-    final pedalling = activity == MotionActivity.bicycle && kmh >= _bikeMinKmh;
+    // Trappen geeft soms ook stappen: zegt het toestel "fiets" (of, verward,
+    // "voertuig") aan fietstempo, dan wint de fiets. Bij het uitstappen
+    // winnen de stappen wel, want de herkenning loopt dan nog even achter.
+    final riding = activity == MotionActivity.bicycle || activity == MotionActivity.vehicle;
+    final pedalling =
+        onFoot == true &&
+        riding &&
+        (kmh >= _bikeMinKmh || (trip.vehicle == TravelMode.bike && kmh >= _slowBikeKmh));
     if (onFoot == true && kmh < _maxStepKmh && !pedalling) {
       trip
         ..leaveVehicle()
@@ -115,20 +127,27 @@ class TripModeMemory {
       trip.mode = TravelMode.walk;
       return;
     }
-    _drive(trip, kmh, activity);
+    _drive(trip, kmh, activity, pedalling: pedalling);
   }
 
-  void _drive(_Trip trip, int kmh, MotionActivity? activity) {
+  void _drive(_Trip trip, int kmh, MotionActivity? activity, {required bool pedalling}) {
     trip.vehicle ??= TravelMode.car;
     trip.vehicleSamples++;
     if (kmh >= _bikeMinKmh) trip.briskSamples++;
-    final bySensor = switch (activity) {
-      MotionActivity.vehicle => TravelMode.car,
-      MotionActivity.bicycle when kmh <= _maxBikeKmh => TravelMode.bike,
-      _ => null,
-    };
+    final bySensor = pedalling
+        ? TravelMode.bike
+        : switch (activity) {
+            MotionActivity.vehicle => TravelMode.car,
+            MotionActivity.bicycle when kmh <= _maxBikeKmh => TravelMode.bike,
+            _ => null,
+          };
     final carSpeed = kmh >= _surelyCarKmh || (kmh >= _carKmh && trip.lastKmh >= _carKmh);
-    if (bySensor != null) {
+    if (kmh > _maxBikeKmh || (carSpeed && activity != MotionActivity.bicycle)) trip.fastSeen = true;
+    if (bySensor == TravelMode.car && trip.vehicle == TravelMode.bike && !carSpeed) {
+      // Op de fiets en "voertuig" aan fietstempo: de herkenning vergist zich.
+    } else if (bySensor == TravelMode.bike && trip.fastSeen) {
+      // Een auto die al op snelheid reed, blijft een auto.
+    } else if (bySensor != null) {
       trip
         ..sensorVehicle = bySensor
         ..carSure = bySensor == TravelMode.car
@@ -170,6 +189,9 @@ class _Trip {
   int briskSamples = 0;
   int lastKmh = 0;
 
+  /// Deze rit ging al eens duidelijk aan auto-snelheid.
+  bool fastSeen = false;
+
   TripHint? get hint => moving == null
       ? null
       : TripHint(moving: moving!, mode: mode ?? TravelMode.walk, speedKmh: moving! ? speedKmh : null);
@@ -178,6 +200,7 @@ class _Trip {
     vehicle = null;
     carSure = false;
     sensorVehicle = null;
+    fastSeen = false;
     vehicleSamples = 0;
     briskSamples = 0;
     lastKmh = 0;
