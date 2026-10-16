@@ -600,5 +600,7 @@
   "parkedCarDeleteAction": "Parkplatz entfernen",
   "parkedCarSaved": "Parkplatz gespeichert.",
   "parkedCarRemoved": "Parkplatz entfernt.",
-  "parkedCarPickHint": "Verschiebe die Karte, bis das Kreuz auf deinem Auto liegt."
+  "parkedCarPickHint": "Verschiebe die Karte, bis das Kreuz auf deinem Auto liegt.",
+  "parkedCarNavigate": "Zum Auto navigieren",
+  "parkedCarOf": "Auto von {name}"
 }

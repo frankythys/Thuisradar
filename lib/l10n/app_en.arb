@@ -600,5 +600,7 @@
   "parkedCarDeleteAction": "Remove parking spot",
   "parkedCarSaved": "Parking spot saved.",
   "parkedCarRemoved": "Parking spot removed.",
-  "parkedCarPickHint": "Drag the map until the crosshair is on your car."
+  "parkedCarPickHint": "Drag the map until the crosshair is on your car.",
+  "parkedCarNavigate": "Navigate to the car",
+  "parkedCarOf": "{name}’s car"
 }

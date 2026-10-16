@@ -251,8 +251,21 @@ Marker _routePoint({required LatLng point, required Color color, required double
   ),
 );
 
-Future<void> openDirections(BuildContext context, double latitude, double longitude) async {
-  final uri = Uri.https('www.google.com', '/maps/dir/', {'api': '1', 'destination': '$latitude,$longitude'});
+/// Routelink naar een punt; opent de kaarten-app (gratis, geen API). Te voet
+/// voor een geparkeerde auto: dan brengt de route je tot op de parking.
+Uri directionsUri(double latitude, double longitude, {bool walking = false}) => Uri.https(
+  'www.google.com',
+  '/maps/dir/',
+  {'api': '1', 'destination': '$latitude,$longitude', if (walking) 'travelmode': 'walking'},
+);
+
+Future<void> openDirections(
+  BuildContext context,
+  double latitude,
+  double longitude, {
+  bool walking = false,
+}) async {
+  final uri = directionsUri(latitude, longitude, walking: walking);
   try {
     if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
   } on Exception {

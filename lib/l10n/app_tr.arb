@@ -600,5 +600,7 @@
   "parkedCarDeleteAction": "Park yerini kaldır",
   "parkedCarSaved": "Park yeri kaydedildi.",
   "parkedCarRemoved": "Park yeri kaldırıldı.",
-  "parkedCarPickHint": "Artı işareti arabanın üzerine gelene kadar haritayı sürükle."
+  "parkedCarPickHint": "Artı işareti arabanın üzerine gelene kadar haritayı sürükle.",
+  "parkedCarNavigate": "Arabaya yol tarifi al",
+  "parkedCarOf": "{name} adlı kişinin arabası"
 }

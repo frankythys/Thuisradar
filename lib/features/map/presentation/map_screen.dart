@@ -32,6 +32,7 @@ import '../../places/presentation/add_place_screen.dart';
 import '../../places/presentation/places_screen.dart';
 import '../../parked_car/application/parked_car_providers.dart';
 import '../../parked_car/domain/parked_car.dart';
+import '../../parked_car/presentation/parked_car_flow.dart';
 import '../../parked_car/presentation/parked_car_map_action.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
@@ -356,7 +357,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             members: members,
             places: places,
             parkedCars: parkedCars,
-            onParkedCarTap: _showParkedCar,
+            onParkedCarTap: (car) => openParkedCar(
+              context,
+              ref,
+              familyId: familyId,
+              car: car,
+              ownerName: members.where((m) => m.member.userId == car.userId).firstOrNull?.member.displayName,
+              onShowCar: _showParkedCar,
+            ),
             placeByUser: placeByUser,
             stationarySinceByUser: stationarySinceByUser,
             now: now,

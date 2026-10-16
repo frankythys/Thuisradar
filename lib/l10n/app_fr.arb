@@ -600,5 +600,7 @@
   "parkedCarDeleteAction": "Supprimer la place",
   "parkedCarSaved": "Place de stationnement enregistrée.",
   "parkedCarRemoved": "Place de stationnement supprimée.",
-  "parkedCarPickHint": "Faites glisser la carte jusqu’à ce que la croix soit sur votre voiture."
+  "parkedCarPickHint": "Faites glisser la carte jusqu’à ce que la croix soit sur votre voiture.",
+  "parkedCarNavigate": "Aller à la voiture",
+  "parkedCarOf": "Voiture de {name}"
 }

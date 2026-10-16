@@ -3042,5 +3042,18 @@
   "parkedCarPickHint": "Sleep de kaart tot het kruis op je auto staat.",
   "@parkedCarPickHint": {
     "description": "Uitleg bovenaan het kaartje om de auto zelf te plaatsen."
+  },
+  "parkedCarNavigate": "Navigeer naar de auto",
+  "@parkedCarNavigate": {
+    "description": "Knop: wandelroute naar de geparkeerde auto (opent de kaarten-app)."
+  },
+  "parkedCarOf": "Auto van {name}",
+  "@parkedCarOf": {
+    "description": "Titel van het blad bij de auto van iemand anders.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }
