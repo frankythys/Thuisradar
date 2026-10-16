@@ -6,7 +6,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/utils/geo.dart';
-import '../../../../core/theme/app_tokens.dart';
 
 import '../../../places/domain/place_status.dart';
 import '../../../location/domain/trip_status.dart';
@@ -25,9 +24,10 @@ import 'group_pin.dart';
 import 'map_marker_spec.dart';
 import 'member_marker.dart';
 import 'member_history_bubble.dart';
+import 'parked_car_specs.dart';
 import 'walker_marker_spec.dart';
 import 'walking_gif_frames.dart';
-import '../../../parked_car/presentation/parked_car_marker.dart';
+import '../../../places/presentation/place_images.dart';
 import '../../../../l10n/l10n.dart';
 
 typedef _Coord = ({double lat, double lng});
@@ -272,26 +272,6 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     });
 
     final markers = <MapMarkerSpec>[];
-    for (final car in widget.parkedCars) {
-      final tokens = context.tokens;
-      final name = widget.memberNames[car.userId] ?? context.l10n.commonMember;
-      markers.add(
-        MapMarkerSpec(
-          id: 'parked_car_${car.userId}',
-          point: LatLng(car.latitude, car.longitude),
-          width: tokens.spaceXxl * 2 + tokens.spaceMd + tokens.spaceSm,
-          height: tokens.spaceXxl + tokens.spaceMd + tokens.spaceSm,
-          alignment: Alignment.bottomCenter,
-          onTap: widget.onParkedCarTap == null ? null : () => widget.onParkedCarTap!(car),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: widget.onParkedCarTap == null ? null : () => widget.onParkedCarTap!(car),
-            child: ParkedCarMarker(name: name),
-          ),
-          imageKey: name,
-        ),
-      );
-    }
     // Sneakers boven de Google-kaart: gaan niet naar Google (zie walkerOverlaySpec).
     final walkerOverlays = <MapMarkerSpec>[];
     final placePoints = [for (final place in widget.reservedPlaces) camera.latLngToScreenOffset(place)];
@@ -424,6 +404,30 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
         );
       }
     }
+
+    // Auto's onderaan tekenen, maar vrij van huis en (stilstaande) leden.
+    // Rijdende leden tellen niet mee, anders springt de auto mee als iemand
+    // voorbijrijdt.
+    markers.insertAll(
+      0,
+      parkedCarSpecs(
+        context,
+        camera: camera,
+        cars: widget.parkedCars,
+        names: widget.memberNames,
+        onTap: widget.onParkedCarTap,
+        obstacles: [
+          for (final place in placePoints)
+            Rect.fromCenter(center: place, width: kPlaceMapImageWidth, height: kPlaceMapImageWidth),
+          for (final group in groups)
+            if (!isDriving(group))
+              _pinRect(
+                screenOf(group.first) + offsets[group.first]!,
+                group.length == 1 ? MemberMarker.avatarSize : GroupPin.clusterWidth(group.length),
+              ),
+        ],
+      ),
+    );
 
     // Ook zonder selectie blijven losse leden hun infolabel behouden.
     // Groepen hebben hun eigen statusballon; bij selectie komt de persoonlijke
@@ -604,3 +608,8 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     );
   }
 }
+
+/// Zichtbaar deel van een stilstaande pin: rondjes van [width] breed die met
+/// hun puntje op [point] staan.
+Rect _pinRect(Offset point, double width) =>
+    Rect.fromLTWH(point.dx - width / 2, point.dy - MemberMarker.height, width, MemberMarker.height);
