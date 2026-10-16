@@ -2,15 +2,21 @@ import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../l10n/l10n.dart';
 import 'push_channels.dart';
 
 /// Regelt FCM: het alarm-notificatiekanaal, tokenregistratie in device_tokens,
 /// en het tonen van SOS-meldingen terwijl de app op de voorgrond staat.
 class PushService {
-  PushService(this._client, this._messaging, this._local);
+  PushService(this._client, this._messaging, this._local, {AppLocalizations Function()? strings})
+    : _strings = strings ?? (() => lookupAppLocalizations(const Locale('nl')));
+
+  /// Teksten in de taal van de app, voor de namen van de meldingskanalen.
+  final AppLocalizations Function() _strings;
 
   final SupabaseClient _client;
   final FirebaseMessaging _messaging;
@@ -30,9 +36,10 @@ class PushService {
       const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
     );
     final android = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await android?.createNotificationChannel(PushChannels.sos);
-    await android?.createNotificationChannel(PushChannels.places);
-    await android?.createNotificationChannel(PushChannels.chat);
+    final l10n = _strings();
+    await android?.createNotificationChannel(PushChannels.sos(l10n));
+    await android?.createNotificationChannel(PushChannels.places(l10n));
+    await android?.createNotificationChannel(PushChannels.chat(l10n));
 
     await _foregroundSub?.cancel();
     _foregroundSub = FirebaseMessaging.onMessage.listen(_showForeground);
@@ -87,7 +94,7 @@ class PushService {
     final notification = message.notification;
     if (notification == null) return;
 
-    final details = PushChannels.details(message.data['type'] as String?);
+    final details = PushChannels.details(_strings(), message.data['type'] as String?);
 
     _local.show(
       notification.hashCode,

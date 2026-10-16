@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../l10n/l10n.dart';
+
 /// Aftellen na het vasthouden van de noodknop: een ring die leegloopt met de
 /// resterende seconden, en een grote knop Annuleren. Pas als de tijd om is,
 /// roept het [onDone] op. Verdwijnt het scherm (kruisje, terug), dan vertrekt
@@ -68,7 +70,7 @@ class _SosCountdownState extends State<SosCountdown> with SingleTickerProviderSt
             final seconds = _secondsLeft;
             return Semantics(
               liveRegion: true,
-              label: 'Alarm vertrekt over $seconds seconden',
+              label: context.l10n.sosAlarmIn(seconds),
               child: Container(
                 width: size,
                 height: size,
@@ -91,7 +93,10 @@ class _SosCountdownState extends State<SosCountdown> with SingleTickerProviderSt
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('$seconds', style: text.displayLarge?.copyWith(color: scheme.onError)),
-                          Text('Alarm vertrekt', style: text.labelMedium?.copyWith(color: scheme.onError)),
+                          Text(
+                            context.l10n.sosAlarmLeaving,
+                            style: text.labelMedium?.copyWith(color: scheme.onError),
+                          ),
                         ],
                       ),
                     ),
@@ -107,7 +112,7 @@ class _SosCountdownState extends State<SosCountdown> with SingleTickerProviderSt
           child: FilledButton.icon(
             onPressed: widget.onCancel,
             icon: const Icon(Icons.close),
-            label: const Text('Annuleren'),
+            label: Text(context.l10n.commonCancel),
             style: FilledButton.styleFrom(
               backgroundColor: scheme.inverseSurface,
               foregroundColor: scheme.onInverseSurface,

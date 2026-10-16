@@ -28,4 +28,16 @@ void main() {
     expect(container.read(languageOverrideProvider), isNull);
     expect(await LanguageStore().read(), isNull);
   });
+
+  test('appLocalizationsProvider volgt de eigen keuze, ook buiten widgets', () async {
+    final container = ProviderContainer(overrides: [savedLanguageProvider.overrideWithValue(AppLanguage.de)]);
+    addTearDown(container.dispose);
+    expect(
+      container.read(appLocalizationsProvider).locationSharingNotice,
+      'Dein Standort wird mit deiner Familie geteilt',
+    );
+
+    await container.read(languageOverrideProvider.notifier).choose(AppLanguage.fr);
+    expect(container.read(appLocalizationsProvider).channelSos, 'Alarmes SOS');
+  });
 }

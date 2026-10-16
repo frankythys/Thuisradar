@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Compacte SOS-pil in de app-balk, naast je avatar. Opent het noodscherm;
 /// het alarm zelf gaat pas af na 3 seconden inhouden op dat scherm.
@@ -17,7 +18,7 @@ class SosAppBarButton extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: tokens.spaceXs),
       child: Tooltip(
-        message: 'SOS-noodbericht',
+        message: context.l10n.sosButtonTooltip,
         child: FilledButton.icon(
           onPressed: onPressed,
           style: FilledButton.styleFrom(

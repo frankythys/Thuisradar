@@ -18,7 +18,7 @@ void main() {
   test('daglabels kloppen de dag na de overgang naar zomertijd', () {
     final now = DateTime(2026, 3, 30, 9);
     expect(formatDayLabel(_nl, DateTime(2026, 3, 29, 20), now: now), 'Gisteren');
-    expect(drivingDayLabel(DateTime(2026, 3, 29), now: now), 'Gisteren');
+    expect(drivingDayLabel(_nl, DateTime(2026, 3, 29), now: now), 'Gisteren');
     expect(formatDayLabel(_nl, DateTime(2026, 3, 28, 20), now: now), isNot('Gisteren'));
   });
 }

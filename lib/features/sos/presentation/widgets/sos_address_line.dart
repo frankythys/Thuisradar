@@ -42,11 +42,11 @@ class SosAddressLine extends ConsumerWidget {
         (street.isNotEmpty
             ? street
             : address.isLoading
-            ? 'Adres opzoeken…'
-            : 'Adres onbekend');
+            ? context.l10n.sosAddressLoading
+            : context.l10n.sosAddressUnknown);
     final subtitle = [
       if (place != null && street.isNotEmpty) street,
-      'Gedeeld ${formatRelative(context.l10n, sharedAt, now: now)}',
+      context.l10n.sosShared(formatRelative(context.l10n, sharedAt, now: now)),
     ].join(' · ');
 
     return Row(

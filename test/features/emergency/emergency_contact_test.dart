@@ -1,5 +1,10 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/l10n/l10n.dart';
+import 'package:thuisradar/features/emergency/application/emergency_alerter.dart';
 import 'package:thuisradar/features/emergency/domain/emergency_contact.dart';
+
+final _nl = lookupAppLocalizations(const Locale('nl'));
 
 void main() {
   const oma = EmergencyContact(position: 1, name: 'Oma', phone: '0470 12 34 56');
@@ -53,10 +58,13 @@ void main() {
   });
 
   test('de sms bevat de naam en een kaartlink met de locatie', () {
-    final text = sosSmsText(senderName: 'Papa', latitude: 51.054301234, longitude: 3.7174);
+    final text = sosSmsText(_nl, senderName: 'Papa', latitude: 51.054301234, longitude: 3.7174);
     expect(text, startsWith('SOS van Papa: ik heb hulp nodig.'));
     expect(text, contains('https://maps.google.com/?q=51.05430,3.71740'));
-    expect(sosSmsText(senderName: ' ', latitude: 0, longitude: 0), startsWith('SOS van Iemand van je gezin'));
+    expect(
+      sosSmsText(_nl, senderName: ' ', latitude: 0, longitude: 0),
+      startsWith('SOS van Iemand van je gezin'),
+    );
   });
 
   test('foutmeldingen bij het invullen', () {

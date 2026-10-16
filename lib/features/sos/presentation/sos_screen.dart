@@ -14,6 +14,7 @@ import 'widgets/sos_countdown.dart';
 import 'widgets/sos_emergency_line.dart';
 import 'widgets/sos_hold_button.dart';
 import 'widgets/sos_recipients.dart';
+import '../../../l10n/l10n.dart';
 
 /// Rustig noodscherm: enkel een kruisje, één grote knop om in te houden en
 /// wie gewaarschuwd wordt. Na het vasthouden telt het [kSosCancelDuration]
@@ -65,17 +66,15 @@ class _SosScreenState extends ConsumerState<SosScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton(
-                  tooltip: 'Sluiten',
+                  tooltip: context.l10n.commonClose,
                   onPressed: () => Navigator.maybePop(context),
                   icon: const Icon(Icons.close),
                 ),
               ),
-              Text('Hulp nodig?', style: text.headlineMedium, textAlign: TextAlign.center),
+              Text(context.l10n.sosNeedHelp, style: text.headlineMedium, textAlign: TextAlign.center),
               SizedBox(height: tokens.spaceXs),
               Text(
-                _counting
-                    ? 'Per ongeluk? Tik op Annuleren. Anders krijgt je gezin zo een alarm met je locatie.'
-                    : 'Houd de knop 3 seconden in. Daarna heb je nog 10 seconden om te annuleren.',
+                _counting ? context.l10n.sosCountingHint : context.l10n.sosHoldHint,
                 style: text.bodyMedium?.copyWith(color: AppColors.muted),
                 textAlign: TextAlign.center,
               ),
@@ -117,7 +116,7 @@ class _SosScreenState extends ConsumerState<SosScreen> {
                 ),
               ),
               Text(
-                _counting ? 'Sluiten of terug annuleert ook.' : 'Vals alarm? Laat los voor de cirkel vol is.',
+                _counting ? context.l10n.sosCloseCancels : context.l10n.sosFalseAlarm,
                 style: text.bodySmall?.copyWith(color: AppColors.muted),
                 textAlign: TextAlign.center,
               ),

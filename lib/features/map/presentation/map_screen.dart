@@ -246,7 +246,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             return false;
           },
         );
-    final contacts = await _alertEmergencyContacts(myId, lat, lng);
+    final contacts = await _alertEmergencyContacts(l10n, myId, lat, lng);
     if (!mounted) return;
     final family = await raising ? l10n.mapSosSent : l10n.mapSosFailed;
     _snack([family, ?contacts].join(' '));
@@ -254,18 +254,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   /// Sms naar de noodcontacten en contact 1 bellen; geeft de uitleg voor de
   /// melding terug. Een fout hier mag het alarm voor het gezin nooit stoppen.
-  Future<String?> _alertEmergencyContacts(String myId, double lat, double lng) async {
+  Future<String?> _alertEmergencyContacts(AppLocalizations l10n, String myId, double lat, double lng) async {
     try {
       final members = ref.read(anchoredMembersOnMapProvider(widget.family.id)).value ?? const <MemberOnMap>[];
       final me = members.where((m) => m.member.userId == myId).firstOrNull;
       final contacts = await ref.read(myEmergencyContactsProvider.future);
       final outcome = await ref
           .read(emergencyAlerterProvider)
-          .alert(contacts: contacts, senderName: me?.member.displayName ?? '', latitude: lat, longitude: lng);
-      return outcome.summary;
+          .alert(
+            l10n: l10n,
+            contacts: contacts,
+            senderName: me?.member.displayName ?? '',
+            latitude: lat,
+            longitude: lng,
+          );
+      return outcome.summary(l10n);
     } on Object catch (error) {
       debugPrint('Noodcontacten verwittigen mislukt: $error');
-      return 'De noodcontacten verwittigen is niet gelukt.';
+      return l10n.emergencyAlertFailed;
     }
   }
 

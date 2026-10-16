@@ -42,7 +42,7 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
     final query = (familyId: widget.family.id, week: _week);
     final reports = ref.watch(drivingReportsProvider(query));
     return Scaffold(
-      appBar: const BrandedAppBar(title: 'Onderweg'),
+      appBar: BrandedAppBar(title: context.l10n.drivingTitle),
       body: Column(
         children: [
           Padding(
@@ -61,7 +61,7 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
             child: reports.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => ErrorView(
-                message: 'Het rijoverzicht kon niet worden geladen.',
+                message: context.l10n.drivingLoadFailed,
                 onRetry: () => ref.invalidate(drivingReportsProvider(query)),
               ),
               data: (data) => RefreshIndicator(
@@ -79,10 +79,13 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                     if (_mode == TravelMode.walk) const StepsOptInCard(),
                     DrivingSummary(reports: data, mode: _mode),
                     SizedBox(height: tokens.spaceLg),
-                    Text('PER GEZINSLID', style: text.labelSmall?.copyWith(color: AppColors.muted)),
+                    Text(
+                      context.l10n.drivingPerMember,
+                      style: text.labelSmall?.copyWith(color: AppColors.muted),
+                    ),
                     SizedBox(height: tokens.spaceSm),
                     if (data.isEmpty)
-                      const Text('Er zijn nog geen gezinsleden.')
+                      Text(context.l10n.drivingNoMembers)
                     else
                       AppCard(
                         padding: EdgeInsets.zero,
@@ -116,9 +119,7 @@ class _DrivingScreenState extends ConsumerState<DrivingScreen> {
                         SizedBox(width: tokens.spaceSm),
                         Expanded(
                           child: Text(
-                            'Schatting op basis van de GPS-snelheid. Een trage rit in de file kan als fietsen '
-                            'tellen, openbaar vervoer of meerijden als rit. Rijgedrag (remmen, gsm) wordt nog '
-                            'niet gemeten.',
+                            context.l10n.drivingEstimateNote,
                             style: text.bodySmall?.copyWith(color: AppColors.muted),
                           ),
                         ),
@@ -156,7 +157,7 @@ class _MemberRow extends StatelessWidget {
         : l10n.drivingCountDistance(
             count,
             travelNoun(l10n, mode, count),
-            drivingNumber(report.kilometersOf(mode)),
+            drivingNumber(l10n, report.kilometersOf(mode)),
           );
     return InkWell(
       onTap: onTap,

@@ -1,40 +1,44 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../../l10n/l10n.dart';
+
 /// Keep IDs and raw sound names in sync with the Edge Function payloads.
+/// De namen volgen de taal van de app; Android werkt de naam van een bestaand
+/// kanaal bij, het id en het geluid niet.
 abstract final class PushChannels {
   // Android cannot change a channel's sound after creation.
-  static const sos = AndroidNotificationChannel(
+  static AndroidNotificationChannel sos(AppLocalizations l10n) => AndroidNotificationChannel(
     'sos_alerts_v2',
-    'SOS-alarmen',
-    description: 'Dringende noodoproepen van je gezin',
+    l10n.channelSos,
+    description: l10n.channelSosDescription,
     importance: Importance.max,
     playSound: true,
-    sound: RawResourceAndroidNotificationSound('thuisradar_sos'),
+    sound: const RawResourceAndroidNotificationSound('thuisradar_sos'),
     audioAttributesUsage: AudioAttributesUsage.alarm,
   );
   // Nieuw id: Android kan het geluid van een bestaand kanaal niet wijzigen.
-  static const places = AndroidNotificationChannel(
+  static AndroidNotificationChannel places(AppLocalizations l10n) => AndroidNotificationChannel(
     'places_v2',
-    'Plaatsen',
-    description: 'Aankomst en vertrek bij plaatsen',
+    l10n.channelPlaces,
+    description: l10n.channelPlacesDescription,
     importance: Importance.high,
     playSound: true,
-    sound: RawResourceAndroidNotificationSound('thuisradar_arrival'),
+    sound: const RawResourceAndroidNotificationSound('thuisradar_arrival'),
   );
-  static const chat = AndroidNotificationChannel(
+  static AndroidNotificationChannel chat(AppLocalizations l10n) => AndroidNotificationChannel(
     'chat_messages',
-    'Chatberichten',
-    description: 'Nieuwe berichten van je gezin',
+    l10n.channelChat,
+    description: l10n.channelChatDescription,
     importance: Importance.high,
     playSound: true,
-    sound: RawResourceAndroidNotificationSound('thuisradar_message'),
+    sound: const RawResourceAndroidNotificationSound('thuisradar_message'),
   );
 
-  static AndroidNotificationDetails details(String? type) {
+  static AndroidNotificationDetails details(AppLocalizations l10n, String? type) {
     final channel = switch (type) {
-      'sos' => sos,
-      'chat' => chat,
-      _ => places,
+      'sos' => sos(l10n),
+      'chat' => chat(l10n),
+      _ => places(l10n),
     };
     return AndroidNotificationDetails(
       channel.id,

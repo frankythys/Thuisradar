@@ -5,6 +5,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
 import 'driving_summary.dart';
 import '../../../core/utils/calendar.dart';
+import '../../../l10n/l10n.dart';
 
 /// Week kiezen met pijltjes: ‹ Deze week ›. Hoogstens [maxWeeksBack] terug,
 /// nooit verder dan de huidige week.
@@ -32,16 +33,16 @@ class DrivingWeekPicker extends StatelessWidget {
     final tokens = context.tokens;
     final end = DateTime(week.year, week.month, week.day + 6);
     final title = switch (_weeksBack) {
-      0 => 'Deze week',
-      1 => 'Vorige week',
-      final n => '$n weken geleden',
+      0 => context.l10n.drivingThisWeek,
+      1 => context.l10n.drivingLastWeek,
+      final n => context.l10n.drivingWeeksAgo(n),
     };
     return AppCard(
       padding: EdgeInsets.symmetric(horizontal: tokens.spaceXs, vertical: tokens.spaceXs),
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Week ervoor',
+            tooltip: context.l10n.drivingWeekBefore,
             onPressed: _weeksBack >= maxWeeksBack ? null : () => onChanged(_shift(-1)),
             icon: const Icon(Icons.chevron_left),
           ),
@@ -57,7 +58,7 @@ class DrivingWeekPicker extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Week erna',
+            tooltip: context.l10n.drivingWeekAfter,
             onPressed: _weeksBack <= 0 ? null : () => onChanged(_shift(1)),
             icon: const Icon(Icons.chevron_right),
           ),

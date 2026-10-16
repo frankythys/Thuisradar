@@ -14,6 +14,7 @@ import '../application/sos_providers.dart';
 import '../domain/sos_alert.dart';
 import 'widgets/sos_address_line.dart';
 import 'widgets/sos_received_header.dart';
+import '../../../l10n/l10n.dart';
 
 /// Scherm 18: volledig-scherm alarm bij de andere gezinsleden wanneer iemand
 /// SOS stuurt. Kop in de alarmkleur, kaart, adres en de acties eronder;
@@ -56,14 +57,15 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
     final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     try {
       await ref.read(sosRepositoryProvider).acknowledge(alert.id, userId, onTheWay: true);
       await ref
           .read(chatRepositoryProvider)
-          .send(familyId: alert.familyId, userId: userId, body: 'Ik ben onderweg om $name te helpen.');
-      messenger.showSnackBar(const SnackBar(content: Text('Je gezin weet dat je onderweg bent.')));
+          .send(familyId: alert.familyId, userId: userId, body: l10n.sosOnMyWayMessage(name));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.sosFamilyKnows)));
     } on Exception {
-      messenger.showSnackBar(const SnackBar(content: Text('Bericht niet verstuurd. Probeer opnieuw.')));
+      messenger.showSnackBar(SnackBar(content: Text(l10n.sosMessageFailed)));
     }
   }
 
@@ -83,8 +85,12 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
 
     final seen = [
       for (final receipt in receipts)
-        '${members.where((m) => m.userId == receipt['user_id']).firstOrNull?.displayName ?? 'Gezinslid'} '
-            '${receipt['on_the_way'] == true ? 'is onderweg' : 'heeft het gezien'}',
+        if (members.where((m) => m.userId == receipt['user_id']).firstOrNull?.displayName ??
+                context.l10n.commonMember
+            case final who)
+          receipt['on_the_way'] == true
+              ? context.l10n.sosReceiptOnTheWay(who)
+              : context.l10n.sosReceiptSeen(who),
     ];
 
     return Material(
@@ -135,7 +141,7 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
                     child: FilledButton.icon(
                       onPressed: () => openDirections(context, latitude, longitude),
                       icon: const Icon(Icons.navigation_outlined, size: 20),
-                      label: const Text('Navigeer'),
+                      label: Text(context.l10n.sosNavigate),
                     ),
                   ),
                   SizedBox(width: tokens.spaceSm),
@@ -143,7 +149,11 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
                     child: OutlinedButton.icon(
                       onPressed: sender == null ? null : () => callMember(context, sender),
                       icon: const Icon(Icons.call_outlined, size: 20),
-                      label: Text('Bel $name', maxLines: 1, overflow: TextOverflow.ellipsis),
+                      label: Text(
+                        context.l10n.sosCallName(name),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ],
@@ -152,7 +162,7 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
               FilledButton.tonalIcon(
                 onPressed: _onTheWay,
                 icon: const Icon(Icons.directions_walk, size: 20),
-                label: const Text('Ik ben onderweg'),
+                label: Text(context.l10n.sosImOnMyWay),
               ),
               SizedBox(height: tokens.spaceXs),
               // Geen knop "Bel 112": per ongeluk een noodnummer bellen is te
@@ -160,7 +170,7 @@ class _SosReceivedState extends ConsumerState<SosReceivedOverlay> {
               TextButton.icon(
                 onPressed: widget.onShowOnMap,
                 icon: const Icon(Icons.map_outlined, size: 20),
-                label: const Text('Toon op kaart'),
+                label: Text(context.l10n.sosShowOnMap),
               ),
             ],
           ),

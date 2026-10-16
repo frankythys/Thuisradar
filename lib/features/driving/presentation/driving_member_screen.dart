@@ -70,7 +70,10 @@ class DrivingMemberScreen extends ConsumerWidget {
       items.add(
         Padding(
           padding: EdgeInsets.only(top: items.isEmpty ? 0 : tokens.spaceMd, bottom: tokens.spaceSm),
-          child: Text(drivingDayLabel(day, now: now), style: Theme.of(context).textTheme.titleLarge),
+          child: Text(
+            drivingDayLabel(context.l10n, day, now: now),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
         ),
       );
       for (final index in shown) {
@@ -105,7 +108,7 @@ class DrivingMemberScreen extends ConsumerWidget {
       body = const Center(child: CircularProgressIndicator());
     } else if (failed) {
       body = ErrorView(
-        message: 'Dagtijdlijn laden mislukt.',
+        message: context.l10n.drivingDayTimelineFailed,
         onRetry: () {
           for (final day in days) {
             ref.invalidate(dayHistoryProvider((userId: member.userId, day: day)));

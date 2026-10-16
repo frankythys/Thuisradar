@@ -1,3 +1,4 @@
+import '../../../l10n/l10n.dart';
 import '../data/emergency_phone.dart';
 import '../domain/emergency_contact.dart';
 
@@ -30,19 +31,29 @@ class EmergencyOutcome {
   final EmergencyContact? manual;
 
   /// Korte uitleg voor de melding, of null zonder noodcontacten.
-  String? get summary {
-    String names(List<EmergencyContact> contacts) => contacts.map((contact) => contact.name).join(' en ');
-    if (manual != null) return "Tik op versturen om ${manual!.name} te sms'en.";
+  String? summary(AppLocalizations l10n) {
+    String names(List<EmergencyContact> contacts) => l10n.joinNames(contacts.map((contact) => contact.name));
+    if (manual != null) return l10n.emergencyTapToSend(manual!.name);
     final parts = [
-      if (texted.isNotEmpty) 'Sms naar ${names(texted)}.',
+      if (texted.isNotEmpty) l10n.emergencySmsTo(names(texted)),
       if (failed.isNotEmpty)
-        noNetwork
-            ? 'Sms naar ${names(failed)} niet verstuurd: geen gsm-netwerk of simkaart.'
-            : 'Sms naar ${names(failed)} mislukt.',
-      if (called != null) 'Nu bellen naar ${called!.name}.',
+        noNetwork ? l10n.emergencySmsNoNetwork(names(failed)) : l10n.emergencySmsFailed(names(failed)),
+      if (called != null) l10n.emergencyCallingNow(called!.name),
     ];
     return parts.isEmpty ? null : parts.join(' ');
   }
+}
+
+/// De sms die de noodcontacten krijgen, met een kaartlink naar de locatie, in
+/// de taal van wie de SOS stuurt.
+String sosSmsText(
+  AppLocalizations l10n, {
+  required String senderName,
+  required double latitude,
+  required double longitude,
+}) {
+  final name = senderName.trim().isEmpty ? l10n.emergencySomeone : senderName.trim();
+  return l10n.emergencySosSms(name, sosMapLink(latitude, longitude));
 }
 
 /// Verwittigt de noodcontacten bij een SOS: eerst een sms naar allemaal, dan
@@ -55,6 +66,7 @@ class EmergencyAlerter {
   final EmergencyPhone _phone;
 
   Future<EmergencyOutcome> alert({
+    required AppLocalizations l10n,
     required List<EmergencyContact> contacts,
     required String senderName,
     required double latitude,
@@ -62,7 +74,7 @@ class EmergencyAlerter {
   }) async {
     final plan = planFor(contacts);
     if (plan.isEmpty) return EmergencyOutcome.none;
-    final text = sosSmsText(senderName: senderName, latitude: latitude, longitude: longitude);
+    final text = sosSmsText(l10n, senderName: senderName, latitude: latitude, longitude: longitude);
     final results = <EmergencyContact, SmsResult>{
       for (final contact in plan.smsTo) contact: await _phone.sendSms(dialablePhone(contact.phone), text),
     };

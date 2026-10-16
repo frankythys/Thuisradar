@@ -7,6 +7,12 @@ import '../domain/device_reading.dart';
 /// foreground service met een vaste melding, zodat hij ook op de achtergrond
 /// blijft werken.
 class DeviceLocationSource {
+  DeviceLocationSource({String Function()? notificationText})
+    : _notificationText = notificationText ?? (() => 'Je locatie wordt gedeeld met je familie');
+
+  /// Tekst van de vaste melding tijdens het delen, in de taal van de app.
+  final String Function() _notificationText;
+
   static const _distanceFilterMeters = 0;
 
   /// Vast meetinterval van de GPS-stroom. Bewust één vaste waarde: de stroom
@@ -74,9 +80,9 @@ class DeviceLocationSource {
         accuracy: LocationAccuracy.high,
         distanceFilter: _distanceFilterMeters,
         intervalDuration: interval,
-        foregroundNotificationConfig: const ForegroundNotificationConfig(
+        foregroundNotificationConfig: ForegroundNotificationConfig(
           notificationTitle: 'CircleBeacon',
-          notificationText: 'Je locatie wordt gedeeld met je familie',
+          notificationText: _notificationText(),
           enableWakeLock: true,
           setOngoing: true,
         ),

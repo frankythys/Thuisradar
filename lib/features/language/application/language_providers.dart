@@ -1,6 +1,9 @@
+import 'dart:ui' show Locale, PlatformDispatcher;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/l10n.dart';
 import '../data/language_store.dart';
 import '../domain/app_language.dart';
 
@@ -27,3 +30,13 @@ class LanguageController extends Notifier<AppLanguage?> {
     }
   }
 }
+
+/// De teksten in de huidige app-taal, voor code zonder [BuildContext]: de
+/// vaste melding tijdens het delen en de namen van de meldingskanalen.
+final appLocalizationsProvider = Provider<AppLocalizations>((ref) {
+  final language = resolveAppLanguage(
+    override: ref.watch(languageOverrideProvider)?.code,
+    deviceLanguages: [for (final locale in PlatformDispatcher.instance.locales) locale.languageCode],
+  );
+  return lookupAppLocalizations(Locale(language.code));
+});

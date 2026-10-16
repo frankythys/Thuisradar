@@ -6,6 +6,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../location/application/location_providers.dart';
 import '../../permissions/application/permissions_providers.dart';
+import '../../../l10n/l10n.dart';
 
 /// Vraagt om de stappenteller van dit toestel aan te zetten, zolang dat nog
 /// niet is gebeurd. Verdwijnt zodra er toestemming is.
@@ -28,9 +29,9 @@ class _StepsOptInCardState extends ConsumerState<StepsOptInCard> {
     if (!granted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Geen toegang tot de stappenteller. Zet "Fysieke activiteit" aan.'),
+          content: Text(context.l10n.drivingStepsDenied),
           action: SnackBarAction(
-            label: 'Instellingen',
+            label: context.l10n.commonSettings,
             onPressed: () => ref.read(permissionServiceProvider).openSettings(),
           ),
         ),
@@ -54,16 +55,16 @@ class _StepsOptInCardState extends ConsumerState<StepsOptInCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Stappen tellen', style: text.titleMedium),
+                  Text(context.l10n.permSteps, style: text.titleMedium),
                   Text(
-                    'Zie bij je wandelingen ook hoeveel stappen je zette.',
+                    context.l10n.drivingStepsHint,
                     style: text.bodySmall?.copyWith(color: AppColors.muted),
                   ),
                 ],
               ),
             ),
             SizedBox(width: tokens.spaceSm),
-            TextButton(onPressed: _busy ? null : _enable, child: const Text('Aanzetten')),
+            TextButton(onPressed: _busy ? null : _enable, child: Text(context.l10n.drivingTurnOn)),
           ],
         ),
       ),

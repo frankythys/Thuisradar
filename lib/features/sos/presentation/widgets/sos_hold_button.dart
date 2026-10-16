@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/sos_alert.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Ronde noodknop in de alarmkleur die je [kSosHoldDuration] moet vasthouden
 /// om af te gaan.
@@ -83,7 +84,7 @@ class _SosHoldButtonState extends State<SosHoldButton> with SingleTickerProvider
 
     return Semantics(
       button: true,
-      label: 'SOS, houd ingedrukt',
+      label: context.l10n.sosHoldLabel,
       child: Listener(
         behavior: HitTestBehavior.opaque,
         onPointerDown: _onDown,
@@ -117,7 +118,7 @@ class _SosHoldButtonState extends State<SosHoldButton> with SingleTickerProvider
                     children: [
                       Text('SOS', style: text.displayLarge?.copyWith(color: onAlert, letterSpacing: 4)),
                       Text(
-                        holding ? 'Blijf vasthouden' : 'Houd ingedrukt',
+                        holding ? context.l10n.sosKeepHolding : context.l10n.sosPressHold,
                         style: text.labelMedium?.copyWith(color: onAlert),
                       ),
                     ],

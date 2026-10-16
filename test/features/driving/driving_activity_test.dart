@@ -1,8 +1,12 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/l10n/l10n.dart';
 import 'package:thuisradar/features/driving/domain/driving_activity.dart';
 import 'package:thuisradar/features/driving/presentation/driving_summary.dart';
 import 'package:thuisradar/features/location/domain/timeline.dart';
 import 'package:thuisradar/features/location/domain/track_point.dart';
+
+final _nl = lookupAppLocalizations(const Locale('nl'));
 
 void main() {
   final day = DateTime(2026, 1, 2);
@@ -153,17 +157,17 @@ void main() {
   });
 
   test('afstand en duur krijgen een leesbare notatie', () {
-    expect(drivingDistance(79), '79 m');
-    expect(drivingDistance(13200), '13,2 km');
-    expect(drivingDistance(null), 'afstand onbekend');
-    expect(drivingDuration(const Duration(hours: 7, minutes: 56)), '7 uur 56 min');
-    expect(drivingDuration(const Duration(minutes: 45)), '45 min');
+    expect(drivingDistance(_nl, 79), '79 m');
+    expect(drivingDistance(_nl, 13200), '13,2 km');
+    expect(drivingDistance(_nl, null), 'afstand onbekend');
+    expect(drivingDuration(_nl, const Duration(hours: 7, minutes: 56)), '7 uur 56 min');
+    expect(drivingDuration(_nl, const Duration(minutes: 45)), '45 min');
   });
 
   test('het daglabel toont Vandaag, Gisteren of de datum', () {
     final now = DateTime(2026, 1, 2, 18);
-    expect(drivingDayLabel(DateTime(2026, 1, 2), now: now), 'Vandaag');
-    expect(drivingDayLabel(DateTime(2026, 1, 1), now: now), 'Gisteren');
-    expect(drivingDayLabel(DateTime(2025, 12, 29), now: now), 'ma 29/12');
+    expect(drivingDayLabel(_nl, DateTime(2026, 1, 2), now: now), 'Vandaag');
+    expect(drivingDayLabel(_nl, DateTime(2026, 1, 1), now: now), 'Gisteren');
+    expect(drivingDayLabel(_nl, DateTime(2025, 12, 29), now: now), 'ma 29/12');
   });
 }

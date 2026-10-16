@@ -91,16 +91,10 @@ EmergencyPlan planFor(List<EmergencyContact> contacts) {
   return EmergencyPlan(smsTo: unique, callTo: unique.firstOrNull);
 }
 
-/// De sms die de noodcontacten krijgen, met een kaartlink naar de locatie.
-/// Een gewone link (geen API): opent op elke telefoon in de kaarten-app.
-String sosSmsText({required String senderName, required double latitude, required double longitude}) {
-  final name = senderName.trim().isEmpty ? 'Iemand van je gezin' : senderName.trim();
-  final lat = latitude.toStringAsFixed(5);
-  final lng = longitude.toStringAsFixed(5);
-  return 'SOS van $name: ik heb hulp nodig. Mijn locatie: '
-      'https://maps.google.com/?q=$lat,$lng '
-      '(automatisch bericht, ik kan misschien niet antwoorden)';
-}
+/// Kaartlink naar de locatie voor de SOS-sms. Een gewone link (geen API):
+/// opent op elke telefoon in de kaarten-app.
+String sosMapLink(double latitude, double longitude) =>
+    'https://maps.google.com/?q=${latitude.toStringAsFixed(5)},${longitude.toStringAsFixed(5)}';
 
 /// Waarom een noodcontact (nog) niet bewaard kan worden.
 enum EmergencyContactProblem { missingName, missingPhone, invalidPhone }

@@ -14,8 +14,12 @@ import '../domain/trip_mode_memory.dart';
 import 'activity_watcher.dart';
 import 'location_tracker.dart';
 import 'tracking_status.dart';
+import '../../language/application/language_providers.dart';
 
-final deviceLocationSourceProvider = Provider<DeviceLocationSource>((ref) => DeviceLocationSource());
+final deviceLocationSourceProvider = Provider<DeviceLocationSource>(
+  (ref) =>
+      DeviceLocationSource(notificationText: () => ref.read(appLocalizationsProvider).locationSharingNotice),
+);
 
 final batterySourceProvider = Provider<BatterySource>((ref) => BatterySource());
 

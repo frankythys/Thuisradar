@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../emergency/application/emergency_providers.dart';
 import '../../../emergency/domain/emergency_contact.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Eén regel onder de ontvangers: welke noodcontacten een sms krijgen en wie
 /// er gebeld wordt. Zonder noodcontacten: waar je ze instelt.
@@ -18,14 +19,14 @@ class SosEmergencyLine extends ConsumerWidget {
     final noSim = ref.watch(emergencySimProvider).value == false;
     final String line;
     if (plan.isEmpty) {
-      line = 'Nog geen noodcontacten · instellen via Profiel';
+      line = context.l10n.sosNoContacts;
     } else if (noSim) {
-      line = 'Deze gsm heeft geen simkaart: geen sms of oproep naar je noodcontacten';
+      line = context.l10n.sosNoSim;
     } else if (!automatic) {
-      line = 'Noodcontact ${plan.callTo!.name}: de sms staat klaar, zelf versturen';
+      line = context.l10n.sosManualContact(plan.callTo!.name);
     } else {
-      final names = plan.smsTo.map((contact) => contact.name).join(' en ');
-      line = 'Ook een sms naar $names · daarna bellen naar ${plan.callTo!.name}';
+      final names = context.l10n.joinNames(plan.smsTo.map((contact) => contact.name));
+      line = context.l10n.sosAlsoSms(names, plan.callTo!.name);
     }
     return Text(
       line,

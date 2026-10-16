@@ -2542,5 +2542,460 @@
   "geofenceNotConfigured": "Zones zijn nog niet ingesteld op de server (migratie 014).",
   "@geofenceNotConfigured": {
     "description": "Banner: zones nog niet op de server."
+  },
+  "locationSharingNotice": "Je locatie wordt gedeeld met je familie",
+  "@locationSharingNotice": {
+    "description": "Vaste melding terwijl de locatie gedeeld wordt."
+  },
+  "channelSos": "SOS-alarmen",
+  "@channelSos": {
+    "description": "Naam van het meldingskanaal SOS."
+  },
+  "channelSosDescription": "Dringende noodoproepen van je gezin",
+  "@channelSosDescription": {
+    "description": "Uitleg bij het meldingskanaal SOS."
+  },
+  "channelPlaces": "Plaatsen",
+  "@channelPlaces": {
+    "description": "Naam van het meldingskanaal plaatsen."
+  },
+  "channelPlacesDescription": "Aankomst en vertrek bij plaatsen",
+  "@channelPlacesDescription": {
+    "description": "Uitleg bij het meldingskanaal plaatsen."
+  },
+  "channelChat": "Chatberichten",
+  "@channelChat": {
+    "description": "Naam van het meldingskanaal chat."
+  },
+  "channelChatDescription": "Nieuwe berichten van je gezin",
+  "@channelChatDescription": {
+    "description": "Uitleg bij het meldingskanaal chat."
+  },
+  "emergencySosSms": "SOS van {name}: ik heb hulp nodig. Mijn locatie: {link} (automatisch bericht, ik kan misschien niet antwoorden)",
+  "@emergencySosSms": {
+    "description": "Sms aan noodcontacten bij een SOS; link = kaartlink.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencySomeone": "Iemand van je gezin",
+  "@emergencySomeone": {
+    "description": "Afzender als je naam leeg is."
+  },
+  "emergencyTapToSend": "Tik op versturen om {name} te sms'en.",
+  "@emergencyTapToSend": {
+    "description": "Na SOS: zelf versturen.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencySmsTo": "Sms naar {names}.",
+  "@emergencySmsTo": {
+    "description": "Na SOS: sms verstuurd.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencySmsNoNetwork": "Sms naar {names} niet verstuurd: geen gsm-netwerk of simkaart.",
+  "@emergencySmsNoNetwork": {
+    "description": "Na SOS: geen netwerk.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencySmsFailed": "Sms naar {names} mislukt.",
+  "@emergencySmsFailed": {
+    "description": "Na SOS: sms mislukt.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencyCallingNow": "Nu bellen naar {name}.",
+  "@emergencyCallingNow": {
+    "description": "Na SOS: nu bellen.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "emergencyAlertFailed": "De noodcontacten verwittigen is niet gelukt.",
+  "@emergencyAlertFailed": {
+    "description": "Na SOS: noodcontacten verwittigen mislukt."
+  },
+  "sosOnMyWayMessage": "Ik ben onderweg om {name} te helpen.",
+  "@sosOnMyWayMessage": {
+    "description": "Chatbericht als je naar iemand toe gaat.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sosFamilyKnows": "Je gezin weet dat je onderweg bent.",
+  "@sosFamilyKnows": {
+    "description": "Melding: gezin weet dat je onderweg bent."
+  },
+  "sosMessageFailed": "Bericht niet verstuurd. Probeer opnieuw.",
+  "@sosMessageFailed": {
+    "description": "Fout: bericht niet verstuurd."
+  },
+  "sosReceiptOnTheWay": "{name} is onderweg",
+  "@sosReceiptOnTheWay": {
+    "description": "Ontvangstbevestiging: onderweg.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sosReceiptSeen": "{name} heeft het gezien",
+  "@sosReceiptSeen": {
+    "description": "Ontvangstbevestiging: gezien.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sosNavigate": "Navigeer",
+  "@sosNavigate": {
+    "description": "Knop: navigeer."
+  },
+  "sosCallName": "Bel {name}",
+  "@sosCallName": {
+    "description": "Knop: iemand bellen.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sosImOnMyWay": "Ik ben onderweg",
+  "@sosImOnMyWay": {
+    "description": "Knop: ik ben onderweg."
+  },
+  "sosShowOnMap": "Toon op kaart",
+  "@sosShowOnMap": {
+    "description": "Knop: toon op kaart."
+  },
+  "sosNeedHelp": "Hulp nodig?",
+  "@sosNeedHelp": {
+    "description": "Kop op het SOS-scherm."
+  },
+  "sosCountingHint": "Per ongeluk? Tik op Annuleren. Anders krijgt je gezin zo een alarm met je locatie.",
+  "@sosCountingHint": {
+    "description": "Uitleg tijdens het aftellen."
+  },
+  "sosHoldHint": "Houd de knop 3 seconden in. Daarna heb je nog 10 seconden om te annuleren.",
+  "@sosHoldHint": {
+    "description": "Uitleg vóór het vasthouden."
+  },
+  "sosCloseCancels": "Sluiten of terug annuleert ook.",
+  "@sosCloseCancels": {
+    "description": "Uitleg: sluiten annuleert."
+  },
+  "sosFalseAlarm": "Vals alarm? Laat los voor de cirkel vol is.",
+  "@sosFalseAlarm": {
+    "description": "Uitleg: vals alarm."
+  },
+  "sosAddressLoading": "Adres opzoeken…",
+  "@sosAddressLoading": {
+    "description": "Adres wordt opgezocht."
+  },
+  "sosAddressUnknown": "Adres onbekend",
+  "@sosAddressUnknown": {
+    "description": "Adres onbekend."
+  },
+  "sosShared": "Gedeeld {when}",
+  "@sosShared": {
+    "description": "Wanneer gedeeld.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "sosButtonTooltip": "SOS-noodbericht",
+  "@sosButtonTooltip": {
+    "description": "Knopuitleg: SOS-noodbericht."
+  },
+  "sosAlarmIn": "Alarm vertrekt over {seconds} seconden",
+  "@sosAlarmIn": {
+    "description": "Schermlezer: alarm vertrekt over x seconden.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "sosAlarmLeaving": "Alarm vertrekt",
+  "@sosAlarmLeaving": {
+    "description": "Label onder het aftelgetal."
+  },
+  "sosNoContacts": "Nog geen noodcontacten · instellen via Profiel",
+  "@sosNoContacts": {
+    "description": "SOS: nog geen noodcontacten."
+  },
+  "sosNoSim": "Deze gsm heeft geen simkaart: geen sms of oproep naar je noodcontacten",
+  "@sosNoSim": {
+    "description": "SOS: geen simkaart."
+  },
+  "sosManualContact": "Noodcontact {name}: de sms staat klaar, zelf versturen",
+  "@sosManualContact": {
+    "description": "SOS: sms staat klaar.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sosAlsoSms": "Ook een sms naar {names} · daarna bellen naar {name}",
+  "@sosAlsoSms": {
+    "description": "SOS: ook sms en bellen.",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sosHoldLabel": "SOS, houd ingedrukt",
+  "@sosHoldLabel": {
+    "description": "Schermlezer: SOS-knop."
+  },
+  "sosKeepHolding": "Blijf vasthouden",
+  "@sosKeepHolding": {
+    "description": "SOS-knop: blijf vasthouden."
+  },
+  "sosPressHold": "Houd ingedrukt",
+  "@sosPressHold": {
+    "description": "SOS-knop: houd ingedrukt."
+  },
+  "sosAt": "Om {clock}",
+  "@sosAt": {
+    "description": "SOS-kop: tijdstip.",
+    "placeholders": {
+      "clock": {
+        "type": "String"
+      }
+    }
+  },
+  "sosBattery": "batterij {level}%",
+  "@sosBattery": {
+    "description": "SOS-kop: batterij.",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "sosEmergencyAlarm": "NOODALARM",
+  "@sosEmergencyAlarm": {
+    "description": "SOS-kop (hoofdletters)."
+  },
+  "sosNeedsHelp": "{name} heeft hulp nodig",
+  "@sosNeedsHelp": {
+    "description": "SOS-kop: iemand heeft hulp nodig.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sosNobody": "Nog niemand in je gezin om te waarschuwen.",
+  "@sosNobody": {
+    "description": "SOS: niemand om te waarschuwen."
+  },
+  "sosGetsAlarm": "Krijgt alarm: ",
+  "@sosGetsAlarm": {
+    "description": "SOS: wie krijgt alarm (gevolgd door namen)."
+  },
+  "drivingTitle": "Onderweg",
+  "@drivingTitle": {
+    "description": "Titel: onderweg."
+  },
+  "drivingLoadFailed": "Het rijoverzicht kon niet worden geladen.",
+  "@drivingLoadFailed": {
+    "description": "Fout: overzicht laden mislukt."
+  },
+  "drivingPerMember": "PER GEZINSLID",
+  "@drivingPerMember": {
+    "description": "Label (hoofdletters): per gezinslid."
+  },
+  "drivingNoMembers": "Er zijn nog geen gezinsleden.",
+  "@drivingNoMembers": {
+    "description": "Geen gezinsleden."
+  },
+  "drivingEstimateNote": "Schatting op basis van de GPS-snelheid. Een trage rit in de file kan als fietsen tellen, openbaar vervoer of meerijden als rit. Rijgedrag (remmen, gsm) wordt nog niet gemeten.",
+  "@drivingEstimateNote": {
+    "description": "Uitleg: schatting op basis van GPS."
+  },
+  "drivingSteps": "{count, plural, =1{{formatted} stap} other{{formatted} stappen}}",
+  "@drivingSteps": {
+    "description": "Aantal stappen (getal al opgemaakt).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "formatted": {
+        "type": "String"
+      }
+    }
+  },
+  "drivingDistanceUnknown": "afstand onbekend",
+  "@drivingDistanceUnknown": {
+    "description": "Afstand onbekend."
+  },
+  "drivingHoursMinutes": "{hours} uur {minutes} min",
+  "@drivingHoursMinutes": {
+    "description": "Duur in uren en minuten (rit).",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "drivingAverage": "gem. {speed} km/u",
+  "@drivingAverage": {
+    "description": "Gemiddelde snelheid.",
+    "placeholders": {
+      "speed": {
+        "type": "String"
+      }
+    }
+  },
+  "drivingWaiting": "{total} · waarvan {waiting} stilstaan of stapvoets",
+  "@drivingWaiting": {
+    "description": "File: duur en hoeveel stilstaan.",
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "waiting": {
+        "type": "String"
+      }
+    }
+  },
+  "drivingMaxSpeed": "max {speed} km/u",
+  "@drivingMaxSpeed": {
+    "description": "Hoogste snelheid.",
+    "placeholders": {
+      "speed": {
+        "type": "int"
+      }
+    }
+  },
+  "drivingOneSpot": "Op één plek",
+  "@drivingOneSpot": {
+    "description": "Op één plek."
+  },
+  "drivingSavePlace": "Plaats opslaan",
+  "@drivingSavePlace": {
+    "description": "Knop: plaats opslaan."
+  },
+  "drivingDayTimelineFailed": "Dagtijdlijn laden mislukt.",
+  "@drivingDayTimelineFailed": {
+    "description": "Fout: dagtijdlijn laden mislukt."
+  },
+  "drivingThisWeek": "Deze week",
+  "@drivingThisWeek": {
+    "description": "Deze week."
+  },
+  "drivingLastWeek": "Vorige week",
+  "@drivingLastWeek": {
+    "description": "Vorige week."
+  },
+  "drivingWeeksAgo": "{weeks} weken geleden",
+  "@drivingWeeksAgo": {
+    "description": "x weken geleden.",
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "drivingWeekBefore": "Week ervoor",
+  "@drivingWeekBefore": {
+    "description": "Knopuitleg: week ervoor."
+  },
+  "drivingWeekAfter": "Week erna",
+  "@drivingWeekAfter": {
+    "description": "Knopuitleg: week erna."
+  },
+  "drivingStepsDenied": "Geen toegang tot de stappenteller. Zet \"Fysieke activiteit\" aan.",
+  "@drivingStepsDenied": {
+    "description": "Fout: geen toegang stappenteller."
+  },
+  "drivingStepsHint": "Zie bij je wandelingen ook hoeveel stappen je zette.",
+  "@drivingStepsHint": {
+    "description": "Uitleg stappen tellen."
+  },
+  "drivingTurnOn": "Aanzetten",
+  "@drivingTurnOn": {
+    "description": "Knop: aanzetten."
+  },
+  "drivingKilometres": "kilometer",
+  "@drivingKilometres": {
+    "description": "Tegel: kilometer."
+  },
+  "drivingAverageSpeed": "km/u gemiddeld",
+  "@drivingAverageSpeed": {
+    "description": "Tegel: gemiddelde snelheid."
+  },
+  "drivingStepsTile": "stappen",
+  "@drivingStepsTile": {
+    "description": "Tegel: stappen."
+  },
+  "drivingWalked": "gewandeld",
+  "@drivingWalked": {
+    "description": "Tegel: gewandeld."
+  },
+  "drivingOnTheMoveTile": "onderweg",
+  "@drivingOnTheMoveTile": {
+    "description": "Tegel: onderweg."
+  },
+  "drivingTopSpeed": "km/u max",
+  "@drivingTopSpeed": {
+    "description": "Tegel: hoogste snelheid."
+  },
+  "drivingTopSpeedBy": "km/u max · {name}",
+  "@drivingTopSpeedBy": {
+    "description": "Tegel: hoogste snelheid met naam.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "drivingHoursShort": "{hours}u{minutes}",
+  "@drivingHoursShort": {
+    "description": "Korte duur in een tegel, bv. 2u05.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
   }
 }

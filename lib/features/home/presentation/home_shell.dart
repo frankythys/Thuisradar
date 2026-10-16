@@ -23,6 +23,7 @@ import '../../places/presentation/places_screen.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/sos_received_overlay.dart';
+import '../../../l10n/l10n.dart';
 
 /// Hoofdframe met de vier tabs. Toont bovenop alles een SOS-overlay zodra een
 /// ander gezinslid een alarm stuurt. Plaatsen/Chat/Meldingen zijn nog lege
@@ -132,6 +133,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     for (final member in members) {
       if (member.userId == userId) return member.displayName;
     }
-    return 'Een gezinslid';
+    return context.l10n.commonSomeone;
   }
 }

@@ -10,10 +10,17 @@ Map<String, dynamic> _arb(String code) =>
 Iterable<String> _keys(Map<String, dynamic> arb) => arb.keys.where((key) => !key.startsWith('@'));
 
 /// `{naam}`-placeholders, bv. `{count}` en `{code}`. Takken van een ICU-keuze
-/// (`1{ma}`, `other{zo}`, `=1{…}`) tellen niet mee: daar staat een woord of `=`
-/// vlak voor de accolade.
-Set<String> _placeholders(String text) =>
-    RegExp(r'(?<![\w=])\{(\w+)[},]').allMatches(text).map((m) => m[1]!).toSet();
+/// (`=1{…}`, `other{…}`, `1{ma}`) tellen niet mee.
+Set<String> _placeholders(String text) {
+  const branches = {'zero', 'one', 'two', 'few', 'many', 'other'};
+  final result = <String>{};
+  for (final match in RegExp(r'\{(\w+)[},]').allMatches(text)) {
+    final before = RegExp(r'(=?\w+)$').firstMatch(text.substring(0, match.start))?[1];
+    final isBranch = before != null && (branches.contains(before) || RegExp(r'^=?\d+$').hasMatch(before));
+    if (!isBranch) result.add(match[1]!);
+  }
+  return result;
+}
 
 void main() {
   final source = _arb('nl');

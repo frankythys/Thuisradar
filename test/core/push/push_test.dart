@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:thuisradar/core/push/push_channels.dart';
 import 'package:thuisradar/core/push/push_gate.dart';
@@ -14,11 +15,13 @@ import 'package:thuisradar/features/auth/application/auth_providers.dart';
 
 class _Push extends Mock implements PushService {}
 
+final _nl = lookupAppLocalizations(const Locale('nl'));
+
 void main() {
   test('SOS heeft eigen alarmtoon, chat een apart meldingskanaal', () {
-    final sos = PushChannels.details('sos');
-    final chat = PushChannels.details('chat');
-    final places = PushChannels.details('place');
+    final sos = PushChannels.details(_nl, 'sos');
+    final chat = PushChannels.details(_nl, 'chat');
+    final places = PushChannels.details(_nl, 'place');
     expect(sos.channelId, 'sos_alerts_v2');
     expect(sos.audioAttributesUsage, AudioAttributesUsage.alarm);
     expect(chat.channelId, isNot(places.channelId));

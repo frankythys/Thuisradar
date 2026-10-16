@@ -16,6 +16,7 @@ import '../../places/domain/place_timeline.dart';
 import '../domain/driving_activity.dart';
 import 'driving_summary.dart';
 import 'travel_mode_filter.dart';
+import '../../../l10n/l10n.dart';
 
 /// Eén activiteit als kaart: een verplaatsing (met de route op een kaart, van
 /// → naar, tijd en afstand; bij een rit de topsnelheid, te voet of met de
@@ -127,7 +128,7 @@ class _TripBody extends StatelessWidget {
         SizedBox(height: tokens.spaceSm),
         Text(
           '${drivingTime(activity.start)} - ${drivingTime(activity.end)}'
-          ' · ${drivingDistance(activity.distanceMeters)}',
+          ' · ${drivingDistance(context.l10n, activity.distanceMeters)}',
           style: text.bodyMedium?.copyWith(color: AppColors.muted),
         ),
         if (activity.mode != TravelMode.car) ...[
@@ -135,9 +136,10 @@ class _TripBody extends StatelessWidget {
           _Detail(
             icon: Icons.schedule,
             text: [
-              drivingDuration(activity.duration),
-              if (activity.averageKmh case final kmh?) 'gem. ${drivingNumber(kmh)} km/u',
-              if (activity.steps case final steps? when steps > 0) drivingSteps(steps),
+              drivingDuration(context.l10n, activity.duration),
+              if (activity.averageKmh case final kmh?)
+                context.l10n.drivingAverage(drivingNumber(context.l10n, kmh)),
+              if (activity.steps case final steps? when steps > 0) drivingSteps(context.l10n, steps),
             ].join(' · '),
           ),
         ] else ...[
@@ -146,9 +148,10 @@ class _TripBody extends StatelessWidget {
             // File: hoe lang van de rit er stilgestaan of aangeschoven werd.
             _Detail(
               icon: Icons.traffic_outlined,
-              text:
-                  '${drivingDuration(activity.duration)} · waarvan ${drivingDuration(waiting)} '
-                  'stilstaan of stapvoets',
+              text: context.l10n.drivingWaiting(
+                drivingDuration(context.l10n, activity.duration),
+                drivingDuration(context.l10n, waiting),
+              ),
             ),
           ],
           if (topSpeed case final speed?) ...[
@@ -158,7 +161,7 @@ class _TripBody extends StatelessWidget {
               children: [
                 const Icon(Icons.speed, size: 16, color: AppColors.muted),
                 const SizedBox(width: 6),
-                Text('max $speed km/u', style: text.labelLarge),
+                Text(context.l10n.drivingMaxSpeed(speed), style: text.labelLarge),
               ],
             ),
           ],
@@ -207,7 +210,7 @@ class _StayBody extends StatelessWidget {
                 places: places,
                 latitude: activity.latitude,
                 longitude: activity.longitude,
-                fallback: 'Op één plek',
+                fallback: context.l10n.drivingOneSpot,
               ),
             ),
             SizedBox(width: tokens.spaceSm),
@@ -225,13 +228,13 @@ class _StayBody extends StatelessWidget {
           children: [
             const Icon(Icons.schedule, size: 16, color: AppColors.muted),
             const SizedBox(width: 6),
-            Text(drivingDuration(activity.duration), style: text.labelLarge),
+            Text(drivingDuration(context.l10n, activity.duration), style: text.labelLarge),
             if (onSaveAsPlace case final save?) ...[
               SizedBox(width: tokens.spaceMd),
               TextButton.icon(
                 onPressed: save,
                 icon: const Icon(Icons.add_location_alt_outlined, size: 18),
-                label: const Text('Plaats opslaan'),
+                label: Text(context.l10n.drivingSavePlace),
               ),
             ],
           ],
@@ -244,30 +247,29 @@ class _StayBody extends StatelessWidget {
 /// Naam van een plek: eerst een eigen plaats, anders het adres van het toestel
 /// (gratis reverse geocoding). Toont [fallback] als er niets bekend is.
 class _PlaceLabel extends ConsumerWidget {
-  const _PlaceLabel({
-    required this.places,
-    required this.latitude,
-    required this.longitude,
-    this.fallback = 'Onbekend',
-  });
+  const _PlaceLabel({required this.places, required this.latitude, required this.longitude, this.fallback});
 
   final List<Place> places;
   final double? latitude;
   final double? longitude;
-  final String fallback;
+
+  /// Null: "Onbekend" in de taal van de app.
+  final String? fallback;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lat = latitude;
     final lng = longitude;
     final style = Theme.of(context).textTheme.titleMedium;
-    if (lat == null || lng == null) return Text(fallback, style: style);
+    if (lat == null || lng == null) return Text(fallback ?? context.l10n.memberUnknownPlace, style: style);
 
     final known = placeNameAt(places, lat, lng);
     if (known != null) return Text(known, style: style);
 
     final address = ref.watch(placeAddressProvider(snapToAddressGrid(lat, lng))).value;
-    final label = address == null || address.isEmpty ? fallback : address.label;
+    final label = address == null || address.isEmpty
+        ? fallback ?? context.l10n.memberUnknownPlace
+        : address.label;
     return Text(label, style: style);
   }
 }

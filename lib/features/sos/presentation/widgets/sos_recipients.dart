@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/widgets/member_avatar.dart';
 import '../../../family/domain/family_member.dart';
+import '../../../../l10n/l10n.dart';
 
 /// Eén regel met wie het alarm krijgt: overlappende avatars + namen.
 class SosRecipients extends StatelessWidget {
@@ -21,7 +22,7 @@ class SosRecipients extends StatelessWidget {
 
     if (members.isEmpty) {
       return Text(
-        'Nog niemand in je gezin om te waarschuwen.',
+        context.l10n.sosNobody,
         style: text.bodyMedium?.copyWith(color: AppColors.muted),
         textAlign: TextAlign.center,
       );
@@ -65,7 +66,7 @@ class SosRecipients extends StatelessWidget {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: 'Krijgt alarm: ',
+                    text: context.l10n.sosGetsAlarm,
                     style: text.bodyMedium?.copyWith(color: AppColors.muted),
                   ),
                   TextSpan(text: names, style: text.titleMedium),

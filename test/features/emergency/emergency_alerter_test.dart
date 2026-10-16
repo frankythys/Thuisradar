@@ -1,10 +1,14 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:thuisradar/features/emergency/application/emergency_alerter.dart';
 import 'package:thuisradar/features/emergency/data/emergency_phone.dart';
 import 'package:thuisradar/features/emergency/domain/emergency_contact.dart';
 
 class _MockPhone extends Mock implements EmergencyPhone {}
+
+final _nl = lookupAppLocalizations(const Locale('nl'));
 
 void main() {
   const oma = EmergencyContact(position: 1, name: 'Oma', phone: '0470 12 34 56');
@@ -31,12 +35,12 @@ void main() {
   });
 
   Future<EmergencyOutcome> alert(List<EmergencyContact> contacts) =>
-      alerter.alert(contacts: contacts, senderName: 'Papa', latitude: 51.0543, longitude: 3.7174);
+      alerter.alert(l10n: _nl, contacts: contacts, senderName: 'Papa', latitude: 51.0543, longitude: 3.7174);
 
   test('automatisch: eerst sms naar allebei, daarna contact 1 bellen', () async {
     final outcome = await alert([jan, oma]);
     expect(log, ['sms 0470123456', 'sms +32471987654', 'bel 0470123456']);
-    expect(outcome.summary, 'Sms naar Oma en Jan. Nu bellen naar Oma.');
+    expect(outcome.summary(_nl), 'Sms naar Oma en Jan. Nu bellen naar Oma.');
     final text = verify(() => phone.sendSms('0470123456', captureAny())).captured.single as String;
     expect(text, contains('SOS van Papa'));
     expect(text, contains('51.05430,3.71740'));
@@ -48,7 +52,7 @@ void main() {
     expect(log, ['open sms 0470123456']);
     verifyNever(() => phone.call(any()));
     expect(outcome.manual, oma);
-    expect(outcome.summary, "Tik op versturen om Oma te sms'en.");
+    expect(outcome.summary(_nl), "Tik op versturen om Oma te sms'en.");
   });
 
   test('bellen lukt niet: de sms is wel vertrokken', () async {
@@ -56,13 +60,13 @@ void main() {
     final outcome = await alert([oma]);
     expect(outcome.texted, [oma]);
     expect(outcome.called, isNull);
-    expect(outcome.summary, 'Sms naar Oma.');
+    expect(outcome.summary(_nl), 'Sms naar Oma.');
   });
 
   test('geen noodcontacten: niets', () async {
     final outcome = await alert(const []);
     expect(log, isEmpty);
-    expect(outcome.summary, isNull);
+    expect(outcome.summary(_nl), isNull);
   });
 
   test('geen simkaart of netwerk: niet doen alsof, en niet bellen', () async {
@@ -71,7 +75,7 @@ void main() {
     verifyNever(() => phone.call(any()));
     verifyNever(() => phone.openSms(any(), any()));
     expect(outcome.texted, isEmpty);
-    expect(outcome.summary, 'Sms naar Oma en Jan niet verstuurd: geen gsm-netwerk of simkaart.');
+    expect(outcome.summary(_nl), 'Sms naar Oma en Jan niet verstuurd: geen gsm-netwerk of simkaart.');
   });
 
   test('één sms mislukt: eerlijk melden, de andere telt wel', () async {
@@ -79,6 +83,6 @@ void main() {
     final outcome = await alert([oma, jan]);
     expect(outcome.texted, [oma]);
     expect(outcome.failed, [jan]);
-    expect(outcome.summary, 'Sms naar Oma. Sms naar Jan mislukt. Nu bellen naar Oma.');
+    expect(outcome.summary(_nl), 'Sms naar Oma. Sms naar Jan mislukt. Nu bellen naar Oma.');
   });
 }
