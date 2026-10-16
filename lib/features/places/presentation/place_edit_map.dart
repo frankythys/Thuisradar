@@ -18,6 +18,7 @@ class PlaceEditMap extends StatelessWidget {
     required this.center,
     required this.radiusMeters,
     required this.onPositionChanged,
+    this.initialZoom = 16,
     this.useGoogleMaps = FeatureFlags.useGoogleMaps,
   });
 
@@ -25,6 +26,9 @@ class PlaceEditMap extends StatelessWidget {
   final LatLng center;
   final double radiusMeters;
   final void Function(MapCamera camera, bool hasGesture) onPositionChanged;
+
+  /// Startzoom; dichterbij (bv. 19) om een auto op de straat te zetten.
+  final double initialZoom;
   final bool useGoogleMaps;
 
   /// Hoe dicht je kan inzoomen om nauwkeurig te plaatsen: OpenStreetMap stopt
@@ -37,7 +41,7 @@ class PlaceEditMap extends StatelessWidget {
       mapController: controller,
       options: MapOptions(
         initialCenter: center,
-        initialZoom: 16,
+        initialZoom: initialZoom,
         minZoom: 3,
         maxZoom: maxZoomFor(google: useGoogleMaps),
         // Met Google eronder: doorzichtig, zodat die ondergrond zichtbaar is.
@@ -52,18 +56,20 @@ class PlaceEditMap extends StatelessWidget {
         if (!useGoogleMaps) const AppMapTiles(),
         // De straal staat altijd rond het midden (onder het kruis), dus ze
         // glijdt niet mee als Google even achterloopt.
-        CircleLayer(
-          circles: [
-            CircleMarker(
-              point: center,
-              radius: radiusMeters,
-              useRadiusInMeter: true,
-              color: AppColors.primary.withValues(alpha: 0.12),
-              borderColor: AppColors.primary,
-              borderStrokeWidth: 2,
-            ),
-          ],
-        ),
+        // Zonder straal (de parkeerplek) geen cirkel.
+        if (radiusMeters > 0)
+          CircleLayer(
+            circles: [
+              CircleMarker(
+                point: center,
+                radius: radiusMeters,
+                useRadiusInMeter: true,
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderColor: AppColors.primary,
+                borderStrokeWidth: 2,
+              ),
+            ],
+          ),
         // Verplichte naamsvermelding van de gratis OpenStreetMap-tegels, klein
         // tussen de sleep-hint (links) en de locatieknop (rechts).
         if (!useGoogleMaps)
@@ -84,7 +90,7 @@ class PlaceEditMap extends StatelessWidget {
       children: [
         // Google volgt de camera van de kaart erboven; alle gebaren blijven daar.
         Positioned.fill(
-          child: GoogleBaseMap(controller: controller, initialCenter: center, initialZoom: 16),
+          child: GoogleBaseMap(controller: controller, initialCenter: center, initialZoom: initialZoom),
         ),
         map,
       ],

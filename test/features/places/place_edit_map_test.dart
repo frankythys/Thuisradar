@@ -52,4 +52,18 @@ void main() {
     expect(map.options.backgroundColor, Colors.transparent);
     expect(map.options.maxZoom, 21);
   });
+
+  test('zonder straal (parkeerplek): geen cirkel, wel dichter ingezoomd', () {
+    final map = PlaceEditMap(
+      controller: controller,
+      center: const LatLng(51.0, 4.0),
+      radiusMeters: 0,
+      initialZoom: 18,
+      onPositionChanged: (_, _) {},
+      useGoogleMaps: false,
+    ).build(_Context()) as FlutterMap;
+
+    expect(map.children.whereType<CircleLayer>(), isEmpty);
+    expect(map.options.initialZoom, 18);
+  });
 }

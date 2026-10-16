@@ -600,5 +600,5 @@
   "parkedCarDeleteAction": "Remove parking spot",
   "parkedCarSaved": "Parking spot saved.",
   "parkedCarRemoved": "Parking spot removed.",
-  "parkedCarNoLocation": "Your current location is not accurate enough. Try again outdoors."
+  "parkedCarPickHint": "Drag the map until the crosshair is on your car."
 }

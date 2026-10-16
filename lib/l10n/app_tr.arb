@@ -600,5 +600,5 @@
   "parkedCarDeleteAction": "Park yerini kaldır",
   "parkedCarSaved": "Park yeri kaydedildi.",
   "parkedCarRemoved": "Park yeri kaldırıldı.",
-  "parkedCarNoLocation": "Mevcut konumun yeterince doğru değil. Dışarıda tekrar dene."
+  "parkedCarPickHint": "Artı işareti arabanın üzerine gelene kadar haritayı sürükle."
 }

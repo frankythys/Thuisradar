@@ -22,3 +22,15 @@ class ParkedCar {
   final double longitude;
   final DateTime parkedAt;
 }
+
+/// Waar het kaartje om de auto te plaatsen begint: de bestaande parkeerplek,
+/// anders een verse GPS-meting, anders de laatst gedeelde locatie. Null als
+/// er niets bekend is (dan begint de kaart op een standaardplek).
+({double latitude, double longitude})? parkedCarStartPoint({
+  ParkedCar? existing,
+  ({double latitude, double longitude})? fresh,
+  ({double latitude, double longitude})? lastShared,
+}) {
+  if (existing != null) return (latitude: existing.latitude, longitude: existing.longitude);
+  return fresh ?? lastShared;
+}

@@ -600,5 +600,5 @@
   "parkedCarDeleteAction": "Parkplatz entfernen",
   "parkedCarSaved": "Parkplatz gespeichert.",
   "parkedCarRemoved": "Parkplatz entfernt.",
-  "parkedCarNoLocation": "Dein aktueller Standort ist nicht genau genug. Versuche es draußen erneut."
+  "parkedCarPickHint": "Verschiebe die Karte, bis das Kreuz auf deinem Auto liegt."
 }

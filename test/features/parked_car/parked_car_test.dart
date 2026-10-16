@@ -18,4 +18,29 @@ void main() {
     expect(car.longitude, 3.8);
     expect(car.parkedAt, parkedAt.toLocal());
   });
+
+  group('parkedCarStartPoint', () {
+    final car = ParkedCar(
+      userId: 'u',
+      familyId: 'f',
+      latitude: 51.1,
+      longitude: 4.1,
+      parkedAt: DateTime(2026, 10, 16),
+    );
+    const fresh = (latitude: 51.2, longitude: 4.2);
+    const shared = (latitude: 51.3, longitude: 4.3);
+
+    test('een bestaande parkeerplek gaat voor', () {
+      expect(parkedCarStartPoint(existing: car, fresh: fresh, lastShared: shared), (
+        latitude: 51.1,
+        longitude: 4.1,
+      ));
+    });
+
+    test('anders een verse GPS-meting, dan de laatst gedeelde locatie', () {
+      expect(parkedCarStartPoint(fresh: fresh, lastShared: shared), fresh);
+      expect(parkedCarStartPoint(lastShared: shared), shared);
+      expect(parkedCarStartPoint(), isNull);
+    });
+  });
 }

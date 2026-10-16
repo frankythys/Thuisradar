@@ -2999,24 +2999,48 @@
     }
   },
   "parkedCarTitle": "Waar staat mijn auto?",
-  "@parkedCarTitle": {"description": "Titel van de kaart om de parkeerplek van de auto op te slaan of te bekijken."},
+  "@parkedCarTitle": {
+    "description": "Titel van de kaart om de parkeerplek van de auto op te slaan of te bekijken."
+  },
   "parkedCarInfo": "Sla hier je parkeerplek op. Je gezin kan de markering op de kaart zien.",
-  "@parkedCarInfo": {"description": "Uitleg bij de parkeerplekkaart."},
+  "@parkedCarInfo": {
+    "description": "Uitleg bij de parkeerplekkaart."
+  },
   "parkedCarLastSaved": "Laatst opgeslagen: {time}",
-  "@parkedCarLastSaved": {"description": "Toont wanneer de parkeerplek voor het laatst is opgeslagen.", "placeholders": {"time": {"type": "String"}}},
+  "@parkedCarLastSaved": {
+    "description": "Toont wanneer de parkeerplek voor het laatst is opgeslagen.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "parkedCarSaveAction": "Auto hier opslaan",
-  "@parkedCarSaveAction": {"description": "Actie om de huidige locatie als parkeerplek op te slaan."},
+  "@parkedCarSaveAction": {
+    "description": "Actie om de huidige locatie als parkeerplek op te slaan."
+  },
   "parkedCarUpdateAction": "Parkeerplek bijwerken",
-  "@parkedCarUpdateAction": {"description": "Actie om de opgeslagen parkeerplek bij te werken."},
+  "@parkedCarUpdateAction": {
+    "description": "Actie om de opgeslagen parkeerplek bij te werken."
+  },
   "parkedCarShowAction": "Auto op de kaart tonen",
-  "@parkedCarShowAction": {"description": "Actie om de kaart naar de opgeslagen auto te verplaatsen."},
+  "@parkedCarShowAction": {
+    "description": "Actie om de kaart naar de opgeslagen auto te verplaatsen."
+  },
   "parkedCarDeleteAction": "Parkeerplek verwijderen",
-  "@parkedCarDeleteAction": {"description": "Actie om de opgeslagen parkeerplek te verwijderen."},
+  "@parkedCarDeleteAction": {
+    "description": "Actie om de opgeslagen parkeerplek te verwijderen."
+  },
   "parkedCarSaved": "Parkeerplek opgeslagen.",
-  "@parkedCarSaved": {"description": "Bevestiging dat de parkeerplek is opgeslagen."},
+  "@parkedCarSaved": {
+    "description": "Bevestiging dat de parkeerplek is opgeslagen."
+  },
   "parkedCarRemoved": "Parkeerplek verwijderd.",
-  "@parkedCarRemoved": {"description": "Bevestiging dat de parkeerplek is verwijderd."},
-  "parkedCarNoLocation": "Je huidige locatie is niet nauwkeurig genoeg. Probeer het buiten opnieuw.",
-  "@parkedCarNoLocation": {"description": "Melding wanneer de huidige GPS-locatie onvoldoende nauwkeurig is."}
-
+  "@parkedCarRemoved": {
+    "description": "Bevestiging dat de parkeerplek is verwijderd."
+  },
+  "parkedCarPickHint": "Sleep de kaart tot het kruis op je auto staat.",
+  "@parkedCarPickHint": {
+    "description": "Uitleg bovenaan het kaartje om de auto zelf te plaatsen."
+  }
 }
