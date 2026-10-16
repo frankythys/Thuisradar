@@ -561,6 +561,8 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           imageKey: (
             Theme.of(context),
             MediaQuery.textScalerOf(context),
+            // Andere taal → ballon opnieuw tekenen.
+            Localizations.maybeLocaleOf(context),
             status.state,
             status.mode,
             status.speedKmh,
