@@ -593,7 +593,7 @@
   "drivingHoursShort": "{hours}h{minutes}",
   "parkedCarTitle": "¿Dónde está mi coche?",
   "parkedCarInfo": "Guarda aquí el lugar donde aparcaste. Tu familia verá el marcador en el mapa.",
-  "parkedCarLastSaved": "Última vez guardado: {time}",
+  "parkedCarLastSaved": "Guardado por última vez: {time}",
   "parkedCarSaveAction": "Guardar coche aquí",
   "parkedCarUpdateAction": "Actualizar lugar de aparcamiento",
   "parkedCarShowAction": "Mostrar coche en el mapa",

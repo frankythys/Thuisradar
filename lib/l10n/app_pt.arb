@@ -591,14 +591,14 @@
   "drivingTopSpeed": "km/h máx.",
   "drivingTopSpeedBy": "km/h máx. · {name}",
   "drivingHoursShort": "{hours}h{minutes}",
-  "parkedCarTitle": "Onde está o meu carro?",
-  "parkedCarInfo": "Guarde aqui o local onde estacionou. A sua família poderá ver o marcador no mapa.",
-  "parkedCarLastSaved": "Última vez guardado: {time}",
-  "parkedCarSaveAction": "Guardar carro aqui",
+  "parkedCarTitle": "Onde está meu carro?",
+  "parkedCarInfo": "Salve aqui o local onde você estacionou. Sua família poderá ver o marcador no mapa.",
+  "parkedCarLastSaved": "Salvo por último: {time}",
+  "parkedCarSaveAction": "Salvar carro aqui",
   "parkedCarUpdateAction": "Atualizar estacionamento",
   "parkedCarShowAction": "Mostrar carro no mapa",
   "parkedCarDeleteAction": "Remover estacionamento",
-  "parkedCarSaved": "Local de estacionamento guardado.",
+  "parkedCarSaved": "Local de estacionamento salvo.",
   "parkedCarRemoved": "Local de estacionamento removido.",
-  "parkedCarNoLocation": "A sua localização atual não é suficientemente precisa. Tente novamente no exterior."
+  "parkedCarNoLocation": "Sua localização atual não é precisa o suficiente. Tente novamente ao ar livre."
 }
