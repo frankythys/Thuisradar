@@ -13,6 +13,7 @@ import '../../../parked_car/domain/parked_car.dart';
 import '../../domain/map_focus.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
+import 'place_radius_layer.dart';
 import 'google_base_map.dart';
 import 'google_map_stack.dart';
 import 'map_gestures.dart';
@@ -137,19 +138,7 @@ class FamilyMap extends StatelessWidget {
         if (!useGoogleMaps) const AppMapTiles(),
         // Met Google Maps tekent Google de plaatsen zelf (zie GoogleBaseMap).
         if (places.isNotEmpty && !useGoogleMaps) ...[
-          CircleLayer(
-            circles: [
-              for (final place in places)
-                CircleMarker(
-                  point: LatLng(place.latitude, place.longitude),
-                  radius: place.radiusMeters.toDouble(),
-                  useRadiusInMeter: true,
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderColor: AppColors.primary.withValues(alpha: 0.5),
-                  borderStrokeWidth: 1.5,
-                ),
-            ],
-          ),
+          PlaceRadiusLayer(places: places),
           MarkerLayer(
             markers: [
               for (final place in places)

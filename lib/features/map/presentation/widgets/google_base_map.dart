@@ -12,6 +12,7 @@ import '../../../places/domain/place.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../../places/presentation/place_images.dart';
 import '../../domain/google_camera.dart';
+import '../../domain/place_radius.dart';
 import '../../domain/map_style.dart';
 import 'google_member_markers.dart';
 import 'google_place_overlays.dart';
@@ -91,8 +92,12 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     _events = widget.controller.mapEventStream.listen((event) {
       final camera = event.camera;
       final before = showsSatellite(choice: widget.satellite, zoom: _zoom);
+      final radiusBefore = showsPlaceRadius(_zoom);
       _zoom = camera.zoom;
-      if (showsSatellite(choice: widget.satellite, zoom: _zoom) != before && mounted) setState(() {});
+      final changed =
+          showsSatellite(choice: widget.satellite, zoom: _zoom) != before ||
+          showsPlaceRadius(_zoom) != radiusBefore;
+      if (changed && mounted) setState(() {});
       _wanted = (
         latitude: camera.center.latitude,
         longitude: camera.center.longitude,
@@ -234,11 +239,14 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
         zoom: widget.initialZoom,
       ),
       mapType: showsSatellite(choice: widget.satellite, zoom: _zoom) ? gm.MapType.hybrid : gm.MapType.normal,
-      circles: placeCircles(
-        widget.places,
-        color: AppColors.primary,
-        pixelRatio: MediaQuery.devicePixelRatioOf(context),
-      ),
+      // De straal pas ver ingezoomd; uitgezoomd enkel het icoon.
+      circles: showsPlaceRadius(_zoom)
+          ? placeCircles(
+              widget.places,
+              color: AppColors.primary,
+              pixelRatio: MediaQuery.devicePixelRatioOf(context),
+            )
+          : const {},
       markers: {...placeMarkers(widget.places, _icons), ..._memberMarkers},
       padding: EdgeInsets.only(bottom: widget.bottomPadding),
       // Alle bediening zit in de kaart erboven.

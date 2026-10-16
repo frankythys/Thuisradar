@@ -9,6 +9,7 @@ import 'package:thuisradar/features/map/presentation/widgets/google_base_map.dar
 import 'package:thuisradar/features/map/presentation/widgets/google_map_stack.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_gestures.dart';
 import 'package:thuisradar/features/map/presentation/widgets/map_marker_spec.dart';
+import 'package:thuisradar/features/map/presentation/widgets/place_radius_layer.dart';
 import 'package:thuisradar/features/places/domain/place.dart';
 import 'package:thuisradar/shared/widgets/app_map_tiles.dart';
 
@@ -50,7 +51,7 @@ void main() {
   test('vlag uit (standaard): gewone OpenStreetMap-kaart zoals voorheen', () {
     final map = _unwrap(familyMap(google: false).build(_Context()));
     expect(map.children.whereType<AppMapTiles>(), hasLength(1));
-    expect(map.children.whereType<CircleLayer>(), hasLength(1));
+    expect(map.children.whereType<PlaceRadiusLayer>(), hasLength(1));
     expect(map.options.backgroundColor, const MapOptions().backgroundColor);
     expect(map.options.maxZoom, 18);
   });
@@ -82,7 +83,7 @@ void main() {
     final (:google, :map) = googleParts();
 
     expect(google.places.single.id, 'thuis');
-    expect(map.children.whereType<CircleLayer>(), isEmpty);
+    expect(map.children.whereType<PlaceRadiusLayer>(), isEmpty);
     expect(map.children.whereType<MarkerLayer>(), isEmpty);
     expect(map.children.whereType<ClusteredMarkerLayer>().single.onNativeMarkers, isNotNull);
   });
