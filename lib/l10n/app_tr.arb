@@ -590,5 +590,15 @@
   "drivingOnTheMoveTile": "yolda",
   "drivingTopSpeed": "km/sa maks.",
   "drivingTopSpeedBy": "km/sa maks. · {name}",
-  "drivingHoursShort": "{hours}sa{minutes}"
+  "drivingHoursShort": "{hours}sa{minutes}",
+  "parkedCarTitle": "Arabam nerede?",
+  "parkedCarInfo": "Park ettiğin yeri buraya kaydet. Ailen haritadaki işareti görebilir.",
+  "parkedCarLastSaved": "Son kaydedilme: {time}",
+  "parkedCarSaveAction": "Arabayı buraya kaydet",
+  "parkedCarUpdateAction": "Park yerini güncelle",
+  "parkedCarShowAction": "Arabayı haritada göster",
+  "parkedCarDeleteAction": "Park yerini kaldır",
+  "parkedCarSaved": "Park yeri kaydedildi.",
+  "parkedCarRemoved": "Park yeri kaldırıldı.",
+  "parkedCarNoLocation": "Mevcut konumun yeterince doğru değil. Dışarıda tekrar dene."
 }

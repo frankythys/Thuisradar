@@ -6,9 +6,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/utils/geo.dart';
+import '../../../../core/theme/app_tokens.dart';
 
 import '../../../places/domain/place_status.dart';
 import '../../../location/domain/trip_status.dart';
+import '../../../parked_car/domain/parked_car.dart';
 import '../../domain/bubble_layout.dart';
 import '../../domain/bubble_side.dart';
 import '../../domain/colocated_anchor.dart';
@@ -25,6 +27,7 @@ import 'member_marker.dart';
 import 'member_history_bubble.dart';
 import 'walker_marker_spec.dart';
 import 'walking_gif_frames.dart';
+import '../../../parked_car/presentation/parked_car_marker.dart';
 import '../../../../l10n/l10n.dart';
 
 typedef _Coord = ({double lat, double lng});
@@ -47,6 +50,9 @@ class ClusteredMarkerLayer extends StatefulWidget {
     this.myUserId,
     this.onHistory,
     this.reservedPlaces = const [],
+    this.parkedCars = const [],
+    this.onParkedCarTap,
+    this.memberNames = const {},
     this.onNativeMarkers,
   });
 
@@ -60,6 +66,9 @@ class ClusteredMarkerLayer extends StatefulWidget {
   final String? myUserId;
   final ValueChanged<MemberOnMap>? onHistory;
   final List<LatLng> reservedPlaces;
+  final List<ParkedCar> parkedCars;
+  final ValueChanged<ParkedCar>? onParkedCarTap;
+  final Map<String, String> memberNames;
 
   /// Met Google Maps: de markers gaan als afbeelding naar Google (die ze vast
   /// aan de kaart tekent); deze laag toont dan enkel onzichtbare tikvlakken.
@@ -263,6 +272,26 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
     });
 
     final markers = <MapMarkerSpec>[];
+    for (final car in widget.parkedCars) {
+      final tokens = context.tokens;
+      final name = widget.memberNames[car.userId] ?? context.l10n.commonMember;
+      markers.add(
+        MapMarkerSpec(
+          id: 'parked_car_${car.userId}',
+          point: LatLng(car.latitude, car.longitude),
+          width: tokens.spaceXxl * 2 + tokens.spaceMd + tokens.spaceSm,
+          height: tokens.spaceXxl + tokens.spaceMd + tokens.spaceSm,
+          alignment: Alignment.bottomCenter,
+          onTap: widget.onParkedCarTap == null ? null : () => widget.onParkedCarTap!(car),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onParkedCarTap == null ? null : () => widget.onParkedCarTap!(car),
+            child: ParkedCarMarker(name: name),
+          ),
+          imageKey: name,
+        ),
+      );
+    }
     // Sneakers boven de Google-kaart: gaan niet naar Google (zie walkerOverlaySpec).
     final walkerOverlays = <MapMarkerSpec>[];
     final placePoints = [for (final place in widget.reservedPlaces) camera.latLngToScreenOffset(place)];

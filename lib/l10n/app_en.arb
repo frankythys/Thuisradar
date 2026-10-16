@@ -590,5 +590,15 @@
   "drivingOnTheMoveTile": "on the move",
   "drivingTopSpeed": "km/h max",
   "drivingTopSpeedBy": "km/h max · {name}",
-  "drivingHoursShort": "{hours}h{minutes}"
+  "drivingHoursShort": "{hours}h{minutes}",
+  "parkedCarTitle": "Where is my car?",
+  "parkedCarInfo": "Save your parking spot here. Your family can see the pin on the map.",
+  "parkedCarLastSaved": "Last saved: {time}",
+  "parkedCarSaveAction": "Save car here",
+  "parkedCarUpdateAction": "Update parking spot",
+  "parkedCarShowAction": "Show car on map",
+  "parkedCarDeleteAction": "Remove parking spot",
+  "parkedCarSaved": "Parking spot saved.",
+  "parkedCarRemoved": "Parking spot removed.",
+  "parkedCarNoLocation": "Your current location is not accurate enough. Try again outdoors."
 }

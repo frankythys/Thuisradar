@@ -590,5 +590,15 @@
   "drivingOnTheMoveTile": "en camino",
   "drivingTopSpeed": "km/h máx.",
   "drivingTopSpeedBy": "km/h máx. · {name}",
-  "drivingHoursShort": "{hours}h{minutes}"
+  "drivingHoursShort": "{hours}h{minutes}",
+  "parkedCarTitle": "¿Dónde está mi coche?",
+  "parkedCarInfo": "Guarda aquí el lugar donde aparcaste. Tu familia verá el marcador en el mapa.",
+  "parkedCarLastSaved": "Última vez guardado: {time}",
+  "parkedCarSaveAction": "Guardar coche aquí",
+  "parkedCarUpdateAction": "Actualizar lugar de aparcamiento",
+  "parkedCarShowAction": "Mostrar coche en el mapa",
+  "parkedCarDeleteAction": "Eliminar lugar de aparcamiento",
+  "parkedCarSaved": "Lugar de aparcamiento guardado.",
+  "parkedCarRemoved": "Lugar de aparcamiento eliminado.",
+  "parkedCarNoLocation": "Tu ubicación actual no es lo bastante precisa. Inténtalo de nuevo al aire libre."
 }

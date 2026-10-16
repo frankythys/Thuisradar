@@ -9,6 +9,7 @@ import '../../../places/domain/place.dart';
 import '../../../places/domain/place_status.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../../places/presentation/place_images.dart';
+import '../../../parked_car/domain/parked_car.dart';
 import '../../domain/map_focus.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
@@ -29,6 +30,8 @@ class FamilyMap extends StatelessWidget {
     required this.onMemberTap,
     required this.onGroupTap,
     this.places = const [],
+    this.parkedCars = const [],
+    this.onParkedCarTap,
     this.placeByUser = const {},
     this.stationarySinceByUser = const {},
     this.selectedUserId,
@@ -51,6 +54,8 @@ class FamilyMap extends StatelessWidget {
   final MapController controller;
   final List<MemberOnMap> members;
   final List<Place> places;
+  final List<ParkedCar> parkedCars;
+  final ValueChanged<ParkedCar>? onParkedCarTap;
   final Map<String, PlaceStatus> placeByUser;
   final Map<String, DateTime> stationarySinceByUser;
   final DateTime now;
@@ -170,6 +175,9 @@ class FamilyMap extends StatelessWidget {
             for (final place in places)
               if (place.icon == 'home') LatLng(place.latitude, place.longitude),
           ],
+          parkedCars: parkedCars,
+          onParkedCarTap: onParkedCarTap,
+          memberNames: {for (final member in members) member.member.userId: member.member.displayName},
           members: membersToShow(members, selectedUserId),
           now: now,
           placeByUser: placeByUser,

@@ -29,6 +29,9 @@ import '../../places/application/places_providers.dart';
 import '../../places/domain/place.dart';
 import '../../places/presentation/add_place_screen.dart';
 import '../../places/presentation/places_screen.dart';
+import '../../parked_car/application/parked_car_providers.dart';
+import '../../parked_car/domain/parked_car.dart';
+import '../../parked_car/presentation/parked_car_map_action.dart';
 import '../../sos/application/sos_providers.dart';
 import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/sos_screen.dart';
@@ -153,6 +156,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Tik op de groepsachtergrond behoudt zowel de selectie als de zoom.
   void _onGroupTap(LatLng center) {
     _autoFit.lock();
+  }
+
+  void _showParkedCar(ParkedCar car) {
+    _autoFit.lock();
+    _mapController.move(LatLng(car.latitude, car.longitude), _memberZoom);
   }
 
   void _deselect() {
@@ -303,6 +311,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final noLocations = membersAsync.hasValue && members.every((m) => m.location == null);
     final offline = trackingStatus == TrackingStatus.offline;
     final places = ref.watch(familyPlacesProvider(familyId)).value ?? const <Place>[];
+    final parkedCars = ref.watch(familyParkedCarsProvider(familyId)).value ?? const <ParkedCar>[];
     final placeByUser = ref.watch(currentPlaceByUserProvider(familyId));
     final stationarySinceByUser = ref.watch(stationarySinceProvider(familyId));
 
@@ -345,6 +354,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             controller: _mapController,
             members: members,
             places: places,
+            parkedCars: parkedCars,
+            onParkedCarTap: _showParkedCar,
             placeByUser: placeByUser,
             stationarySinceByUser: stationarySinceByUser,
             now: now,
@@ -379,6 +390,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       onPressed: () {
                         _fit(members, deliberate: true);
                       },
+                    ),
+                  ),
+                  Positioned(
+                    right: 16,
+                    bottom: base + (48 + 12) * (FeatureFlags.useGoogleMaps ? 3 : 2),
+                    child: ParkedCarMapAction(
+                      familyId: familyId,
+                      parkedCars: parkedCars,
+                      onShowCar: _showParkedCar,
                     ),
                   ),
                   if (FeatureFlags.useGoogleMaps)

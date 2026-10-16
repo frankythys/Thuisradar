@@ -590,5 +590,15 @@
   "drivingOnTheMoveTile": "in movimento",
   "drivingTopSpeed": "km/h max",
   "drivingTopSpeedBy": "km/h max · {name}",
-  "drivingHoursShort": "{hours}h{minutes}"
+  "drivingHoursShort": "{hours}h{minutes}",
+  "parkedCarTitle": "Dov’è la mia auto?",
+  "parkedCarInfo": "Salva qui il punto in cui hai parcheggiato. La tua famiglia può vedere il segnaposto sulla mappa.",
+  "parkedCarLastSaved": "Ultimo salvataggio: {time}",
+  "parkedCarSaveAction": "Salva qui l’auto",
+  "parkedCarUpdateAction": "Aggiorna il parcheggio",
+  "parkedCarShowAction": "Mostra l’auto sulla mappa",
+  "parkedCarDeleteAction": "Rimuovi il parcheggio",
+  "parkedCarSaved": "Parcheggio salvato.",
+  "parkedCarRemoved": "Parcheggio rimosso.",
+  "parkedCarNoLocation": "La tua posizione attuale non è abbastanza precisa. Riprova all’aperto."
 }
