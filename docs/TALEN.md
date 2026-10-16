@@ -35,7 +35,15 @@ Doel: bij beta/launch een veel groter publiek bereiken. Alles hieronder is grati
 `main.dart` leest de keuze vóór de eerste frame, zodat de app niet eerst in de
 toesteltaal flitst. `flutter pub get` / `run` / `test` genereren de code opnieuw.
 
-**Al omgezet:** onderste navigatie, het profielscherm, de taalkeuze.
+**Al omgezet (16/10):** alle schermen van de app — navigatie, profiel, gezin,
+noodcontacten, inloggen en vergrendeling, introductie, toestemmingen, kaart,
+gezinslid-detail, plaatsen, meldingen, chat, SOS en onderweg — plus tijd/afstand,
+de sms aan noodcontacten, de vaste melding tijdens het delen en de namen van de
+meldingskanalen (via `appLocalizationsProvider`, ook buiten widgets).
+
+**Bewust Nederlands:** het interne locatiediagnose-logboek (voor de ontwikkelaar)
+en `debugPrint`-regels. **Nog Nederlands:** pushmeldingen die de server stuurt
+(fase 4) en serverfouten die de app niet herkent.
 
 ### Een tekst toevoegen of omzetten
 
@@ -54,7 +62,7 @@ sleutel mist, een tekst leeg is of placeholders anders zijn.
 
 ### Fase 1 — Fundament ✅
 
-### Fase 2 — App-teksten per feature (±700 teksten)
+### Fase 2 — App-teksten per feature ✅
 
 Eén commit per feature, in volgorde van wat een nieuwe gebruiker eerst ziet:
 
@@ -69,7 +77,7 @@ Eén commit per feature, in volgorde van wat een nieuwe gebruiker eerst ziet:
 Bestaande widgettests blijven Nederlands (terugval van `context.l10n`); per feature
 één extra test in een andere taal volstaat.
 
-### Fase 3 — Teksten buiten widgets
+### Fase 3 — Teksten buiten widgets ✅ (op adressen/geocoder na)
 
 - **`domain/` blijft puur Dart.** Teksten in `trip_status.dart`,
   `diagnostic_tally.dart` e.d. worden een waarde of enum; `presentation/` maakt er
