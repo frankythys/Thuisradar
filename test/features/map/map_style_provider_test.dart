@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:thuisradar/features/map/application/map_style_provider.dart';
 import 'package:thuisradar/features/map/domain/map_style.dart';
@@ -38,6 +39,7 @@ void main() {
     bool? chosen;
     await tester.pumpWidget(
       MaterialApp(
+        theme: AppTheme.light(),
         home: Stack(
           children: [
             FlutterMap(

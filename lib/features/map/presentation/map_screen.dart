@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/clock.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../auth/application/auth_providers.dart';
@@ -392,9 +393,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       },
                     ),
                   ),
+                  // Van onder naar boven: centreren, auto, kaarttype, kompas
+                  // (dat laatste enkel zichtbaar als de kaart gedraaid is).
                   Positioned(
                     right: 16,
-                    bottom: base + (48 + 12) * (FeatureFlags.useGoogleMaps ? 3 : 2),
+                    bottom: base + 48 + 12,
                     child: ParkedCarMapAction(
                       familyId: familyId,
                       parkedCars: parkedCars,
@@ -404,7 +407,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   if (FeatureFlags.useGoogleMaps)
                     Positioned(
                       right: 16,
-                      bottom: base + 48 + 12,
+                      bottom: base + (48 + 12) * 2,
                       child: MapStyleButton(
                         controller: _mapController,
                         choice: ref.watch(mapSatelliteProvider),
@@ -413,7 +416,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                   Positioned(
                     right: 16,
-                    bottom: base + (48 + 12) * (FeatureFlags.useGoogleMaps ? 2 : 1),
+                    bottom: base + (48 + 12) * (FeatureFlags.useGoogleMaps ? 3 : 2),
                     child: MapCompassButton(controller: _mapController),
                   ),
                 ],

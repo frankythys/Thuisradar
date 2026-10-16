@@ -9,7 +9,10 @@ class _RecenterButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      shape: const CircleBorder(),
+      // Blauwe rand in de kleur van de app (zelfde als de auto- en kaartknop).
+      shape: CircleBorder(
+        side: BorderSide(color: AppColors.primary, width: context.tokens.spaceXs / 2),
+      ),
       elevation: 3,
       shadowColor: const Color(0x33121C1C),
       child: InkWell(
