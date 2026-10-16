@@ -45,11 +45,19 @@ class MotionFilter {
   /// Onder deze GPS-snelheid (m/s, ±1 km/u) staat een voertuig echt stil.
   static const _surelyStillMps = 0.3;
 
+  /// Stop-and-go: kort na een rit bewijst één meting vanaf [_restartMps]
+  /// (5,4 km/u) mét verplaatsing en een nauwkeurige fix al het vertrek. Zo
+  /// toont de kaart na een rood licht ±5 s sneller weer "rijdt".
+  static const _restartWindow = Duration(minutes: 3);
+  static const _restartMps = 1.5;
+  static const _restartAccuracyMeters = 20.0;
+
   DevicePosition? _previous;
   DevicePosition? _motionOrigin;
   int _movingSamples = 0;
   int _stillSamples = 0;
   bool? _moving;
+  DateTime? _lastMovingAt;
 
   bool get wantsFastUpdates => _moving == true || _movingSamples > 0;
 
@@ -95,6 +103,7 @@ class MotionFilter {
       _motionOrigin = null;
       _moving = null;
       _movingSamples = _stillSamples = 0;
+      _lastMovingAt = null;
     }
     final distance = previous == null
         ? null
@@ -142,8 +151,18 @@ class MotionFilter {
     } else if (speed >= kMovingSpeedMps) {
       _movingSamples++;
       _stillSamples = 0;
+      final lastMovingAt = _lastMovingAt;
+      final restart =
+          _moving == false &&
+          lastMovingAt != null &&
+          point.timestamp.difference(lastMovingAt) <= _restartWindow &&
+          speed >= _restartMps &&
+          accuracy != null &&
+          accuracy <= _restartAccuracyMeters &&
+          distance != null &&
+          distance >= speed * seconds! * 0.5;
       // Twee metingen én echte verplaatsing, ook bij een GPS-snelheid.
-      if (_movingSamples >= 2 && movedFromOrigin > originUncertainty) _moving = true;
+      if (restart || (_movingSamples >= 2 && movedFromOrigin > originUncertainty)) _moving = true;
     } else if (speed <= 0.8) {
       _stillSamples++;
       _movingSamples = 0;
@@ -157,6 +176,7 @@ class MotionFilter {
       _movingSamples = _stillSamples = 0;
     }
     _previous = point;
+    if (_moving == true) _lastMovingAt = point.timestamp;
     // Null betekent onbekend; nul bevestigd stilstaand; positief onderweg.
     final reportedSpeed = _moving == false
         ? 0.0

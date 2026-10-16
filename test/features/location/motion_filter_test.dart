@@ -50,6 +50,41 @@ void main() {
     expect(crawl.accept(pos(51.0005, 3, later, accuracy: 5, speed: 0.6), later)!.speedMps, 0);
   });
 
+  group('stop-and-go na een rit', () {
+    /// Rijden, dan stil aan het rode licht op [stopAt] s.
+    MotionFilter stoppedAt(int stopAt) {
+      final filter = MotionFilter();
+      filter.accept(pos(51, 3, base, accuracy: 5, speed: 10), base);
+      final at = base.add(const Duration(seconds: 5));
+      filter.accept(pos(51.0005, 3, at, accuracy: 5, speed: 10), at);
+      final stop = base.add(Duration(seconds: stopAt));
+      expect(filter.accept(pos(51.0005, 3, stop, accuracy: 5, speed: 0), stop)!.speedMps, 0);
+      return filter;
+    }
+
+    test('vertrek na een rood licht: de eerste bewegende meting is meteen rijden', () {
+      final filter = stoppedAt(10);
+      final wait = base.add(const Duration(seconds: 35));
+      filter.accept(pos(51.0005, 3, wait, accuracy: 5, speed: 0), wait);
+      final go = base.add(const Duration(seconds: 40));
+      // ±11 m in 5 s aan 2 m/s: echt vertrokken.
+      expect(filter.accept(pos(51.0006, 3, go, accuracy: 5, speed: 2), go)!.speedMps, 2);
+    });
+
+    test('een snelheidspiek zonder verplaatsing aan het licht blijft stil', () {
+      final filter = stoppedAt(10);
+      final spike = base.add(const Duration(seconds: 15));
+      expect(filter.accept(pos(51.0005, 3, spike, accuracy: 5, speed: 2), spike)!.speedMps, 0);
+    });
+
+    test('lang na de rit (geparkeerd) vraagt vertrek weer twee metingen', () {
+      final filter = stoppedAt(10);
+      final go = base.add(const Duration(minutes: 5));
+      filter.accept(pos(51.0005, 3, go.subtract(const Duration(seconds: 5)), accuracy: 5, speed: 0), go);
+      expect(filter.accept(pos(51.0006, 3, go, accuracy: 5, speed: 2), go)!.speedMps ?? 0, 0);
+    });
+  });
+
   test('GPS-snelheid van 6 km/u zonder verplaatsing meldt geen beweging', () {
     final filter = MotionFilter();
     for (var i = 0; i < 12; i++) {
