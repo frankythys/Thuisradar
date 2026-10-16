@@ -95,10 +95,10 @@ class AppTokens extends ThemeExtension<AppTokens> {
       BoxShadow(color: Color(0x5C12201C), blurRadius: 12, offset: Offset(0, 5)),
       BoxShadow(color: Color(0x3D12201C), blurRadius: 4, offset: Offset(0, 1.5)),
     ],
-    // AppColors.mapSelection (#0A6F91) op 45 % en 20 %.
+    // AppColors.mapSelection (#0A6F91) op 60 % en 30 %: duidelijke gloed.
     glowSelection: [
-      BoxShadow(color: Color(0x730A6F91), blurRadius: 18, spreadRadius: 2),
-      BoxShadow(color: Color(0x330A6F91), blurRadius: 36, spreadRadius: 6),
+      BoxShadow(color: Color(0x990A6F91), blurRadius: 20, spreadRadius: 4),
+      BoxShadow(color: Color(0x4D0A6F91), blurRadius: 40, spreadRadius: 10),
     ],
     memberColors: AppColors.members,
   );

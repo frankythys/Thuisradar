@@ -22,7 +22,10 @@ class MemberMarker extends StatelessWidget {
   static const avatarSize = 64.0;
 
   /// Straal van een geselecteerd rondje inclusief de selectierand.
-  static const selectedRadius = avatarSize / 2 + 6;
+  static const selectedRadius = avatarSize / 2 + selectionRing;
+
+  /// Dikte van de selectiering in de app-kleur.
+  static const selectionRing = 8.0;
 
   final MemberOnMap entry;
   final DateTime now;
@@ -94,20 +97,15 @@ class _Avatar extends StatelessWidget {
     final avatar = MemberAvatar(member: entry.member, size: MemberMarker.avatarSize, ring: !selected);
     if (!selected) return avatar;
 
-    // Selectie: ring in de app-kleur met gloed. Een dun wit lijntje binnenin
-    // houdt de ring los van een blauwgroene avatar.
+    // Selectie: volle, dikke ring in de app-kleur met gloed.
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(MemberMarker.selectionRing),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.mapSelection,
         boxShadow: [...context.tokens.glowSelection, ...context.tokens.shadowMarker],
       ),
-      child: Container(
-        padding: const EdgeInsets.all(2),
-        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-        child: avatar,
-      ),
+      child: avatar,
     );
   }
 }
