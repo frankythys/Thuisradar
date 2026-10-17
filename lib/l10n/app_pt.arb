@@ -570,7 +570,7 @@
   "drivingDistanceUnknown": "distância desconhecida",
   "drivingHoursMinutes": "{hours} h {minutes} min",
   "drivingAverage": "média {speed} km/h",
-  "drivingWaiting": "{total} · dos quais {waiting} parado ou devagar",
+  "drivingWaiting": "{total} · dos quais {waiting} parado",
   "drivingMaxSpeed": "máx. {speed} km/h",
   "drivingOneSpot": "Num só lugar",
   "drivingSavePlace": "Salvar local",

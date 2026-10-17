@@ -570,7 +570,7 @@
   "drivingDistanceUnknown": "Strecke unbekannt",
   "drivingHoursMinutes": "{hours} Std. {minutes} Min.",
   "drivingAverage": "Ø {speed} km/h",
-  "drivingWaiting": "{total} · davon {waiting} Stillstand oder Schritttempo",
+  "drivingWaiting": "{total} · davon {waiting} Stillstand",
   "drivingMaxSpeed": "max. {speed} km/h",
   "drivingOneSpot": "An einem Ort",
   "drivingSavePlace": "Ort speichern",

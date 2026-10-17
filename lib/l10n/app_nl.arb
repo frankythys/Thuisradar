@@ -2883,9 +2883,9 @@
       }
     }
   },
-  "drivingWaiting": "{total} · waarvan {waiting} stilstaan of stapvoets",
+  "drivingWaiting": "{total} · waarvan {waiting} stilstaan",
   "@drivingWaiting": {
-    "description": "File: duur en hoeveel stilstaan.",
+    "description": "Autorit: duur en hoe lang er stilgestaan werd (enkel \"stilstaan\", geen \"stapvoets\").",
     "placeholders": {
       "total": {
         "type": "String"

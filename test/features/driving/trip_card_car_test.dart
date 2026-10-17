@@ -85,7 +85,8 @@ void main() {
       end: DateTime(2026, 10, 9, 18, 36),
       waiting: const Duration(minutes: 47),
     );
-    expect(find.textContaining('waarvan 47 min stilstaan of stapvoets'), findsOneWidget);
+    expect(find.textContaining('waarvan 47 min stilstaan'), findsOneWidget);
+    expect(find.textContaining('stapvoets'), findsNothing);
     expect(find.byIcon(Icons.traffic_outlined), findsOneWidget);
   });
 

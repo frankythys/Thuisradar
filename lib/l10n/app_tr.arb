@@ -570,7 +570,7 @@
   "drivingDistanceUnknown": "mesafe bilinmiyor",
   "drivingHoursMinutes": "{hours} sa {minutes} dk",
   "drivingAverage": "ort. {speed} km/sa",
-  "drivingWaiting": "{total} · bunun {waiting} kadarı durarak veya yavaşça",
+  "drivingWaiting": "{total} · bunun {waiting} kadarı durarak",
   "drivingMaxSpeed": "maks. {speed} km/sa",
   "drivingOneSpot": "Tek bir yerde",
   "drivingSavePlace": "Yeri kaydet",
