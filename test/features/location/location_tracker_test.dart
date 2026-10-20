@@ -68,7 +68,7 @@ void main() {
       container.read(locationTrackerProvider.notifier).start(userId: 'u1', familyId: 'f1');
 
   test('zonder toestemming wordt er niets gevolgd', () async {
-    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.denied);
+    when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.denied);
 
     await start();
 
@@ -76,8 +76,29 @@ void main() {
     verifyNever(() => device.positions());
   });
 
+  test('starten toont nooit zelf de Android-vraag om locatie (die komt pas na de uitleg)', () async {
+    when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.denied);
+
+    await start();
+
+    verifyNever(() => device.ensureAccess());
+  });
+
+  test('na toestemming start retryStart het wachtende delen alsnog', () async {
+    var access = LocationAccess.denied;
+    when(() => device.checkAccess()).thenAnswer((_) async => access);
+    await start();
+    expect(container.read(locationTrackerProvider), TrackingStatus.permissionDenied);
+
+    access = LocationAccess.granted;
+    await container.read(locationTrackerProvider.notifier).retryStart();
+
+    expect(container.read(locationTrackerProvider), isNot(TrackingStatus.permissionDenied));
+    verify(() => device.positions()).called(1);
+  });
+
   test('nieuwe positie wordt met batterijstand geüpload', () async {
-    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+    when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.granted);
     when(() => repository.upload(any())).thenAnswer((_) async {});
 
     await start();
@@ -107,7 +128,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+    when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.granted);
     when(() => repository.upload(any())).thenAnswer((_) async {});
 
     await start();
@@ -137,7 +158,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+    when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.granted);
     when(() => repository.upload(any())).thenAnswer((_) async {});
 
     await start();
@@ -164,7 +185,7 @@ void main() {
   });
 
   test('mislukte upload zet de status op offline en blijft volgen', () async {
-    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+    when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.granted);
     when(() => repository.upload(any())).thenThrow(Exception('geen netwerk'));
 
     await start();
@@ -178,7 +199,7 @@ void main() {
     SharedPreferences.setMockInitialValues({'profile_u1_sharing': false});
     await start();
     expect(container.read(locationTrackerProvider), TrackingStatus.idle);
-    verifyNever(() => device.ensureAccess());
+    verifyNever(() => device.checkAccess());
     verifyNever(() => device.positions());
   });
 
@@ -186,13 +207,13 @@ void main() {
     final pending = start();
     container.read(locationTrackerProvider.notifier).stop();
     await pending;
-    verifyNever(() => device.ensureAccess());
+    verifyNever(() => device.checkAccess());
     expect(container.read(locationTrackerProvider), TrackingStatus.idle);
   });
 
   test('stop tijdens toestemmingsvraag hangt geen stroom aan', () async {
     final access = Completer<LocationAccess>();
-    when(() => device.ensureAccess()).thenAnswer((_) => access.future);
+    when(() => device.checkAccess()).thenAnswer((_) => access.future);
     final pending = start();
     await pumpEventQueue();
     container.read(locationTrackerProvider.notifier).stop();
@@ -204,7 +225,7 @@ void main() {
 
   test('stop tijdens batterij lezen uploadt geen locatie', () async {
     final reading = Completer<BatteryReading>();
-    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+    when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.granted);
     when(() => battery.read()).thenAnswer((_) => reading.future);
     await start();
     positions.add(position);

@@ -1067,9 +1067,25 @@
   "@permPrivacyPromise": {
     "description": "Titel: privacybelofte."
   },
-  "permPrivacyPromiseText": "Geen trackers, geen advertenties. Je data verlaat nooit je gezinskring.",
+  "permPrivacyPromiseText": "Geen trackers, geen advertenties en we verkopen niets. Locaties zijn enkel zichtbaar voor je gezin. Om te werken gaan ze wel via onze server (Supabase); meldingen lopen via Google Firebase en de kaart komt van OpenStreetMap.",
   "@permPrivacyPromiseText": {
     "description": "Tekst van de privacybelofte."
+  },
+  "locationDisclosureTitle": "Locatie, ook op de achtergrond",
+  "@locationDisclosureTitle": {
+    "description": "Titel van de uitleg vóór de vraag om locatie (Play: prominente melding)."
+  },
+  "locationDisclosureBody": "CircleBeacon verzamelt je locatie om ze live met je gezin te delen, aankomst en vertrek bij plaatsen te melden, je verplaatsingen in Onderweg en je geschiedenis te tonen en je positie mee te sturen bij een SOS, ook als de app gesloten is of niet gebruikt wordt. Je locatie is enkel zichtbaar voor je gezin. Je kan het delen altijd pauzeren in Profiel.",
+  "@locationDisclosureBody": {
+    "description": "Uitleg vóór de vraag om locatie: welke functies locatie gebruiken, ook als de app gesloten is."
+  },
+  "locationDisclosureAccept": "Akkoord",
+  "@locationDisclosureAccept": {
+    "description": "Knop: akkoord met de uitleg over locatie; daarna volgt de Android-vraag."
+  },
+  "locationDisclosureDecline": "Nee, bedankt",
+  "@locationDisclosureDecline": {
+    "description": "Knop: geen locatie delen; de Android-vraag komt dan niet."
   },
   "permLater": "Later instellen",
   "@permLater": {
@@ -1135,7 +1151,7 @@
   "@onboardingPrivacyTitle": {
     "description": "Slide 2: titel."
   },
-  "onboardingPrivacyBody": "Locaties zijn enkel zichtbaar binnen jullie eigen kring. Niemand anders, ook wij niet.",
+  "onboardingPrivacyBody": "Locaties zijn enkel zichtbaar binnen jullie eigen kring. Ze staan op onze server zodat de app werkt, maar we verkopen ze nooit en gebruiken ze niet voor reclame.",
   "@onboardingPrivacyBody": {
     "description": "Slide 2: uitleg."
   },

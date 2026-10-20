@@ -93,7 +93,9 @@ class LocationTracker extends Notifier<TrackingStatus> {
       state = TrackingStatus.idle;
       return;
     }
-    final access = await _device.ensureAccess();
+    // Nooit zelf de Android-vraag tonen: die komt pas na de uitleg, via het
+    // toestemmingsscherm of de knop Toestaan op de kaart.
+    final access = await _device.checkAccess();
     if (!ref.mounted || generation != _generation) return;
 
     state = TrackingStatus.fromAccess(access);
@@ -153,6 +155,15 @@ class LocationTracker extends Notifier<TrackingStatus> {
   /// (Android stopte hem op de achtergrond), dan nu opnieuw aanhaken — op de
   /// voorgrond mag de voorgronddienst wél starten. Daarna meteen een verse
   /// positie delen, zodat de kaart niet op een oude plek blijft staan.
+  /// Start opnieuw als het delen op toestemming wachtte (net gegeven op het
+  /// toestemmingsscherm). Doet niets zolang er nog nooit gestart is.
+  Future<void> retryStart() async {
+    final userId = _userId;
+    final familyId = _familyId;
+    if (_granted || userId == null || familyId == null) return;
+    await start(userId: userId, familyId: familyId);
+  }
+
   void resume() {
     if (!_granted || _userId == null) return;
     final lastFix = _lastFixAt;

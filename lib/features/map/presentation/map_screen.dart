@@ -23,6 +23,8 @@ import '../../geofencing/presentation/geofence_banner.dart';
 import '../application/map_style_provider.dart';
 import 'widgets/map_style_button.dart';
 import '../../location/application/location_providers.dart';
+import '../../permissions/application/permissions_providers.dart';
+import '../../permissions/presentation/location_disclosure_dialog.dart';
 import '../../family/presentation/invite_screen.dart';
 import '../../family/presentation/family_setup_screen.dart';
 import '../../member/presentation/member_detail_screen.dart';
@@ -108,6 +110,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       if (!mounted) return;
       unawaited(ref.read(geofenceSyncProvider.notifier).start(userId: userId, familyId: widget.family.id));
     });
+  }
+
+  /// "Toestaan" op de kaart: eerst de uitleg, pas daarna de Android-vraag.
+  Future<void> _allowLocation() async {
+    if (!await showLocationDisclosure(context) || !mounted) return;
+    await ref.read(permissionServiceProvider).requestLocation();
+    if (mounted) _startTracking();
   }
 
   /// Maakt de kaart passend. Automatisch hoogstens één keer en nooit meer nadat
@@ -443,6 +452,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       child: TrackingBanner(
                         status: trackingStatus,
                         onRetry: _startTracking,
+                        onAllow: _allowLocation,
                         onOpenSettings: () => ref.read(deviceLocationSourceProvider).openSettings(),
                       ),
                     ),
@@ -450,6 +460,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     TrackingBanner(
                       status: trackingStatus,
                       onRetry: _startTracking,
+                      onAllow: _allowLocation,
                       onOpenSettings: () => ref.read(locationTrackerProvider.notifier).openSettings(),
                     ),
                   if (GeofenceBanner.messageFor(context.l10n, ref.watch(geofenceSyncProvider)) != null) ...[

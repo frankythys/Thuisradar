@@ -22,13 +22,20 @@ class DeviceLocationSource {
   /// Hoe vaak er geüpload wordt, regelt de tracker zelf.
   static const streamInterval = Duration(seconds: 5);
 
-  Future<LocationAccess> ensureAccess() async {
+  /// Vraagt de toestemming als die er nog niet is. Enkel na de uitleg
+  /// (`showLocationDisclosure`): Play eist die vóór de Android-vraag.
+  Future<LocationAccess> ensureAccess() => _access(request: true);
+
+  /// Kijkt alleen of er toestemming is, zonder de Android-vraag te tonen.
+  Future<LocationAccess> checkAccess() => _access(request: false);
+
+  Future<LocationAccess> _access({required bool request}) async {
     if (!await Geolocator.isLocationServiceEnabled()) {
       return LocationAccess.serviceDisabled;
     }
 
     var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    if (request && permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
 

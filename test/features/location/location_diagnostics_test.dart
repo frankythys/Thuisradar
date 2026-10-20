@@ -54,7 +54,7 @@ void main() {
       sink = _MemorySink();
       diagnostics = LocationDiagnostics(sink);
 
-      when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+      when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.granted);
       when(() => device.positions()).thenAnswer((_) => positions.stream);
       when(() => battery.read()).thenAnswer((_) async => const BatteryReading(level: 64, isCharging: false));
 

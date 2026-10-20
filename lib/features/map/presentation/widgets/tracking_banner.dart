@@ -10,18 +10,22 @@ class TrackingBanner extends StatelessWidget {
     super.key,
     required this.status,
     required this.onRetry,
+    required this.onAllow,
     required this.onOpenSettings,
   });
 
   final TrackingStatus status;
   final VoidCallback onRetry;
+
+  /// Toestemming vragen: eerst de uitleg, dan de Android-vraag.
+  final VoidCallback onAllow;
   final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final (message, action) = switch (status) {
-      TrackingStatus.permissionDenied => (l10n.mapTrackingPermission, (l10n.commonAllow, onRetry)),
+      TrackingStatus.permissionDenied => (l10n.mapTrackingPermission, (l10n.commonAllow, onAllow)),
       TrackingStatus.permissionDeniedForever => (
         l10n.mapTrackingBlocked,
         (l10n.commonSettings, onOpenSettings),

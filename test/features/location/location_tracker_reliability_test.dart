@@ -38,7 +38,7 @@ void main() {
   ProviderContainer containerWith(_MockDevice device, _MockBattery battery, _MockRepository repository) {
     final prefs = _MockPrefs();
     when(() => prefs.sharing(any())).thenAnswer((_) async => true);
-    when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.granted);
+    when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.granted);
     when(() => battery.read()).thenAnswer((_) async => const BatteryReading(level: 50, isCharging: false));
     return ProviderContainer(
       overrides: [
@@ -275,7 +275,7 @@ void main() {
       final repository = _MockRepository();
       final container = containerWith(device, battery, repository);
       addTearDown(container.dispose);
-      when(() => device.ensureAccess()).thenAnswer((_) async => LocationAccess.denied);
+      when(() => device.checkAccess()).thenAnswer((_) async => LocationAccess.denied);
       container.read(locationTrackerProvider.notifier).start(userId: 'u1', familyId: 'f1');
       async.flushMicrotasks();
 

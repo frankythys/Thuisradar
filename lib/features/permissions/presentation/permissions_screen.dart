@@ -5,14 +5,18 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
+import '../../location/application/location_providers.dart';
 import '../application/permissions_providers.dart';
+import 'location_disclosure_dialog.dart';
 import '../../../l10n/l10n.dart';
 
 part 'permissions_screen_permission_card.dart';
 part 'permissions_screen_required_badge.dart';
 
 /// Scherm 10: vraagt locatie (vereist), meldingen, batterij-uitzondering en
-/// de stappenteller.
+/// de stappenteller. Vóór de Android-vraag om locatie komt de uitleg van
+/// [showLocationDisclosure]; de batterij-uitzondering staat standaard uit en
+/// kiest de gebruiker zelf.
 /// Weigeren mag: de app gaat gewoon door en legt uit hoe je het later aanzet.
 class PermissionsScreen extends ConsumerStatefulWidget {
   const PermissionsScreen({super.key});
@@ -23,7 +27,7 @@ class PermissionsScreen extends ConsumerStatefulWidget {
 
 class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
   bool _wantNotifications = true;
-  bool _wantBattery = true;
+  bool _wantBattery = false;
   bool _wantSteps = true;
   bool _busy = false;
 
@@ -36,7 +40,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen> {
     setState(() => _busy = true);
 
     final service = ref.read(permissionServiceProvider);
-    final locationGranted = await service.requestLocation();
+    final disclosed = await showLocationDisclosure(context);
+    final locationGranted = disclosed && await service.requestLocation();
+    if (locationGranted) await ref.read(locationTrackerProvider.notifier).retryStart();
     if (_wantNotifications) await service.requestNotifications();
     if (_wantBattery) await service.requestBatteryExemption();
     if (_wantSteps) await service.requestSteps();
