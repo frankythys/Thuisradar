@@ -28,7 +28,7 @@ Beslissingen en werkregels staan in `../CLAUDE.md`; kosten in `KOSTEN.md`.
 
 ## ⏳ Nu / volgende
 
-- **Afwerking** — release-keystore, versienummers, app-icoon, testdata opkuisen.
+- **Afwerking** — upload-sleutel aanmaken (de build is klaar, zie `SETUP.md`), versienummers, app-icoon, testdata opkuisen.
 
 ## ⏳ Later
 

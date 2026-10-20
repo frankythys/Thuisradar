@@ -92,8 +92,57 @@ flutter build apk --release --dart-define-from-file=env.json
 Het bestand staat in `build\app\outputs\flutter-apk\app-release.apk`. Zet het op de gsm
 en installeer het (Android vraagt om "installeren uit onbekende bronnen" toe te staan).
 
-> Voor nu gebruikt de release-build de debug-sleutel. Prima voor de familie;
-> voor de Play Store is later een eigen signing key nodig.
+> Zonder `android/key.properties` wordt de release met de **debug-sleutel** ondertekend
+> (de Gradle-uitvoer meldt dat). Prima voor de familie, maar Google Play weigert zo'n bundle.
+
+## Release voor Google Play (upload-sleutel)
+
+Google Play wil een bundle (`.aab`) die met **jouw eigen upload-sleutel** ondertekend is.
+Met *Play App Signing* (standaard bij een nieuwe app) ondertekent Google de app daarna
+zelf opnieuw; de upload-sleutel bewijst alleen dat de upload van jou komt.
+
+**1. Keystore maken (eenmalig).** In een terminal (keytool zit bij de JDK van Android
+Studio of Adoptium). Bewaar hem **buiten** het project, bv. in `C:\Users\<jij>\keys`:
+
+```
+mkdir C:\Users\<jij>\keys
+keytool -genkeypair -v -keystore C:\Users\<jij>\keys\circlebeacon-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+keytool vraagt een wachtwoord (kies een sterk wachtwoord) en je naam/organisatie
+(gewoon je naam en `BE` mag). Bij dit standaardformaat (PKCS12) is het
+sleutelwachtwoord hetzelfde als het keystore-wachtwoord.
+
+**2. Veilig bewaren.** Zet het `.jks`-bestand én het wachtwoord in je wachtwoordbeheerder
+(of een back-up buiten deze pc). Nooit in git, nooit in een chat of mail. Kwijt? Met
+Play App Signing kan je in de Play Console een nieuwe upload-sleutel aanvragen, maar dat
+duurt een paar dagen.
+
+**3. `android/key.properties` maken.** Kopieer `android/key.properties.example` naar
+`android/key.properties` (staat in `.gitignore`) en vul in. Gebruik `/` in het pad:
+
+```
+storeFile=C:/Users/<jij>/keys/circlebeacon-upload.jks
+storePassword=<je wachtwoord>
+keyAlias=upload
+keyPassword=<je wachtwoord>
+```
+
+**4. Bundle bouwen:**
+
+```
+flutter build appbundle --release --dart-define-from-file=env.json
+```
+
+De bundle staat in `build\app\outputs\bundle\release\app-release.aab`; die upload je
+in de Play Console. Controleren met welke sleutel hij ondertekend is:
+`keytool -printcert -jarfile build\app\outputs\bundle\release\app-release.aab`
+(je ziet de naam die je bij stap 1 invulde, niet "Android Debug").
+
+> **Let op bij de gsm's van de familie:** een APK met de upload-sleutel kan niet over een
+> APK met de debug-sleutel heen geïnstalleerd worden ("App niet geïnstalleerd"). Dan
+> eerst de oude app verwijderen (opnieuw inloggen en toestemmingen geven) of de app
+> voortaan via Google Play installeren.
 
 ## Bekende aandachtspunten
 
@@ -103,6 +152,7 @@ en installeer het (Android vraagt om "installeren uit onbekende bronnen" toe te 
 | Geen vaste melding zichtbaar (Android 13+) | *Instellingen > Apps > Thuisradar > Meldingen* aanzetten |
 | `SUPABASE_URL ... ontbreekt` bij starten | `--dart-define-from-file=env.json` ontbreekt in de Run-configuratie |
 | Familie laden mislukt | Zijn `supabase/schema.sql` én alle migraties uitgevoerd? |
+| `failed to strip debug symbols` bij `flutter build appbundle` | De `.aab` is wel gemaakt, maar Flutter kan hem niet nakijken: *Android Studio > Settings > Languages & Frameworks > Android SDK > SDK Tools* → **Android SDK Command-line Tools (latest)** aanvinken, daarna `flutter doctor --android-licenses` |
 | Gradle-fout bij eerste build | `flutter doctor` controleren, daarna **File > Invalidate Caches** |
 
 ## Mama's iPhone
