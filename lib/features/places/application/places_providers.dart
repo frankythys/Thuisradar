@@ -15,9 +15,15 @@ final placesRepositoryProvider = Provider<PlacesRepository>(
   (ref) => PlacesRepository(ref.watch(supabaseClientProvider)),
 );
 
-final familyPlacesProvider = StreamProvider.family<List<Place>, String>(
-  (ref, familyId) => ref.watch(placesRepositoryProvider).watchPlaces(familyId),
-);
+/// Realtime plaatsen; herstelt zichzelf net als de aanwezigheid hieronder.
+final familyPlacesProvider = StreamProvider.family<List<Place>, String>((ref, familyId) {
+  final repository = ref.watch(placesRepositoryProvider);
+  return resilientStream(
+    () => repository.watchPlaces(familyId),
+    resync: ref.watch(resyncSignalProvider).stream,
+    onError: (error) => debugPrint('Plaatsenstroom (realtime) fout: $error'),
+  );
+});
 
 /// Realtime aanwezigheid; herstelt zichzelf net als de locatiestroom, zodat
 /// "Thuis" niet blijft hangen op een oude stand.

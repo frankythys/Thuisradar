@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
+import '../../../core/utils/resilient_stream.dart';
+import '../../../core/utils/resync_signal.dart';
 import '../../auth/application/auth_providers.dart';
 import '../data/family_repository.dart';
 import '../domain/family.dart';
@@ -20,10 +23,16 @@ final myFamilyProvider = FutureProvider<Family?>((ref) async {
   return ref.read(familyRepositoryProvider).fetchMyFamily(userId);
 });
 
-/// Realtime ledenlijst: nieuwe gezinsleden verschijnen meteen.
-final familyMembersProvider = StreamProvider.family<List<FamilyMember>, String>(
-  (ref, familyId) => ref.watch(familyRepositoryProvider).watchMembers(familyId),
-);
+/// Realtime ledenlijst: nieuwe gezinsleden verschijnen meteen. Herstelt
+/// zichzelf als het realtime-kanaal wegvalt.
+final familyMembersProvider = StreamProvider.family<List<FamilyMember>, String>((ref, familyId) {
+  final repository = ref.watch(familyRepositoryProvider);
+  return resilientStream(
+    () => repository.watchMembers(familyId),
+    resync: ref.watch(resyncSignalProvider).stream,
+    onError: (error) => debugPrint('Ledenstroom (realtime) fout: $error'),
+  );
+});
 
 /// De actuele uitnodigingscode van het gezin met haar vervaldatum. Niet
 /// automatisch opnieuw proberen: het scherm valt terug op de bekende code.

@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/supabase/supabase_providers.dart';
+import '../../../core/utils/resilient_stream.dart';
+import '../../../core/utils/resync_signal.dart';
 import '../../auth/application/auth_providers.dart';
 import '../../location/application/location_providers.dart';
 import '../data/events_repository.dart';
@@ -14,9 +17,15 @@ final eventsRepositoryProvider = Provider<EventsRepository>(
 
 final notificationsStoreProvider = Provider<NotificationsStore>((ref) => NotificationsStore());
 
-final familyEventsProvider = StreamProvider.family<List<FamilyEvent>, String>(
-  (ref, familyId) => ref.watch(eventsRepositoryProvider).watchEvents(familyId),
-);
+/// Realtime meldingen; herstelt zichzelf als het realtime-kanaal wegvalt.
+final familyEventsProvider = StreamProvider.family<List<FamilyEvent>, String>((ref, familyId) {
+  final repository = ref.watch(eventsRepositoryProvider);
+  return resilientStream(
+    () => repository.watchEvents(familyId),
+    resync: ref.watch(resyncSignalProvider).stream,
+    onError: (error) => debugPrint('Meldingenstroom (realtime) fout: $error'),
+  );
+});
 
 final lastSeenProvider = FutureProvider.family<DateTime?, String>((ref, familyId) {
   final userId = ref.watch(currentUserIdProvider);
