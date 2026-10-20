@@ -11,6 +11,8 @@ import 'push_channels.dart';
 
 /// Regelt FCM: het alarm-notificatiekanaal, tokenregistratie in device_tokens,
 /// en het tonen van SOS-meldingen terwijl de app op de voorgrond staat.
+/// Zonder [FirebaseMessaging] (Firebase kon niet starten) draait de app
+/// gewoon zonder push: enkel de lokale meldingskanalen worden aangemaakt.
 class PushService {
   PushService(this._client, this._messaging, this._local, {AppLocalizations Function()? strings})
     : _strings = strings ?? (() => lookupAppLocalizations(const Locale('nl')));
@@ -19,7 +21,7 @@ class PushService {
   final AppLocalizations Function() _strings;
 
   final SupabaseClient _client;
-  final FirebaseMessaging _messaging;
+  final FirebaseMessaging? _messaging;
   final FlutterLocalNotificationsPlugin _local;
 
   StreamSubscription<String>? _tokenRefreshSub;
@@ -42,17 +44,20 @@ class PushService {
     await android?.createNotificationChannel(PushChannels.chat(l10n));
 
     await _foregroundSub?.cancel();
+    if (_messaging == null) return;
     _foregroundSub = FirebaseMessaging.onMessage.listen(_showForeground);
   }
 
   /// Vraagt toestemming en bewaart het FCM-token voor deze gebruiker.
   Future<void> registerFor(String userId) async {
-    await _messaging.requestPermission();
-    final token = await _messaging.getToken();
+    final messaging = _messaging;
+    if (messaging == null) return;
+    await messaging.requestPermission();
+    final token = await messaging.getToken();
     if (token != null) await _save(token, userId);
 
     await _tokenRefreshSub?.cancel();
-    _tokenRefreshSub = _messaging.onTokenRefresh.listen((t) => _save(t, userId));
+    _tokenRefreshSub = messaging.onTokenRefresh.listen((t) => _save(t, userId));
   }
 
   /// Haalt het token van dit toestel weg uit `device_tokens`. Moet gebeuren
@@ -63,7 +68,7 @@ class PushService {
     await _tokenRefreshSub?.cancel();
     _tokenRefreshSub = null;
     try {
-      final token = await _messaging.getToken();
+      final token = await _messaging?.getToken();
       if (token != null) await _client.from('device_tokens').delete().eq('token', token);
     } on Exception catch (e) {
       debugPrint('Token verwijderen mislukt: $e');
@@ -73,7 +78,7 @@ class PushService {
   /// Verwijdert het token bij uitloggen.
   Future<void> unregister() async {
     await forgetServerToken();
-    await _messaging.deleteToken();
+    await _messaging?.deleteToken();
   }
 
   Future<void> _save(String token, String userId) async {
