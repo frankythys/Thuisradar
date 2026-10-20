@@ -26,6 +26,8 @@
   "profileLeaveFamilyTitle": "Familie verlassen?",
   "profileLeaveFamilyBody": "Du siehst {family} dann nicht mehr auf der Karte.",
   "profileLeaveFamilyConfirm": "Verlassen",
+  "profileLeaveFamilyOwnerFirst": "Du bist Verwalter. Mach zuerst jemand anderen in der Mitgliederliste zum Verwalter; danach kannst du austreten.",
+  "profileLeaveFamilyFailed": "Familie verlassen hat nicht geklappt. Bitte versuche es erneut.",
   "profilePreferenceFailed": "Einstellung speichern fehlgeschlagen. Bitte erneut versuchen.",
   "profileShareLocation": "Standort teilen",
   "profileShareLocationOn": "An · deine Familie sieht, wo du bist",

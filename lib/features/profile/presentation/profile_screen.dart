@@ -192,6 +192,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _leaveFamily() async {
+    final myId = ref.read(currentUserIdProvider);
+    if (myId == null) return;
+    // De beheerder laat het gezin nooit zonder beheerder achter.
+    final members = ref.read(familyMembersProvider(widget.family.id)).value ?? const <FamilyMember>[];
+    final isOwner = members.any((member) => member.userId == myId && member.isOwner);
+    if (isOwner && members.any((member) => member.userId != myId)) {
+      _snack(context.l10n.profileLeaveFamilyOwnerFirst);
+      return;
+    }
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -209,9 +218,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
     if (confirm != true) return;
 
-    final myId = ref.read(currentUserIdProvider);
-    if (myId == null) return;
-    await ref.read(familyRepositoryProvider).leaveFamily(myId, widget.family.id);
+    try {
+      await ref.read(familyRepositoryProvider).leaveFamily(widget.family.id);
+    } on Exception catch (error) {
+      debugPrint('Familie verlaten mislukt: $error');
+      if (mounted) _snack(context.l10n.profileLeaveFamilyFailed);
+      return;
+    }
     ref.read(locationTrackerProvider.notifier).stop(reason: 'familie verlaten');
     await ref.read(geofenceSyncProvider.notifier).stop();
     ref.invalidate(myFamilyProvider);

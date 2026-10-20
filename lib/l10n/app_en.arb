@@ -26,6 +26,8 @@
   "profileLeaveFamilyTitle": "Leave family?",
   "profileLeaveFamilyBody": "You will no longer see {family} on the map.",
   "profileLeaveFamilyConfirm": "Leave",
+  "profileLeaveFamilyOwnerFirst": "You are the admin. First make someone else admin in the member list; then you can leave.",
+  "profileLeaveFamilyFailed": "Leaving the family failed. Please try again.",
   "profilePreferenceFailed": "Saving the preference failed. Please try again.",
   "profileShareLocation": "Share location",
   "profileShareLocationOn": "On · your family sees where you are",

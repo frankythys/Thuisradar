@@ -26,6 +26,8 @@
   "profileLeaveFamilyTitle": "Quitter la famille ?",
   "profileLeaveFamilyBody": "Vous ne verrez plus {family} sur la carte.",
   "profileLeaveFamilyConfirm": "Quitter",
+  "profileLeaveFamilyOwnerFirst": "Tu es l'administrateur. Nomme d'abord quelqu'un d'autre administrateur dans la liste des membres ; ensuite tu pourras quitter.",
+  "profileLeaveFamilyFailed": "Impossible de quitter la famille. Réessaie.",
   "profilePreferenceFailed": "L'enregistrement de la préférence a échoué. Réessayez.",
   "profileShareLocation": "Partager la position",
   "profileShareLocationOn": "Activé · votre famille voit où vous êtes",

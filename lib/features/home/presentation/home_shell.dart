@@ -3,6 +3,7 @@ import 'dart:async';
 import '../../../core/platform/app_background.dart';
 import '../../../core/utils/resync_signal.dart';
 import '../../geofencing/application/geofencing_providers.dart';
+import '../application/membership_guard.dart';
 import '../../location/application/location_diagnostics.dart';
 import '../../location/application/location_providers.dart';
 import '../../profile/presentation/profile_screen.dart';
@@ -25,9 +26,8 @@ import '../../sos/domain/sos_alert.dart';
 import '../../sos/presentation/sos_received_overlay.dart';
 import '../../../l10n/l10n.dart';
 
-/// Hoofdframe met de vier tabs. Toont bovenop alles een SOS-overlay zodra een
-/// ander gezinslid een alarm stuurt. Plaatsen/Chat/Meldingen zijn nog lege
-/// "binnenkort"-staten; die worden in Fase D ingevuld.
+/// Hoofdframe met de vier tabs (Kaart, Onderweg, Plaatsen, Chat). Toont
+/// bovenop alles een SOS-overlay zodra een ander gezinslid een alarm stuurt.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key, required this.family});
 
@@ -70,6 +70,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   Widget build(BuildContext context) {
     final familyId = widget.family.id;
     final myId = ref.watch(currentUserIdProvider);
+    ref.watch(membershipGuardProvider(familyId));
     final active = ref.watch(activeSosProvider(familyId)).value ?? const [];
     final incoming = sosToShow(active, myUserId: myId, dismissed: _dismissed);
 

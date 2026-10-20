@@ -67,9 +67,11 @@ class FamilyRepository {
     await _client.rpc('transfer_ownership', params: {'fid': familyId, 'new_owner': userId});
   }
 
-  /// De ingelogde gebruiker verlaat de familie.
-  Future<void> leaveFamily(String userId, String familyId) {
-    return _client.from('family_members').delete().eq('user_id', userId).eq('family_id', familyId);
+  /// De ingelogde gebruiker verlaat de familie; de server ruimt de laatste
+  /// locatie en aanwezigheid op en weigert de beheerder zolang er nog andere
+  /// leden zijn (migratie 024).
+  Future<void> leaveFamily(String familyId) async {
+    await _client.rpc('leave_family', params: {'fid': familyId});
   }
 
   Future<List<FamilyMember>> fetchMembers(String familyId) async {

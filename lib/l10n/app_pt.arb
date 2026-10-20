@@ -26,6 +26,8 @@
   "profileLeaveFamilyTitle": "Sair da família?",
   "profileLeaveFamilyBody": "Você deixará de ver {family} no mapa.",
   "profileLeaveFamilyConfirm": "Sair",
+  "profileLeaveFamilyOwnerFirst": "És o administrador. Primeiro torna outra pessoa administradora na lista de membros; depois podes sair.",
+  "profileLeaveFamilyFailed": "Não foi possível sair da família. Tenta novamente.",
   "profilePreferenceFailed": "Não foi possível salvar a preferência. Tente novamente.",
   "profileShareLocation": "Compartilhar localização",
   "profileShareLocationOn": "Ativado · sua família vê onde você está",

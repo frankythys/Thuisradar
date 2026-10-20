@@ -139,6 +139,14 @@
   "@profileLeaveFamilyConfirm": {
     "description": "Knop: het gezin verlaten bevestigen."
   },
+  "profileLeaveFamilyOwnerFirst": "Je bent beheerder. Maak eerst iemand anders beheerder in de ledenlijst; daarna kan je vertrekken.",
+  "@profileLeaveFamilyOwnerFirst": {
+    "description": "Melding: de beheerder kan pas vertrekken na het beheer over te dragen."
+  },
+  "profileLeaveFamilyFailed": "Familie verlaten is niet gelukt. Probeer opnieuw.",
+  "@profileLeaveFamilyFailed": {
+    "description": "Melding: familie verlaten mislukt."
+  },
   "profilePreferenceFailed": "Voorkeur opslaan mislukt. Probeer opnieuw.",
   "@profilePreferenceFailed": {
     "description": "Melding: een meldingsvoorkeur bewaren is mislukt."

@@ -26,6 +26,8 @@
   "profileLeaveFamilyTitle": "Aileden ayrılınsın mı?",
   "profileLeaveFamilyBody": "{family} artık haritada görünmeyecek.",
   "profileLeaveFamilyConfirm": "Ayrıl",
+  "profileLeaveFamilyOwnerFirst": "Yöneticisin. Önce üye listesinden başka birini yönetici yap; sonra ayrılabilirsin.",
+  "profileLeaveFamilyFailed": "Aileden ayrılma başarısız oldu. Lütfen tekrar dene.",
   "profilePreferenceFailed": "Tercih kaydedilemedi. Tekrar deneyin.",
   "profileShareLocation": "Konumu paylaş",
   "profileShareLocationOn": "Açık · ailen nerede olduğunu görür",
