@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
+import 'package:thuisradar/core/utils/clock.dart';
 import 'package:thuisradar/features/auth/application/auth_providers.dart';
 import 'package:thuisradar/features/family/application/family_providers.dart';
 import 'package:thuisradar/features/family/data/family_repository.dart';
@@ -15,6 +16,9 @@ import 'package:thuisradar/features/profile/presentation/profile_screen.dart';
 class _Repo extends Mock implements FamilyRepository {}
 
 const _family = Family(id: 'fam', name: 'Familie Thys', inviteCode: 'K7Q2M9XA');
+
+/// Vaste klok: de codes van 18/10 en 25/10 blijven in de test altijd geldig.
+final _now = DateTime(2026, 10, 11, 16);
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -46,6 +50,7 @@ void main() {
       ProviderScope(
         overrides: [
           familyRepositoryProvider.overrideWithValue(repo),
+          clockProvider.overrideWith((ref) => Stream.value(_now)),
           currentUserIdProvider.overrideWithValue(me),
           myFamilyProvider.overrideWith((ref) async => _family),
           familyMembersProvider.overrideWith(

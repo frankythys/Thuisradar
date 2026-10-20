@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thuisradar/l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
+import 'package:thuisradar/core/utils/clock.dart';
 import 'package:thuisradar/features/auth/application/auth_providers.dart';
 import 'package:thuisradar/features/family/application/family_providers.dart';
 import 'package:thuisradar/features/family/data/family_repository.dart';
@@ -67,6 +68,8 @@ void main() {
       ProviderScope(
         overrides: [
           familyRepositoryProvider.overrideWithValue(repo),
+          // Vaste klok: de code van 18/10 blijft in de test altijd geldig.
+          clockProvider.overrideWith((ref) => Stream.value(now)),
           currentUserIdProvider.overrideWithValue('papa'),
           familyMembersProvider.overrideWith(
             (ref, id) => Stream.value([

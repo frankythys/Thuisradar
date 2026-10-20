@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/utils/clock.dart';
 import '../../../core/utils/time_format.dart';
 import '../application/family_providers.dart';
 import '../domain/family.dart';
@@ -21,7 +22,7 @@ String? inviteValidity(AppLocalizations l10n, Family family, DateTime now, {requ
 }
 
 /// De geldigheid van de code als kleine regel, rood als ze verlopen is.
-class InviteValidityText extends StatelessWidget {
+class InviteValidityText extends ConsumerWidget {
   const InviteValidityText({super.key, required this.family, required this.isOwner, this.textAlign});
 
   final Family family;
@@ -29,8 +30,8 @@ class InviteValidityText extends StatelessWidget {
   final TextAlign? textAlign;
 
   @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = ref.watch(clockProvider).value ?? DateTime.now();
     final validity = inviteValidity(context.l10n, family, now, isOwner: isOwner);
     if (validity == null) return const SizedBox.shrink();
     return Text(
