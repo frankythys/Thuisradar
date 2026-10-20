@@ -226,7 +226,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       return;
     }
 
-    // Verse GPS-positie (max 5 s), anders de laatst gedeelde locatie.
+    // Verse GPS-positie (max 8 s), anders de laatst gedeelde locatie.
     final fresh = await ref.read(deviceLocationSourceProvider).currentPosition();
     var lat = fresh?.latitude;
     var lng = fresh?.longitude;

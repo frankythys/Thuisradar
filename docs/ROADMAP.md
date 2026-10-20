@@ -9,7 +9,11 @@ Beslissingen en werkregels staan in `../CLAUDE.md`; kosten in `KOSTEN.md`.
 - **Fase B** — Onboarding, account, familie maken/joinen, uitnodigen, welkom, toestemmingen.
 - **Fase C** — Hoofdschermen: bottom navigation, kaart-restyle, gezinslid-detail met tijdlijn.
 - **Fase D1** — SOS (noodknop 3 s vasthouden + realtime overlay).
+- **Fase D2** — Plaatsen + aankomst/vertrek-meldingen (server-side geofence met hysterese, gewoon meldingskanaal; migratie `005_places.sql` en verder).
 - **Fase D2.5** — SOS-push via FCM (komt binnen ook als de app dicht is).
+- **Fase D3** — Meldingen (feed uit `family_events`, ongelezen-badge via `last_seen`).
+- **Fase D4** — Chat (`messages` + realtime).
+- **Fase D5** — Profielscherm (display_name bewerken, familie verlaten, uitloggen).
 - **Fix** — Locatiegeschiedenis laadt nooit oneindig (stabiele dagsleutel + timeout).
 - **Kaart-afwerking (huidige kaart, flutter_map + OpenStreetMap):**
   - Zichtbare terugknop op alle subschermen + predictive back.
@@ -24,13 +28,6 @@ Beslissingen en werkregels staan in `../CLAUDE.md`; kosten in `KOSTEN.md`.
 
 ## ⏳ Nu / volgende
 
-- **Fase D2** — Plaatsen + aankomst/vertrek-meldingen.
-  - Server-side geofence-trigger met anti-flapping: metingen met `accuracy > 100 m` negeren; "binnen" = afstand `< straal`; "buiten" pas bij `> straal + 50 m` (hysterese); vertrek telt pas na ≥2 metingen of 3 min. Overgangslogica ook puur in Dart met unit-tests.
-  - Push zonder alarmgeluid (gewoon meldingskanaal, niet het SOS-alarmkanaal).
-  - Schermen: Plaatsen (13) en Plaats toevoegen (14). Migratie `005_places.sql`.
-- **Fase D3** — Meldingen-tab (feed uit `family_events`, ongelezen-badge via `last_seen`).
-- **Fase D4** — Chat (`messages` + realtime).
-- **Fase D5** — Profielscherm (display_name bewerken, familie verlaten, uitloggen).
 - **Afwerking** — release-keystore, versienummers, app-icoon, testdata opkuisen.
 
 ## ⏳ Later

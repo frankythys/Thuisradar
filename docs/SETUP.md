@@ -35,6 +35,10 @@ Open daarna in Android Studio: **File > Open** → `C:\Programming\thuisradar`.
    in je wachtwoordbeheerder.
 2. **SQL Editor > New query** → plak de volledige inhoud van `supabase/schema.sql` → **Run**.
    Je moet "Success. No rows returned" zien.
+   Voer daarna **elke migratie** in `supabase/migrations/` uit, één per keer en **in
+   nummervolgorde** (`002_…` tot en met de hoogste, nu `024_leave_family.sql`). Zonder de
+   migraties ontbreken SOS, push, plaatsen, chat, noodcontacten, parkeerplek en het
+   veilig verlaten van een gezin.
 3. **Authentication > Sign In / Providers > Email**:
    - *Enable Email provider*: aan.
    - *Confirm email*: **uitzetten** is het eenvoudigst voor een familie-app
@@ -74,9 +78,10 @@ Kopieer `env.example.json` naar **`env.json`** (in dezelfde map) en vul in:
 2. **Familie aanmaken** → tik linksboven op de familienaam → **Gezinslid uitnodigen**
    kopieert de code.
 3. Op de gsm van je zoon: app installeren, account aanmaken, **Familie joinen** met de code.
-4. Locatie toestaan → kies **"Tijdens gebruik van de app"**. Er verschijnt een vaste melding
-   *"Je locatie wordt gedeeld met je familie"*: zolang die er staat, wordt de locatie
-   ook op de achtergrond gedeeld.
+4. Locatie toestaan → kies eerst **"Tijdens gebruik van de app"** en daarna, als de app
+   erom vraagt, **"Altijd toestaan"**. Zonder "Altijd toestaan" stopt het delen zodra de
+   app op de achtergrond gaat, en werken aankomst/vertrek bij plaatsen niet. Er verschijnt
+   een vaste melding *"Je locatie wordt gedeeld met je familie"* zolang er gedeeld wordt.
 
 ## APK maken voor de gsm van je zoon
 
@@ -97,7 +102,7 @@ en installeer het (Android vraagt om "installeren uit onbekende bronnen" toe te 
 | Locatie stopt na een tijdje | Samsung/Xiaomi/Huawei: *Instellingen > Apps > Thuisradar > Batterij* → **Onbeperkt** |
 | Geen vaste melding zichtbaar (Android 13+) | *Instellingen > Apps > Thuisradar > Meldingen* aanzetten |
 | `SUPABASE_URL ... ontbreekt` bij starten | `--dart-define-from-file=env.json` ontbreekt in de Run-configuratie |
-| Familie laden mislukt | Is `supabase/schema.sql` volledig uitgevoerd? |
+| Familie laden mislukt | Zijn `supabase/schema.sql` én alle migraties uitgevoerd? |
 | Gradle-fout bij eerste build | `flutter doctor` controleren, daarna **File > Invalidate Caches** |
 
 ## Mama's iPhone

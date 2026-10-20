@@ -98,7 +98,8 @@ Bestaande widgettests blijven Nederlands (terugval van `context.l10n`); per feat
 Nu zetten de Edge Functions (`send-sos-push`, `send-place-push`,
 `send-chat-push`) Nederlandse tekst in de melding. Plan:
 
-- Migratie `022_profile_language.sql`: kolom `profiles.language text` (bv. `'fr'`).
+- Migratie `022_profile_language.sql` (nog niet gemaakt; nummer 022 is hiervoor vrijgehouden):
+  kolom `profiles.language text` (bv. `'fr'`).
 - De app schrijft de gekozen of opgeloste taal bij het opstarten en bij elke
   wijziging weg.
 - `supabase/functions/_shared/i18n.ts`: teksttabel per taal met Engels als

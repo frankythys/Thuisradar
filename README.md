@@ -4,8 +4,9 @@ Familie-locatie app (eigen alternatief voor Life360), gebouwd met **Flutter** en
 
 **Versie 1 (basis):** inloggen, familie aanmaken of joinen met een code, live kaart met
 de locatie van elk gezinslid (ook op de achtergrond) en batterijniveau.
-**Gepland:** plaatsen (geofences) met aankomst/vertrek-meldingen, geschiedenis-scherm,
-familiechat en SOS. Zie het ontwerp: 6 schermen in de canvas "Familie Locatie App".
+**Ook klaar:** plaatsen (geofences) met aankomst/vertrek-meldingen, geschiedenis per
+gezinslid, Onderweg (ritten met auto/fiets/wandelen), familiechat, meldingen, SOS met
+push en noodcontacten, parkeerplek en 8 talen. Zie `docs/ROADMAP.md` voor wat volgt.
 
 ➡️ **Installeren en starten: [docs/SETUP.md](docs/SETUP.md)**
 
