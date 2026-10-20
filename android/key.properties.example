@@ -1,7 +1,8 @@
 # Kopieer naar android/key.properties (staat niet in git) en vul in.
 # Uitleg en het keytool-commando: docs/SETUP.md, "Release voor Google Play".
-# Gebruik / in het pad, ook op Windows. Bewaar de keystore buiten het project.
-storeFile=C:/Users/<jij>/keys/circlebeacon-upload.jks
+# storeFile is relatief aan android/app: de keystore staat dan in
+# android/app/upload-keystore.jks (elk .jks-bestand staat in .gitignore).
+storeFile=upload-keystore.jks
 storePassword=<wachtwoord van de keystore>
 keyAlias=upload
 keyPassword=<zelfde wachtwoord als storePassword>

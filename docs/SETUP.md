@@ -101,28 +101,30 @@ Google Play wil een bundle (`.aab`) die met **jouw eigen upload-sleutel** ondert
 Met *Play App Signing* (standaard bij een nieuwe app) ondertekent Google de app daarna
 zelf opnieuw; de upload-sleutel bewijst alleen dat de upload van jou komt.
 
-**1. Keystore maken (eenmalig).** In een terminal (keytool zit bij de JDK van Android
-Studio of Adoptium). Bewaar hem **buiten** het project, bv. in `C:\Users\<jij>\keys`:
+**1. Keystore maken (eenmalig).** In een terminal in de projectmap (keytool zit bij de
+JDK van Android Studio of Adoptium). De keystore komt in `android\app`; elk `.jks`-bestand
+staat in `.gitignore`, dus hij gaat nooit mee naar GitHub:
 
 ```
-mkdir C:\Users\<jij>\keys
-keytool -genkeypair -v -keystore C:\Users\<jij>\keys\circlebeacon-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+keytool -genkeypair -v -keystore android\app\upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
 keytool vraagt een wachtwoord (kies een sterk wachtwoord) en je naam/organisatie
 (gewoon je naam en `BE` mag). Bij dit standaardformaat (PKCS12) is het
 sleutelwachtwoord hetzelfde als het keystore-wachtwoord.
 
-**2. Veilig bewaren.** Zet het `.jks`-bestand én het wachtwoord in je wachtwoordbeheerder
-(of een back-up buiten deze pc). Nooit in git, nooit in een chat of mail. Kwijt? Met
+**2. Back-up maken.** Omdat de keystore niet in git zit, staat hij enkel op deze pc (en
+niet op de laptop na Ctrl+T). Zet het `.jks`-bestand én het wachtwoord daarom ook in je
+wachtwoordbeheerder of op een USB-stick. Nooit in git, nooit in een chat of mail. Kwijt? Met
 Play App Signing kan je in de Play Console een nieuwe upload-sleutel aanvragen, maar dat
 duurt een paar dagen.
 
 **3. `android/key.properties` maken.** Kopieer `android/key.properties.example` naar
-`android/key.properties` (staat in `.gitignore`) en vul in. Gebruik `/` in het pad:
+`android/key.properties` (staat in `.gitignore`) en vul je wachtwoord in. `storeFile` is
+relatief aan `android/app`:
 
 ```
-storeFile=C:/Users/<jij>/keys/circlebeacon-upload.jks
+storeFile=upload-keystore.jks
 storePassword=<je wachtwoord>
 keyAlias=upload
 keyPassword=<je wachtwoord>
