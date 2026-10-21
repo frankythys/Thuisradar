@@ -61,6 +61,12 @@ export const TEXT = {
       failed: 'Dat lukte niet. Probeer het later opnieuw, of stuur ons een mail.',
       missing: 'Vul je e-mailadres en wachtwoord in.',
     },
+    confirmed: {
+      title: 'E-mailadres bevestigd',
+      body: 'Je e-mailadres is bevestigd. Open CircleBeacon op je gsm en log in met je e-mailadres en wachtwoord.',
+      errorTitle: 'Link werkt niet meer',
+      error: 'Deze bevestigingslink is verlopen of al gebruikt. Probeer in de app in te loggen; lukt dat niet, registreer dan opnieuw om een nieuwe mail te krijgen.',
+    },
     footer: 'CircleBeacon',
   },
   en: {
@@ -117,6 +123,12 @@ export const TEXT = {
       owner: 'You are the admin of a family that still has other members. First make someone else admin in the app (Profile → your family); then you can delete your account.',
       failed: 'That did not work. Please try again later, or email us.',
       missing: 'Fill in your email address and password.',
+    },
+    confirmed: {
+      title: 'Email address confirmed',
+      body: 'Your email address is confirmed. Open CircleBeacon on your phone and sign in with your email address and password.',
+      errorTitle: 'Link no longer works',
+      error: 'This confirmation link has expired or was already used. Try signing in in the app; if that fails, sign up again to get a new email.',
     },
     footer: 'CircleBeacon',
   },

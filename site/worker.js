@@ -3,6 +3,8 @@
  *
  *   GET  /                 korte uitleg + links
  *   GET  /privacy          privacybeleid (Google Play: in de app en in de Console)
+ *   GET  /bevestigd        landingspagina na de bevestigingsmail van een nieuw account
+ *                          (Supabase bevestigt zelf; hier enkel "open de app")
  *   GET  /account/delete   formulier om het account te verwijderen (Google Play)
  *   POST /account/delete   aanmelden bij Supabase met e-mail + wachtwoord en
  *                          dan hetzelfde doen als de app: eigen bijlagen wissen,
@@ -33,6 +35,13 @@ export default {
 
     if (request.method === 'GET' && path === '/') return page(t, t.home.title, homeBody(t));
     if (request.method === 'GET' && path === '/privacy') return page(t, t.privacy.title, privacyBody(t, env));
+    if (request.method === 'GET' && path === '/bevestigd') {
+      // Supabase zet error/error_code in de query als de link verlopen of al gebruikt is.
+      const failed = url.searchParams.has('error') || url.searchParams.has('error_code');
+      return failed
+        ? page(t, t.confirmed.errorTitle, `<p class="note err" role="alert">${t.confirmed.error}</p>`)
+        : page(t, t.confirmed.title, `<p class="note ok">${t.confirmed.body}</p>`);
+    }
     if (path === '/account/delete') {
       if (request.method === 'GET') return page(t, t.del.title, deleteBody(t, env));
       if (request.method === 'POST') return handleDelete(request, env, t);

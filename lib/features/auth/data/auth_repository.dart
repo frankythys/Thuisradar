@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/site_links.dart';
+
 class AuthRepository {
   AuthRepository(this._client);
 
@@ -42,6 +44,7 @@ class AuthRepository {
       email: email,
       password: password,
       data: {_nameKey: displayName},
+      emailRedirectTo: SiteLinks.emailConfirmed,
     );
     return response.session != null;
   }

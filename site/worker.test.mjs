@@ -57,6 +57,22 @@ test('privacybeleid: in het Nederlands, met contact en zonder scripts', async ()
   assert.match(res.headers.get('Content-Security-Policy'), /default-src 'none'/);
 });
 
+test('bevestigd: uitleg om in te loggen, ook met de code van Supabase erbij', async () => {
+  const res = await worker.fetch(new Request('https://x/bevestigd?code=12c4e713&lang=nl'), env);
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /E-mailadres bevestigd/);
+  assert.doesNotMatch(html, /12c4e713/, 'de code komt niet op de pagina');
+});
+
+test('bevestigd: verlopen link geeft een duidelijke uitleg', async () => {
+  const res = await worker.fetch(
+    new Request('https://x/bevestigd?error=access_denied&error_code=otp_expired&lang=en'),
+    env,
+  );
+  assert.match(await res.text(), /Link no longer works/);
+});
+
 test('onbekende pagina: 404', async () => {
   const res = await worker.fetch(new Request('https://x/admin'), env);
   assert.equal(res.status, 404);

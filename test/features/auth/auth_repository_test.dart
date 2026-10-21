@@ -31,4 +31,31 @@ void main() {
     expect(errors, isEmpty);
     expect(events, [null, null]);
   });
+
+  test('registreren: de bevestigingsmail leidt naar de pagina /bevestigd', () async {
+    final client = _Client();
+    final auth = _Auth();
+    when(() => client.auth).thenReturn(auth);
+    when(
+      () => auth.signUp(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+        data: any(named: 'data'),
+        emailRedirectTo: any(named: 'emailRedirectTo'),
+      ),
+    ).thenAnswer((_) async => AuthResponse());
+
+    final signedIn = await AuthRepository(client)
+        .signUp(email: 'oma@example.com', password: 'Geheim-123', displayName: 'Oma');
+
+    expect(signedIn, isFalse);
+    verify(
+      () => auth.signUp(
+        email: 'oma@example.com',
+        password: 'Geheim-123',
+        data: {'display_name': 'Oma'},
+        emailRedirectTo: 'https://circlebeacon.frankythys.workers.dev/bevestigd',
+      ),
+    ).called(1);
+  });
 }
