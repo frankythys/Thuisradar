@@ -11,6 +11,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as jose from "npm:jose@5";
 import { invalidFcmToken } from "../_shared/fcm_result.ts";
+import { hasValidWebhookSecret } from "../_shared/webhook_secret.ts";
 
 interface ServiceAccount {
   project_id: string;
@@ -68,8 +69,7 @@ async function sendPush(
 }
 
 Deno.serve(async (req) => {
-  const secret = Deno.env.get("SOS_WEBHOOK_SECRET");
-  if (!secret || req.headers.get("x-webhook-secret") !== secret) {
+  if (!hasValidWebhookSecret(req, Deno.env.get("SOS_WEBHOOK_SECRET"))) {
     return new Response("unauthorized", { status: 401 });
   }
 
