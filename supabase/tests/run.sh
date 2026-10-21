@@ -13,8 +13,8 @@ psql_q=(psql -v ON_ERROR_STOP=1 -q)
 "${psql_q[@]}" -d "$db" -f "$here/stubs.sql" >/dev/null 2>&1
 "${psql_q[@]}" -d "$db" -f "$root/schema.sql" >/dev/null 2>&1
 for f in "$root"/migrations/0*.sql; do
-  # pg_net bestaat lokaal niet; de stub in stubs.sql neemt het over.
-  sed 's/^create extension if not exists pg_net;//' "$f" | "${psql_q[@]}" -d "$db" >/dev/null 2>&1 \
+  # pg_net en pg_cron bestaan lokaal niet; de stubs in stubs.sql nemen het over.
+  sed -e 's/^create extension if not exists pg_net;//' -e 's/^create extension if not exists pg_cron.*;//' "$f" | "${psql_q[@]}" -d "$db" >/dev/null 2>&1 \
     || { echo "Migratie faalt: $f"; exit 1; }
 done
 

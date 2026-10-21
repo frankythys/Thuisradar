@@ -51,3 +51,12 @@ create function storage.foldername(name text) returns text[] language sql as $$
   select string_to_array(name, '/')
 $$;
 alter table storage.objects enable row level security;
+
+-- pg_cron: geplande taken komen als rij in cron.jobs terecht.
+create schema cron;
+create table cron.jobs (name text primary key, schedule text, command text);
+create function cron.schedule(job_name text, schedule text, command text) returns bigint language sql as $$
+  insert into cron.jobs values (job_name, schedule, command)
+  on conflict (name) do update set schedule = excluded.schedule, command = excluded.command;
+  select 1::bigint;
+$$;
