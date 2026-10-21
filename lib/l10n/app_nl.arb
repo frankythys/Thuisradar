@@ -868,13 +868,57 @@
   "@authEnterEmailFirst": {
     "description": "Fout: eerst e-mailadres invullen."
   },
-  "authResetSent": "Controleer je e-mail om je wachtwoord opnieuw in te stellen.",
+  "authResetSent": "Controleer je e-mail en open de link op deze gsm om een nieuw wachtwoord te kiezen.",
   "@authResetSent": {
     "description": "Melding: herstelmail verstuurd."
   },
   "authResetFailed": "De herstelmail kon niet worden verstuurd. Probeer opnieuw.",
   "@authResetFailed": {
     "description": "Fout: herstelmail mislukt."
+  },
+  "authPasswordWeak": "Dit wachtwoord is te zwak. Gebruik minstens één kleine letter, hoofdletter, cijfer en symbool.",
+  "@authPasswordWeak": {
+    "description": "Fout: het wachtwoord voldoet niet aan de regels."
+  },
+  "authNewPasswordTitle": "Nieuw wachtwoord",
+  "@authNewPasswordTitle": {
+    "description": "Schermtitel: nieuw wachtwoord kiezen na de herstellink."
+  },
+  "authNewPasswordIntro": "Je bent aangemeld via de herstellink. Kies nu een nieuw wachtwoord voor je account.",
+  "@authNewPasswordIntro": {
+    "description": "Uitleg bovenaan het scherm nieuw wachtwoord."
+  },
+  "authNewPasswordField": "Nieuw wachtwoord",
+  "@authNewPasswordField": {
+    "description": "Veld: nieuw wachtwoord."
+  },
+  "authNewPasswordRepeat": "Herhaal het wachtwoord",
+  "@authNewPasswordRepeat": {
+    "description": "Veld: nieuw wachtwoord herhalen."
+  },
+  "authNewPasswordMismatch": "De wachtwoorden zijn niet gelijk.",
+  "@authNewPasswordMismatch": {
+    "description": "Fout: de twee wachtwoorden verschillen."
+  },
+  "authNewPasswordSave": "Wachtwoord opslaan",
+  "@authNewPasswordSave": {
+    "description": "Knop: nieuw wachtwoord opslaan."
+  },
+  "authNewPasswordLater": "Later",
+  "@authNewPasswordLater": {
+    "description": "Knop: geen nieuw wachtwoord kiezen, verder naar de app."
+  },
+  "authNewPasswordSaved": "Je wachtwoord is gewijzigd.",
+  "@authNewPasswordSaved": {
+    "description": "Melding: wachtwoord gewijzigd."
+  },
+  "authNewPasswordSame": "Kies een ander wachtwoord dan je vorige.",
+  "@authNewPasswordSame": {
+    "description": "Fout: het nieuwe wachtwoord is gelijk aan het oude."
+  },
+  "authNewPasswordFailed": "Opslaan is niet gelukt. Probeer opnieuw.",
+  "@authNewPasswordFailed": {
+    "description": "Fout: nieuw wachtwoord opslaan mislukt."
   },
   "authBiometricTitle": "Biometrie inschakelen",
   "@authBiometricTitle": {
@@ -940,7 +984,7 @@
   "@authPassword": {
     "description": "Veldlabel: wachtwoord."
   },
-  "authPasswordHelper": "Minimaal 8 tekens",
+  "authPasswordHelper": "Minstens 8 tekens, met een kleine letter, hoofdletter, cijfer en symbool",
   "@authPasswordHelper": {
     "description": "Hulptekst: minimale lengte wachtwoord."
   },

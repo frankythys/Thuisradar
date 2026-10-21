@@ -41,6 +41,7 @@ class _Field extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         helperText: helper,
+        helperMaxLines: 2,
         prefixIcon: Icon(icon, color: AppColors.primary),
         suffixIcon: suffix,
       ),

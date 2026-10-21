@@ -136,6 +136,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           setState(() => _message = context.l10n.authConfirmEmail);
         }
       }
+    } on AuthWeakPasswordException {
+      if (mounted) setState(() => _message = context.l10n.authPasswordWeak);
     } on AuthException catch (e) {
       if (mounted) setState(() => _message = e.message);
     } catch (_) {

@@ -49,7 +49,19 @@ class AuthRepository {
     return response.session != null;
   }
 
-  Future<void> resetPassword(String email) => _client.auth.resetPasswordForEmail(email);
+  /// Stuurt de herstelmail. De link opent de app weer (zelfde terugkeeradres
+  /// als bij Google); daar kies je een nieuw wachtwoord. Open de mail op
+  /// dezelfde gsm: de app bewaart een sleutel die bij de link hoort (PKCE).
+  Future<void> resetPassword(String email) =>
+      _client.auth.resetPasswordForEmail(email, redirectTo: googleRedirectUrl);
+
+  /// Meldt zich telkens de gebruiker via de herstellink binnenkomt.
+  Stream<void> watchPasswordRecovery() => _client.auth.onAuthStateChange
+      .where((state) => state.event == AuthChangeEvent.passwordRecovery)
+      .handleError((Object error) => debugPrint('Herstellink verwerken mislukt: $error'));
+
+  /// Zet een nieuw wachtwoord voor de ingelogde gebruiker.
+  Future<void> updatePassword(String password) => _client.auth.updateUser(UserAttributes(password: password));
 
   Future<void> signOut() => _client.auth.signOut();
 

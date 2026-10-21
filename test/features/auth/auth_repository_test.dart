@@ -58,4 +58,19 @@ void main() {
       ),
     ).called(1);
   });
+
+  test('wachtwoord vergeten: de herstellink opent de app', () async {
+    final client = _Client();
+    final auth = _Auth();
+    when(() => client.auth).thenReturn(auth);
+    when(() => auth.resetPasswordForEmail(any(), redirectTo: any(named: 'redirectTo')))
+        .thenAnswer((_) async {});
+
+    await AuthRepository(client).resetPassword('oma@example.com');
+
+    verify(
+      () =>
+          auth.resetPasswordForEmail('oma@example.com', redirectTo: 'com.circlebeacon.app://login-callback/'),
+    ).called(1);
+  });
 }
