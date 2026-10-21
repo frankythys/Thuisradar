@@ -36,9 +36,12 @@ Open daarna in Android Studio: **File > Open** → `C:\Programming\thuisradar`.
 2. **SQL Editor > New query** → plak de volledige inhoud van `supabase/schema.sql` → **Run**.
    Je moet "Success. No rows returned" zien.
    Voer daarna **elke migratie** in `supabase/migrations/` uit, één per keer en **in
-   nummervolgorde** (`002_…` tot en met de hoogste, nu `024_leave_family.sql`). Zonder de
-   migraties ontbreken SOS, push, plaatsen, chat, noodcontacten, parkeerplek en het
-   veilig verlaten van een gezin.
+   nummervolgorde** (`002_…` tot en met de hoogste, nu `025_privacy_and_account.sql`). Zonder de
+   migraties ontbreken SOS, push, plaatsen, chat, noodcontacten, parkeerplek, het
+   veilig verlaten van een gezin en het verwijderen van een account.
+   Migratie 025 zet zelf **pg_cron** aan (geschiedenis ouder dan 31 dagen wissen); lukt
+   dat niet, zet het dan eerst aan via **Database > Extensions > pg_cron** en voer 025
+   opnieuw uit.
 3. **Authentication > Sign In / Providers > Email**:
    - *Enable Email provider*: aan.
    - *Confirm email*: **uitzetten** is het eenvoudigst voor een familie-app
@@ -145,6 +148,15 @@ in de Play Console. Controleren met welke sleutel hij ondertekend is:
 > APK met de debug-sleutel heen geïnstalleerd worden ("App niet geïnstalleerd"). Dan
 > eerst de oude app verwijderen (opnieuw inloggen en toestemmingen geven) of de app
 > voortaan via Google Play installeren.
+
+## Website: privacybeleid en account verwijderen
+
+Google Play vraagt een publieke URL voor het privacybeleid en voor het verwijderen van een
+account. Die staan op een kleine Cloudflare Worker in `site/` (zoals bij Cooklet); zie
+`site/README.md` om hem online te zetten. Vul daarna in de Play Console in:
+
+- **Privacybeleid:** `https://circlebeacon.frankythys.workers.dev/privacy`
+- **Data safety → Delete account URL:** `https://circlebeacon.frankythys.workers.dev/account/delete`
 
 ## Bekende aandachtspunten
 
