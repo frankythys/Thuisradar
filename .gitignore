@@ -65,3 +65,6 @@ supabase/.temp/
 
 # Gegenereerde vertalingen (flutter gen-l10n, zie l10n.yaml)
 /lib/l10n/generated/
+
+# Wrangler-cache van de website (lokaal, niet committen)
+site/.wrangler/
