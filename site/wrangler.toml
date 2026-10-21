@@ -1,0 +1,14 @@
+# Publieke website van CircleBeacon: privacybeleid en account verwijderen.
+# Zie README.md. Adres na deploy: https://circlebeacon.frankythys.workers.dev
+name = "circlebeacon"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Staan publiek op de pagina's (privacybeleid, verwijderpagina).
+OWNER_NAME = "Franky Thys"
+CONTACT_EMAIL = "frankythys@gmail.com"
+
+# Secrets (NIET in dit bestand, zelfde waarden als in env.json):
+#   npx wrangler secret put SUPABASE_URL
+#   npx wrangler secret put SUPABASE_PUBLISHABLE_KEY
