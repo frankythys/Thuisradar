@@ -7,7 +7,6 @@ import '../../../shared/widgets/branded_app_bar.dart';
 import '../../auth/application/auth_providers.dart';
 import '../application/emergency_providers.dart';
 import '../domain/emergency_contact.dart';
-import 'emergency_access_tile.dart';
 import 'emergency_contact_fields.dart';
 import '../../../l10n/l10n.dart';
 
@@ -76,10 +75,6 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
       await ref.read(emergencyContactRepositoryProvider).save(userId, contacts);
       await ref.read(emergencyContactCacheProvider).write(userId, contacts);
       ref.invalidate(myEmergencyContactsProvider);
-      if (contacts.isNotEmpty && !await ref.read(emergencyPhoneProvider).canSendAutomatically()) {
-        await ref.read(emergencyPhoneProvider).requestAccess();
-        ref.invalidate(emergencyAutomaticProvider);
-      }
       _snack(contacts.isEmpty ? l10n.emergencyCleared : l10n.emergencySaved);
     } on Exception catch (error) {
       debugPrint('Noodcontacten bewaren mislukt: $error');
@@ -95,30 +90,9 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
     final plan = planFor(contacts);
     final l10n = context.l10n;
     if (plan.isEmpty) return _snack(l10n.emergencyFillFirst);
-    final phone = ref.read(emergencyPhoneProvider);
     final sender = widget.senderName.trim();
     final text = l10n.emergencyTestSms(sender.isEmpty ? l10n.emergencyYourContact : sender);
-    final results = <String, SmsResult>{
-      for (final contact in plan.smsTo) contact.name: await phone.sendSms(dialablePhone(contact.phone), text),
-    };
-    ref.invalidate(emergencySimProvider);
-    if (results.values.every((result) => result == SmsResult.notAllowed)) {
-      return phone.openSms(dialablePhone(plan.smsTo.first.phone), text);
-    }
-    String names(SmsResult wanted) => l10n.joinNames([
-      for (final MapEntry(:key, :value) in results.entries)
-        if (value == wanted) key,
-    ]);
-    final sent = names(SmsResult.sent);
-    final noService = names(SmsResult.noService);
-    final failed = names(SmsResult.failed);
-    _snack(
-      [
-        if (sent.isNotEmpty) l10n.emergencyTestSent(sent),
-        if (noService.isNotEmpty) l10n.emergencyTestNoService(noService),
-        if (failed.isNotEmpty) l10n.emergencyTestFailed(failed),
-      ].join(' '),
-    );
+    await ref.read(emergencyPhoneProvider).openSms(dialablePhone(plan.callTo!.phone), text);
   }
 
   String? _problemText(AppLocalizations l10n, EmergencyContactProblem? problem) => switch (problem) {
@@ -165,8 +139,6 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
                     phone: _phones[1],
                     error: _problemText(l10n, _errors[1]),
                   ),
-                  SizedBox(height: tokens.spaceMd),
-                  const EmergencyAccessTile(),
                   SizedBox(height: tokens.spaceMd),
                   FilledButton(onPressed: _busy ? null : _save, child: Text(l10n.emergencySave)),
                   SizedBox(height: tokens.spaceSm),

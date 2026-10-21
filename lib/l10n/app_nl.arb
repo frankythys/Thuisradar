@@ -122,6 +122,42 @@
   "@profileLeaveFamily": {
     "description": "Rij en dialoogknop: het gezin verlaten."
   },
+  "profileDeleteAccount": "Account verwijderen",
+  "@profileDeleteAccount": {
+    "description": "Rij: het eigen account verwijderen."
+  },
+  "profileDeleteAccountSubtitle": "Wist je account en al je gegevens",
+  "@profileDeleteAccountSubtitle": {
+    "description": "Uitleg bij account verwijderen."
+  },
+  "profileDeleteAccountBusy": "Bezig met verwijderen…",
+  "@profileDeleteAccountBusy": {
+    "description": "Uitleg terwijl het account verwijderd wordt."
+  },
+  "profileDeleteAccountTitle": "Account verwijderen?",
+  "@profileDeleteAccountTitle": {
+    "description": "Dialoogtitel: account verwijderen."
+  },
+  "profileDeleteAccountBody": "Je account wordt definitief gewist, met je locaties en geschiedenis, berichten en bijlagen, SOS-meldingen en noodcontacten. Ben je de laatste in je gezin, dan verdwijnt ook het gezin met zijn plaatsen. Dit kan je niet ongedaan maken.",
+  "@profileDeleteAccountBody": {
+    "description": "Uitleg in de dialoog: wat er gewist wordt."
+  },
+  "profileDeleteAccountConfirm": "Definitief verwijderen",
+  "@profileDeleteAccountConfirm": {
+    "description": "Knop: account definitief verwijderen."
+  },
+  "profileDeleteAccountOwnerFirst": "Je bent beheerder. Maak eerst iemand anders beheerder in de ledenlijst; daarna kan je je account verwijderen.",
+  "@profileDeleteAccountOwnerFirst": {
+    "description": "Melding: de beheerder moet eerst het beheer overdragen."
+  },
+  "profileDeleteAccountFailed": "Account verwijderen is niet gelukt. Probeer opnieuw.",
+  "@profileDeleteAccountFailed": {
+    "description": "Melding: account verwijderen mislukt."
+  },
+  "profileDeleteAccountDone": "Je account is verwijderd.",
+  "@profileDeleteAccountDone": {
+    "description": "Melding: account is verwijderd."
+  },
   "profileLeaveFamilyTitle": "Familie verlaten?",
   "@profileLeaveFamilyTitle": {
     "description": "Dialoogtitel: het gezin verlaten."
@@ -341,6 +377,10 @@
   "profilePrivacyText": "Alleen leden van jouw gezin zien je locatie, plaatsen en berichten. De verbinding is versleuteld. Je kunt locatie delen altijd pauzeren in je profiel.",
   "@profilePrivacyText": {
     "description": "Uitleg in het privacyblad."
+  },
+  "profilePrivacyPolicy": "Privacybeleid lezen",
+  "@profilePrivacyPolicy": {
+    "description": "Knop: het volledige privacybeleid op de website openen."
   },
   "profileForgetLogin": "Opgeslagen login verwijderen",
   "@profileForgetLogin": {
@@ -566,6 +606,10 @@
   "@familyErrorExpiredCode": {
     "description": "Fout: uitnodigingscode verlopen."
   },
+  "familyErrorTooManyAttempts": "Te veel foute codes. Probeer het over een kwartier opnieuw.",
+  "@familyErrorTooManyAttempts": {
+    "description": "Fout: te veel foute uitnodigingscodes na elkaar."
+  },
   "familyErrorGeneric": "Dat lukte niet. Probeer opnieuw.",
   "@familyErrorGeneric": {
     "description": "Fout: iets ging mis op de server."
@@ -620,7 +664,7 @@
       }
     }
   },
-  "emergencyIntro": "Bij een SOS krijgen je noodcontacten automatisch een sms met je locatie, ook als ze de app niet hebben. Contact 1 wordt daarna ook gebeld. De sms gaat van je eigen gsm en werkt ook zonder internet.",
+  "emergencyIntro": "Bij een SOS opent de berichten-app met een sms en je locatie, klaar voor je noodcontact. Jij tikt op versturen; dat werkt ook zonder internet. Je gezin krijgt de SOS sowieso via de app.",
   "@emergencyIntro": {
     "description": "Uitleg bovenaan het noodcontactenscherm."
   },
@@ -633,11 +677,11 @@
       }
     }
   },
-  "emergencyRoleFirst": "Krijgt een sms en wordt gebeld",
+  "emergencyRoleFirst": "Krijgt de SOS-sms",
   "@emergencyRoleFirst": {
     "description": "Wat contact 1 krijgt."
   },
-  "emergencyRoleSecond": "Krijgt een sms",
+  "emergencyRoleSecond": "Reserve: krijgt de sms als contact 1 leeg is",
   "@emergencyRoleSecond": {
     "description": "Wat contact 2 krijgt."
   },
@@ -673,33 +717,6 @@
   "@emergencyFillFirst": {
     "description": "Melding: eerst een contact invullen."
   },
-  "emergencyTestSent": "Test-sms verstuurd naar {names}.",
-  "@emergencyTestSent": {
-    "description": "Melding: test-sms verstuurd.",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      }
-    }
-  },
-  "emergencyTestNoService": "Niet verstuurd naar {names}: geen gsm-netwerk of simkaart.",
-  "@emergencyTestNoService": {
-    "description": "Melding: geen netwerk of simkaart.",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      }
-    }
-  },
-  "emergencyTestFailed": "Test-sms naar {names} mislukt.",
-  "@emergencyTestFailed": {
-    "description": "Melding: test-sms mislukt.",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      }
-    }
-  },
   "emergencyTestSms": "Test van {name}: je bent ingesteld als noodcontact. Bij een SOS krijg je een sms met de locatie. Je hoeft niets te doen.",
   "@emergencyTestSms": {
     "description": "Inhoud van de test-sms; name = jouw naam.",
@@ -724,26 +741,6 @@
   "emergencyErrorInvalidPhone": "Dit telefoonnummer klopt niet.",
   "@emergencyErrorInvalidPhone": {
     "description": "Fout: ongeldig telefoonnummer."
-  },
-  "emergencyAutoTitle": "Automatisch sms'en en bellen",
-  "@emergencyAutoTitle": {
-    "description": "Titel: automatisch sms en bellen."
-  },
-  "emergencyAutoNoSim": "Deze gsm heeft geen simkaart (of geen gsm-netwerk): sms en bellen werken niet",
-  "@emergencyAutoNoSim": {
-    "description": "Uitleg: geen simkaart."
-  },
-  "emergencyAutoOn": "Aan · bij een SOS vertrekken de sms en de oproep vanzelf",
-  "@emergencyAutoOn": {
-    "description": "Uitleg: automatisch staat aan."
-  },
-  "emergencyAutoNoPermission": "Nog geen toestemming · dan opent bij een SOS enkel de berichten-app",
-  "@emergencyAutoNoPermission": {
-    "description": "Uitleg: nog geen toestemming (Android)."
-  },
-  "emergencyAutoIphone": "Op iPhone kan een app niet zelf sms'en of bellen; de berichten-app opent met de sms klaar",
-  "@emergencyAutoIphone": {
-    "description": "Uitleg op iPhone."
   },
   "commonListAnd": "{start} en {last}",
   "@commonListAnd": {
@@ -2620,42 +2617,6 @@
       }
     }
   },
-  "emergencySmsTo": "Sms naar {names}.",
-  "@emergencySmsTo": {
-    "description": "Na SOS: sms verstuurd.",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      }
-    }
-  },
-  "emergencySmsNoNetwork": "Sms naar {names} niet verstuurd: geen gsm-netwerk of simkaart.",
-  "@emergencySmsNoNetwork": {
-    "description": "Na SOS: geen netwerk.",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      }
-    }
-  },
-  "emergencySmsFailed": "Sms naar {names} mislukt.",
-  "@emergencySmsFailed": {
-    "description": "Na SOS: sms mislukt.",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      }
-    }
-  },
-  "emergencyCallingNow": "Nu bellen naar {name}.",
-  "@emergencyCallingNow": {
-    "description": "Na SOS: nu bellen.",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "emergencyAlertFailed": "De noodcontacten verwittigen is niet gelukt.",
   "@emergencyAlertFailed": {
     "description": "Na SOS: noodcontacten verwittigen mislukt."
@@ -2774,26 +2735,10 @@
   "@sosNoContacts": {
     "description": "SOS: nog geen noodcontacten."
   },
-  "sosNoSim": "Deze gsm heeft geen simkaart: geen sms of oproep naar je noodcontacten",
-  "@sosNoSim": {
-    "description": "SOS: geen simkaart."
-  },
   "sosManualContact": "Noodcontact {name}: de sms staat klaar, zelf versturen",
   "@sosManualContact": {
     "description": "SOS: sms staat klaar.",
     "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "sosAlsoSms": "Ook een sms naar {names} · daarna bellen naar {name}",
-  "@sosAlsoSms": {
-    "description": "SOS: ook sms en bellen.",
-    "placeholders": {
-      "names": {
-        "type": "String"
-      },
       "name": {
         "type": "String"
       }

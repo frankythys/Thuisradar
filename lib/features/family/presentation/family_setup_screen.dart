@@ -74,6 +74,7 @@ class _FamilySetupScreenState extends ConsumerState<FamilySetupScreen> {
     return switch (classifyFamilyError(message)) {
       FamilyError.unknownCode => l10n.familyErrorUnknownCode,
       FamilyError.expiredCode => l10n.familyErrorExpiredCode,
+      FamilyError.tooManyAttempts => l10n.familyErrorTooManyAttempts,
       FamilyError.other => l10n.familyErrorGeneric,
     };
   }

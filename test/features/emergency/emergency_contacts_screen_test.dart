@@ -33,15 +33,12 @@ void main() {
     phone = _MockPhone();
     when(() => repository.save(any(), any())).thenAnswer((_) async {});
     when(() => cache.write(any(), any())).thenAnswer((_) async {});
-    when(() => phone.canSendAutomatically()).thenAnswer((_) async => true);
-    when(() => phone.simReady()).thenAnswer((_) async => true);
+    when(() => phone.openSms(any(), any())).thenAnswer((_) async {});
   });
 
-  List<Override> overrides(List<EmergencyContact> contacts, {bool automatic = true, bool? sim = true}) => [
-    emergencySimProvider.overrideWith((ref) async => sim),
+  List<Override> overrides(List<EmergencyContact> contacts) => [
     currentUserIdProvider.overrideWithValue('me'),
     myEmergencyContactsProvider.overrideWith((ref) async => contacts),
-    emergencyAutomaticProvider.overrideWith((ref) async => automatic),
     emergencyContactRepositoryProvider.overrideWithValue(repository),
     emergencyContactCacheProvider.overrideWithValue(cache),
     emergencyPhoneProvider.overrideWithValue(phone),
@@ -68,7 +65,8 @@ void main() {
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(2), 'Jan');
     await tester.enterText(fields.at(3), 'geen nummer');
-    await tester.scrollUntilVisible(find.text('Bewaren'), 200, scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(find.text('Bewaren'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Bewaren'));
     await tester.pump();
     expect(find.text('Dit telefoonnummer klopt niet.'), findsOneWidget);
@@ -83,8 +81,7 @@ void main() {
     expect(find.text('Noodcontacten bewaard.'), findsOneWidget);
   });
 
-  testWidgets('test-sms gaat naar elk ingevuld contact', (tester) async {
-    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => SmsResult.sent);
+  testWidgets('test-sms: de berichten-app opent voor contact 1', (tester) async {
     await pumpScreen(tester, const [_oma, _jan]);
     await tester.scrollUntilVisible(
       find.text('Stuur een test-sms'),
@@ -93,44 +90,15 @@ void main() {
     );
     await tester.tap(find.text('Stuur een test-sms'));
     await tester.pumpAndSettle();
-    verify(() => phone.sendSms('0470123456', any(that: startsWith('Test van Papa')))).called(1);
-    verify(() => phone.sendSms('0471987654', any())).called(1);
-    expect(find.text('Test-sms verstuurd naar Oma en Jan.'), findsOneWidget);
-  });
-
-  testWidgets('test-sms zonder netwerk: niet verstuurd, en de waarschuwing staat er', (tester) async {
-    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => SmsResult.noService);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: overrides(const [_oma], sim: false),
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          home: const EmergencyContactsScreen(senderName: 'Papa'),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Stuur een test-sms'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.textContaining('geen simkaart'), findsOneWidget);
-    await tester.tap(find.text('Stuur een test-sms'));
-    await tester.pumpAndSettle();
-    expect(find.text('Niet verstuurd naar Oma: geen gsm-netwerk of simkaart.'), findsOneWidget);
+    verify(() => phone.openSms('0470123456', any(that: startsWith('Test van Papa')))).called(1);
+    verifyNever(() => phone.openSms('0471987654', any()));
   });
 
   group('regel op het SOS-scherm', () {
-    Future<void> pumpLine(
-      WidgetTester tester,
-      List<EmergencyContact> contacts, {
-      bool automatic = true,
-      bool? sim = true,
-    }) async {
+    Future<void> pumpLine(WidgetTester tester, List<EmergencyContact> contacts) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: overrides(contacts, automatic: automatic, sim: sim),
+          overrides: overrides(contacts),
           child: MaterialApp(
             theme: AppTheme.light(),
             home: const Scaffold(body: SosEmergencyLine()),
@@ -140,27 +108,14 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('met contacten: wie een sms krijgt en wie gebeld wordt', (tester) async {
+    testWidgets('met contacten: de sms staat klaar voor contact 1', (tester) async {
       await pumpLine(tester, const [_oma, _jan]);
-      expect(find.text('Ook een sms naar Oma en Jan · daarna bellen naar Oma'), findsOneWidget);
-    });
-
-    testWidgets('zonder toestemming: de sms staat klaar', (tester) async {
-      await pumpLine(tester, const [_oma], automatic: false);
       expect(find.text('Noodcontact Oma: de sms staat klaar, zelf versturen'), findsOneWidget);
     });
 
     testWidgets('zonder contacten: waar je ze instelt', (tester) async {
       await pumpLine(tester, const []);
       expect(find.text('Nog geen noodcontacten · instellen via Profiel'), findsOneWidget);
-    });
-
-    testWidgets('zonder simkaart: duidelijke waarschuwing', (tester) async {
-      await pumpLine(tester, const [_oma], sim: false);
-      expect(
-        find.text('Deze gsm heeft geen simkaart: geen sms of oproep naar je noodcontacten'),
-        findsOneWidget,
-      );
     });
   });
 }

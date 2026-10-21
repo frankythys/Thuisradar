@@ -8,6 +8,10 @@ void main() {
       classifyFamilyError('Deze uitnodigingscode is verlopen. Vraag een nieuwe code.'),
       FamilyError.expiredCode,
     );
+    expect(
+      classifyFamilyError('Te veel foute codes. Probeer het over een kwartier opnieuw.'),
+      FamilyError.tooManyAttempts,
+    );
     expect(classifyFamilyError('Niet ingelogd'), FamilyError.other);
   });
 }

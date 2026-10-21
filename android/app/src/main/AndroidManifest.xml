@@ -22,11 +22,11 @@
     <!-- Het package vraagt minSdk 26, maar enkel voor die voorgronddienst
          (startForegroundService). Zonder dienst werkt het ook op Android 7. -->
     <uses-sdk tools:overrideLibrary="dk.carp.activity_recognition_flutter"/>
-    <!-- Noodcontacten: bij een SOS automatisch een sms sturen en contact 1 bellen. -->
-    <uses-permission android:name="android.permission.SEND_SMS"/>
-    <uses-permission android:name="android.permission.CALL_PHONE"/>
-    <!-- Ook installeerbaar op een tablet zonder simkaart (dan zonder sms/bellen). -->
-    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
+    <!-- Noodcontacten: de app sms't en belt niet zelf, maar opent de berichten-
+         of telefoon-app (geen SEND_SMS/CALL_PHONE, die Google Play beperkt).
+         Ook als een plug-in ze ooit meebrengt, blijven ze eruit. -->
+    <uses-permission android:name="android.permission.SEND_SMS" tools:node="remove"/>
+    <uses-permission android:name="android.permission.CALL_PHONE" tools:node="remove"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- Zonebewaking (native_geofence): zones opnieuw aanmelden na herstart -->
@@ -82,9 +82,12 @@
         <!-- Google Maps (vlag USE_GOOGLE_MAPS): sleutel komt uit android/local.properties -->
         <meta-data android:name="com.google.android.geo.API_KEY"
                    android:value="${MAPS_API_KEY}"/>
-        <!-- Zonebewaking (native_geofence): Android wekt de app bij aankomst/vertrek -->
+        <!-- Zonebewaking (native_geofence): Android wekt de app bij aankomst/vertrek.
+             Niet exported: Play-services levert de expliciete PendingIntent van de
+             app zelf af. Exported kon elke andere app een nep-aankomst (en een
+             eigen callback-handle) binnenschieten. -->
         <receiver android:name="com.chunkytofustudios.native_geofence.receivers.NativeGeofenceBroadcastReceiver"
-                  android:exported="true"/>
+                  android:exported="false"/>
         <receiver android:name="com.chunkytofustudios.native_geofence.receivers.NativeGeofenceRebootBroadcastReceiver"
                   android:exported="true">
             <intent-filter>

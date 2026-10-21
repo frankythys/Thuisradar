@@ -21,6 +21,7 @@ import '../../location/application/location_providers.dart';
 import '../../onboarding/presentation/replay_onboarding_button.dart';
 import '../../../l10n/l10n.dart';
 import '../application/profile_providers.dart';
+import 'delete_account_tile.dart';
 import 'diagnostics_export_tile.dart';
 import 'profile_edit_sheet.dart';
 import 'profile_header.dart';
@@ -349,6 +350,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 danger: true,
                 onTap: _leaveFamily,
               ),
+              DeleteAccountTile(family: widget.family),
             ]),
             SizedBox(height: tokens.spaceMd),
             Text(

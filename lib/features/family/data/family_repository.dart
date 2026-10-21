@@ -27,9 +27,14 @@ class FamilyRepository {
     return Family.fromJson(row as Map<String, dynamic>);
   }
 
+  /// Sinds migratie 025 geeft de server bij een foute code null (of een rij
+  /// zonder id) terug in plaats van een fout, zodat de poging blijft tellen.
   Future<Family> joinFamily(String inviteCode) async {
     final row = await _client.rpc('join_family', params: {'code': inviteCode});
-    return Family.fromJson(row as Map<String, dynamic>);
+    if (row is! Map<String, dynamic> || row['id'] == null) {
+      throw const PostgrestException(message: 'Onbekende uitnodigingscode');
+    }
+    return Family.fromJson(row);
   }
 
   /// De actuele uitnodigingscode en haar vervaldatum. Zonder migratie 017

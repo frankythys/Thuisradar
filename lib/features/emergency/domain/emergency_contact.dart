@@ -1,5 +1,5 @@
 /// Eén noodcontact (tabel `emergency_contacts`, migratie 021): iemand buiten
-/// de app die bij een SOS een sms krijgt; contact 1 wordt daarna ook gebeld.
+/// de app voor wie bij een SOS de sms klaarstaat (contact 1, anders contact 2).
 /// Puur model, los van Flutter en Supabase.
 class EmergencyContact {
   const EmergencyContact({required this.position, required this.name, required this.phone});
@@ -10,7 +10,7 @@ class EmergencyContact {
     phone: json['phone'] as String,
   );
 
-  /// 1 of 2. Contact 1 wordt na de sms ook gebeld.
+  /// 1 of 2. Contact 1 krijgt de SOS-sms; contact 2 als contact 1 leeg is.
   final int position;
   final String name;
   final String phone;
@@ -30,21 +30,6 @@ class EmergencyContact {
   int get hashCode => Object.hash(position, name, phone);
 }
 
-/// Hoe het versturen van één sms afliep.
-enum SmsResult {
-  /// Het netwerk nam de sms aan.
-  sent,
-
-  /// Niet automatisch: geen toestemming, of een iPhone.
-  notAllowed,
-
-  /// Geen simkaart of geen gsm-netwerk.
-  noService,
-
-  /// Iets anders liep mis.
-  failed,
-}
-
 /// Hoeveel noodcontacten je kan instellen.
 const kMaxEmergencyContacts = 2;
 
@@ -62,8 +47,7 @@ String dialablePhone(String phone) {
   return trimmed.startsWith('+') ? '+$digits' : digits;
 }
 
-/// Wat er bij een SOS met de noodcontacten gebeurt: wie een sms krijgt en
-/// wie er daarna gebeld wordt.
+/// De noodcontacten bij een SOS, en voor wie de sms klaarstaat.
 class EmergencyPlan {
   const EmergencyPlan({required this.smsTo, required this.callTo});
 
@@ -72,7 +56,8 @@ class EmergencyPlan {
   /// Iedereen met een geldig nummer, contact 1 eerst, zonder dubbels.
   final List<EmergencyContact> smsTo;
 
-  /// Contact 1; zonder contact 1 het andere contact. null = niemand.
+  /// Voor wie de sms klaarstaat: contact 1, zonder contact 1 het andere.
+  /// null = niemand.
   final EmergencyContact? callTo;
 
   bool get isEmpty => smsTo.isEmpty;

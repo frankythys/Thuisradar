@@ -41,15 +41,3 @@ final myEmergencyContactsProvider = FutureProvider<List<EmergencyContact>>((ref)
     return cache.read(userId);
   }
 });
-
-/// Kan deze gsm automatisch sms'en en bellen? Opnieuw lezen (invalidate) na
-/// het vragen van de toestemming.
-final emergencyAutomaticProvider = FutureProvider.autoDispose<bool>(
-  (ref) => ref.watch(emergencyPhoneProvider).canSendAutomatically(),
-);
-
-/// Heeft deze gsm een simkaart die klaar is? false = sms en bellen werken
-/// niet; null = niet te zeggen (iPhone).
-final emergencySimProvider = FutureProvider.autoDispose<bool?>(
-  (ref) => ref.watch(emergencyPhoneProvider).simReady(),
-);

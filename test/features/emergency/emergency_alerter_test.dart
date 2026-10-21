@@ -21,14 +21,6 @@ void main() {
     phone = _MockPhone();
     alerter = EmergencyAlerter(phone);
     log = [];
-    when(() => phone.sendSms(any(), any())).thenAnswer((call) async {
-      log.add('sms ${call.positionalArguments.first}');
-      return SmsResult.sent;
-    });
-    when(() => phone.call(any())).thenAnswer((call) async {
-      log.add('bel ${call.positionalArguments.first}');
-      return true;
-    });
     when(() => phone.openSms(any(), any())).thenAnswer((call) async {
       log.add('open sms ${call.positionalArguments.first}');
     });
@@ -37,52 +29,25 @@ void main() {
   Future<EmergencyOutcome> alert(List<EmergencyContact> contacts) =>
       alerter.alert(l10n: _nl, contacts: contacts, senderName: 'Papa', latitude: 51.0543, longitude: 3.7174);
 
-  test('automatisch: eerst sms naar allebei, daarna contact 1 bellen', () async {
+  test('de berichten-app opent met de sms klaar voor contact 1', () async {
     final outcome = await alert([jan, oma]);
-    expect(log, ['sms 0470123456', 'sms +32471987654', 'bel 0470123456']);
-    expect(outcome.summary(_nl), 'Sms naar Oma en Jan. Nu bellen naar Oma.');
-    final text = verify(() => phone.sendSms('0470123456', captureAny())).captured.single as String;
+    expect(log, ['open sms 0470123456']);
+    expect(outcome.manual, oma);
+    expect(outcome.summary(_nl), "Tik op versturen om Oma te sms'en.");
+    final text = verify(() => phone.openSms('0470123456', captureAny())).captured.single as String;
     expect(text, contains('SOS van Papa'));
     expect(text, contains('51.05430,3.71740'));
   });
 
-  test('zonder toestemming: de berichten-app opent voor contact 1, niet bellen', () async {
-    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => SmsResult.notAllowed);
-    final outcome = await alert([oma, jan]);
-    expect(log, ['open sms 0470123456']);
-    verifyNever(() => phone.call(any()));
-    expect(outcome.manual, oma);
-    expect(outcome.summary(_nl), "Tik op versturen om Oma te sms'en.");
-  });
-
-  test('bellen lukt niet: de sms is wel vertrokken', () async {
-    when(() => phone.call(any())).thenAnswer((_) async => false);
-    final outcome = await alert([oma]);
-    expect(outcome.texted, [oma]);
-    expect(outcome.called, isNull);
-    expect(outcome.summary(_nl), 'Sms naar Oma.');
+  test('zonder contact 1: de sms staat klaar voor het andere contact', () async {
+    final outcome = await alert([jan]);
+    expect(log, ['open sms +32471987654']);
+    expect(outcome.manual, jan);
   });
 
   test('geen noodcontacten: niets', () async {
     final outcome = await alert(const []);
     expect(log, isEmpty);
     expect(outcome.summary(_nl), isNull);
-  });
-
-  test('geen simkaart of netwerk: niet doen alsof, en niet bellen', () async {
-    when(() => phone.sendSms(any(), any())).thenAnswer((_) async => SmsResult.noService);
-    final outcome = await alert([oma, jan]);
-    verifyNever(() => phone.call(any()));
-    verifyNever(() => phone.openSms(any(), any()));
-    expect(outcome.texted, isEmpty);
-    expect(outcome.summary(_nl), 'Sms naar Oma en Jan niet verstuurd: geen gsm-netwerk of simkaart.');
-  });
-
-  test('één sms mislukt: eerlijk melden, de andere telt wel', () async {
-    when(() => phone.sendSms('+32471987654', any())).thenAnswer((_) async => SmsResult.failed);
-    final outcome = await alert([oma, jan]);
-    expect(outcome.texted, [oma]);
-    expect(outcome.failed, [jan]);
-    expect(outcome.summary(_nl), 'Sms naar Oma. Sms naar Jan mislukt. Nu bellen naar Oma.');
   });
 }

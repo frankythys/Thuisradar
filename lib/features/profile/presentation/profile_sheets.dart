@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/site_links.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/member_avatar.dart';
@@ -151,7 +153,16 @@ Future<void> showPrivacySheet(BuildContext context, {required Future<void> Funct
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(context.l10n.profilePrivacyText, style: text.bodyMedium),
-        SizedBox(height: tokens.spaceLg),
+        SizedBox(height: tokens.spaceSm),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton.icon(
+            onPressed: () => launchUrl(SiteLinks.privacy, mode: LaunchMode.externalApplication),
+            icon: const Icon(Icons.open_in_new),
+            label: Text(context.l10n.profilePrivacyPolicy),
+          ),
+        ),
+        SizedBox(height: tokens.spaceMd),
         OutlinedButton.icon(
           onPressed: () async {
             Navigator.pop(context);
