@@ -33,3 +33,68 @@ export function sosText(language: Language, actorName: string | null | undefined
   const name = actorName?.trim() || t.someone;
   return { title: "🚨 SOS", body: t.body(name), name };
 }
+
+type PlaceEvent = "arrival" | "departure";
+
+// Zinnen zoals in de app (notificationsArrival/Departure in lib/l10n). Zonder
+// plaatsnaam een eigen zin: "een plaats" past niet in elke taal in dezelfde zin.
+const PLACE: Record<Language, {
+  title: string;
+  arrival: (name: string, place: string | null) => string;
+  departure: (name: string, place: string | null) => string;
+}> = {
+  nl: {
+    title: "Plaatsen",
+    arrival: (n, p) => `${n} is aangekomen op ${p ?? "een plaats"}`,
+    departure: (n, p) => `${n} is vertrokken van ${p ?? "een plaats"}`,
+  },
+  en: {
+    title: "Places",
+    arrival: (n, p) => `${n} arrived at ${p ?? "a place"}`,
+    departure: (n, p) => `${n} left ${p ?? "a place"}`,
+  },
+  fr: {
+    title: "Lieux",
+    arrival: (n, p) => `${n} est arrivé à ${p ?? "un lieu"}`,
+    departure: (n, p) => `${n} a quitté ${p ?? "un lieu"}`,
+  },
+  de: {
+    title: "Orte",
+    arrival: (n, p) => (p ? `${n} ist bei ${p} angekommen` : `${n} ist an einem Ort angekommen`),
+    departure: (n, p) => (p ? `${n} hat ${p} verlassen` : `${n} hat einen Ort verlassen`),
+  },
+  es: {
+    title: "Lugares",
+    arrival: (n, p) => `${n} ha llegado a ${p ?? "un lugar"}`,
+    departure: (n, p) => `${n} ha salido de ${p ?? "un lugar"}`,
+  },
+  pt: {
+    title: "Locais",
+    arrival: (n, p) => `${n} chegou a ${p ?? "um local"}`,
+    departure: (n, p) => `${n} saiu de ${p ?? "um local"}`,
+  },
+  it: {
+    title: "Luoghi",
+    arrival: (n, p) => `${n} è arrivato a ${p ?? "un luogo"}`,
+    departure: (n, p) => `${n} ha lasciato ${p ?? "un luogo"}`,
+  },
+  tr: {
+    title: "Yerler",
+    arrival: (n, p) => (p ? `${n}, ${p} yerine vardı` : `${n} bir yere vardı`),
+    departure: (n, p) => (p ? `${n}, ${p} yerinden ayrıldı` : `${n} bir yerden ayrıldı`),
+  },
+};
+
+/** Titel en tekst van de aankomst/vertrek-push. Zonder naam: "een gezinslid"
+ *  in die taal; zonder plaatsnaam (plaats intussen gewist): "een plaats". */
+export function placeText(
+  language: Language,
+  event: PlaceEvent,
+  actorName: string | null | undefined,
+  placeName: string | null | undefined,
+) {
+  const t = PLACE[language];
+  const name = actorName?.trim() || SOS[language].someone;
+  const place = placeName?.trim() || null;
+  return { title: t.title, body: t[event](name, place) };
+}

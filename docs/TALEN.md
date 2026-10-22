@@ -43,7 +43,7 @@ meldingskanalen (via `appLocalizationsProvider`, ook buiten widgets).
 
 **Bewust Nederlands:** het interne locatiediagnose-logboek (voor de ontwikkelaar)
 en `debugPrint`-regels. **Nog Nederlands:** de pushmeldingen voor plaatsen en
-chat (fase 4; SOS is vertaald) en serverfouten die de app niet herkent.
+chat (fase 4; SOS en plaatsen zijn vertaald) en serverfouten die de app niet herkent.
 
 ### Een tekst toevoegen of omzetten
 
@@ -98,9 +98,13 @@ Bestaande widgettests blijven Nederlands (terugval van `context.l10n`); per feat
 **SOS is klaar (22 okt):** migratie `022_profile_language.sql`, de app schrijft
 haar taal weg (`profileLanguageSyncProvider`), `_shared/i18n.ts` bevat de
 teksten en `send-sos-push` kiest per ontvanger. Geen taal bekend (oude app):
-Nederlands; onbekende taal: Engels. **Nog Nederlands:** `send-place-push` en
-`send-chat-push` — voeg hun teksten toe aan `_shared/i18n.ts` en kies per token
-de taal, net als in `send-sos-push`.
+Nederlands; onbekende taal: Engels.
+
+**Plaatsen is klaar (22 okt):** `send-place-push` v9 gebruikt `placeText()` met
+dezelfde zinnen als de app (`notificationsArrival`/`Departure`, titel `navPlaces`).
+
+**Nog Nederlands:** `send-chat-push` — voeg de teksten toe aan `_shared/i18n.ts`
+en kies per token de taal, net als in `send-place-push`.
 
 Oorspronkelijk plan:
 

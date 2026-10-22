@@ -12,6 +12,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import * as jose from "npm:jose@5";
 import { invalidFcmToken } from "../_shared/fcm_result.ts";
 import { hasValidWebhookSecret } from "../_shared/webhook_secret.ts";
+import { type Language, placeText, pushLanguage } from "../_shared/i18n.ts";
 
 interface ServiceAccount {
   project_id: string;
@@ -45,7 +46,7 @@ async function sendPush(
   projectId: string,
   accessToken: string,
   token: string,
-  body: string,
+  text: { title: string; body: string },
 ): Promise<"ok" | "invalid" | "error"> {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
@@ -53,7 +54,7 @@ async function sendPush(
     body: JSON.stringify({
       message: {
         token,
-        notification: { title: "Plaatsen", body },
+        notification: { title: text.title, body: text.body },
         android: {
           priority: "high",
           notification: { channel_id: "places_v2", sound: "thuisradar_arrival" },
@@ -87,14 +88,11 @@ Deno.serve(async (req) => {
 
   const { data: actor } = await supabase
     .from("profiles").select("display_name").eq("id", record.actor_user_id).single();
-  const actorName = actor?.display_name ?? "Een gezinslid";
+  const actorName: string | null = actor?.display_name ?? null;
 
   const { data: place } = await supabase
     .from("places").select("name").eq("id", record.place_id).single();
-  const placeName = place?.name ?? "een plaats";
-
-  const verb = record.type === "arrival" ? "is aangekomen op" : "is vertrokken van";
-  const message = `${actorName} ${verb} ${placeName}`;
+  const placeName: string | null = place?.name ?? null;
 
   const { data: members } = await supabase
     .from("family_members").select("user_id").eq("family_id", record.family_id).neq("user_id", record.actor_user_id);
@@ -109,9 +107,17 @@ Deno.serve(async (req) => {
   const recipients = userIds.filter((id) => !disabled.has(id));
   if (recipients.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 
+  // Taal per ontvanger (migratie 022). Ontbreekt de kolom nog, dan Nederlands.
+  const { data: profiles, error: languageError } = await supabase
+    .from("profiles").select("id, language").in("id", recipients);
+  if (languageError) console.warn("Taal van ontvangers onbekend:", languageError.message);
+  const languageOf = new Map<string, Language>(
+    (profiles ?? []).map((p) => [p.id as string, pushLanguage(p.language as string | null)]),
+  );
+
   const { data: tokens } = await supabase
-    .from("device_tokens").select("token").in("user_id", recipients);
-  const tokenList = (tokens ?? []).map((t) => t.token as string);
+    .from("device_tokens").select("token, user_id").in("user_id", recipients);
+  const tokenList = tokens ?? [];
   if (tokenList.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 
   const sa = JSON.parse(Deno.env.get("FCM_SERVICE_ACCOUNT")!) as ServiceAccount;
@@ -121,8 +127,10 @@ Deno.serve(async (req) => {
   let sent = 0;
   let failed = 0;
   await Promise.all(
-    tokenList.map(async (token) => {
-      const result = await sendPush(sa.project_id, accessToken, token, message);
+    tokenList.map(async ({ token, user_id }) => {
+      const language = languageOf.get(user_id) ?? pushLanguage(null);
+      const text = placeText(language, eventType, actorName, placeName);
+      const result = await sendPush(sa.project_id, accessToken, token, text);
       if (result === "invalid") invalid.push(token);
       else if (result === "ok") sent++;
       else failed++;
