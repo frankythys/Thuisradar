@@ -69,6 +69,13 @@ void main() {
     expect(arrow.position.dy, lessThanOrEqualTo(buttons.top - radius + 0.01), reason: 'boven de knoppen');
   });
 
+  test('pas een pijl als de pin volledig uit beeld is', () {
+    // Midden 20 px buiten de rechterrand, maar de pin is 36 px breed (straal).
+    const halfVisible = Offset(420, 400);
+    expect(edgeIndicators({'a': halfVisible}, visible, radius: radius, reach: {'a': 36}), isEmpty);
+    expect(edgeIndicators({'a': const Offset(440, 400)}, visible, radius: radius, reach: {'a': 36}), hasLength(1));
+  });
+
   test('achter het onderpaneel telt als buiten beeld', () {
     const aboveSheet = Rect.fromLTWH(0, 0, 400, 500);
     final [arrow] = edgeIndicators({'a': const Offset(200, 650)}, aboveSheet, radius: radius);

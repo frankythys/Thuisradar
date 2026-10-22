@@ -12,6 +12,7 @@ import '../../../places/presentation/place_icons.dart';
 import '../../domain/edge_indicator.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/member_on_map.dart';
+import 'group_pin.dart';
 import 'member_marker.dart';
 
 /// Wat de kaart onderaan bedekt, gemeten vanaf de onderkant van de kaart: het
@@ -35,8 +36,13 @@ class OffscreenMembersLayer extends StatefulWidget {
     this.coverChanges,
   });
 
-  /// Eén gezichtje (of plaats-icoon) in het blokje.
+  /// Eén gezichtje in het blokje; ze liggen een stukje in elkaar, zoals de
+  /// cirkels van een groepspin, telkens [_step] verder.
   static const face = 28.0;
+  static const _step = 20.0;
+
+  /// Het plaats-icoon bovenaan (of vooraan) in het blokje.
+  static const _placeSlot = 26.0;
   static const _padding = 4.0;
   static const _thickness = face + 2 * _padding;
 
@@ -54,6 +60,10 @@ class OffscreenMembersLayer extends StatefulWidget {
 
   /// Het gezichtje van een marker staat boven zijn punt; dat telt.
   static const _avatarLift = MemberMarker.avatarSize * 0.75;
+
+  /// Halve maat van een losse pin: pas als die helemaal uit beeld is, komt
+  /// er een blokje.
+  static const _pinReach = MemberMarker.avatarSize / 2 + 4;
 
   /// Wie op het scherm dichter bij elkaar staat, zit in hetzelfde blokje.
   static const _together = 56.0;
@@ -104,12 +114,14 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
     final avoid = [if (cover.buttonsTop > cover.buttonsBottom) buttons];
 
     final byId = {for (final member in widget.members) member.member.userId: member};
-    final faces = <String, Offset>{
+    final points = <String, Offset>{
       for (final member in widget.members)
         if (member.location case final location?)
-          member.member.userId:
-              camera.latLngToScreenOffset(LatLng(location.latitude, location.longitude)) -
-              const Offset(0, OffscreenMembersLayer._avatarLift),
+          member.member.userId: camera.latLngToScreenOffset(LatLng(location.latitude, location.longitude)),
+    };
+    final faces = {
+      for (final MapEntry(key: id, value: point) in points.entries)
+        id: point - const Offset(0, OffscreenMembersLayer._avatarLift),
     };
     // Groepen op het scherm; de eerste van elke groep is het anker.
     final groups = {
@@ -120,13 +132,26 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
         group.first: [for (final id in group) byId[id]!],
     };
     const radius = OffscreenMembersLayer._thickness / 2 + tip;
+    // Midden en halve maat van wat er op de kaart staat: één cirkel, of voor
+    // een groep de hele piramide boven het punt.
     final indicators = edgeIndicators(
-      {for (final anchor in groups.keys) anchor: faces[anchor]!},
+      {
+        for (final MapEntry(key: anchor, value: group) in groups.entries)
+          anchor: group.length == 1
+              ? faces[anchor]!
+              : points[anchor]! - Offset(0, GroupPin.clusterHeight(group.length) / 2),
+      },
       visible,
       radius: radius,
       shown: _shown,
       hysteresis: OffscreenMembersLayer._hysteresis,
       avoid: avoid,
+      reach: {
+        for (final MapEntry(key: anchor, value: group) in groups.entries)
+          anchor: group.length == 1
+              ? OffscreenMembersLayer._pinReach
+              : math.max(GroupPin.clusterWidth(group.length), GroupPin.clusterHeight(group.length)) / 2 + 4,
+      },
     );
     _shown = {for (final indicator in indicators) indicator.id};
 
@@ -137,8 +162,10 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
     for (final indicator in indicators) {
       final group = groups[indicator.id]!;
       final place = _sharedPlace(group);
-      final items = math.min(group.length, OffscreenMembersLayer._maxFaces) + (place == null ? 0 : 1);
-      final length = items * OffscreenMembersLayer.face + 2 * OffscreenMembersLayer._padding;
+      final length = _Indicator.lengthFor(
+        faces: math.min(group.length, OffscreenMembersLayer._maxFaces),
+        place: place != null,
+      );
       final inner = visible.deflate(radius);
       final vertical =
           indicator.position.dx <= inner.left + 0.5 || indicator.position.dx >= inner.right - 0.5;
@@ -225,16 +252,31 @@ class _Indicator extends StatelessWidget {
   final Size capsule;
   final ValueChanged<MemberOnMap> onTap;
 
+  /// Lengte van het blokje met [faces] gezichtjes (en eventueel een plaats).
+  static double lengthFor({required int faces, required bool place}) =>
+      2 * OffscreenMembersLayer._padding +
+      (place ? OffscreenMembersLayer._placeSlot : 0) +
+      OffscreenMembersLayer.face +
+      (faces - 1) * OffscreenMembersLayer._step;
+
   @override
   Widget build(BuildContext context) {
     const tip = OffscreenMembersLayer.tip;
     const max = OffscreenMembersLayer._maxFaces;
+    const step = OffscreenMembersLayer._step;
     final extra = members.length > max ? members.length - (max - 1) : 0;
     final shown = extra > 0 ? members.take(max - 1).toList() : members;
-    final items = [
-      if (place case final place?) _place(place),
-      for (final member in shown) _face(member),
-      if (extra > 0) _plus(extra),
+    final start = place == null ? 0.0 : OffscreenMembersLayer._placeSlot;
+    Widget at(double along, Widget child) => Positioned(
+      left: vertical ? 0 : along,
+      top: vertical ? along : 0,
+      child: child,
+    );
+    // Achterste eerst tekenen: de eerste ligt bovenop, zoals op de kaart.
+    final items = <Widget>[
+      if (place case final place?) at(0, _place(place)),
+      if (extra > 0) at(start + shown.length * step, _plus(extra)),
+      for (final (index, member) in shown.indexed.toList().reversed) at(start + index * step, _face(member)),
     ];
     // Zacht verschijnen in plaats van plots op te springen.
     return TweenAnimationBuilder<double>(
@@ -250,11 +292,7 @@ class _Indicator extends StatelessWidget {
             painter: _CapsulePainter(angle: angle, shadows: context.tokens.shadowMarker),
             child: Padding(
               padding: const EdgeInsets.all(tip + OffscreenMembersLayer._padding),
-              child: Flex(
-                direction: vertical ? Axis.vertical : Axis.horizontal,
-                mainAxisSize: MainAxisSize.min,
-                children: items,
-              ),
+              child: Stack(clipBehavior: Clip.none, children: items),
             ),
           ),
         ),
@@ -268,15 +306,20 @@ class _Indicator extends StatelessWidget {
     child: GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => onTap(member),
-      child: SizedBox.square(
-        dimension: OffscreenMembersLayer.face,
-        child: Center(child: MemberAvatar(member: member.member, size: OffscreenMembersLayer.face - 2)),
+      // Wit randje: zo blijven gezichtjes die in elkaar liggen te onderscheiden.
+      child: Container(
+        width: OffscreenMembersLayer.face,
+        height: OffscreenMembersLayer.face,
+        padding: const EdgeInsets.all(1.5),
+        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+        child: MemberAvatar(member: member.member, size: OffscreenMembersLayer.face - 3),
       ),
     ),
   );
 
-  Widget _place(PlaceStatus place) => SizedBox.square(
-    dimension: OffscreenMembersLayer.face,
+  Widget _place(PlaceStatus place) => SizedBox(
+    width: vertical ? OffscreenMembersLayer.face : OffscreenMembersLayer._placeSlot,
+    height: vertical ? OffscreenMembersLayer._placeSlot : OffscreenMembersLayer.face,
     child: Center(
       child: place.icon == 'home'
           ? Image.asset('assets/markers/huis.png', width: 24, height: 24, fit: BoxFit.contain)

@@ -81,6 +81,9 @@ class GroupPin extends StatelessWidget {
   /// Breedte van de piramide cirkels voor [count] leden.
   static double clusterWidth(int count) => (_rows(count).last - 1) * _step + _avatar;
 
+  /// Hoogte van de piramide cirkels met het puntje eronder.
+  static double clusterHeight(int count) => (_rows(count).length - 1) * _rowStep + _avatar + _tip;
+
   /// Hoogte van de hele pin: elke extra rij cirkels maakt hem hoger.
   static double heightFor(int count) => height + (_rows(count).length - 1) * _rowStep;
 

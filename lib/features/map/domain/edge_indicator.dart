@@ -10,6 +10,9 @@ typedef EdgeIndicator = ({String id, Offset position, double angle});
 /// lijn van het midden naar dat punt, [radius] van de rand zodat de pijl er
 /// volledig in past. Behoudt de volgorde van [points].
 ///
+/// - Een punt met een [reach] (bv. de straal van zijn pin) telt als in beeld
+///   zolang er nog iets van die pin zichtbaar is: de pijl komt pas als de pin
+///   volledig weg is.
 /// - Wie al een pijl had ([shown]), houdt die tot hij [hysteresis] ver in
 ///   beeld is: zo flikkert niets als iemand net op de rand staat.
 /// - Een vlak van [avoid] (bv. de knoppen) telt als buiten beeld: wie erachter
@@ -24,13 +27,14 @@ List<EdgeIndicator> edgeIndicators(
   Set<String> shown = const {},
   double hysteresis = 0,
   List<Rect> avoid = const [],
+  Map<String, double> reach = const {},
 }) {
   final inner = visible.deflate(radius);
   if (inner.width <= 0 || inner.height <= 0) return const [];
   final center = inner.center;
   final placed = <EdgeIndicator>[];
   for (final MapEntry(key: id, value: point) in points.entries) {
-    final keep = shown.contains(id) ? hysteresis : 0.0;
+    final keep = (shown.contains(id) ? hysteresis : 0.0) - (reach[id] ?? 0);
     final inView =
         visible.deflate(keep).contains(point) && !avoid.any((area) => area.inflate(keep).contains(point));
     if (inView) continue;

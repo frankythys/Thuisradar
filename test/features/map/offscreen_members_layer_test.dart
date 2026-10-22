@@ -84,7 +84,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('wie samen staat, zit in één blokje: gezichtjes onder elkaar', (tester) async {
+  testWidgets('wie samen staat, zit in één blokje: gezichtjes onder elkaar, een stukje in elkaar', (tester) async {
     MemberOnMap? tapped;
     const together = LatLng(51.0, 4.3);
     await pump(
@@ -99,8 +99,9 @@ void main() {
       expect(face.dx, closeTo(faces.first.dx, 0.5), reason: 'onder elkaar langs de rechterrand');
     }
     final ys = faces.map((f) => f.dy).toList()..sort();
-    expect(ys[1] - ys[0], closeTo(OffscreenMembersLayer.face, 0.5), reason: 'tegen elkaar aan');
-    expect(ys[2] - ys[1], closeTo(OffscreenMembersLayer.face, 0.5));
+    // 20 px uit elkaar bij gezichtjes van 28: een stukje in elkaar, zoals op de kaart.
+    expect(ys[1] - ys[0], closeTo(20, 0.5), reason: 'een stukje in elkaar');
+    expect(ys[2] - ys[1], closeTo(20, 0.5));
 
     await tester.tapAt(arrowOf(tester, 'Liam').center);
     expect(tapped?.member.userId, 'Liam');
