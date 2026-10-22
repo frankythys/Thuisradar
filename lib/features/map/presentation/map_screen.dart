@@ -20,6 +20,8 @@ import '../../family/domain/family.dart';
 import '../../../core/config/feature_flags.dart';
 import '../../geofencing/application/geofencing_providers.dart';
 import '../../geofencing/presentation/geofence_banner.dart';
+import '../application/map_view_recorder.dart';
+import '../data/map_view_store.dart';
 import '../application/map_style_provider.dart';
 import 'widgets/map_style_button.dart';
 import '../../location/application/location_providers.dart';
@@ -88,14 +90,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// Ingeklapte hoogte van het paneel als fractie; bijgewerkt bij elke layout.
   double? _sheetMinimum;
 
+  /// Onthoudt waar de kaart staat, zodat ze bij de volgende start daar opent.
+  late final _viewRecorder = MapViewRecorder(_mapController, ref.read(mapViewStoreProvider));
+
   @override
   void initState() {
     super.initState();
+    _viewRecorder.start();
     WidgetsBinding.instance.addPostFrameCallback((_) => _startTracking());
   }
 
   @override
   void dispose() {
+    _viewRecorder.dispose();
     _geofenceStart?.cancel();
     _mapController.dispose();
     _sheetController.dispose();
@@ -391,6 +398,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             },
             satellite: ref.watch(mapSatelliteProvider),
             bottomInset: sheetTop,
+            savedView: ref.read(savedMapViewProvider),
           ),
           // De knoppen staan boven het paneel en zakken mee als je het lager
           // schuift dan de gewone stand (enkel de greep zichtbaar).

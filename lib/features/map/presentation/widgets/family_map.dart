@@ -11,6 +11,7 @@ import '../../../places/presentation/place_icons.dart';
 import '../../../places/presentation/place_images.dart';
 import '../../../parked_car/domain/parked_car.dart';
 import '../../domain/map_focus.dart';
+import '../../domain/map_view.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
 import 'place_radius_layer.dart';
@@ -44,6 +45,7 @@ class FamilyMap extends StatelessWidget {
     this.useGoogleMaps = FeatureFlags.useGoogleMaps,
     this.satellite,
     this.bottomInset = 0,
+    this.savedView,
   });
 
   static const fallbackCenter = LatLng(50.85, 4.35); // België
@@ -83,11 +85,19 @@ class FamilyMap extends StatelessWidget {
   /// Hoogte van het onderpaneel, zodat het Google-logo zichtbaar blijft.
   final double bottomInset;
 
+  /// Waar de kaart de vorige keer stond; dan opent ze meteen daar (zie
+  /// [startView]).
+  final MapView? savedView;
+
   @override
   Widget build(BuildContext context) {
     final ownLocation = members.where((entry) => entry.member.userId == myUserId).firstOrNull?.location;
-    final center = ownLocation == null ? fallbackCenter : LatLng(ownLocation.latitude, ownLocation.longitude);
-    final zoom = ownLocation == null ? 8.0 : 12.0;
+    final view = startView(
+      saved: savedView,
+      own: ownLocation == null ? null : (latitude: ownLocation.latitude, longitude: ownLocation.longitude),
+    );
+    final center = LatLng(view.latitude, view.longitude);
+    final zoom = view.zoom;
     if (!useGoogleMaps) return _map(center, zoom, null);
     return GoogleMapStack(
       base: (markers) => GoogleBaseMap(

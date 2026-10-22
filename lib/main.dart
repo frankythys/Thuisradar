@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,12 +7,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/env.dart';
+import 'core/platform/maps_warmup.dart';
 import 'core/utils/startup_diagnostics.dart';
 import 'features/language/application/language_providers.dart';
 import 'features/language/data/language_store.dart';
 import 'features/language/domain/app_language.dart';
 import 'features/location/application/location_diagnostics.dart';
 import 'features/location/data/diagnostics_store.dart';
+import 'features/map/data/map_view_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,26 +23,38 @@ Future<void> main() async {
   final diagnostics = StartupDiagnostics();
   Env.assertConfigured();
 
+  // Google Maps al opwarmen: loopt mee terwijl we hieronder op het netwerk en
+  // straks op het gezin wachten, i.p.v. pas bij de eerste kaart.
+  unawaited(
+    warmUpGoogleMaps().then(
+      (_) => diagnostics.checkpoint('Google Maps opgewarmd'),
+      onError: (Object e) => debugPrint('Google Maps opwarmen mislukt: $e'),
+    ),
+  );
+
+  // Supabase en Firebase tegelijk: ze hangen niet van elkaar af. Firebase is
+  // nodig voor push (SOS); faalt het, dan draait de app zonder push.
+  final firebase = Firebase.initializeApp().then<void>(
+    (_) => diagnostics.checkpoint('Firebase gereed'),
+    onError: (Object e) => debugPrint('Firebase initialiseren mislukt: $e'),
+  );
+  // Taalkeuze en laatste kaartpositie vóór de eerste frame: de app opent
+  // meteen in die taal en de kaart meteen op de juiste plek.
+  final savedLanguage = LanguageStore().read().then(AppLanguage.fromCode, onError: (_) => null);
+  final savedMapView = MapViewStore().read().then((view) => view, onError: (_) => null);
+
   await Supabase.initialize(url: Env.supabaseUrl, publishableKey: Env.supabaseKey);
   diagnostics.checkpoint('Supabase gereed');
-
-  // Firebase is nodig voor push (SOS). Faalt dit, dan draait de app zonder push.
-  try {
-    await Firebase.initializeApp();
-  } on Exception catch (e) {
-    debugPrint('Firebase initialiseren mislukt: $e');
-  }
-  diagnostics.checkpoint('Firebase gereed of overgeslagen');
-
-  // Taalkeuze vóór de eerste frame, zodat de app meteen in die taal opent.
-  final savedLanguage = await LanguageStore().read().then(AppLanguage.fromCode, onError: (_) => null);
+  await firebase;
 
   diagnostics.watchFirstFrame();
   runApp(
     ProviderScope(
       overrides: [
         locationDiagnosticsProvider.overrideWithValue(locationDiagnostics),
-        savedLanguageProvider.overrideWithValue(savedLanguage),
+        savedLanguageProvider.overrideWithValue(await savedLanguage),
+        savedMapViewProvider.overrideWithValue(await savedMapView),
+        startupDiagnosticsProvider.overrideWithValue(diagnostics),
       ],
       child: const ThuisradarApp(),
     ),

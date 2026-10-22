@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/startup_diagnostics.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../../places/presentation/place_images.dart';
@@ -225,6 +227,13 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     }
   }
 
+  /// Meetpunt in de opstartmeting (enkel debug/profile, eenmalig per stap).
+  /// Zonder ProviderScope (sommige tests) is er niets te meten.
+  void _measure(String stage) {
+    if (!mounted || context.findAncestorWidgetOfExactType<UncontrolledProviderScope>() == null) return;
+    ProviderScope.containerOf(context, listen: false).read(startupDiagnosticsProvider)?.checkpointOnce(stage);
+  }
+
   @override
   Widget build(BuildContext context) {
     final target = googleCameraTarget(
@@ -261,6 +270,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       indoorViewEnabled: false,
       onMapCreated: (controller) {
         _google = controller;
+        _measure('Google-kaart aangemaakt');
         unawaited(_sync());
       },
       onCameraIdle: () {
@@ -268,6 +278,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
         // Teken de eerste ballonnen pas na de eerste camerabeweging, ook
         // wanneer de gebruiker de kaart nog niet heeft aangeraakt.
         if (_mapReady.isCompleted) return;
+        _measure('Google-kaart eerste beeld');
         _mapReady.complete();
         _onMarkers();
       },

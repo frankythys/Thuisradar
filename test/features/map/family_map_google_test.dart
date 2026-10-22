@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:thuisradar/features/map/domain/map_view.dart';
 import 'package:thuisradar/features/map/presentation/widgets/family_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/clustered_marker_layer.dart';
 import 'package:thuisradar/features/map/presentation/widgets/google_base_map.dart';
@@ -47,6 +48,25 @@ void main() {
     satellite: satellite,
     bottomInset: 280,
   );
+
+  test('vlag aan, met bewaarde positie: Google en de kaart erboven openen daar', () {
+    const saved = MapView(latitude: 51.0543, longitude: 3.7174, zoom: 14.5);
+    final stack = FamilyMap(
+      controller: controller,
+      members: const [],
+      now: DateTime(2026),
+      onMemberTap: (_) {},
+      onGroupTap: (_) {},
+      useGoogleMaps: true,
+      savedView: saved,
+    ).build(_Context()) as GoogleMapStack;
+    final google = stack.base(ValueNotifier<List<MapMarkerSpec>>(const [])) as GoogleBaseMap;
+    final map = _unwrap(stack.overlay((_) {}));
+    expect(google.initialCenter, const LatLng(51.0543, 3.7174));
+    expect(google.initialZoom, 14.5);
+    expect(map.options.initialCenter, const LatLng(51.0543, 3.7174));
+    expect(map.options.initialZoom, 14.5);
+  });
 
   test('vlag uit (standaard): gewone OpenStreetMap-kaart zoals voorheen', () {
     final map = _unwrap(familyMap(google: false).build(_Context()));

@@ -66,6 +66,10 @@ dependencies:
   native_geofence: ^1.3.1
   # Vast op 2.18.1: 2.18.2+ vraagt Flutter 3.47 (project: 3.44).
   google_maps_flutter: ">=2.18.1 <2.18.2"
+  # Rechtstreeks nodig om Google Maps al bij het opstarten op te warmen
+  # (core/platform/maps_warmup.dart); android komt uit third_party (override).
+  google_maps_flutter_android: ^2.21.0
+  google_maps_flutter_platform_interface: ^2.17.0
   pedometer: ^4.2.0
   activity_recognition_flutter: ^6.1.0
 

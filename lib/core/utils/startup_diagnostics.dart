@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Gerichte timing in debug/profile, zonder extra werk in release builds.
 class StartupDiagnostics {
@@ -17,6 +18,14 @@ class StartupDiagnostics {
   final _watch = Stopwatch();
   int _previousStage = 0;
   int _lastFrameLog = -5000;
+
+  final _once = <String>{};
+
+  /// Zoals [checkpoint], maar elke stap maar één keer (bv. "eerste kaartbeeld",
+  /// ook als het kaartscherm later opnieuw opgebouwd wordt).
+  void checkpointOnce(String stage) {
+    if (_once.add(stage)) checkpoint(stage);
+  }
 
   void checkpoint(String stage) {
     if (kReleaseMode) return;
@@ -40,3 +49,7 @@ class StartupDiagnostics {
     );
   }
 }
+
+/// De opstartmeting van `main.dart`, voor meetpunten verderop (de kaart).
+/// Null in tests en waar niets gemeten wordt.
+final startupDiagnosticsProvider = Provider<StartupDiagnostics?>((ref) => null);
