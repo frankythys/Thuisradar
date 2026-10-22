@@ -183,7 +183,7 @@ void main() {
     final image = (car.image as ResizeImage).imageProvider as AssetImage;
     expect(image.assetName, 'assets/icon/Rijdende auto.png');
     expect(find.byIcon(Icons.directions_car), findsNothing);
-    expect(find.text('Rijden'), findsOneWidget);
+    expect(find.text('Rijden'), findsNothing, reason: 'het icoon zegt het al');
     expect(find.text('45 km/u'), findsOneWidget);
     expect(find.text('Hier sinds'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -219,7 +219,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
     // Een volgend beeld van de cyclus.
     expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNot(same(first)));
-    expect(find.text('Wandelen'), findsOneWidget);
+    expect(find.text('Wandelen'), findsNothing, reason: 'het icoon zegt het al');
     expect(find.text('5 km/u'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -241,7 +241,7 @@ void main() {
     );
     final bike = tester.widget<Image>(find.byType(Image));
     expect(bike.image, same(bubbleBikeImage));
-    expect(find.text('Fietsen'), findsOneWidget);
+    expect(find.text('Fietsen'), findsNothing, reason: 'het icoon zegt het al');
     expect(find.text('18 km/u'), findsOneWidget);
     expect(find.byType(WalkingSneakers), findsNothing);
     expect(tester.takeException(), isNull);

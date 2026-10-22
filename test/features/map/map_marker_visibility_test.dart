@@ -148,7 +148,7 @@ void main() {
       final franky = find.byWidgetPredicate(
         (widget) => widget is MemberAvatar && widget.member.userId == 'Franky',
       );
-      expect(tester.getRect(find.text('Rijden')).top, lessThan(tester.getRect(franky).top));
+      expect(tester.getRect(find.text('36 km/u')).top, lessThan(tester.getRect(franky).top));
     }
     await tester.pumpWidget(const SizedBox());
     controller.dispose();

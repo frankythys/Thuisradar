@@ -64,7 +64,7 @@ void main() {
       );
       // Vaste ballon: tekst zichtbaar; zonder stilstaand beeld blijft het vak leeg.
       expect(find.byType(RawImage), findsNothing);
-      expect(find.text('Wandelen'), findsOneWidget);
+      expect(find.text('5 km/u'), findsOneWidget);
       final slot = find.byWidgetPredicate(
         (widget) =>
             widget is SizedBox &&

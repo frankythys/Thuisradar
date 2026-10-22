@@ -102,15 +102,16 @@ class MemberHistoryBubble extends StatelessWidget {
         !stationarySince!.isAfter(now);
     final sinceTime = atPlace ? placeSince : (stopped ? stationarySince : null);
     final duration = sinceTime == null ? null : now.difference(sinceTime);
+    // Onderweg zegt het icoon (auto, fiets, wandelaar) al hoe; enkel de snelheid.
     final title = isMoving
-        ? status.mode!.label(l10n)
+        ? l10n.speedKmh(status.speedKmh!)
         : atPlace
         ? placeStatus!.name
         : stopped
         ? l10n.tripStationary
         : status.label(l10n);
-    final subtitle = isMoving
-        ? l10n.speedKmh(status.speedKmh!)
+    final String? subtitle = isMoving
+        ? null
         : duration != null
         ? l10n.mapSince(_formatStay(l10n, duration))
         : _formatUpdated(l10n, entry.location?.updatedAt, now);
@@ -142,10 +143,11 @@ class MemberHistoryBubble extends StatelessWidget {
               child: Row(
                 children: [
                   if (isMoving && status.walking)
-                    _walkerImage()
+                    Semantics(label: status.mode!.label(l10n), child: _walkerImage())
                   else if (isMoving)
                     Image(
                       image: status.cycling ? bubbleBikeImage : bubbleCarImage,
+                      semanticLabel: status.mode!.label(l10n),
                       width: 38,
                       height: 32,
                       fit: BoxFit.contain,
@@ -171,13 +173,14 @@ class MemberHistoryBubble extends StatelessWidget {
                             color: AppColors.ink,
                           ),
                         ),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
-                        ),
+                        if (subtitle != null)
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
+                          ),
                       ],
                     ),
                   ),
