@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileRepository {
@@ -18,5 +19,17 @@ class ProfileRepository {
 
   Future<void> setColor(String userId, int index) async {
     await _client.from('profiles').update({'color_index': index}).eq('id', userId);
+  }
+
+  /// Bewaart de app-taal, zodat de server pushmeldingen (SOS) in die taal
+  /// stuurt (migratie 022). Zonder die migratie bestaat de kolom nog niet:
+  /// dan niets doen, de push blijft dan Nederlands.
+  Future<void> setLanguage(String userId, String language) async {
+    try {
+      await _client.from('profiles').update({'language': language}).eq('id', userId);
+    } on PostgrestException catch (error) {
+      if (error.code != '42703' && error.code != 'PGRST204') rethrow;
+      debugPrint('Taal niet bewaard: migratie 022 ontbreekt nog');
+    }
   }
 }

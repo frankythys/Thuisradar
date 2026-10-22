@@ -13,6 +13,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import * as jose from "npm:jose@5";
 import { invalidFcmToken } from "../_shared/fcm_result.ts";
 import { hasValidWebhookSecret } from "../_shared/webhook_secret.ts";
+import { type Language, pushLanguage, sosText } from "../_shared/i18n.ts";
 
 interface ServiceAccount {
   project_id: string;
@@ -53,17 +54,19 @@ async function sendPush(
   projectId: string,
   accessToken: string,
   token: string,
-  actorName: string,
+  actorName: string | null,
+  language: Language,
   record: { family_id: string; lat: number; lng: number },
   notificationVersion: number,
 ): Promise<"ok" | "invalid" | "error"> {
+  const text = sosText(language, actorName);
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       message: {
         token,
-        notification: { title: "🚨 SOS", body: `${actorName} heeft hulp nodig!` },
+        notification: { title: text.title, body: text.body },
         android: {
           priority: "high",
           notification: {
@@ -76,7 +79,7 @@ async function sendPush(
         data: {
           type: "sos",
           family_id: record.family_id,
-          actor: actorName,
+          actor: text.name,
           lat: String(record.lat),
           lng: String(record.lng),
         },
@@ -113,7 +116,7 @@ Deno.serve(async (req) => {
     .select("display_name")
     .eq("id", record.user_id)
     .single();
-  const actorName = actor?.display_name ?? "Een gezinslid";
+  const actorName: string | null = actor?.display_name ?? null;
 
   const { data: members } = await supabase
     .from("family_members")
@@ -130,9 +133,19 @@ Deno.serve(async (req) => {
   const recipients = userIds.filter((id) => !disabled.has(id));
   if (recipients.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 
+  // Taal per ontvanger (migratie 022). Ontbreekt de kolom nog, dan Nederlands.
+  const { data: profiles, error: languageError } = await supabase
+    .from("profiles")
+    .select("id, language")
+    .in("id", recipients);
+  if (languageError) console.warn("Taal van ontvangers onbekend:", languageError.message);
+  const languageOf = new Map<string, Language>(
+    (profiles ?? []).map((p) => [p.id as string, pushLanguage(p.language as string | null)]),
+  );
+
   const { data: tokens } = await supabase
     .from("device_tokens")
-    .select("token, notification_version")
+    .select("token, notification_version, user_id")
     .in("user_id", recipients);
   const tokenList = tokens ?? [];
   if (tokenList.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
@@ -145,8 +158,11 @@ Deno.serve(async (req) => {
   let sent = 0;
   let failed = 0;
   await Promise.all(
-    tokenList.map(async ({ token, notification_version }) => {
-      const result = await sendPush(sa.project_id, accessToken, token, actorName, record, notification_version);
+    tokenList.map(async ({ token, notification_version, user_id }) => {
+      const language = languageOf.get(user_id) ?? pushLanguage(null);
+      const result = await sendPush(
+        sa.project_id, accessToken, token, actorName, language, record, notification_version,
+      );
       if (result === "invalid") invalid.push(token);
       else if (result === "ok") sent++;
       else failed++;

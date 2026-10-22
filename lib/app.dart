@@ -8,6 +8,7 @@ import 'features/auth/presentation/app_pin_lock.dart';
 import 'features/language/application/language_providers.dart';
 import 'features/language/application/app_locale.dart';
 import 'features/onboarding/presentation/onboarding_gate.dart';
+import 'features/profile/application/profile_providers.dart';
 
 class ThuisradarApp extends ConsumerWidget {
   const ThuisradarApp({super.key});
@@ -17,6 +18,8 @@ class ThuisradarApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final chosen = ref.watch(languageOverrideProvider);
+    // De taal ook op de server, voor pushmeldingen in die taal.
+    ref.watch(profileLanguageSyncProvider);
     return MaterialApp(
       navigatorKey: _navigatorKey,
       title: 'CircleBeacon',
