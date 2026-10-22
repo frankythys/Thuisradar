@@ -73,4 +73,21 @@ void main() {
           auth.resetPasswordForEmail('oma@example.com', redirectTo: 'com.circlebeacon.app://login-callback/'),
     ).called(1);
   });
+
+  test('herstelcode: gecontroleerd als type recovery bij het juiste adres', () async {
+    final client = _Client();
+    final auth = _Auth();
+    when(() => client.auth).thenReturn(auth);
+    when(
+      () => auth.verifyOTP(
+        type: OtpType.recovery,
+        email: any(named: 'email'),
+        token: any(named: 'token'),
+      ),
+    ).thenAnswer((_) async => AuthResponse());
+
+    await AuthRepository(client).verifyRecoveryCode(email: 'oma@example.com', code: '123456');
+
+    verify(() => auth.verifyOTP(type: OtpType.recovery, email: 'oma@example.com', token: '123456')).called(1);
+  });
 }

@@ -868,13 +868,42 @@
   "@authEnterEmailFirst": {
     "description": "Fout: eerst e-mailadres invullen."
   },
-  "authResetSent": "Controleer je e-mail en open de link op deze gsm om een nieuw wachtwoord te kiezen.",
+  "authResetSent": "We stuurden je een mail met een code om een nieuw wachtwoord te kiezen.",
   "@authResetSent": {
     "description": "Melding: herstelmail verstuurd."
   },
   "authResetFailed": "De herstelmail kon niet worden verstuurd. Probeer opnieuw.",
   "@authResetFailed": {
     "description": "Fout: herstelmail mislukt."
+  },
+  "authResetCodeTitle": "Code invoeren",
+  "@authResetCodeTitle": {
+    "description": "Schermtitel: de code uit de herstelmail intypen."
+  },
+  "authResetCodeIntro": "We stuurden een mail naar {email}. Typ hieronder de code uit die mail. Lees je de mail op deze gsm, dan kan je ook gewoon op de knop in de mail tikken.",
+  "@authResetCodeIntro": {
+    "description": "Uitleg op het codescherm; {email} is het adres waarnaar de mail ging.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authResetCodeField": "Code uit de mail",
+  "@authResetCodeField": {
+    "description": "Veld: de code uit de herstelmail."
+  },
+  "authResetCodeConfirm": "Bevestigen",
+  "@authResetCodeConfirm": {
+    "description": "Knop: de code controleren."
+  },
+  "authResetCodeInvalid": "Deze code klopt niet of is verlopen. Kijk de code na, of vraag een nieuwe mail aan.",
+  "@authResetCodeInvalid": {
+    "description": "Fout: de code klopt niet of is verlopen."
+  },
+  "authResetCodeFailed": "Dat lukte niet. Controleer je verbinding en probeer opnieuw.",
+  "@authResetCodeFailed": {
+    "description": "Fout: de code kon niet gecontroleerd worden (bv. geen verbinding)."
   },
   "authPasswordWeak": "Dit wachtwoord is te zwak. Gebruik minstens één kleine letter, hoofdletter, cijfer en symbool.",
   "@authPasswordWeak": {

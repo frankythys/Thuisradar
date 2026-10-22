@@ -49,11 +49,16 @@ class AuthRepository {
     return response.session != null;
   }
 
-  /// Stuurt de herstelmail. De link opent de app weer (zelfde terugkeeradres
-  /// als bij Google); daar kies je een nieuw wachtwoord. Open de mail op
-  /// dezelfde gsm: de app bewaart een sleutel die bij de link hoort (PKCE).
+  /// Stuurt de herstelmail, met een code (zie ResetCodeScreen) én een link.
+  /// De link opent de app weer (zelfde terugkeeradres als bij Google), maar
+  /// enkel op deze gsm: de app bewaart een sleutel die erbij hoort (PKCE).
   Future<void> resetPassword(String email) =>
       _client.auth.resetPasswordForEmail(email, redirectTo: googleRedirectUrl);
+
+  /// Controleert de code uit de herstelmail. Lukt dat, dan is de gebruiker
+  /// aangemeld en meldt Supabase hetzelfde herstel-event als bij de link.
+  Future<void> verifyRecoveryCode({required String email, required String code}) =>
+      _client.auth.verifyOTP(type: OtpType.recovery, email: email, token: code);
 
   /// Meldt zich telkens de gebruiker via de herstellink binnenkomt.
   Stream<void> watchPasswordRecovery() => _client.auth.onAuthStateChange

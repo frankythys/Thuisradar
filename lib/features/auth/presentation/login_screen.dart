@@ -10,6 +10,7 @@ import '../../location/application/location_diagnostics.dart';
 import '../application/auth_providers.dart';
 import '../data/biometric_login.dart';
 import 'google_sign_in_button.dart';
+import 'reset_code_screen.dart';
 import '../../../l10n/l10n.dart';
 
 part 'login_screen_actions.dart';
@@ -159,11 +160,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() => _message = context.l10n.authEnterEmailFirst);
       return;
     }
+    final email = _email.text.trim();
     try {
-      await ref.read(authRepositoryProvider).resetPassword(_email.text.trim());
-      if (mounted) {
-        setState(() => _message = context.l10n.authResetSent);
-      }
+      await ref.read(authRepositoryProvider).resetPassword(email);
+      if (!mounted) return;
+      setState(() => _message = context.l10n.authResetSent);
+      await Navigator.of(context)
+          .push(MaterialPageRoute<void>(builder: (_) => ResetCodeScreen(email: email)));
     } on Exception {
       if (mounted) {
         setState(() => _message = context.l10n.authResetFailed);
