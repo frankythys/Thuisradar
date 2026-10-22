@@ -113,6 +113,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _measure('Google-kaart gevraagd');
     _loadIcons();
     // Afbeeldingen in de markers moeten klaar zijn vóór we ze tekenen.
     _assetsReady = Future.wait([

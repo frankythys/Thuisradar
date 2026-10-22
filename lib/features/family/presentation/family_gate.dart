@@ -1,3 +1,5 @@
+import '../../../core/utils/startup_diagnostics.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,7 +18,10 @@ class FamilyGate extends ConsumerWidget {
     return ref
         .watch(myFamilyProvider)
         .when(
-          data: (family) => family == null ? const FamilySetupScreen() : HomeShell(family: family),
+          data: (family) {
+            ref.read(startupDiagnosticsProvider)?.checkpointOnce('gezin geladen');
+            return family == null ? const FamilySetupScreen() : HomeShell(family: family);
+          },
           loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, _) => Scaffold(
             body: ErrorView(

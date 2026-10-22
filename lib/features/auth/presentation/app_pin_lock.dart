@@ -1,3 +1,5 @@
+import '../../../core/utils/startup_diagnostics.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,6 +132,8 @@ class _SessionLockState extends ConsumerState<_SessionLock> with WidgetsBindingO
     final preference = ref.watch(appLockEnabledProvider(widget.userId));
     final pinEnabled = ref.watch(pinEnabledProvider(widget.userId));
     final blocked = preference.isLoading || preference.hasError || (preference.value == true && _locked);
+    // Meetpunt: vanaf hier is de app zichtbaar (met vergrendeling: na de pincode).
+    if (!blocked) ref.read(startupDiagnosticsProvider)?.checkpointOnce('app zichtbaar (ontgrendeld)');
     return Stack(
       fit: StackFit.expand,
       children: [
