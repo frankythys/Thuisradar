@@ -104,5 +104,19 @@ void main() {
       expect(container.read(passwordRecoveryProvider), isFalse);
       verifyNever(() => auth.updatePassword(any()));
     });
+
+    testWidgets('oogje: toont en verbergt beide wachtwoorden', (tester) async {
+      await pump(tester);
+      bool hidden(int i) => tester.widget<EditableText>(find.byType(EditableText).at(i)).obscureText;
+      expect([hidden(0), hidden(1)], [true, true]);
+
+      await tester.tap(find.byTooltip('Wachtwoord tonen'));
+      await tester.pump();
+      expect([hidden(0), hidden(1)], [false, false]);
+
+      await tester.tap(find.byTooltip('Wachtwoord verbergen'));
+      await tester.pump();
+      expect([hidden(0), hidden(1)], [true, true]);
+    });
   });
 }

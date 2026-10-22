@@ -23,6 +23,7 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
   final _password = TextEditingController();
   final _repeat = TextEditingController();
   bool _busy = false;
+  bool _obscure = true;
   String? _error;
 
   @override
@@ -76,20 +77,25 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
               SizedBox(height: tokens.spaceMd),
               TextFormField(
                 controller: _password,
-                obscureText: true,
+                obscureText: _obscure,
                 autofillHints: const [AutofillHints.newPassword],
                 decoration: InputDecoration(
                   labelText: l10n.authNewPasswordField,
                   helperText: l10n.authPasswordHelper,
                   helperMaxLines: 2,
                   prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
+                  suffixIcon: IconButton(
+                    tooltip: _obscure ? l10n.authShowPassword : l10n.authHidePassword,
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                    icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                  ),
                 ),
                 validator: (value) => value == null || value.length < 8 ? l10n.authPasswordTooShort : null,
               ),
               SizedBox(height: tokens.spaceSm),
               TextFormField(
                 controller: _repeat,
-                obscureText: true,
+                obscureText: _obscure,
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _save(),
                 decoration: InputDecoration(
