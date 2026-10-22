@@ -13,6 +13,7 @@ class GroupPinBackdrop extends StatelessWidget {
     required this.diameter,
     required this.step,
     required this.color,
+    this.tip = 0,
     this.shadows = const [],
   });
 
@@ -22,6 +23,9 @@ class GroupPinBackdrop extends StatelessWidget {
 
   /// Afstand tussen de middelpunten van buren; die krijgen een hals.
   final double step;
+
+  /// Hoe ver het puntje onderaan, in het midden, onder de cirkels uitsteekt.
+  final double tip;
   final Color color;
   final List<BoxShadow> shadows;
 
@@ -29,9 +33,16 @@ class GroupPinBackdrop extends StatelessWidget {
   Widget build(BuildContext context) => CustomPaint(
     size: Size(
       origins.fold(0.0, (width, origin) => math.max(width, origin.dx)) + diameter,
-      origins.fold(0.0, (height, origin) => math.max(height, origin.dy)) + diameter,
+      origins.fold(0.0, (height, origin) => math.max(height, origin.dy)) + diameter + tip,
     ),
-    painter: _BackdropPainter(origins: origins, diameter: diameter, step: step, color: color, shadows: shadows),
+    painter: _BackdropPainter(
+      origins: origins,
+      diameter: diameter,
+      step: step,
+      tip: tip,
+      color: color,
+      shadows: shadows,
+    ),
   );
 }
 
@@ -40,6 +51,7 @@ class _BackdropPainter extends CustomPainter {
     required this.origins,
     required this.diameter,
     required this.step,
+    required this.tip,
     required this.color,
     required this.shadows,
   });
@@ -47,8 +59,12 @@ class _BackdropPainter extends CustomPainter {
   final List<Offset> origins;
   final double diameter;
   final double step;
+  final double tip;
   final Color color;
   final List<BoxShadow> shadows;
+
+  /// Halve breedte van het puntje waar het in de onderste cirkels begint.
+  static const _tipWidth = 0.6;
 
   /// Breedte van de verbinding tussen twee cirkels, als deel van de diameter.
   static const _neck = 0.72;
@@ -76,6 +92,23 @@ class _BackdropPainter extends CustomPainter {
         );
       }
     }
+    if (tip > 0 && centers.isNotEmpty) {
+      // Driehoek vanaf het midden van de onderste rij tot onder de cirkels;
+      // de rijen staan gecentreerd, dus het midden van de groep is het midden.
+      final xs = centers.map((center) => center.dx);
+      final midX = (xs.reduce(math.min) + xs.reduce(math.max)) / 2;
+      final baseY = centers.map((center) => center.dy).reduce(math.max);
+      final half = radius * _tipWidth;
+      path = Path.combine(
+        PathOperation.union,
+        path,
+        Path()..addPolygon([
+          Offset(midX - half, baseY),
+          Offset(midX + half, baseY),
+          Offset(midX, baseY + radius + tip),
+        ], true),
+      );
+    }
     return path;
   }
 
@@ -95,6 +128,7 @@ class _BackdropPainter extends CustomPainter {
       !listEquals(old.origins, origins) ||
       old.diameter != diameter ||
       old.step != step ||
+      old.tip != tip ||
       old.color != color ||
       old.shadows != shadows;
 }

@@ -41,6 +41,9 @@ class GroupPin extends StatelessWidget {
   static const _rowStep = 50.0;
   static const _maxSlots = 6;
 
+  /// Lengte van het puntje onder de cirkels; de punt zelf is de plek.
+  static const _tip = 14.0;
+
   /// Breedte van de gezamenlijke witte rand rond de groep.
   static const _inset = 1.0;
 
@@ -113,15 +116,17 @@ class GroupPin extends StatelessWidget {
         const SizedBox(height: 4),
         SizedBox(
           width: clusterWidth(members.length),
-          height: origins.last.dy + _avatar + 12,
+          height: origins.last.dy + _avatar + _tip,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // Eén witte vorm achter alle cirkels: de randen vloeien in elkaar.
+              // Eén witte vorm achter alle cirkels: de randen vloeien in elkaar
+              // en onderaan wijst een puntje naar de plek.
               GroupPinBackdrop(
                 origins: origins,
                 diameter: _avatar,
                 step: _step,
+                tip: _tip,
                 color: Colors.white,
                 shadows: context.tokens.shadowMarker,
               ),
@@ -135,15 +140,6 @@ class GroupPin extends StatelessWidget {
                   child: _avatarFor(context, member),
                 ),
             ],
-          ),
-        ),
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
           ),
         ),
       ],
