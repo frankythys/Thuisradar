@@ -1,0 +1,45 @@
+import 'dart:math' as math;
+import 'dart:ui';
+
+/// Pijl aan de rand van de kaart voor een lid buiten beeld: waar hij staat en
+/// in welke richting het lid is ([angle] in radialen, 0 = rechts, met de klok
+/// mee zoals op het scherm).
+typedef EdgeIndicator = ({String id, Offset position, double angle});
+
+/// Voor elk punt buiten [visible]: een plek op de rand van [visible], op de
+/// lijn van het midden naar dat punt, [radius] van de rand zodat de pijl er
+/// volledig in past. Pijlen die elkaar zouden raken, schuiven langs de rand
+/// naar het midden van die rand. Behoudt de volgorde van [points].
+List<EdgeIndicator> edgeIndicators(Map<String, Offset> points, Rect visible, {required double radius}) {
+  final inner = visible.deflate(radius);
+  if (inner.width <= 0 || inner.height <= 0) return const [];
+  final center = inner.center;
+  final placed = <EdgeIndicator>[];
+  for (final MapEntry(key: id, value: point) in points.entries) {
+    if (visible.contains(point)) continue;
+    final direction = point - center;
+    final toSide = direction.dx == 0 ? double.infinity : inner.width / 2 / direction.dx.abs();
+    final toTopOrBottom = direction.dy == 0 ? double.infinity : inner.height / 2 / direction.dy.abs();
+    var position = center + direction * math.min(toSide, toTopOrBottom);
+    final onTopOrBottom = toTopOrBottom < toSide;
+
+    // Langs de rand opschuiven, weg van de hoek, tot er niemand meer ligt.
+    // Elke stap schuift één pijlbreedte, altijd dezelfde kant op.
+    final step = Offset(
+      onTopOrBottom ? 2 * radius * _towards(position.dx, center.dx) : 0,
+      onTopOrBottom ? 0 : 2 * radius * _towards(position.dy, center.dy),
+    );
+    for (var tries = 0; tries <= placed.length && _overlaps(position, placed, radius); tries++) {
+      final next = position + step;
+      position = Offset(next.dx.clamp(inner.left, inner.right), next.dy.clamp(inner.top, inner.bottom));
+    }
+    placed.add((id: id, position: position, angle: math.atan2(direction.dy, direction.dx)));
+  }
+  return placed;
+}
+
+bool _overlaps(Offset position, List<EdgeIndicator> placed, double radius) =>
+    placed.any((other) => (other.position - position).distance < 2 * radius);
+
+/// -1 of 1: de kant van [value] naar [target]; in het midden naar rechts/onder.
+double _towards(double value, double target) => value > target ? -1 : 1;

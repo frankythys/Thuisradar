@@ -19,6 +19,7 @@ import 'google_base_map.dart';
 import 'google_map_stack.dart';
 import 'map_gestures.dart';
 import 'map_marker_spec.dart';
+import 'offscreen_members_layer.dart';
 import '../../../../l10n/l10n.dart';
 
 /// Kaart met een marker (of groepspin) per gezinslid met locatie. Ondergrond:
@@ -187,6 +188,12 @@ class FamilyMap extends StatelessWidget {
           selectedUserId: selectedUserId,
           myUserId: myUserId,
           onNativeMarkers: onNativeMarkers,
+        ),
+        OffscreenMembersLayer(
+          members: membersToShow(members, selectedUserId),
+          myUserId: myUserId,
+          bottomInset: bottomInset,
+          onTap: onMemberTap,
         ),
         if (!useGoogleMaps)
           Builder(builder: (context) => SimpleAttributionWidget(source: Text(context.l10n.osmContributors))),
