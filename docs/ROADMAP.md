@@ -23,12 +23,14 @@ Beslissingen en werkregels staan in `../CLAUDE.md`; kosten in `KOSTEN.md`.
   - Selectie-ring rond geselecteerd lid (op kaart én in lijst).
   - Overlappende leden groeperen in één groepspin met statusballon (pure Dart, getest).
 - **Onderweg: wandelen en fietsen** — tab Rijden heet Onderweg met filter Alles / Auto / Fiets / Wandelen. Elke verplaatsing krijgt een geschat vervoermiddel (GPS-snelheid + gemiddeld tempo); wandelen telt vanaf 3,6 km/u als onderweg en wordt elke 5 s gelogd. Wandelingen tonen route, afstand, duur, gemiddeld tempo en stappen (stappenteller, migratie `019_steps.sql`).
-- **SOS veiliger + noodcontacten** — na 3 s vasthouden 10 s aftellen met een grote knop Annuleren (sluiten annuleert ook); "Bel 112" is overal weg (per ongeluk bellen is te gevaarlijk). In Profiel › Noodcontacten stel je 2 mensen in, ook buiten de app: bij een SOS krijgen ze automatisch een sms met een kaartlink, daarna belt de gsm contact 1. Android rechtstreeks (toestemming sms + bellen, werkt ook zonder internet); iPhone kan dat niet automatisch, daar opent de berichten-app met de sms klaar. Migratie `021_emergency_contacts.sql` (enkel jij ziet je contacten).
+- **SOS veiliger + noodcontacten** — na 3 s vasthouden 10 s aftellen met een grote knop Annuleren (sluiten annuleert ook); "Bel 112" is overal weg (per ongeluk bellen is te gevaarlijk). In Profiel › Noodcontacten stel je 2 mensen in, ook buiten de app: bij een SOS opent de berichten-app met een sms en kaartlink klaar voor contact 1 (contact 2 als reserve); jij tikt op versturen. Zo heeft de app geen `SEND_SMS`/`CALL_PHONE` nodig, die Google Play beperkt, en werkt het op Android en iPhone hetzelfde. Migratie `021_emergency_contacts.sql` (enkel jij ziet je contacten).
 - **Activiteitsherkenning (achter de vlag `USE_ACTIVITY_RECOGNITION`, standaard uit)** — de bewegingssensoren van het toestel (Android Activity Recognition, Sampling API elke ±5 s; iPhone CoreMotion) zeggen "voertuig", "fiets" of "te voet". Dat stuurt de live status bij waar GPS en stappen twijfelen: traag in de file blijft een auto, een e-bike of speed pedelec tot 50 km/u blijft een fiets. Het zegt niet wélk voertuig (auto, bus of trein zijn allemaal "voertuig"). Migratie `020_activity.sql`; de herkenning wordt ook in `location_history` bewaard, zodat de weekrapporten ze later kunnen gebruiken.
+
+- **Klaar voor Google Play (21–22 okt)** — account verwijderen (app + website), privacybeleid op `circlebeacon.frankythys.workers.dev`, bewaartermijn geschiedenis 31 dagen, sterkere uitnodigingscodes, wachtwoord vergeten met code uit de mail. Zie `PLAYSTORE_AUDIT_2026-10-21.md`.
 
 ## ⏳ Nu / volgende
 
-- **Afwerking** — upload-sleutel aanmaken (de build is klaar, zie `SETUP.md`), versienummers, app-icoon, testdata opkuisen.
+- **Afwerking** — release-bundle bouwen, Play Console invullen (declaraties locatie/foreground service met video, Data safety, doelgroep 13+, testaccount), versienummers, testdata opkuisen.
 
 ## ⏳ Later
 
