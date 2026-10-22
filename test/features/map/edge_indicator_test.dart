@@ -63,6 +63,12 @@ void main() {
     expect(arrow.position.dy, closeTo(buttons.top - radius, 0.01));
   });
 
+  test('wie achter de knoppen staat, krijgt een pijl ernaast', () {
+    const buttons = Rect.fromLTRB(330, 560, 400, 800);
+    final [arrow] = edgeIndicators({'a': const Offset(365, 700)}, visible, radius: radius, avoid: [buttons]);
+    expect(arrow.position.dy, lessThanOrEqualTo(buttons.top - radius + 0.01), reason: 'boven de knoppen');
+  });
+
   test('achter het onderpaneel telt als buiten beeld', () {
     const aboveSheet = Rect.fromLTWH(0, 0, 400, 500);
     final [arrow] = edgeIndicators({'a': const Offset(200, 650)}, aboveSheet, radius: radius);

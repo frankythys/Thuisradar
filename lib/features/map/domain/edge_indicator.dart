@@ -12,8 +12,9 @@ typedef EdgeIndicator = ({String id, Offset position, double angle});
 ///
 /// - Wie al een pijl had ([shown]), houdt die tot hij [hysteresis] ver in
 ///   beeld is: zo flikkert niets als iemand net op de rand staat.
-/// - Een pijl die in een vlak van [avoid] valt (bv. de knoppen), schuift
-///   langs de rand tot erbuiten.
+/// - Een vlak van [avoid] (bv. de knoppen) telt als buiten beeld: wie erachter
+///   staat, krijgt een pijl. Een pijl die erin valt, schuift langs de rand
+///   tot erbuiten.
 /// - Pijlen die elkaar zouden raken, schuiven langs de rand naar het midden
 ///   van die rand.
 List<EdgeIndicator> edgeIndicators(
@@ -29,8 +30,10 @@ List<EdgeIndicator> edgeIndicators(
   final center = inner.center;
   final placed = <EdgeIndicator>[];
   for (final MapEntry(key: id, value: point) in points.entries) {
-    final inView = shown.contains(id) ? visible.deflate(hysteresis) : visible;
-    if (inView.contains(point)) continue;
+    final keep = shown.contains(id) ? hysteresis : 0.0;
+    final inView =
+        visible.deflate(keep).contains(point) && !avoid.any((area) => area.inflate(keep).contains(point));
+    if (inView) continue;
     final direction = point - center;
     final toSide = direction.dx == 0 ? double.infinity : inner.width / 2 / direction.dx.abs();
     final toTopOrBottom = direction.dy == 0 ? double.infinity : inner.height / 2 / direction.dy.abs();

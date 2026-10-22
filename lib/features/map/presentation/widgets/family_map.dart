@@ -202,6 +202,8 @@ class FamilyMap extends StatelessWidget {
           cover: cover ?? () => (sheet: bottomInset, buttonsWidth: 0, buttonsBottom: 0, buttonsTop: 0),
           coverChanges: coverChanges,
           onTap: onMemberTap,
+          // Groep: de kaart schuift erheen, op dezelfde zoom.
+          onGroupTap: (point) => controller.move(point, controller.camera.zoom),
         ),
         if (!useGoogleMaps)
           Builder(builder: (context) => SimpleAttributionWidget(source: Text(context.l10n.osmContributors))),

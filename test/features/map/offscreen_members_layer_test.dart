@@ -31,6 +31,7 @@ void main() {
     WidgetTester tester,
     List<MemberOnMap> members, {
     ValueChanged<MemberOnMap>? onTap,
+    ValueChanged<LatLng>? onGroupTap,
     ValueNotifier<double>? sheet,
   }) async {
     await tester.pumpWidget(
@@ -45,6 +46,7 @@ void main() {
                 cover: () => cover(sheet: sheet?.value ?? 200),
                 coverChanges: sheet,
                 onTap: onTap ?? (_) {},
+                onGroupTap: onGroupTap,
               ),
             ],
           ),
@@ -82,6 +84,32 @@ void main() {
     await tester.tap(find.byWidgetPredicate((widget) => widget is MemberAvatar && widget.member.userId == 'Liam'));
     expect(tapped?.member.userId, 'Liam');
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wie samen staat, deelt één pijl; tikken gaat naar de groep', (tester) async {
+    LatLng? groupTapped;
+    const together = LatLng(51.0, 4.3);
+    await pump(
+      tester,
+      [member('Franky', together), member('Liam', const LatLng(51.0001, 4.3001))],
+      onGroupTap: (point) => groupTapped = point,
+    );
+
+    expect(find.byType(MemberAvatar), findsNWidgets(2));
+    final franky = arrowOf(tester, 'Franky');
+    final liam = arrowOf(tester, 'Liam');
+    expect((franky.center - liam.center).distance, lessThan(OffscreenMembersLayer.circle / 2),
+        reason: 'samen in één rondje');
+
+    await tester.tapAt(franky.center);
+    expect(groupTapped, together);
+  });
+
+  testWidgets('vier samen: twee gezichtjes en +2', (tester) async {
+    const together = LatLng(51.0, 4.3);
+    await pump(tester, [for (final id in ['A', 'B', 'C', 'D']) member(id, together)]);
+    expect(find.byType(MemberAvatar), findsNWidgets(2));
+    expect(find.text('+2'), findsOneWidget);
   });
 
   testWidgets('een pijl rechts blijft weg van de knoppen', (tester) async {
