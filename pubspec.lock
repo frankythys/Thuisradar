@@ -688,7 +688,7 @@ packages:
     source: hosted
     version: "2.18.1"
   google_maps_flutter_android:
-    dependency: "direct main"
+    dependency: "direct overridden"
     description:
       path: "third_party/google_maps_flutter_android"
       relative: true
@@ -703,7 +703,7 @@ packages:
     source: hosted
     version: "2.18.6"
   google_maps_flutter_platform_interface:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: google_maps_flutter_platform_interface
       sha256: "742e86787abac8b08352aaf31b2d1fffc77038ab2e9ebd8d4d7013eec9e97218"

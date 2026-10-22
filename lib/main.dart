@@ -7,7 +7,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/config/env.dart';
-import 'core/platform/maps_warmup.dart';
 import 'core/utils/startup_diagnostics.dart';
 import 'features/language/application/language_providers.dart';
 import 'features/language/data/language_store.dart';
@@ -22,15 +21,6 @@ Future<void> main() async {
   final locationDiagnostics = LocationDiagnostics(DiagnosticsStore())..start();
   final diagnostics = StartupDiagnostics();
   Env.assertConfigured();
-
-  // Google Maps al opwarmen: loopt mee terwijl we hieronder op het netwerk en
-  // straks op het gezin wachten, i.p.v. pas bij de eerste kaart.
-  unawaited(
-    warmUpGoogleMaps().then(
-      (_) => diagnostics.checkpoint('Google Maps opgewarmd'),
-      onError: (Object e) => debugPrint('Google Maps opwarmen mislukt: $e'),
-    ),
-  );
 
   // Supabase en Firebase tegelijk: ze hangen niet van elkaar af. Firebase is
   // nodig voor push (SOS); faalt het, dan draait de app zonder push.
