@@ -14,8 +14,9 @@ import 'group_pin_backdrop.dart';
 import '../../../../l10n/l10n.dart';
 
 /// Groepspin voor leden die op het scherm dicht bij elkaar staan: overlappende
-/// avatars (max 3 + "+N"), een statusballon met de meest recente status, en een
-/// puntje naar de locatie.
+/// avatars als piramide (1 bovenaan, dan 2, dan 3; vanaf 7 leden is de laatste
+/// "+N"), een statusballon met de meest recente status, en een puntje naar de
+/// locatie.
 class GroupPin extends StatelessWidget {
   const GroupPin({
     super.key,
@@ -28,11 +29,17 @@ class GroupPin extends StatelessWidget {
   });
 
   static const width = 260.0;
+
+  /// Hoogte bij één rij cirkels; zie [heightFor].
   static const height = 160.0;
 
   static const _avatar = 72.0;
   static const _step = 58.0;
-  static const _maxShown = 3;
+
+  /// Verticale afstand tussen de rijen: schuine buren liggen even ver uit
+  /// elkaar als buren naast elkaar (58 × sin 60°).
+  static const _rowStep = 50.0;
+  static const _maxSlots = 6;
 
   /// Breedte van de gezamenlijke witte rand rond de groep.
   static const _inset = 1.0;
@@ -47,19 +54,43 @@ class GroupPin extends StatelessWidget {
   /// Tik op één avatar in de groep: toon de info van dat lid.
   final ValueChanged<MemberOnMap>? onMemberTap;
 
-  /// Breedte van de rij cirkels voor [count] leden (max 3 + "+N").
-  static double clusterWidth(int count) {
-    final shown = count.clamp(1, _maxShown);
-    final extra = count - shown;
-    return (shown - 1) * _step + _avatar + (extra > 0 ? _step : 0);
+  /// Aantal cirkels per rij, van boven naar onder. De onderste rij is het
+  /// breedst, zodat het een piramide blijft.
+  static List<int> _rows(int count) => switch (count.clamp(1, _maxSlots)) {
+    1 => const [1],
+    2 => const [2],
+    3 => const [1, 2],
+    4 => const [1, 3],
+    5 => const [2, 3],
+    _ => const [1, 2, 3],
+  };
+
+  /// Linkerbovenhoek van elke cirkel; elke rij staat gecentreerd.
+  static List<Offset> _origins(int count) {
+    final rows = _rows(count);
+    final widest = rows.last;
+    return [
+      for (final (row, size) in rows.indexed)
+        for (var i = 0; i < size; i++) Offset(((widest - size) / 2 + i) * _step, row * _rowStep),
+    ];
   }
+
+  /// Breedte van de piramide cirkels voor [count] leden.
+  static double clusterWidth(int count) => (_rows(count).last - 1) * _step + _avatar;
+
+  /// Hoogte van de hele pin: elke extra rij cirkels maakt hem hoger.
+  static double heightFor(int count) => height + (_rows(count).length - 1) * _rowStep;
+
+  /// Zichtbare leden: allemaal tot 6, daarna 5 en een "+N".
+  List<MemberOnMap> get _shown =>
+      members.length <= _maxSlots ? members : members.take(_maxSlots - 1).toList();
 
   /// Alles wat het getekende beeld bepaalt, als vergelijkbare sleutel: Google
   /// tekent de groepspin enkel opnieuw als die verandert.
   String imageKey(AppLocalizations l10n) {
     final info = _info(l10n);
     return [
-      for (final member in members.take(_maxShown))
+      for (final member in _shown)
         '${member.member.userId}:${member.member.initial}:${member.member.colorIndex}:'
             '${member.member.userId == selectedUserId}',
       members.length,
@@ -71,9 +102,9 @@ class GroupPin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shown = members.take(_maxShown).toList();
+    final shown = _shown;
     final extra = members.length - shown.length;
-    final clusterWidth = GroupPin.clusterWidth(members.length);
+    final origins = _origins(members.length);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -81,24 +112,28 @@ class GroupPin extends StatelessWidget {
         _Bubble(info: _info(context.l10n), now: now),
         const SizedBox(height: 4),
         SizedBox(
-          width: clusterWidth,
-          height: _avatar + 12,
+          width: clusterWidth(members.length),
+          height: origins.last.dy + _avatar + 12,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
               // Eén witte vorm achter alle cirkels: de randen vloeien in elkaar.
               GroupPinBackdrop(
-                count: shown.length + (extra > 0 ? 1 : 0),
+                origins: origins,
                 diameter: _avatar,
                 step: _step,
                 color: Colors.white,
                 shadows: context.tokens.shadowMarker,
               ),
               if (extra > 0)
-                Positioned(left: shown.length * _step + _inset, top: _inset, child: _plus(extra)),
+                Positioned(left: origins.last.dx + _inset, top: origins.last.dy + _inset, child: _plus(extra)),
               // Achterste eerst tekenen; "ik" (index 0) komt zo bovenop.
               for (final (index, member) in shown.indexed.toList().reversed)
-                Positioned(left: index * _step + _inset, top: _inset, child: _avatarFor(context, member)),
+                Positioned(
+                  left: origins[index].dx + _inset,
+                  top: origins[index].dy + _inset,
+                  child: _avatarFor(context, member),
+                ),
             ],
           ),
         ),

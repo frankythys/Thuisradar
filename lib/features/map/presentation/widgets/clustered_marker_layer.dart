@@ -298,7 +298,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       }
       final screenPoint = screenOf(group.first);
       final width = single ? MemberMarker.width : GroupPin.width;
-      final height = single ? MemberMarker.height : GroupPin.height;
+      final height = single ? MemberMarker.height : GroupPin.heightFor(group.length);
       clearance[group.first] = markerClearance(
         Rect.fromLTWH(
           screenPoint.dx - width / 2,
@@ -341,7 +341,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       final single = groupMembers.length == 1;
       final driving = isDriving(group);
       final width = single ? MemberMarker.width : GroupPin.width;
-      final height = single ? MemberMarker.height : GroupPin.height;
+      final height = single ? MemberMarker.height : GroupPin.heightFor(group.length);
       final offset = clearance[group.first]!;
       final shiftX = spread[group.first] ?? 0;
       for (final member in groupMembers) {
@@ -393,7 +393,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
             imageKey: (Theme.of(context), MediaQuery.textScalerOf(context), pin.imageKey(context.l10n)),
             point: point,
             width: GroupPin.width,
-            height: GroupPin.height,
+            height: height,
             alignment: Alignment(2 * shiftX / width, -1 + 2 * offset.dy / height),
             onTap: () => widget.onGroupTap(point),
             child: GestureDetector(

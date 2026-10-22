@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Eén witte vorm achter alle cirkels van een groepspin: cirkels die door een
@@ -6,76 +9,79 @@ import 'package:flutter/material.dart';
 class GroupPinBackdrop extends StatelessWidget {
   const GroupPinBackdrop({
     super.key,
-    required this.count,
+    required this.origins,
     required this.diameter,
     required this.step,
     required this.color,
     this.shadows = const [],
   });
 
-  /// Aantal cirkels op één rij (inclusief een eventuele "+N").
-  final int count;
+  /// Linkerbovenhoek van elke cirkel (inclusief een eventuele "+N").
+  final List<Offset> origins;
   final double diameter;
 
-  /// Horizontale afstand tussen de middelpunten.
+  /// Afstand tussen de middelpunten van buren; die krijgen een hals.
   final double step;
   final Color color;
   final List<BoxShadow> shadows;
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-    size: Size((count - 1) * step + diameter, diameter),
-    painter: _BackdropPainter(count: count, diameter: diameter, step: step, color: color, shadows: shadows),
+    size: Size(
+      origins.fold(0.0, (width, origin) => math.max(width, origin.dx)) + diameter,
+      origins.fold(0.0, (height, origin) => math.max(height, origin.dy)) + diameter,
+    ),
+    painter: _BackdropPainter(origins: origins, diameter: diameter, step: step, color: color, shadows: shadows),
   );
 }
 
 class _BackdropPainter extends CustomPainter {
   _BackdropPainter({
-    required this.count,
+    required this.origins,
     required this.diameter,
     required this.step,
     required this.color,
     required this.shadows,
   });
 
-  final int count;
+  final List<Offset> origins;
   final double diameter;
   final double step;
   final Color color;
   final List<BoxShadow> shadows;
 
-  /// Hoogte van de verbinding tussen twee cirkels, als deel van de diameter.
+  /// Breedte van de verbinding tussen twee cirkels, als deel van de diameter.
   static const _neck = 0.72;
 
   Path _shape() {
     final radius = diameter / 2;
+    final centers = [for (final origin in origins) origin + Offset(radius, radius)];
     var path = Path();
-    for (var i = 0; i < count; i++) {
-      final center = Offset(radius + i * step, radius);
+    for (final (i, center) in centers.indexed) {
       path = Path.combine(
         PathOperation.union,
         path,
         Path()..addOval(Rect.fromCircle(center: center, radius: radius)),
       );
-      if (i == 0) continue;
-      final neck = Rect.fromLTRB(
-        radius + (i - 1) * step,
-        radius * (1 - _neck),
-        center.dx,
-        radius * (1 + _neck),
-      );
-      path = Path.combine(
-        PathOperation.union,
-        path,
-        Path()..addRRect(RRect.fromRectAndRadius(neck, Radius.circular(radius * _neck))),
-      );
+      // Hals naar elke buur, ook schuin naar de rij erboven. De uiteinden
+      // liggen binnen de cirkels, dus een rechthoek volstaat.
+      for (final other in centers.take(i)) {
+        final along = center - other;
+        if (along.distance > step + 1) continue;
+        final across = Offset(-along.dy, along.dx) / along.distance * (radius * _neck);
+        path = Path.combine(
+          PathOperation.union,
+          path,
+          Path()..addPolygon([other + across, center + across, center - across, other - across], true),
+        );
+      }
     }
     return path;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (count <= 0) return;
+    if (origins.isEmpty) return;
     final shape = _shape();
     for (final shadow in shadows) {
       final paint = shadow.toPaint();
@@ -86,7 +92,7 @@ class _BackdropPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_BackdropPainter old) =>
-      old.count != count ||
+      !listEquals(old.origins, origins) ||
       old.diameter != diameter ||
       old.step != step ||
       old.color != color ||

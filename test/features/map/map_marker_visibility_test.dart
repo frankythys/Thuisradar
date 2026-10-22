@@ -238,26 +238,51 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('groepspin met grote avatars en extra leden past in marker', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: GroupPin.width,
-              height: GroupPin.height,
-              child: GroupPin(
-                members: [member('Franky'), member('Liam'), member('Hedwig'), member('F')],
-                now: now,
-                selectedUserId: 'Franky',
-              ),
-            ),
+  Future<void> pumpGroup(WidgetTester tester, List<String> names) => tester.pumpWidget(
+    MaterialApp(
+      theme: AppTheme.light(),
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: GroupPin.width,
+            height: GroupPin.heightFor(names.length),
+            child: GroupPin(members: [for (final name in names) member(name)], now: now, selectedUserId: names.first),
           ),
         ),
       ),
-    );
-    expect(find.text('+1'), findsOneWidget);
+    ),
+  );
+
+  testWidgets('drie leden staan als driehoek: één bovenaan, twee eronder', (tester) async {
+    await pumpGroup(tester, ['Franky', 'Hedwig', 'Liam']);
+    final rects = [for (final element in find.byType(MemberAvatar).evaluate()) tester.getRect(find.byWidget(element.widget))];
+    rects.sort((a, b) => a.top.compareTo(b.top));
+    final [top, left, right] = rects;
+    expect(left.top, closeTo(right.top, 0.1));
+    expect(top.top, lessThan(left.top - 40));
+    expect(top.center.dx, closeTo((left.center.dx + right.center.dx) / 2, 1));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('zes leden: piramide 1-2-3, iedereen zichtbaar en binnen de marker', (tester) async {
+    await pumpGroup(tester, ['A', 'B', 'C', 'D', 'E', 'F']);
+    expect(find.byType(MemberAvatar), findsNWidgets(6));
+    expect(find.textContaining('+'), findsNothing);
+    final pin = tester.getRect(find.byType(GroupPin));
+    final tops = {for (final element in find.byType(MemberAvatar).evaluate()) tester.getRect(find.byWidget(element.widget)).top.round()};
+    expect(tops, hasLength(3));
+    for (final element in find.byType(MemberAvatar).evaluate()) {
+      final rect = tester.getRect(find.byWidget(element.widget));
+      expect(pin.inflate(1).contains(rect.topLeft) && pin.inflate(1).contains(rect.bottomRight), isTrue);
+    }
+    expect(GroupPin.clusterWidth(6), lessThan(GroupPin.width));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('groepspin met grote avatars en extra leden past in marker', (tester) async {
+    await pumpGroup(tester, ['Franky', 'Liam', 'Hedwig', 'F', 'G', 'H', 'I']);
+    expect(find.text('+2'), findsOneWidget);
+    expect(find.byType(MemberAvatar), findsNWidgets(5));
     // De gezamenlijke witte vorm houdt de grote maat (72); de gezichten zelf
     // liggen erbinnen met een dun wit scheidingslijntje of de paarse rand.
     expect(tester.widget<GroupPinBackdrop>(find.byType(GroupPinBackdrop)).diameter, 72);
