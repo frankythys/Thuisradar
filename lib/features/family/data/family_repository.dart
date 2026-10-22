@@ -66,6 +66,13 @@ class FamilyRepository {
     await _client.rpc('remove_member', params: {'fid': familyId, 'member': userId});
   }
 
+  /// Nieuwe gezinsnaam (enkel de beheerder; migratie 026). De server knipt
+  /// spaties weg en weigert een lege of te lange naam.
+  Future<Family> renameFamily(String familyId, String name) async {
+    final row = await _client.rpc('rename_family', params: {'fid': familyId, 'new_name': name});
+    return Family.fromJson(row as Map<String, dynamic>);
+  }
+
   /// Draagt het beheer over aan [userId]; de huidige beheerder wordt gewoon
   /// gezinslid (enkel de beheerder; migratie 018).
   Future<void> transferOwnership(String familyId, String userId) async {

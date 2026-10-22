@@ -40,7 +40,8 @@ Future<void> _sheet(BuildContext context, String title, Widget child) {
 /// Gezin: uitnodigingscode (kopiëren, geldigheid, voor de beheerder "Nieuwe
 /// code maken"), de leden en "iemand uitnodigen".
 /// Voor de beheerder ([onMakeOwner] en [onRemove]) krijgt elk ander lid een
-/// menu: beheerder maken of uit het gezin verwijderen.
+/// menu: beheerder maken of uit het gezin verwijderen; met [onRename] ook
+/// "Gezinsnaam wijzigen".
 Future<void> showFamilySheet(
   BuildContext context, {
   required Family family,
@@ -48,6 +49,7 @@ Future<void> showFamilySheet(
   required VoidCallback onInvite,
   void Function(FamilyMember member)? onMakeOwner,
   void Function(FamilyMember member)? onRemove,
+  VoidCallback? onRename,
 }) {
   final tokens = context.tokens;
   return _sheet(
@@ -97,6 +99,17 @@ Future<void> showFamilySheet(
                   ),
           ),
         SizedBox(height: tokens.spaceSm),
+        if (onRename != null) ...[
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              onRename();
+            },
+            icon: const Icon(Icons.edit_outlined),
+            label: Text(context.l10n.profileRenameFamily),
+          ),
+          SizedBox(height: tokens.spaceSm),
+        ],
         FilledButton.icon(
           onPressed: () {
             Navigator.pop(context);
@@ -108,6 +121,64 @@ Future<void> showFamilySheet(
       ],
     ),
   );
+}
+
+/// Venster om de gezinsnaam te wijzigen; geeft de nieuwe naam (zonder spaties
+/// errond) of null bij annuleren of een ongewijzigde naam.
+Future<String?> showRenameFamilyDialog(BuildContext context, {required String current}) =>
+    showDialog<String>(context: context, builder: (_) => _RenameFamilyDialog(current: current));
+
+class _RenameFamilyDialog extends StatefulWidget {
+  const _RenameFamilyDialog({required this.current});
+
+  final String current;
+
+  @override
+  State<_RenameFamilyDialog> createState() => _RenameFamilyDialogState();
+}
+
+class _RenameFamilyDialogState extends State<_RenameFamilyDialog> {
+  /// Zelfde grens als op de server (migratie 026).
+  static const _maxLength = 50;
+
+  late final _name = TextEditingController(text: widget.current);
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _name.text.trim();
+    if (name.isEmpty) return setState(() => _error = context.l10n.profileRenameFamilyEmpty);
+    Navigator.pop(context, name == widget.current.trim() ? null : name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(context.l10n.profileRenameFamily),
+      content: TextField(
+        controller: _name,
+        autofocus: true,
+        maxLength: _maxLength,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _save(),
+        decoration: InputDecoration(
+          labelText: context.l10n.familyNameLabel,
+          hintText: context.l10n.familyNameHint,
+          errorText: _error,
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(context.l10n.commonCancel)),
+        FilledButton(onPressed: _save, child: Text(context.l10n.commonSave)),
+      ],
+    );
+  }
 }
 
 /// Meldingen: aankomst, vertrek en SOS aan of uit.

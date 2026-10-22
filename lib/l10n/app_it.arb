@@ -622,5 +622,8 @@
   "parkedCarRemoved": "Parcheggio rimosso.",
   "parkedCarPickHint": "Trascina la mappa finché la croce non è sulla tua auto.",
   "parkedCarNavigate": "Vai all’auto",
-  "parkedCarOf": "Auto di {name}"
+  "parkedCarOf": "Auto di {name}",
+  "profileRenameFamily": "Rinomina la famiglia",
+  "profileRenameFamilyEmpty": "Inserisci un nome per la famiglia.",
+  "profileRenameFamilyDone": "Nome della famiglia modificato."
 }

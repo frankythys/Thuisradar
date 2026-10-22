@@ -3097,5 +3097,17 @@
         "type": "String"
       }
     }
+  },
+  "profileRenameFamily": "Gezinsnaam wijzigen",
+  "@profileRenameFamily": {
+    "description": "Knop en venstertitel (beheerder): de gezinsnaam wijzigen."
+  },
+  "profileRenameFamilyEmpty": "Vul een gezinsnaam in.",
+  "@profileRenameFamilyEmpty": {
+    "description": "Fout: lege gezinsnaam bij wijzigen."
+  },
+  "profileRenameFamilyDone": "Gezinsnaam gewijzigd.",
+  "@profileRenameFamilyDone": {
+    "description": "Melding: gezinsnaam is gewijzigd."
   }
 }

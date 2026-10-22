@@ -622,5 +622,8 @@
   "parkedCarRemoved": "Park yeri kaldırıldı.",
   "parkedCarPickHint": "Artı işareti arabanın üzerine gelene kadar haritayı sürükle.",
   "parkedCarNavigate": "Arabaya yol tarifi al",
-  "parkedCarOf": "{name} adlı kişinin arabası"
+  "parkedCarOf": "{name} adlı kişinin arabası",
+  "profileRenameFamily": "Aile adını değiştir",
+  "profileRenameFamilyEmpty": "Bir aile adı gir.",
+  "profileRenameFamilyDone": "Aile adı değiştirildi."
 }

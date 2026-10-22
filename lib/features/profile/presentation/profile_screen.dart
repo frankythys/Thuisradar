@@ -163,6 +163,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  /// Beheerder: de gezinsnaam wijzigen (migratie 026). Daarna het gezin
+  /// opnieuw laden, zodat de nieuwe naam ook op de kaart staat.
+  Future<void> _renameFamily(Family family) async {
+    final name = await showRenameFamilyDialog(context, current: family.name);
+    if (name == null || !mounted) return;
+    try {
+      await ref.read(familyRepositoryProvider).renameFamily(family.id, name);
+      ref.invalidate(familyInviteProvider(family.id));
+      ref.invalidate(myFamilyProvider);
+      if (mounted) _snack(context.l10n.profileRenameFamilyDone);
+    } on Exception catch (error) {
+      debugPrint('Gezinsnaam wijzigen mislukt: $error');
+      if (mounted) _snack(context.l10n.familyErrorGeneric);
+    }
+  }
+
   /// Beheerder: iemand uit het gezin halen. Op de server verdwijnt die ook
   /// van de kaart en krijgt het gezin een nieuwe code (migratie 017).
   Future<void> _removeMember(FamilyMember member) async {
@@ -302,7 +318,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               if (userId != null) PinSettingsTile(userId: userId),
               ProfileTile(
                 icon: Icons.groups_outlined,
-                title: widget.family.name,
+                // Uit de uitnodiging, niet uit widget.family: die ververst na
+                // "Gezinsnaam wijzigen".
+                title: invite.name,
                 subtitle: l10n.profileFamilySummary(members.length, invite.inviteCode),
                 onTap: () => showFamilySheet(
                   context,
@@ -310,9 +328,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   members: members,
                   onMakeOwner: me?.isOwner == true ? _makeOwner : null,
                   onRemove: me?.isOwner == true ? _removeMember : null,
+                  onRename: me?.isOwner == true ? () => _renameFamily(invite) : null,
                   onInvite: () =>
                       Navigator.of(context)
-                          .push(MaterialPageRoute<void>(builder: (_) => InviteScreen(family: widget.family))),
+                          .push(MaterialPageRoute<void>(builder: (_) => InviteScreen(family: invite))),
                 ),
               ),
               EmergencyContactsTile(senderName: me?.displayName ?? ''),
