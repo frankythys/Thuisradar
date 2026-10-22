@@ -14,7 +14,6 @@ import '../../../places/domain/place.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../../places/presentation/place_images.dart';
 import '../../domain/google_camera.dart';
-import '../../domain/map_ready_gate.dart';
 import '../../domain/place_radius.dart';
 import '../../domain/map_style.dart';
 import 'google_member_markers.dart';
@@ -77,19 +76,13 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     },
   );
   Set<gm.Marker> _memberMarkers = const {};
-  final _mapReady = MapReadyGate();
+  final _mapReady = Completer<void>();
 
   Future<void> _assetsReady = Future<void>.value();
 
   @override
   void initState() {
     super.initState();
-    unawaited(
-      _mapReady.future.then((_) {
-        _measure('Google-kaart eerste beeld');
-        _onMarkers();
-      }),
-    );
     _zoom = widget.initialZoom;
     _wanted = (
       latitude: widget.initialCenter.latitude,
@@ -185,7 +178,6 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   void dispose() {
     widget.markers?.removeListener(_onMarkers);
-    _mapReady.dispose();
     _members.dispose();
     unawaited(_events?.cancel());
     super.dispose();
@@ -280,12 +272,17 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       onMapCreated: (controller) {
         _google = controller;
         _measure('Google-kaart aangemaakt');
-        _mapReady.created();
         unawaited(_sync());
       },
-      // Teken de eerste ballonnen na de eerste camerabeweging, of kort na het
-      // aanmaken als de kaart al op de juiste plek opent (zie MapReadyGate).
-      onCameraIdle: _mapReady.cameraIdle,
+      onCameraIdle: () {
+        // Een aangemaakte controller betekent nog geen afgewerkte kaart.
+        // Teken de eerste ballonnen pas na de eerste camerabeweging, ook
+        // wanneer de gebruiker de kaart nog niet heeft aangeraakt.
+        if (_mapReady.isCompleted) return;
+        _measure('Google-kaart eerste beeld');
+        _mapReady.complete();
+        _onMarkers();
+      },
     );
   }
 }
