@@ -8,22 +8,35 @@ typedef EdgeIndicator = ({String id, Offset position, double angle});
 
 /// Voor elk punt buiten [visible]: een plek op de rand van [visible], op de
 /// lijn van het midden naar dat punt, [radius] van de rand zodat de pijl er
-/// volledig in past. Pijlen die elkaar zouden raken, schuiven langs de rand
-/// naar het midden van die rand. Behoudt de volgorde van [points].
-List<EdgeIndicator> edgeIndicators(Map<String, Offset> points, Rect visible, {required double radius}) {
+/// volledig in past. Behoudt de volgorde van [points].
+///
+/// - Wie al een pijl had ([shown]), houdt die tot hij [hysteresis] ver in
+///   beeld is: zo flikkert niets als iemand net op de rand staat.
+/// - Een pijl die in een vlak van [avoid] valt (bv. de knoppen), schuift
+///   langs de rand tot erbuiten.
+/// - Pijlen die elkaar zouden raken, schuiven langs de rand naar het midden
+///   van die rand.
+List<EdgeIndicator> edgeIndicators(
+  Map<String, Offset> points,
+  Rect visible, {
+  required double radius,
+  Set<String> shown = const {},
+  double hysteresis = 0,
+  List<Rect> avoid = const [],
+}) {
   final inner = visible.deflate(radius);
   if (inner.width <= 0 || inner.height <= 0) return const [];
   final center = inner.center;
   final placed = <EdgeIndicator>[];
   for (final MapEntry(key: id, value: point) in points.entries) {
-    if (visible.contains(point)) continue;
+    final inView = shown.contains(id) ? visible.deflate(hysteresis) : visible;
+    if (inView.contains(point)) continue;
     final direction = point - center;
     final toSide = direction.dx == 0 ? double.infinity : inner.width / 2 / direction.dx.abs();
     final toTopOrBottom = direction.dy == 0 ? double.infinity : inner.height / 2 / direction.dy.abs();
-    var position = center + direction * math.min(toSide, toTopOrBottom);
     final onTopOrBottom = toTopOrBottom < toSide;
+    var position = _outside(center + direction * math.min(toSide, toTopOrBottom), avoid, inner, radius, onTopOrBottom);
 
-    // Langs de rand opschuiven, weg van de hoek, tot er niemand meer ligt.
     // Elke stap schuift één pijlbreedte, altijd dezelfde kant op.
     final step = Offset(
       onTopOrBottom ? 2 * radius * _towards(position.dx, center.dx) : 0,
@@ -36,6 +49,22 @@ List<EdgeIndicator> edgeIndicators(Map<String, Offset> points, Rect visible, {re
     placed.add((id: id, position: position, angle: math.atan2(direction.dy, direction.dx)));
   }
   return placed;
+}
+
+/// Ligt de pijl in een vlak van [avoid], dan langs de rand ernaast: op een
+/// zijrand erboven (of eronder als er boven geen plaats is), bovenaan of
+/// onderaan ernaast.
+Offset _outside(Offset position, List<Rect> avoid, Rect inner, double radius, bool onTopOrBottom) {
+  for (final area in avoid) {
+    if (!area.inflate(radius).contains(position)) continue;
+    if (onTopOrBottom) {
+      final left = area.left - radius;
+      return Offset(left >= inner.left ? left : area.right + radius, position.dy);
+    }
+    final above = area.top - radius;
+    return Offset(position.dx, above >= inner.top ? above : area.bottom + radius);
+  }
+  return position;
 }
 
 bool _overlaps(Offset position, List<EdgeIndicator> placed, double radius) =>

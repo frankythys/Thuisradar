@@ -46,6 +46,23 @@ void main() {
     expect(arrows[1].position.dx, closeTo(400 - radius, 0.01), reason: 'blijft op de rechterrand');
   });
 
+  test('wie al een pijl had, houdt die tot hij echt in beeld is (geen flikkeren)', () {
+    const justInside = Offset(395, 400);
+    expect(edgeIndicators({'a': justInside}, visible, radius: radius), isEmpty, reason: 'nieuw: in beeld');
+    final kept = edgeIndicators({'a': justInside}, visible, radius: radius, shown: {'a'}, hysteresis: 24);
+    expect(kept, hasLength(1), reason: 'had al een pijl en is nog geen 24 px binnen');
+    final gone = edgeIndicators({'a': const Offset(300, 400)}, visible, radius: radius, shown: {'a'}, hysteresis: 24);
+    expect(gone, isEmpty);
+  });
+
+  test('een pijl op de knoppen schuift erboven', () {
+    // Knoppen rechtsonder, zoals centreren/auto/kaarttype.
+    const buttons = Rect.fromLTRB(330, 560, 400, 800);
+    final [arrow] = edgeIndicators({'a': const Offset(900, 1400)}, visible, radius: radius, avoid: [buttons]);
+    expect(arrow.position.dx, closeTo(400 - radius, 0.01), reason: 'blijft op de rechterrand');
+    expect(arrow.position.dy, closeTo(buttons.top - radius, 0.01));
+  });
+
   test('achter het onderpaneel telt als buiten beeld', () {
     const aboveSheet = Rect.fromLTWH(0, 0, 400, 500);
     final [arrow] = edgeIndicators({'a': const Offset(200, 650)}, aboveSheet, radius: radius);

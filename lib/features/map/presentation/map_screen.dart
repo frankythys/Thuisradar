@@ -51,6 +51,7 @@ import 'widgets/family_map.dart';
 import 'widgets/map_compass_button.dart';
 import 'widgets/member_list_sheet.dart';
 import 'widgets/member_sheet_dimensions.dart';
+import 'widgets/offscreen_members_layer.dart' show MapCover;
 import 'widgets/tracking_banner.dart';
 import 'widgets/no_locations_card.dart';
 import 'widgets/sheet_scrim.dart';
@@ -179,6 +180,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _showParkedCar(ParkedCar car) {
     _autoFit.lock();
     _mapController.move(LatLng(car.latitude, car.longitude), _memberZoom);
+  }
+
+  /// Waar het paneel nu staat en waar de knoppen rechts erboven staan
+  /// (centreren, auto, kaarttype, kompas: 48 hoog, 12 ertussen). De knoppen
+  /// zakken mee als het paneel lager staat dan [sheetTop], maar gaan niet mee
+  /// omhoog.
+  MapCover _mapCover(double sheetTop) {
+    final sheet = _sheetController.isAttached ? _sheetController.pixels : sheetTop;
+    final base = math.min(sheet, sheetTop) + 16;
+    final buttons = FeatureFlags.useGoogleMaps ? 4 : 3;
+    return (sheet: sheet, buttonsWidth: 16 + 48, buttonsBottom: base, buttonsTop: base + buttons * 48 + (buttons - 1) * 12);
   }
 
   void _deselect() {
@@ -398,6 +410,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             },
             satellite: ref.watch(mapSatelliteProvider),
             bottomInset: sheetTop,
+            cover: () => _mapCover(sheetTop),
+            coverChanges: _sheetController,
             savedView: ref.read(savedMapViewProvider),
           ),
           // De knoppen staan boven het paneel en zakken mee als je het lager
@@ -405,8 +419,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ListenableBuilder(
             listenable: _sheetController,
             builder: (context, _) {
-              final sheet = _sheetController.isAttached ? _sheetController.pixels : sheetTop;
-              final base = math.min(sheet, sheetTop) + 16;
+              final base = _mapCover(sheetTop).buttonsBottom;
               return Stack(
                 children: [
                   Positioned(

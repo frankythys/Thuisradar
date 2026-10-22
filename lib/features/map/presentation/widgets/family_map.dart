@@ -46,6 +46,8 @@ class FamilyMap extends StatelessWidget {
     this.useGoogleMaps = FeatureFlags.useGoogleMaps,
     this.satellite,
     this.bottomInset = 0,
+    this.cover,
+    this.coverChanges,
     this.savedView,
   });
 
@@ -85,6 +87,12 @@ class FamilyMap extends StatelessWidget {
 
   /// Hoogte van het onderpaneel, zodat het Google-logo zichtbaar blijft.
   final double bottomInset;
+
+  /// Wat de kaart nu onderaan bedekt (paneel en knoppen), voor de pijlen naar
+  /// wie buiten beeld is; opnieuw gelezen bij [coverChanges]. Zonder: enkel
+  /// [bottomInset].
+  final MapCover Function()? cover;
+  final Listenable? coverChanges;
 
   /// Waar de kaart de vorige keer stond; dan opent ze meteen daar (zie
   /// [startView]).
@@ -191,8 +199,8 @@ class FamilyMap extends StatelessWidget {
         ),
         OffscreenMembersLayer(
           members: membersToShow(members, selectedUserId),
-          myUserId: myUserId,
-          bottomInset: bottomInset,
+          cover: cover ?? () => (sheet: bottomInset, buttonsWidth: 0, buttonsBottom: 0, buttonsTop: 0),
+          coverChanges: coverChanges,
           onTap: onMemberTap,
         ),
         if (!useGoogleMaps)
