@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import * as jose from "npm:jose@5";
 import { invalidFcmToken } from "../_shared/fcm_result.ts";
 import { hasValidWebhookSecret } from "../_shared/webhook_secret.ts";
+import { chatText, type Language, pushLanguage } from "../_shared/i18n.ts";
 
 interface ServiceAccount {
   project_id: string;
@@ -36,7 +37,7 @@ async function sendPush(
   projectId: string,
   accessToken: string,
   token: string,
-  body: string,
+  text: { title: string; body: string },
   notificationVersion: number,
 ): Promise<"ok" | "invalid" | "error"> {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
@@ -45,7 +46,7 @@ async function sendPush(
     body: JSON.stringify({
       message: {
         token,
-        notification: { title: "Thuisradar · Chat", body },
+        notification: { title: text.title, body: text.body },
         android: {
           priority: "high",
           notification: {
@@ -88,7 +89,7 @@ export async function handleRequest(req: Request): Promise<Response> {
   }
   const { data: actor } = await supabase
     .from("profiles").select("display_name").eq("id", stored.user_id).single();
-  const message = `Nieuw bericht van ${actor?.display_name ?? "een gezinslid"}`;
+  const actorName: string | null = actor?.display_name ?? null;
 
   const { data: members, error: membersError } = await supabase
     .from("family_members").select("user_id").eq("family_id", stored.family_id).neq("user_id", stored.user_id);
@@ -96,8 +97,16 @@ export async function handleRequest(req: Request): Promise<Response> {
   const userIds = (members ?? []).map((m) => m.user_id);
   if (userIds.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
 
+  // Taal per ontvanger (migratie 022). Ontbreekt de kolom nog, dan Nederlands.
+  const { data: profiles, error: languageError } = await supabase
+    .from("profiles").select("id, language").in("id", userIds);
+  if (languageError) console.warn("Taal van ontvangers onbekend:", languageError.message);
+  const languageOf = new Map<string, Language>(
+    (profiles ?? []).map((p) => [p.id as string, pushLanguage(p.language as string | null)]),
+  );
+
   const { data: tokens, error: tokensError } = await supabase
-    .from("device_tokens").select("token, notification_version").in("user_id", userIds);
+    .from("device_tokens").select("token, notification_version, user_id").in("user_id", userIds);
   if (tokensError) return new Response("tokens unavailable", { status: 503 });
   const tokenList = tokens ?? [];
   if (tokenList.length === 0) return new Response(JSON.stringify({ sent: 0 }), { status: 200 });
@@ -109,8 +118,9 @@ export async function handleRequest(req: Request): Promise<Response> {
   let sent = 0;
   let failed = 0;
   await Promise.all(
-    tokenList.map(async ({ token, notification_version }) => {
-      const result = await sendPush(sa.project_id, accessToken, token, message, notification_version);
+    tokenList.map(async ({ token, notification_version, user_id }) => {
+      const text = chatText(languageOf.get(user_id) ?? pushLanguage(null), actorName);
+      const result = await sendPush(sa.project_id, accessToken, token, text, notification_version);
       if (result === "invalid") invalid.push(token);
       else if (result === "ok") sent++;
       else failed++;

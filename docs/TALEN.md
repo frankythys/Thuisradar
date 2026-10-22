@@ -42,8 +42,8 @@ de sms aan noodcontacten, de vaste melding tijdens het delen en de namen van de
 meldingskanalen (via `appLocalizationsProvider`, ook buiten widgets).
 
 **Bewust Nederlands:** het interne locatiediagnose-logboek (voor de ontwikkelaar)
-en `debugPrint`-regels. **Nog Nederlands:** de pushmeldingen voor plaatsen en
-chat (fase 4; SOS en plaatsen zijn vertaald) en serverfouten die de app niet herkent.
+en `debugPrint`-regels. **Nog Nederlands:** serverfouten die de app niet
+herkent. De pushmeldingen zijn vertaald (fase 4).
 
 ### Een tekst toevoegen of omzetten
 
@@ -103,8 +103,9 @@ Nederlands; onbekende taal: Engels.
 **Plaatsen is klaar (22 okt):** `send-place-push` v9 gebruikt `placeText()` met
 dezelfde zinnen als de app (`notificationsArrival`/`Departure`, titel `navPlaces`).
 
-**Nog Nederlands:** `send-chat-push` — voeg de teksten toe aan `_shared/i18n.ts`
-en kies per token de taal, net als in `send-place-push`.
+**Chat is klaar (22 okt):** `send-chat-push` v2 gebruikt `chatText()`; titel
+"CircleBeacon · " + `chatTitle`, geen berichtinhoud op het vergrendelscherm.
+Daarmee zijn alle pushmeldingen vertaald.
 
 Oorspronkelijk plan:
 

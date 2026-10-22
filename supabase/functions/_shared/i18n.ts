@@ -98,3 +98,23 @@ export function placeText(
   const place = placeName?.trim() || null;
   return { title: t.title, body: t[event](name, place) };
 }
+
+// Titel: chatTitle uit de app. Geen inhoud van het bericht op het vergrendelscherm.
+// Eigen "een gezinslid": midden in de zin (en in het Duits na "von").
+const CHAT: Record<Language, { title: string; body: (name: string) => string; someone: string }> = {
+  nl: { title: "Chat", body: (n) => `Nieuw bericht van ${n}`, someone: "een gezinslid" },
+  en: { title: "Chat", body: (n) => `New message from ${n}`, someone: "a family member" },
+  fr: { title: "Discussion", body: (n) => `Nouveau message de ${n}`, someone: "un membre de la famille" },
+  de: { title: "Chat", body: (n) => `Neue Nachricht von ${n}`, someone: "einem Familienmitglied" },
+  es: { title: "Chat", body: (n) => `Nuevo mensaje de ${n}`, someone: "un miembro de la familia" },
+  pt: { title: "Conversa", body: (n) => `Nova mensagem de ${n}`, someone: "um membro da família" },
+  it: { title: "Chat", body: (n) => `Nuovo messaggio da ${n}`, someone: "un familiare" },
+  tr: { title: "Sohbet", body: (n) => `${n} yeni bir mesaj gönderdi`, someone: "Bir aile üyesi" },
+};
+
+/** Titel en tekst van de chat-push. Zonder naam: "een gezinslid" in die taal. */
+export function chatText(language: Language, actorName: string | null | undefined) {
+  const t = CHAT[language];
+  const name = actorName?.trim() || t.someone;
+  return { title: `CircleBeacon · ${t.title}`, body: t.body(name) };
+}

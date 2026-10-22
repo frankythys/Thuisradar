@@ -44,7 +44,10 @@ Deno.test("chat push validates secret, stored message and excludes the author", 
           : Response.json({ name: "fake-message" });
       }
       if (url.pathname.endsWith("/messages")) return Response.json(exists ? { id: 7, family_id: "family", user_id: "author" } : null);
-      if (url.pathname.endsWith("/profiles")) return Response.json({ display_name: "Papa" });
+      if (url.pathname.endsWith("/profiles")) {
+        if (url.searchParams.get("select") === "id,language") return Response.json([{ id: "recipient", language: "fr" }]);
+        return Response.json({ display_name: "Papa" });
+      }
       if (url.pathname.endsWith("/family_members")) {
         memberQuery = url.search;
         if (membersError) return Response.json({ message: "unavailable" }, { status: 503 });
@@ -53,7 +56,7 @@ Deno.test("chat push validates secret, stored message and excludes the author", 
       if (url.pathname.endsWith("/device_tokens")) {
         check(init?.method !== "DELETE", "must not delete tokens for bad payloads");
         tokenQuery = url.search;
-        return Response.json([{ token: "recipient-token", notification_version: notificationVersion }]);
+        return Response.json([{ token: "recipient-token", notification_version: notificationVersion, user_id: "recipient" }]);
       }
       throw new Error(`Unexpected request: ${url}`);
     };
@@ -72,6 +75,8 @@ Deno.test("chat push validates secret, stored message and excludes the author", 
     check(message.android.notification.channel_id === "chat_messages", "chat channel");
     check(message.android.notification.sound === "thuisradar_message", "chat tone");
     check(message.data.type === "chat", "foreground routing");
+    check(message.notification.title === "CircleBeacon · Discussion", "title in recipient language");
+    check(message.notification.body === "Nouveau message de Papa", "body in recipient language");
     check(!JSON.stringify(message).includes("private text"), "lockscreen privacy");
     notificationVersion = 1;
     await handleRequest(request());

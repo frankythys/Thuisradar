@@ -1,4 +1,4 @@
-import { placeText, pushLanguage, sosText } from "./i18n.ts";
+import { chatText, placeText, pushLanguage, sosText } from "./i18n.ts";
 
 function check(value: unknown, message: string): asserts value {
   if (!value) throw new Error(message);
@@ -29,4 +29,13 @@ Deno.test("plaatsen-tekst per taal, met en zonder naam of plaats", () => {
   check(placeText("de", "departure", "Liam", null).body === "Liam hat einen Ort verlassen", "zonder plaats");
   check(placeText("fr", "arrival", "Liam", "  ").body === "Liam est arrivé à un lieu", "lege plaats");
   check(placeText("es", "arrival", "Liam", "Casa").title === "Lugares", "titel");
+});
+
+Deno.test("chat-tekst per taal, met en zonder naam", () => {
+  check(chatText("nl", "Papa").body === "Nieuw bericht van Papa", "nl");
+  check(chatText("nl", "Papa").title === "CircleBeacon · Chat", "titel nl");
+  check(chatText("fr", "Papa").title === "CircleBeacon · Discussion", "titel fr");
+  check(chatText("tr", "Papa").body === "Papa yeni bir mesaj gönderdi", "tr");
+  check(chatText("nl", null).body === "Nieuw bericht van een gezinslid", "zonder naam");
+  check(chatText("de", "  ").body === "Neue Nachricht von einem Familienmitglied", "lege naam de");
 });
