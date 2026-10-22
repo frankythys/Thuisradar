@@ -63,9 +63,9 @@ class _BackdropPainter extends CustomPainter {
   final Color color;
   final List<BoxShadow> shadows;
 
-  /// Halve breedte van het puntje onder één middelste cirkel, als deel van
-  /// de straal.
-  static const _tipWidth = 0.5;
+  /// Halve breedte van het puntje waar het uit de cirkels komt, als deel van
+  /// de straal (±1/3 van een cirkel breed).
+  static const _tipWidth = 0.4;
 
   /// Breedte van de verbinding tussen twee cirkels, als deel van de diameter.
   static const _neck = 0.72;
@@ -106,8 +106,10 @@ class _BackdropPainter extends CustomPainter {
     final midX = (xs.reduce(math.min) + xs.reduce(math.max)) / 2;
     final baseY = centers.map((center) => center.dy).reduce(math.max);
     final bottomRow = centers.where((center) => (center.dy - baseY).abs() < 0.5).length;
-    // Hoeken net binnen de onderkant van de cirkel(s), dus geen naad.
-    final (half, depth) = bottomRow.isEven ? (step / 2, radius * 0.94) : (radius * _tipWidth, radius * 0.8);
+    final half = radius * _tipWidth;
+    // Hoeken net binnen de onderkant van de dichtste cirkel, dus geen naad.
+    final toCircle = bottomRow.isEven ? step / 2 - half : half;
+    final depth = math.sqrt(radius * radius - toCircle * toCircle) - 1;
     return Path()..addPolygon([
       Offset(midX - half, baseY),
       Offset(midX + half, baseY),
