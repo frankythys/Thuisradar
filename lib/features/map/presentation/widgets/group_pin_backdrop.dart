@@ -63,8 +63,9 @@ class _BackdropPainter extends CustomPainter {
   final Color color;
   final List<BoxShadow> shadows;
 
-  /// Halve breedte van het puntje waar het in de onderste cirkels begint.
-  static const _tipWidth = 0.6;
+  /// Halve breedte van het puntje onder één middelste cirkel, als deel van
+  /// de straal.
+  static const _tipWidth = 0.5;
 
   /// Breedte van de verbinding tussen twee cirkels, als deel van de diameter.
   static const _neck = 0.72;
@@ -92,24 +93,28 @@ class _BackdropPainter extends CustomPainter {
         );
       }
     }
-    if (tip > 0 && centers.isNotEmpty) {
-      // Driehoek vanaf het midden van de onderste rij tot onder de cirkels;
-      // de rijen staan gecentreerd, dus het midden van de groep is het midden.
-      final xs = centers.map((center) => center.dx);
-      final midX = (xs.reduce(math.min) + xs.reduce(math.max)) / 2;
-      final baseY = centers.map((center) => center.dy).reduce(math.max);
-      final half = radius * _tipWidth;
-      path = Path.combine(
-        PathOperation.union,
-        path,
-        Path()..addPolygon([
-          Offset(midX - half, baseY),
-          Offset(midX + half, baseY),
-          Offset(midX, baseY + radius + tip),
-        ], true),
-      );
-    }
+    if (tip > 0 && centers.isNotEmpty) path = Path.combine(PathOperation.union, path, _tipShape(centers, radius));
     return path;
+  }
+
+  /// Puntje onder het midden van de onderste rij; de rijen staan gecentreerd,
+  /// dus het midden van de groep is het midden. Staan daar twee cirkels naast
+  /// elkaar, dan loopt het vanaf de onderkant van allebei naar de punt en vult
+  /// het de inkeping ertussen; anders vanaf de onderkant van de middelste.
+  Path _tipShape(List<Offset> centers, double radius) {
+    final xs = centers.map((center) => center.dx);
+    final midX = (xs.reduce(math.min) + xs.reduce(math.max)) / 2;
+    final baseY = centers.map((center) => center.dy).reduce(math.max);
+    final bottomRow = centers.where((center) => (center.dy - baseY).abs() < 0.5).length;
+    // Hoeken net binnen de onderkant van de cirkel(s), dus geen naad.
+    final (half, depth) = bottomRow.isEven ? (step / 2, radius * 0.94) : (radius * _tipWidth, radius * 0.8);
+    return Path()..addPolygon([
+      Offset(midX - half, baseY),
+      Offset(midX + half, baseY),
+      Offset(midX + half, baseY + depth),
+      Offset(midX, baseY + radius + tip),
+      Offset(midX - half, baseY + depth),
+    ], true);
   }
 
   @override
