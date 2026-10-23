@@ -102,7 +102,9 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
     const margin = OffscreenMembersLayer._margin;
     const tip = OffscreenMembersLayer.tip;
     final camera = MapCamera.of(context);
-    final size = camera.size;
+    // Het scherm zelf: `camera.size` is bij een gedraaide kaart de grotere
+    // omsluitende rechthoek, terwijl `latLngToScreenOffset` in schermpunten rekent.
+    final size = camera.nonRotatedSize;
     final cover = widget.cover();
     final visible = Rect.fromLTRB(margin, margin, size.width - margin, size.height - cover.sheet - margin);
     final buttons = Rect.fromLTRB(
@@ -125,10 +127,9 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
     };
     // Groepen op het scherm; de eerste van elke groep is het anker.
     final groups = {
-      for (final group in clusterByScreenDistance(
-        [for (final MapEntry(key: id, value: face) in faces.entries) ClusterPoint(id, face)],
-        thresholdPx: OffscreenMembersLayer._together,
-      ))
+      for (final group in clusterByScreenDistance([
+        for (final MapEntry(key: id, value: face) in faces.entries) ClusterPoint(id, face),
+      ], thresholdPx: OffscreenMembersLayer._together))
         group.first: [for (final id in group) byId[id]!],
     };
     const radius = OffscreenMembersLayer._thickness / 2 + tip;
@@ -216,8 +217,20 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
   /// [within] past en niets uit [avoid] raakt.
   Rect _fit(Rect rect, {required bool vertical, required Rect within, required List<Rect> avoid}) {
     Rect clamp(Rect r) => vertical
-        ? r.shift(Offset(0, (within.top - r.top).clamp(0, double.infinity) + (within.bottom - r.bottom).clamp(double.negativeInfinity, 0)))
-        : r.shift(Offset((within.left - r.left).clamp(0, double.infinity) + (within.right - r.right).clamp(double.negativeInfinity, 0), 0));
+        ? r.shift(
+            Offset(
+              0,
+              (within.top - r.top).clamp(0, double.infinity) +
+                  (within.bottom - r.bottom).clamp(double.negativeInfinity, 0),
+            ),
+          )
+        : r.shift(
+            Offset(
+              (within.left - r.left).clamp(0, double.infinity) +
+                  (within.right - r.right).clamp(double.negativeInfinity, 0),
+              0,
+            ),
+          );
     var result = clamp(rect);
     for (var tries = 0; tries <= avoid.length; tries++) {
       final hit = avoid.where((area) => area.overlaps(result)).firstOrNull;
@@ -229,7 +242,11 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
       final fits = vertical ? before.top >= within.top : before.left >= within.left;
       result = fits
           ? before
-          : clamp(vertical ? result.shift(Offset(0, hit.bottom - result.top)) : result.shift(Offset(hit.right - result.left, 0)));
+          : clamp(
+              vertical
+                  ? result.shift(Offset(0, hit.bottom - result.top))
+                  : result.shift(Offset(hit.right - result.left, 0)),
+            );
     }
     return result;
   }
@@ -267,11 +284,8 @@ class _Indicator extends StatelessWidget {
     final extra = members.length > max ? members.length - (max - 1) : 0;
     final shown = extra > 0 ? members.take(max - 1).toList() : members;
     final start = place == null ? 0.0 : OffscreenMembersLayer._placeSlot;
-    Widget at(double along, Widget child) => Positioned(
-      left: vertical ? 0 : along,
-      top: vertical ? along : 0,
-      child: child,
-    );
+    Widget at(double along, Widget child) =>
+        Positioned(left: vertical ? 0 : along, top: vertical ? along : 0, child: child);
     // Achterste eerst tekenen: de eerste ligt bovenop, zoals op de kaart.
     final items = <Widget>[
       if (place case final place?) at(0, _place(place)),

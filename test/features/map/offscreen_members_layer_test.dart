@@ -25,20 +25,22 @@ void main() {
   );
 
   // Kaart van 800 × 600: paneel 200 hoog, knoppen rechts van 216 tot 444 boven de onderkant.
-  MapCover cover({double sheet = 200}) => (sheet: sheet, buttonsWidth: 64, buttonsBottom: 216, buttonsTop: 444);
+  MapCover cover({double sheet = 200}) =>
+      (sheet: sheet, buttonsWidth: 64, buttonsBottom: 216, buttonsTop: 444);
 
   Future<void> pump(
     WidgetTester tester,
     List<MemberOnMap> members, {
     ValueChanged<MemberOnMap>? onTap,
     ValueNotifier<double>? sheet,
+    double rotation = 0,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
         home: Scaffold(
           body: FlutterMap(
-            options: const MapOptions(initialCenter: center, initialZoom: 15),
+            options: MapOptions(initialCenter: center, initialZoom: 15, initialRotation: rotation),
             children: [
               OffscreenMembersLayer(
                 members: members,
@@ -60,15 +62,11 @@ void main() {
 
   testWidgets('iedereen buiten beeld krijgt een pijl, ook jijzelf; wie in beeld is niet', (tester) async {
     MemberOnMap? tapped;
-    await pump(
-      tester,
-      [
-        member('ik', const LatLng(51.2, 4.0)), // ver naar het noorden
-        member('Liam', const LatLng(51.0, 4.3)), // ver naar het oosten
-        member('Hedwig', center), // in beeld
-      ],
-      onTap: (m) => tapped = m,
-    );
+    await pump(tester, [
+      member('ik', const LatLng(51.2, 4.0)), // ver naar het noorden
+      member('Liam', const LatLng(51.0, 4.3)), // ver naar het oosten
+      member('Hedwig', center), // in beeld
+    ], onTap: (m) => tapped = m);
 
     final avatars = tester.widgetList<MemberAvatar>(find.byType(MemberAvatar)).map((a) => a.member.userId);
     expect(avatars, unorderedEquals(['ik', 'Liam']));
@@ -79,22 +77,28 @@ void main() {
     expect(liam.center.dx, greaterThan(screen.right - OffscreenMembersLayer.face * 2.5));
     expect(liam.bottom, lessThan(screen.bottom - 200));
 
-    await tester.tap(find.byWidgetPredicate((widget) => widget is MemberAvatar && widget.member.userId == 'Liam'));
+    await tester.tap(
+      find.byWidgetPredicate((widget) => widget is MemberAvatar && widget.member.userId == 'Liam'),
+    );
     expect(tapped?.member.userId, 'Liam');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('wie samen staat, zit in één blokje: gezichtjes onder elkaar, een stukje in elkaar', (tester) async {
+  testWidgets('wie samen staat, zit in één blokje: gezichtjes onder elkaar, een stukje in elkaar', (
+    tester,
+  ) async {
     MemberOnMap? tapped;
     const together = LatLng(51.0, 4.3);
-    await pump(
-      tester,
-      [member('Franky', together), member('Liam', const LatLng(51.0001, 4.3001)), member('Hedwig', together)],
-      onTap: (m) => tapped = m,
-    );
+    await pump(tester, [
+      member('Franky', together),
+      member('Liam', const LatLng(51.0001, 4.3001)),
+      member('Hedwig', together),
+    ], onTap: (m) => tapped = m);
 
     expect(find.byType(MemberAvatar), findsNWidgets(3));
-    final faces = [for (final id in ['Franky', 'Liam', 'Hedwig']) arrowOf(tester, id).center];
+    final faces = [
+      for (final id in ['Franky', 'Liam', 'Hedwig']) arrowOf(tester, id).center,
+    ];
     for (final face in faces) {
       expect(face.dx, closeTo(faces.first.dx, 0.5), reason: 'onder elkaar langs de rechterrand');
     }
@@ -126,5 +130,33 @@ void main() {
     sheet.value = 40;
     await tester.pumpAndSettle();
     expect(find.byType(MemberAvatar), findsNothing, reason: 'nu in beeld: geen pijl meer');
+  });
+
+  testWidgets('gedraaide kaart: elk blokje ligt tegen de rand van het zichtbare deel', (tester) async {
+    // Gedraaid is de omsluitende rechthoek van de kaart groter dan het scherm;
+    // de blokjes moeten toch tegen de echte rand boven het paneel liggen.
+    await pump(tester, [
+      member('Noord', const LatLng(51.2, 4.0)),
+      member('Oost', const LatLng(51.0, 4.4)),
+      member('Zuid', const LatLng(50.8, 4.0)),
+      member('West', const LatLng(51.0, 3.6)),
+    ], rotation: 35);
+    final screen = tester.getRect(find.byType(FlutterMap));
+    final visible = Rect.fromLTRB(screen.left, screen.top, screen.right, screen.bottom - 200);
+    for (final id in ['Noord', 'Oost', 'Zuid', 'West']) {
+      final face = arrowOf(tester, id);
+      expect(
+        visible.contains(face.topLeft) && visible.contains(face.bottomRight),
+        isTrue,
+        reason: '$id in beeld',
+      );
+      final toEdge = [
+        face.top - visible.top,
+        visible.bottom - face.bottom,
+        face.left - visible.left,
+        visible.right - face.right,
+      ].reduce((a, b) => a < b ? a : b);
+      expect(toEdge, lessThan(30), reason: '$id tegen de rand, niet ergens in de kaart');
+    }
   });
 }
