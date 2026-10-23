@@ -62,6 +62,11 @@ class GoogleBaseMap extends StatefulWidget {
 }
 
 class _GoogleBaseMapState extends State<GoogleBaseMap> {
+  /// Onzichtbaar klein, maar groot genoeg om Google een nieuw beeld te laten
+  /// tekenen.
+  static const _redrawZoomStep = 0.01;
+  static const _redrawDelay = Duration(milliseconds: 150);
+
   gm.GoogleMapController? _google;
   StreamSubscription<MapEvent>? _events;
   ({double latitude, double longitude, double zoom, double bearing})? _wanted;
@@ -72,10 +77,16 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   double? _iconPixelRatio;
   late final _members = GoogleMemberMarkers(
     onChanged: (markers) {
-      if (mounted) setState(() => _memberMarkers = markers);
+      if (!mounted) return;
+      final first = _memberMarkers.isEmpty && markers.isNotEmpty;
+      setState(() => _memberMarkers = markers);
+      // De eerste personen: Google tekent ze pas na een camerabeweging.
+      if (first) _scheduleRedraw();
     },
   );
   Set<gm.Marker> _memberMarkers = const {};
+  Timer? _redrawTimer;
+  int _redrawTries = 0;
   final _mapReady = Completer<void>();
 
   Future<void> _assetsReady = Future<void>.value();
@@ -178,6 +189,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   void dispose() {
     widget.markers?.removeListener(_onMarkers);
+    _redrawTimer?.cancel();
     _members.dispose();
     unawaited(_events?.cancel());
     super.dispose();
@@ -226,6 +238,54 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
         _moving = false;
       }
     }
+  }
+
+  /// Google (de nieuwe tekenmotor in een textuur) zet nieuwe markers pas op
+  /// het scherm na een camerabeweging. Bij het opstarten staat de camera stil
+  /// (de kaart opent op de bewaarde plek), dus bleven de personen weg tot je
+  /// scrolde. Een onzichtbaar kleine zoomstap, even laten staan zodat Google
+  /// een beeld tekent, en dan terug naar de stand van de kaart erboven.
+  void _scheduleRedraw() {
+    _redrawTimer?.cancel();
+    _redrawTimer = Timer(_redrawDelay, () => unawaited(_redraw()));
+  }
+
+  Future<void> _redraw() async {
+    final google = _google;
+    final wanted = _wanted;
+    if (!mounted) return;
+    if (google == null || wanted == null || _moving || !_mapReady.isCompleted) {
+      // Wacht tot de kaart haar eerste beeld heeft en de markers er zijn:
+      // straks opnieuw proberen.
+      if (_redrawTries++ < 60) _scheduleRedraw();
+      return;
+    }
+    final target = googleCameraTarget(
+      latitude: wanted.latitude,
+      longitude: wanted.longitude,
+      zoom: wanted.zoom,
+      bottomPadding: widget.bottomPadding,
+      bearing: wanted.bearing,
+    );
+    try {
+      await google.moveCamera(
+        gm.CameraUpdate.newCameraPosition(
+          gm.CameraPosition(
+            target: gm.LatLng(target.latitude, target.longitude),
+            zoom: wanted.zoom + _redrawZoomStep,
+            bearing: wanted.bearing,
+          ),
+        ),
+      );
+      // Eerst een beeld laten tekenen: twee bewegingen binnen dezelfde frame
+      // heffen elkaar op en dan blijft de kaart onveranderd.
+      await Future<void>.delayed(_redrawDelay);
+    } on Exception catch (error) {
+      debugPrint('Google-kaart hertekenen mislukt: $error');
+    }
+    if (!mounted) return;
+    _shown = null; // terug naar exact de stand van de kaart erboven
+    unawaited(_sync());
   }
 
   /// Meetpunt in de opstartmeting (enkel debug/profile, eenmalig per stap).
