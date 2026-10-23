@@ -18,8 +18,22 @@ class GoogleMapStack extends StatefulWidget {
 class _GoogleMapStackState extends State<GoogleMapStack> {
   final _markers = ValueNotifier<List<MapMarkerSpec>>(const []);
 
+  /// De Flutter-engine overleeft het Android-scherm (zie MainActivity), de
+  /// native Google-kaart niet: die hoort bij het gesloten scherm. Na elke
+  /// ontkoppeling bouwen we daarom een nieuwe kaart (nieuwe sleutel), ook als
+  /// er tussendoor geen enkel beeld getekend werd.
+  late final AppLifecycleListener _lifecycle;
+  int _screen = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onDetach: () => setState(() => _screen++));
+  }
+
   @override
   void dispose() {
+    _lifecycle.dispose();
     _markers.dispose();
     super.dispose();
   }
@@ -28,7 +42,9 @@ class _GoogleMapStackState extends State<GoogleMapStack> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(child: widget.base(_markers)),
+        Positioned.fill(
+          child: KeyedSubtree(key: ValueKey(_screen), child: widget.base(_markers)),
+        ),
         widget.overlay((markers) => _markers.value = markers),
       ],
     );
