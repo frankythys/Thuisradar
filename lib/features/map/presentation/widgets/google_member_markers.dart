@@ -41,6 +41,11 @@ class GoogleMemberMarkers {
   /// Standaardruimte rond elk vak voor schaduw, gloed en lichtkring.
   static const _margin = 24.0;
 
+  /// Waarschuwt in de console als de eerste markers te lang op hun
+  /// voorbereiding wachten (afbeeldingen of de kaart). Zonder die melding zie
+  /// je enkel dat er geen personen op de kaart staan, zonder reden.
+  static const _readyWarnAfter = Duration(seconds: 10);
+
   /// Zoveel getekende varianten per marker blijven bewaard.
   static const _keepDrawn = 4;
   static const _keepAnimations = 3;
@@ -164,8 +169,10 @@ class GoogleMemberMarkers {
   void _emit(Set<gm.Marker> markers) {
     _scheduleFrame();
     if (setEquals(markers, _shown)) return;
+    final first = _shown.isEmpty && markers.isNotEmpty;
     _shown = markers;
     onChanged(markers);
+    if (first) debugPrint('Markers op de kaart: ${markers.length}');
   }
 
   /// Volgend beeld op het tempo van de GIF, zolang er iets geanimeerd wordt.
@@ -233,8 +240,19 @@ class GoogleMemberMarkers {
       ..start();
     final generation = ++_generation;
     final specs = _pending;
+    final watchdog = Timer(
+      _readyWarnAfter,
+      () => debugPrint(
+        'Markers wachten al ${_readyWarnAfter.inSeconds}s op de afbeeldingen of de kaart; '
+        'nog niets getekend',
+      ),
+    );
     try {
-      await ready;
+      try {
+        await ready;
+      } finally {
+        watchdog.cancel();
+      }
       // Gewone markers eerst, en meteen tonen: een wandelanimatie (tot 19
       // beelden) mag de andere ballonnen niet laten wachten.
       for (final spec in specs) {

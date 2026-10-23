@@ -81,13 +81,24 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       final first = _memberMarkers.isEmpty && markers.isNotEmpty;
       setState(() => _memberMarkers = markers);
       // De eerste personen: Google tekent ze pas na een camerabeweging.
-      if (first) _scheduleRedraw();
+      if (first) {
+        _redrawTries = 0;
+        _scheduleRedraw();
+      }
     },
   );
   Set<gm.Marker> _memberMarkers = const {};
   Timer? _redrawTimer;
   int _redrawTries = 0;
   final _mapReady = Completer<void>();
+  Timer? _mapReadyFallback;
+
+  /// Zoveel hertekenpogingen (elke [_redrawDelay]) voordat we opgeven.
+  static const _redrawTriesMax = 60;
+
+  /// Vangnet als Google geen `onCameraIdle` meldt (trage start, debugger):
+  /// zonder dat signaal wacht het tekenen van de markers voorgoed.
+  static const _mapReadyFallbackDelay = Duration(seconds: 4);
 
   Future<void> _assetsReady = Future<void>.value();
 
@@ -190,6 +201,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   void dispose() {
     widget.markers?.removeListener(_onMarkers);
     _redrawTimer?.cancel();
+    _mapReadyFallback?.cancel();
     _members.dispose();
     unawaited(_events?.cancel());
     super.dispose();
@@ -240,6 +252,20 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     }
   }
 
+  /// De kaart is klaar genoeg om de eerste markers te tekenen: één keer, via
+  /// `onCameraIdle` of het vangnet. Zet de hertekenpogingen terug op nul, want
+  /// bij een trage start (debug) kunnen ze opgebruikt zijn vóór de kaart klaar
+  /// was; dan verschenen de personen nooit en zonder foutmelding.
+  void _completeMapReady() {
+    if (_mapReady.isCompleted) return;
+    _mapReady.complete();
+    _mapReadyFallback?.cancel();
+    _mapReadyFallback = null;
+    _redrawTries = 0;
+    _onMarkers();
+    if (_memberMarkers.isNotEmpty) _scheduleRedraw();
+  }
+
   /// Google (de nieuwe tekenmotor in een textuur) zet nieuwe markers pas op
   /// het scherm na een camerabeweging. Bij het opstarten staat de camera stil
   /// (de kaart opent op de bewaarde plek), dus bleven de personen weg tot je
@@ -257,7 +283,11 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     if (google == null || wanted == null || _moving || !_mapReady.isCompleted) {
       // Wacht tot de kaart haar eerste beeld heeft en de markers er zijn:
       // straks opnieuw proberen.
-      if (_redrawTries++ < 60) _scheduleRedraw();
+      if (_redrawTries++ < _redrawTriesMax) {
+        _scheduleRedraw();
+      } else {
+        debugPrint('Kaart: eerste markers niet hertekend (kaart bleef te lang bezet)');
+      }
       return;
     }
     final target = googleCameraTarget(
@@ -285,6 +315,8 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     }
     if (!mounted) return;
     _shown = null; // terug naar exact de stand van de kaart erboven
+    // De eerste keer dat Google zijn eigen beeld met de personen tekent.
+    _measure('Google-kaart eerste markers');
     unawaited(_sync());
   }
 
@@ -332,16 +364,20 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       onMapCreated: (controller) {
         _google = controller;
         _measure('Google-kaart aangemaakt');
+        _mapReadyFallback = Timer(_mapReadyFallbackDelay, () {
+          if (!_mapReady.isCompleted) {
+            debugPrint('Kaart: geen camerastilte gemeld, markers toch tekenen');
+          }
+          _completeMapReady();
+        });
         unawaited(_sync());
       },
       onCameraIdle: () {
         // Een aangemaakte controller betekent nog geen afgewerkte kaart.
         // Teken de eerste ballonnen pas na de eerste camerabeweging, ook
         // wanneer de gebruiker de kaart nog niet heeft aangeraakt.
-        if (_mapReady.isCompleted) return;
         _measure('Google-kaart eerste beeld');
-        _mapReady.complete();
-        _onMarkers();
+        _completeMapReady();
       },
     );
   }
