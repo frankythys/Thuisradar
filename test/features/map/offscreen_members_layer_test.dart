@@ -6,6 +6,7 @@ import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
+import 'package:thuisradar/features/map/presentation/widgets/member_marker.dart';
 import 'package:thuisradar/features/map/presentation/widgets/offscreen_members_layer.dart';
 import 'package:thuisradar/shared/widgets/member_avatar.dart';
 
@@ -42,11 +43,23 @@ void main() {
           body: FlutterMap(
             options: MapOptions(initialCenter: center, initialZoom: 15, initialRotation: rotation),
             children: [
-              OffscreenMembersLayer(
-                members: members,
-                cover: () => cover(sheet: sheet?.value ?? 200),
-                coverChanges: sheet,
-                onTap: onTap ?? (_) {},
+              // Elk lid als stilstaande pin op zijn plek.
+              Builder(
+                builder: (context) => OffscreenMembersLayer(
+                  pins: [
+                    for (final m in members)
+                      (
+                        members: [m],
+                        circles: MemberMarker.circleAt(
+                          MapCamera.of(context)
+                              .latLngToScreenOffset(LatLng(m.location!.latitude, m.location!.longitude)),
+                        ),
+                      ),
+                  ],
+                  cover: () => cover(sheet: sheet?.value ?? 200),
+                  coverChanges: sheet,
+                  onTap: onTap ?? (_) {},
+                ),
               ),
             ],
           ),
@@ -123,7 +136,7 @@ void main() {
     final sheet = ValueNotifier<double>(200);
     addTearDown(sheet.dispose);
     // Iets onder het midden: achter het paneel zolang dat 200 hoog is.
-    await pump(tester, [member('Liam', const LatLng(50.995, 4.0))], sheet: sheet);
+    await pump(tester, [member('Liam', const LatLng(50.994, 4.0))], sheet: sheet);
     final screen = tester.getRect(find.byType(FlutterMap));
     expect(arrowOf(tester, 'Liam').bottom, lessThan(screen.bottom - 200));
 

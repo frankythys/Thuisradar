@@ -27,6 +27,20 @@ class MemberMarker extends StatelessWidget {
   /// Dikte van de selectiering in de app-kleur.
   static const selectionRing = 8.0;
 
+  /// Waar het rondje op het scherm staat voor een pin op [point], verschoven
+  /// met [shift]: rijdend met zijn midden op het punt, stilstaand bovenaan het
+  /// vak boven het punt (zie [build]).
+  static Rect circleAt(
+    Offset point, {
+    Offset shift = Offset.zero,
+    bool selected = false,
+    bool driving = false,
+  }) {
+    final size = selected ? 2 * selectedRadius : avatarSize;
+    if (driving) return Rect.fromCenter(center: point, width: size, height: size);
+    return Rect.fromLTWH(point.dx + shift.dx - size / 2, point.dy + shift.dy - height, size, size);
+  }
+
   final MemberOnMap entry;
   final DateTime now;
 

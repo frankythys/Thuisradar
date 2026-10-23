@@ -84,6 +84,15 @@ class GroupPin extends StatelessWidget {
   /// Hoogte van de piramide cirkels met het puntje eronder.
   static double clusterHeight(int count) => (_rows(count).length - 1) * _rowStep + _avatar + _tip;
 
+  /// Waar de cirkels (met het puntje) op het scherm staan voor een pin op
+  /// [point], verschoven met [shift]: het puntje wijst naar het punt.
+  static Rect circlesAt(Offset point, int count, {Offset shift = Offset.zero}) => Rect.fromLTWH(
+    point.dx + shift.dx - clusterWidth(count) / 2,
+    point.dy + shift.dy - clusterHeight(count),
+    clusterWidth(count),
+    clusterHeight(count),
+  );
+
   /// Hoogte van de hele pin: elke extra rij cirkels maakt hem hoger.
   static double heightFor(int count) => height + (_rows(count).length - 1) * _rowStep;
 
@@ -134,7 +143,11 @@ class GroupPin extends StatelessWidget {
                 shadows: context.tokens.shadowMarker,
               ),
               if (extra > 0)
-                Positioned(left: origins.last.dx + _inset, top: origins.last.dy + _inset, child: _plus(extra)),
+                Positioned(
+                  left: origins.last.dx + _inset,
+                  top: origins.last.dy + _inset,
+                  child: _plus(extra),
+                ),
               // Achterste eerst tekenen; "ik" (index 0) komt zo bovenop.
               for (final (index, member) in shown.indexed.toList().reversed)
                 Positioned(

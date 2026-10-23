@@ -22,6 +22,7 @@ import '../../domain/marker_clearance.dart';
 import '../../domain/member_on_map.dart';
 import 'group_pin.dart';
 import 'map_marker_spec.dart';
+import 'offscreen_members_layer.dart' show ShownPin;
 import 'member_marker.dart';
 import 'member_history_bubble.dart';
 import 'parked_car_specs.dart';
@@ -54,6 +55,7 @@ class ClusteredMarkerLayer extends StatefulWidget {
     this.onParkedCarTap,
     this.memberNames = const {},
     this.onNativeMarkers,
+    this.overlay,
   });
 
   final List<MemberOnMap> members;
@@ -73,6 +75,10 @@ class ClusteredMarkerLayer extends StatefulWidget {
   /// Met Google Maps: de markers gaan als afbeelding naar Google (die ze vast
   /// aan de kaart tekent); deze laag toont dan enkel onzichtbare tikvlakken.
   final ValueChanged<List<MapMarkerSpec>>? onNativeMarkers;
+
+  /// Laag bovenop de markers die precies weet waar elke pin nu getekend
+  /// wordt (bv. de randblokjes voor wie buiten beeld is).
+  final Widget Function(List<ShownPin> pins)? overlay;
 
   @override
   State<ClusteredMarkerLayer> createState() => _ClusteredMarkerLayerState();
@@ -334,6 +340,7 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
           ),
     ]);
     final offsets = <String, Offset>{};
+    final pins = <ShownPin>[];
     for (final group in groups) {
       final groupMembers = [for (final id in group) byId[id]!];
       final anchor = coords[groupMembers.first.member.userId]!;
@@ -347,6 +354,19 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       for (final member in groupMembers) {
         offsets[member.member.userId] = Offset(shiftX, offset.dy);
       }
+      final screen = screenOf(group.first);
+      final shift = Offset(shiftX, offset.dy);
+      pins.add((
+        members: groupMembers,
+        circles: single
+            ? MemberMarker.circleAt(
+                screen,
+                shift: shift,
+                selected: group.first == widget.selectedUserId,
+                driving: driving,
+              )
+            : GroupPin.circlesAt(screen, groupMembers.length, shift: shift),
+      ));
 
       if (groupMembers.length == 1) {
         final member = groupMembers.single;
@@ -582,31 +602,36 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       }
     }
 
+    final overlay = widget.overlay;
+    Widget withOverlay(Widget layer) =>
+        overlay == null ? layer : Stack(fit: StackFit.expand, children: [layer, overlay(pins)]);
     if (native == null) {
-      return MarkerLayer(markers: [for (final spec in markers) spec.toMarker()]);
+      return withOverlay(MarkerLayer(markers: [for (final spec in markers) spec.toMarker()]));
     }
     // Google tekent de markers; na deze frame doorgeven (niet tijdens build).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) native(markers);
     });
-    return MarkerLayer(
-      markers: [
-        for (final spec in markers)
-          if (spec.onTap case final onTap?)
-            spec.toMarker(
-              replaceChild: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onTap,
-                // De groepsafbeelding heeft individuele avatars: behoud hun
-                // tikvlakken ook als Google het zichtbare beeld tekent.
-                child: spec.id.startsWith('group_')
-                    ? Opacity(opacity: 0, child: spec.child)
-                    : const SizedBox.expand(),
+    return withOverlay(
+      MarkerLayer(
+        markers: [
+          for (final spec in markers)
+            if (spec.onTap case final onTap?)
+              spec.toMarker(
+                replaceChild: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onTap,
+                  // De groepsafbeelding heeft individuele avatars: behoud hun
+                  // tikvlakken ook als Google het zichtbare beeld tekent.
+                  child: spec.id.startsWith('group_')
+                      ? Opacity(opacity: 0, child: spec.child)
+                      : const SizedBox.expand(),
+                ),
               ),
-            ),
-        // Laatst, dus bovenop; tikken gaat erdoor naar de ballon.
-        for (final spec in walkerOverlays) spec.toMarker(),
-      ],
+          // Laatst, dus bovenop; tikken gaat erdoor naar de ballon.
+          for (final spec in walkerOverlays) spec.toMarker(),
+        ],
+      ),
     );
   }
 }

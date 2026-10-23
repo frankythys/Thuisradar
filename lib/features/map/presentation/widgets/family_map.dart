@@ -196,13 +196,14 @@ class FamilyMap extends StatelessWidget {
           selectedUserId: selectedUserId,
           myUserId: myUserId,
           onNativeMarkers: onNativeMarkers,
-        ),
-        OffscreenMembersLayer(
-          members: membersToShow(members, selectedUserId),
-          placeByUser: placeByUser,
-          cover: cover ?? () => (sheet: bottomInset, buttonsWidth: 0, buttonsBottom: 0, buttonsTop: 0),
-          coverChanges: coverChanges,
-          onTap: onMemberTap,
+          // De blokjes rekenen met de pinnen zoals die nu getekend worden.
+          overlay: (pins) => OffscreenMembersLayer(
+            pins: pins,
+            placeByUser: placeByUser,
+            cover: cover ?? () => (sheet: bottomInset, buttonsWidth: 0, buttonsBottom: 0, buttonsTop: 0),
+            coverChanges: coverChanges,
+            onTap: onMemberTap,
+          ),
         ),
         if (!useGoogleMaps)
           Builder(builder: (context) => SimpleAttributionWidget(source: Text(context.l10n.osmContributors))),

@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart' show LatLng;
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -12,13 +11,16 @@ import '../../../places/presentation/place_icons.dart';
 import '../../domain/edge_indicator.dart';
 import '../../domain/marker_cluster.dart';
 import '../../domain/member_on_map.dart';
-import 'group_pin.dart';
-import 'member_marker.dart';
 
 /// Wat de kaart onderaan bedekt, gemeten vanaf de onderkant van de kaart: het
 /// paneel ([sheet] hoog) en rechts erboven de knoppenkolom ([buttonsWidth]
 /// breed inclusief marge, van [buttonsBottom] tot [buttonsTop] hoog).
 typedef MapCover = ({double sheet, double buttonsWidth, double buttonsBottom, double buttonsTop});
+
+/// Een pin zoals de markerlaag hem nu tekent: wie erin staat (de eerste
+/// bovenaan) en waar de cirkels op het scherm staan. Zo volgt het blokje de
+/// pin die je ziet, ook terwijl die nog naar een nieuw punt schuift.
+typedef ShownPin = ({List<MemberOnMap> members, Rect circles});
 
 /// Leden buiten beeld (bv. wie wegrijdt terwijl de kaart stilstaat): aan de
 /// rand van de kaart een wit blokje met hun gezichtjes en een puntje naar waar
@@ -29,7 +31,7 @@ typedef MapCover = ({double sheet, double buttonsWidth, double buttonsBottom, do
 class OffscreenMembersLayer extends StatefulWidget {
   const OffscreenMembersLayer({
     super.key,
-    required this.members,
+    required this.pins,
     required this.onTap,
     required this.cover,
     this.placeByUser = const {},
@@ -58,12 +60,9 @@ class OffscreenMembersLayer extends StatefulWidget {
   /// Wie een pijl heeft, houdt die tot zijn gezichtje zo ver in beeld is.
   static const _hysteresis = 24.0;
 
-  /// Het gezichtje van een marker staat boven zijn punt; dat telt.
-  static const _avatarLift = MemberMarker.avatarSize * 0.75;
-
-  /// Halve maat van een losse pin: pas als die helemaal uit beeld is, komt
-  /// er een blokje.
-  static const _pinReach = MemberMarker.avatarSize / 2 + 4;
+  /// Bovenop de halve maat van een pin: pas als die helemaal uit beeld is,
+  /// komt er een blokje.
+  static const _reachMargin = 4.0;
 
   /// Wie op het scherm dichter bij elkaar staat, zit in hetzelfde blokje.
   static const _together = 56.0;
@@ -71,7 +70,7 @@ class OffscreenMembersLayer extends StatefulWidget {
   /// Zo lang glijdt een blokje naar zijn nieuwe plek.
   static const _glide = Duration(milliseconds: 220);
 
-  final List<MemberOnMap> members;
+  final List<ShownPin> pins;
   final ValueChanged<MemberOnMap> onTap;
 
   /// Waar elk lid nu is (voor het plaats-icoon in het blokje).
@@ -115,43 +114,29 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
     );
     final avoid = [if (cover.buttonsTop > cover.buttonsBottom) buttons];
 
-    final byId = {for (final member in widget.members) member.member.userId: member};
-    final points = <String, Offset>{
-      for (final member in widget.members)
-        if (member.location case final location?)
-          member.member.userId: camera.latLngToScreenOffset(LatLng(location.latitude, location.longitude)),
-    };
-    final faces = {
-      for (final MapEntry(key: id, value: point) in points.entries)
-        id: point - const Offset(0, OffscreenMembersLayer._avatarLift),
-    };
-    // Groepen op het scherm; de eerste van elke groep is het anker.
-    final groups = {
-      for (final group in clusterByScreenDistance([
-        for (final MapEntry(key: id, value: face) in faces.entries) ClusterPoint(id, face),
-      ], thresholdPx: OffscreenMembersLayer._together))
-        group.first: [for (final id in group) byId[id]!],
-    };
+    // Pinnen die op het scherm dicht bij elkaar staan, komen in één blokje;
+    // de eerste van elke groep is het anker.
+    final byAnchor = {for (final pin in widget.pins) pin.members.first.member.userId: pin};
+    final circles = <String, Rect>{};
+    final groups = <String, List<MemberOnMap>>{};
+    for (final group in clusterByScreenDistance([
+      for (final MapEntry(key: id, value: pin) in byAnchor.entries) ClusterPoint(id, pin.circles.center),
+    ], thresholdPx: OffscreenMembersLayer._together)) {
+      final pins = [for (final id in group) byAnchor[id]!];
+      circles[group.first] = pins.map((pin) => pin.circles).reduce((a, b) => a.expandToInclude(b));
+      groups[group.first] = [for (final pin in pins) ...pin.members];
+    }
     const radius = OffscreenMembersLayer._thickness / 2 + tip;
-    // Midden en halve maat van wat er op de kaart staat: één cirkel, of voor
-    // een groep de hele piramide boven het punt.
     final indicators = edgeIndicators(
-      {
-        for (final MapEntry(key: anchor, value: group) in groups.entries)
-          anchor: group.length == 1
-              ? faces[anchor]!
-              : points[anchor]! - Offset(0, GroupPin.clusterHeight(group.length) / 2),
-      },
+      {for (final MapEntry(key: anchor, value: rect) in circles.entries) anchor: rect.center},
       visible,
       radius: radius,
       shown: _shown,
       hysteresis: OffscreenMembersLayer._hysteresis,
       avoid: avoid,
       reach: {
-        for (final MapEntry(key: anchor, value: group) in groups.entries)
-          anchor: group.length == 1
-              ? OffscreenMembersLayer._pinReach
-              : math.max(GroupPin.clusterWidth(group.length), GroupPin.clusterHeight(group.length)) / 2 + 4,
+        for (final MapEntry(key: anchor, value: rect) in circles.entries)
+          anchor: rect.longestSide / 2 + OffscreenMembersLayer._reachMargin,
       },
     );
     _shown = {for (final indicator in indicators) indicator.id};
