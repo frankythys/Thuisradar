@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -53,8 +54,9 @@ class MemberHistoryBubble extends StatelessWidget {
     this.walkerStill,
   });
 
-  /// Waar de sneakers staan in een ballon van [kBubbleWidth] × [kBubbleHeight]:
-  /// links binnen de opvulling, verticaal gecentreerd.
+  /// Waar de sneakers staan in een ballon van [kBubbleWidth] × [kBubbleHeight]
+  /// met de staart links: links binnen de opvulling, verticaal gecentreerd.
+  /// Met de staart rechts zie [walkerSlotFor].
   static const walkerSlot = Rect.fromLTWH(
     _paddingX,
     (kBubbleHeight - _walkerHeight) / 2,
@@ -79,6 +81,24 @@ class MemberHistoryBubble extends StatelessWidget {
 
   /// Stilstaand beeld van de sneakers voor [WalkerDisplay.slot].
   final ui.Image? walkerStill;
+
+  /// Het vak van de sneakers in het vak van [kBubbleWidth] breed. De ballon is
+  /// zo breed als zijn inhoud en staat tegen de kant van de avatar: met de
+  /// staart rechts schuift het vak dus mee naar rechts.
+  static Rect walkerSlotFor(BuildContext context, MemberOnMap entry, DateTime now, {required bool tailLeft}) {
+    if (tailLeft) return walkerSlot;
+    final speed = TripStatus.at(entry.location, now).speedKmh;
+    if (speed == null) return walkerSlot;
+    final painter = TextPainter(
+      text: TextSpan(text: context.l10n.speedKmh(speed), style: _titleStyle(context)),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    )..layout();
+    final width = math.min(kBubbleWidth, 2 * _paddingX + _walkerWidth + _iconGap + painter.width);
+    painter.dispose();
+    return walkerSlot.shift(Offset(kBubbleWidth - width, 0));
+  }
 
   /// Is dit de wandelballon (dus met animatie)?
   static bool isWalking(MemberOnMap entry, DateTime now) {
@@ -122,74 +142,80 @@ class MemberHistoryBubble extends StatelessWidget {
       bottomRight: Radius.circular(tailLeft ? 15 : 4),
       bottomLeft: Radius.circular(tailLeft ? 4 : 15),
     );
-    return Semantics(
-      button: true,
-      label: l10n.mapHistoryOf(entry.member.displayName),
-      // Zelfde schaduw als de rondjes, plus een lichte rand die de ballon
-      // laat loskomen van een lichte kaart.
-      child: DecoratedBox(
-        decoration: BoxDecoration(borderRadius: radius, boxShadow: context.tokens.shadowBubble),
-        child: Material(
-          color: kBubbleColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: radius,
-            side: const BorderSide(color: AppColors.border),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: _paddingX, vertical: 5),
-              child: Row(
-                children: [
-                  if (isMoving && status.walking)
-                    Semantics(label: status.mode!.label(l10n), child: _walkerImage())
-                  else if (isMoving)
-                    Image(
-                      image: status.cycling ? bubbleBikeImage : bubbleCarImage,
-                      semanticLabel: status.mode!.label(l10n),
-                      width: 38,
-                      height: 32,
-                      fit: BoxFit.contain,
-                    )
-                  else if ((atPlace ? placeBubbleImage(placeStatus!.icon) : null) case final photo?)
-                    Image(image: photo, width: 38, height: 32, fit: BoxFit.contain)
-                  else
-                    Icon(icon, color: AppColors.primary, size: 23),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Column(
+    // Zo breed als de inhoud plus vaste opvulling, tegen de kant van de
+    // avatar (waar de staart wijst); de rest van het vak blijft leeg.
+    return Row(
+      mainAxisAlignment: tailLeft ? MainAxisAlignment.start : MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Flexible(
+          child: Semantics(
+            button: true,
+            label: l10n.mapHistoryOf(entry.member.displayName),
+            // Zelfde schaduw als de rondjes, plus een lichte rand die de ballon
+            // laat loskomen van een lichte kaart.
+            child: DecoratedBox(
+              decoration: BoxDecoration(borderRadius: radius, boxShadow: context.tokens.shadowBubble),
+              child: Material(
+                color: kBubbleColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: radius,
+                  side: const BorderSide(color: AppColors.border),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: _paddingX, vertical: 5),
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 12,
-                            height: 1.2,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink,
+                        if (isMoving && status.walking)
+                          Semantics(label: status.mode!.label(l10n), child: _walkerImage())
+                        else if (isMoving)
+                          Image(
+                            image: status.cycling ? bubbleBikeImage : bubbleCarImage,
+                            semanticLabel: status.mode!.label(l10n),
+                            width: 38,
+                            height: 32,
+                            fit: BoxFit.contain,
+                          )
+                        else if ((atPlace ? placeBubbleImage(placeStatus!.icon) : null) case final photo?)
+                          Image(image: photo, width: 38, height: 32, fit: BoxFit.contain)
+                        else
+                          Icon(icon, color: AppColors.primary, size: 23),
+                        const SizedBox(width: _iconGap),
+                        Flexible(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: _titleStyle(context),
+                              ),
+                              if (subtitle != null)
+                                Text(
+                                  subtitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
+                                ),
+                            ],
                           ),
                         ),
-                        if (subtitle != null)
-                          Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
-                          ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -208,6 +234,11 @@ class MemberHistoryBubble extends StatelessWidget {
 const _walkerWidth = 52.0;
 const _walkerHeight = 32.0;
 const _paddingX = 8.0;
+const _iconGap = 5.0;
+
+TextStyle? _titleStyle(BuildContext context) =>
+    Theme.of(context).textTheme.bodyMedium
+        ?.copyWith(fontSize: 12, height: 1.2, fontWeight: FontWeight.w600, color: AppColors.ink);
 
 String _formatStay(AppLocalizations l10n, Duration duration) => duration.inHours > 0
     ? l10n.mapStayHoursMinutes(duration.inHours, duration.inMinutes.remainder(60))

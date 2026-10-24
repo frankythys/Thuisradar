@@ -246,4 +246,43 @@ void main() {
     expect(find.byType(WalkingSneakers), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  for (final tailLeft in [true, false]) {
+    testWidgets('ballon is zo breed als zijn inhoud, tegen de avatar (staart links: $tailLeft)', (
+      tester,
+    ) async {
+      // Het testlettertype heeft brede, vierkante letters: kleiner zetten zodat
+      // de inhoud het vak niet vult.
+      tester.platformDispatcher.textScaleFactorTestValue = 0.5;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                key: const Key('vak'),
+                width: 142,
+                height: 48,
+                child: MemberHistoryBubble(
+                  entry: movingMember('Liam', speedMps: 5),
+                  now: now,
+                  onTap: () {},
+                  tailLeft: tailLeft,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final box = tester.getRect(find.byKey(const Key('vak')));
+      final bubble = tester.getRect(
+        find.descendant(of: find.byType(MemberHistoryBubble), matching: find.byType(Material)).first,
+      );
+      expect(bubble.width, lessThan(box.width));
+      expect(bubble.height, box.height);
+      expect(tailLeft ? bubble.left : bubble.right, tailLeft ? box.left : box.right);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

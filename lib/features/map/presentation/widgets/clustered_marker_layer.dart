@@ -597,7 +597,13 @@ class _ClusteredMarkerLayerState extends State<ClusteredMarkerLayer> with Single
       );
       if (animate && walkerStill != null) {
         walkerOverlays.add(
-          walkerOverlaySpec(id: 'walker_$id', point: point, alignment: alignment, offset: offset),
+          walkerOverlaySpec(
+            id: 'walker_$id',
+            point: point,
+            alignment: alignment,
+            offset: offset,
+            slot: MemberHistoryBubble.walkerSlotFor(context, selected, widget.now, tailLeft: onRight),
+          ),
         );
       }
     }

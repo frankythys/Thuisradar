@@ -7,7 +7,7 @@ import 'map_marker_spec.dart';
 import 'member_history_bubble.dart';
 
 /// De wandelende sneakers boven de Google-kaart ([GoogleWalkerOverlay]),
-/// exact op het vak ([MemberHistoryBubble.walkerSlot]) van de ballon met
+/// exact op het vak ([slot], zie [MemberHistoryBubble.walkerSlotFor]) van de ballon met
 /// [alignment] en [offset], plus een smalle rand ([GoogleWalkerOverlay.bleed]).
 ///
 /// Dit gaat niet naar Google: de kaart erboven tekent het als widget, zodat
@@ -17,8 +17,8 @@ MapMarkerSpec walkerOverlaySpec({
   required LatLng point,
   required Alignment alignment,
   required Offset offset,
+  Rect slot = MemberHistoryBubble.walkerSlot,
 }) {
-  const slot = MemberHistoryBubble.walkerSlot;
   // Midden van de ballon t.o.v. het kaartpunt, zoals flutter_map hem plaatst.
   final bubbleCenter = Offset(
     alignment.x * kBubbleWidth / 2 + offset.dx,

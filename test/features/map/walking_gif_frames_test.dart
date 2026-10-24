@@ -42,6 +42,10 @@ void main() {
       ),
     );
     expect(MemberHistoryBubble.isWalking(walking, now), isTrue);
+    // Kleinere tekst (het testlettertype is breed), zodat de ballon smaller is
+    // dan zijn vak en het vak met de staart rechts echt verschuift.
+    tester.platformDispatcher.textScaleFactorTestValue = 0.5;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     for (final tailLeft in [true, false]) {
       await tester.pumpWidget(
         MaterialApp(
@@ -72,7 +76,14 @@ void main() {
             widget.height == MemberHistoryBubble.walkerSlot.height,
       );
       final origin = tester.getTopLeft(find.byKey(const Key('ballon')));
-      expect(tester.getRect(slot).shift(-origin), MemberHistoryBubble.walkerSlot);
+      final expected = MemberHistoryBubble.walkerSlotFor(
+        tester.element(find.byKey(const Key('ballon'))),
+        walking,
+        now,
+        tailLeft: tailLeft,
+      );
+      expect(tester.getRect(slot).shift(-origin), expected);
+      if (!tailLeft) expect(expected.left, greaterThan(MemberHistoryBubble.walkerSlot.left));
     }
   });
 
