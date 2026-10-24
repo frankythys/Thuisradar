@@ -70,6 +70,19 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   gm.GoogleMapController? _google;
   StreamSubscription<MapEvent>? _events;
   ({double latitude, double longitude, double zoom, double bearing})? _wanted;
+
+  /// Eerste camerastand van deze Google-kaart (zie [initState]).
+  late final ({double latitude, double longitude, double zoom, double bearing}) _start;
+
+  /// De stand van de kaart erboven, of null als die nog nooit getekend werd.
+  MapCamera? _overlayCamera() {
+    try {
+      return widget.controller.camera;
+    } on Exception {
+      return null;
+    }
+  }
+
   ({double latitude, double longitude, double zoom, double bearing})? _shown;
   bool _moving = false;
   double _zoom = 0;
@@ -105,13 +118,18 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   void initState() {
     super.initState();
-    _zoom = widget.initialZoom;
+    // Een nieuwe Google-kaart terwijl de kaart erboven al bestaat (scherm
+    // terug na wegvegen): start op diens stand, niet op de beginplek. Anders
+    // staan de cirkels elders tot je de kaart aanraakt.
+    final camera = _overlayCamera();
+    _zoom = camera?.zoom ?? widget.initialZoom;
     _wanted = (
-      latitude: widget.initialCenter.latitude,
-      longitude: widget.initialCenter.longitude,
-      zoom: widget.initialZoom,
-      bearing: 0.0,
+      latitude: camera?.center.latitude ?? widget.initialCenter.latitude,
+      longitude: camera?.center.longitude ?? widget.initialCenter.longitude,
+      zoom: _zoom,
+      bearing: camera == null ? 0.0 : (-camera.rotation + 360) % 360,
     );
+    _start = _wanted!;
     widget.markers?.addListener(_onMarkers);
     _events = widget.controller.mapEventStream.listen((event) {
       final camera = event.camera;
@@ -330,15 +348,16 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   Widget build(BuildContext context) {
     final target = googleCameraTarget(
-      latitude: widget.initialCenter.latitude,
-      longitude: widget.initialCenter.longitude,
-      zoom: widget.initialZoom,
+      latitude: _start.latitude,
+      longitude: _start.longitude,
+      zoom: _start.zoom,
       bottomPadding: widget.bottomPadding,
     );
     return gm.GoogleMap(
       initialCameraPosition: gm.CameraPosition(
         target: gm.LatLng(target.latitude, target.longitude),
-        zoom: widget.initialZoom,
+        zoom: _start.zoom,
+        bearing: _start.bearing,
       ),
       mapType: showsSatellite(choice: widget.satellite, zoom: _zoom) ? gm.MapType.hybrid : gm.MapType.normal,
       // De straal pas ver ingezoomd; uitgezoomd enkel het icoon.
