@@ -15,7 +15,12 @@ import '../../domain/member_on_map.dart';
 /// Wat de kaart onderaan bedekt, gemeten vanaf de onderkant van de kaart: het
 /// paneel ([sheet] hoog) en rechts erboven de knoppenkolom ([buttonsWidth]
 /// breed inclusief marge, van [buttonsBottom] tot [buttonsTop] hoog).
-typedef MapCover = ({double sheet, double buttonsWidth, double buttonsBottom, double buttonsTop});
+typedef MapCover = ({
+  double sheet,
+  double buttonsWidth,
+  double buttonsBottom,
+  double buttonsTop,
+});
 
 /// Een pin zoals de markerlaag hem nu tekent: wie erin staat (de eerste
 /// bovenaan) en waar de cirkels op het scherm staan. Zo volgt het blokje de
@@ -94,7 +99,10 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
   Widget build(BuildContext context) {
     final changes = widget.coverChanges;
     if (changes == null) return _arrows(context);
-    return ListenableBuilder(listenable: changes, builder: (context, _) => _arrows(context));
+    return ListenableBuilder(
+      listenable: changes,
+      builder: (context, _) => _arrows(context),
+    );
   }
 
   Widget _arrows(BuildContext context) {
@@ -105,7 +113,12 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
     // omsluitende rechthoek, terwijl `latLngToScreenOffset` in schermpunten rekent.
     final size = camera.nonRotatedSize;
     final cover = widget.cover();
-    final visible = Rect.fromLTRB(margin, margin, size.width - margin, size.height - cover.sheet - margin);
+    final visible = Rect.fromLTRB(
+      margin,
+      margin,
+      size.width - margin,
+      size.height - cover.sheet - margin,
+    );
     final buttons = Rect.fromLTRB(
       size.width - cover.buttonsWidth - margin,
       size.height - cover.buttonsTop - margin,
@@ -116,19 +129,27 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
 
     // Pinnen die op het scherm dicht bij elkaar staan, komen in één blokje;
     // de eerste van elke groep is het anker.
-    final byAnchor = {for (final pin in widget.pins) pin.members.first.member.userId: pin};
+    final byAnchor = {
+      for (final pin in widget.pins) pin.members.first.member.userId: pin,
+    };
     final circles = <String, Rect>{};
     final groups = <String, List<MemberOnMap>>{};
     for (final group in clusterByScreenDistance([
-      for (final MapEntry(key: id, value: pin) in byAnchor.entries) ClusterPoint(id, pin.circles.center),
+      for (final MapEntry(key: id, value: pin) in byAnchor.entries)
+        ClusterPoint(id, pin.circles.center),
     ], thresholdPx: OffscreenMembersLayer._together)) {
       final pins = [for (final id in group) byAnchor[id]!];
-      circles[group.first] = pins.map((pin) => pin.circles).reduce((a, b) => a.expandToInclude(b));
+      circles[group.first] = pins
+          .map((pin) => pin.circles)
+          .reduce((a, b) => a.expandToInclude(b));
       groups[group.first] = [for (final pin in pins) ...pin.members];
     }
     const radius = OffscreenMembersLayer._thickness / 2 + tip;
     final indicators = edgeIndicators(
-      {for (final MapEntry(key: anchor, value: rect) in circles.entries) anchor: rect.center},
+      {
+        for (final MapEntry(key: anchor, value: rect) in circles.entries)
+          anchor: rect.center,
+      },
       visible,
       radius: radius,
       shown: _shown,
@@ -154,7 +175,8 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
       );
       final inner = visible.deflate(radius);
       final vertical =
-          indicator.position.dx <= inner.left + 0.5 || indicator.position.dx >= inner.right - 0.5;
+          indicator.position.dx <= inner.left + 0.5 ||
+          indicator.position.dx >= inner.right - 0.5;
       final capsule = _fit(
         Rect.fromCenter(
           center: indicator.position,
@@ -193,14 +215,23 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
     if (first == null) return null;
     for (final member in group.skip(1)) {
       final place = widget.placeByUser[member.member.userId];
-      if (place == null || place.name != first.name || place.icon != first.icon) return null;
+      if (place == null ||
+          place.name != first.name ||
+          place.icon != first.icon) {
+        return null;
+      }
     }
     return first;
   }
 
   /// Schuift [rect] langs zijn rand ([vertical]: op en neer) tot het binnen
   /// [within] past en niets uit [avoid] raakt.
-  Rect _fit(Rect rect, {required bool vertical, required Rect within, required List<Rect> avoid}) {
+  Rect _fit(
+    Rect rect, {
+    required bool vertical,
+    required Rect within,
+    required List<Rect> avoid,
+  }) {
     Rect clamp(Rect r) => vertical
         ? r.shift(
             Offset(
@@ -224,7 +255,9 @@ class _OffscreenMembersLayerState extends State<OffscreenMembersLayer> {
       final before = vertical
           ? result.shift(Offset(0, hit.top - result.bottom))
           : result.shift(Offset(hit.left - result.right, 0));
-      final fits = vertical ? before.top >= within.top : before.left >= within.left;
+      final fits = vertical
+          ? before.top >= within.top
+          : before.left >= within.left;
       result = fits
           ? before
           : clamp(
@@ -269,28 +302,38 @@ class _Indicator extends StatelessWidget {
     final extra = members.length > max ? members.length - (max - 1) : 0;
     final shown = extra > 0 ? members.take(max - 1).toList() : members;
     final start = place == null ? 0.0 : OffscreenMembersLayer._placeSlot;
-    Widget at(double along, Widget child) =>
-        Positioned(left: vertical ? 0 : along, top: vertical ? along : 0, child: child);
+    Widget at(double along, Widget child) => Positioned(
+      left: vertical ? 0 : along,
+      top: vertical ? along : 0,
+      child: child,
+    );
     // Achterste eerst tekenen: de eerste ligt bovenop, zoals op de kaart.
     final items = <Widget>[
       if (place case final place?) at(0, _place(place)),
       if (extra > 0) at(start + shown.length * step, _plus(extra)),
-      for (final (index, member) in shown.indexed.toList().reversed) at(start + index * step, _face(member)),
+      for (final (index, member) in shown.indexed.toList().reversed)
+        at(start + index * step, _face(member)),
     ];
     // Zacht verschijnen in plaats van plots op te springen.
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: OffscreenMembersLayer._glide,
-      builder: (context, opacity, child) => Opacity(opacity: opacity, child: child),
+      builder: (context, opacity, child) =>
+          Opacity(opacity: opacity, child: child),
       child: Semantics(
         label: members.map((m) => m.member.displayName).join(', '),
         child: SizedBox(
           width: capsule.width + 2 * tip,
           height: capsule.height + 2 * tip,
           child: CustomPaint(
-            painter: _CapsulePainter(angle: angle, shadows: context.tokens.shadowMarker),
+            painter: _CapsulePainter(
+              angle: angle,
+              shadows: context.tokens.shadowMarker,
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(tip + OffscreenMembersLayer._padding),
+              padding: const EdgeInsets.all(
+                tip + OffscreenMembersLayer._padding,
+              ),
               child: Stack(clipBehavior: Clip.none, children: items),
             ),
           ),
@@ -310,18 +353,33 @@ class _Indicator extends StatelessWidget {
         width: OffscreenMembersLayer.face,
         height: OffscreenMembersLayer.face,
         padding: const EdgeInsets.all(1.5),
-        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-        child: MemberAvatar(member: member.member, size: OffscreenMembersLayer.face - 3),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+        child: MemberAvatar(
+          member: member.member,
+          size: OffscreenMembersLayer.face - 3,
+        ),
       ),
     ),
   );
 
   Widget _place(PlaceStatus place) => SizedBox(
-    width: vertical ? OffscreenMembersLayer.face : OffscreenMembersLayer._placeSlot,
-    height: vertical ? OffscreenMembersLayer._placeSlot : OffscreenMembersLayer.face,
+    width: vertical
+        ? OffscreenMembersLayer.face
+        : OffscreenMembersLayer._placeSlot,
+    height: vertical
+        ? OffscreenMembersLayer._placeSlot
+        : OffscreenMembersLayer.face,
     child: Center(
       child: place.icon == 'home'
-          ? Image.asset('assets/markers/huis.png', width: 24, height: 24, fit: BoxFit.contain)
+          ? Image.asset(
+              'assets/markers/huis.png',
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+            )
           : Icon(placeIcon(place.icon), size: 18, color: AppColors.primary),
     ),
   );
@@ -333,10 +391,17 @@ class _Indicator extends StatelessWidget {
         width: OffscreenMembersLayer.face - 2,
         height: OffscreenMembersLayer.face - 2,
         alignment: Alignment.center,
-        decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+        decoration: const BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+        ),
         child: Text(
           '+$extra',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 11,
+          ),
         ),
       ),
     ),
@@ -359,15 +424,25 @@ class _CapsulePainter extends CustomPainter {
     final across = Offset(-direction.dy, direction.dx);
     // Afstand van het midden tot de rand van het blokje in die richting.
     final toEdge = math.min(
-      direction.dx.abs() < 1e-6 ? double.infinity : body.width / 2 / direction.dx.abs(),
-      direction.dy.abs() < 1e-6 ? double.infinity : body.height / 2 / direction.dy.abs(),
+      direction.dx.abs() < 1e-6
+          ? double.infinity
+          : body.width / 2 / direction.dx.abs(),
+      direction.dy.abs() < 1e-6
+          ? double.infinity
+          : body.height / 2 / direction.dy.abs(),
     );
     final base = center + direction * (toEdge - 6);
     final pointer = Path()
-      ..addPolygon([base + across * 7, center + direction * (toEdge + tip), base - across * 7], true);
+      ..addPolygon([
+        base + across * 7,
+        center + direction * (toEdge + tip),
+        base - across * 7,
+      ], true);
     final shape = Path.combine(
       PathOperation.union,
-      Path()..addRRect(RRect.fromRectAndRadius(body, Radius.circular(body.shortestSide / 2))),
+      Path()..addRRect(
+        RRect.fromRectAndRadius(body, Radius.circular(body.shortestSide / 2)),
+      ),
       pointer,
     );
     for (final shadow in shadows) {
@@ -377,5 +452,6 @@ class _CapsulePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CapsulePainter old) => old.angle != angle || old.shadows != shadows;
+  bool shouldRepaint(_CapsulePainter old) =>
+      old.angle != angle || old.shadows != shadows;
 }

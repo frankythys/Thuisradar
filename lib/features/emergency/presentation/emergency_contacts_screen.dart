@@ -6,6 +6,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../shared/widgets/branded_app_bar.dart';
 import '../../auth/application/auth_providers.dart';
 import '../application/emergency_providers.dart';
+import '../data/emergency_phone.dart';
 import '../domain/emergency_contact.dart';
 import 'emergency_contact_fields.dart';
 import '../../../l10n/l10n.dart';
@@ -92,7 +93,14 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
     if (plan.isEmpty) return _snack(l10n.emergencyFillFirst);
     final sender = widget.senderName.trim();
     final text = l10n.emergencyTestSms(sender.isEmpty ? l10n.emergencyYourContact : sender);
-    await ref.read(emergencyPhoneProvider).openSms(dialablePhone(plan.callTo!.phone), text);
+    try {
+      await ref.read(emergencyPhoneProvider).openSms(dialablePhone(plan.callTo!.phone), text);
+    } on SmsUnavailableException {
+      _snack(l10n.emergencySmsUnavailable);
+    } on Object catch (error) {
+      debugPrint('Test-sms openen mislukt: ${error.runtimeType}');
+      _snack(l10n.emergencyAlertFailed);
+    }
   }
 
   String? _problemText(AppLocalizations l10n, EmergencyContactProblem? problem) => switch (problem) {

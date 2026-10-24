@@ -1,6 +1,8 @@
 package be.thuisradar.thuisradar
 
 import android.os.Bundle
+import android.os.Build
+import android.telephony.TelephonyManager
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
@@ -43,6 +45,25 @@ class MainActivity : FlutterFragmentActivity() {
                     "moveToBackground" -> {
                         moveTaskToBack(true)
                         result.success(null)
+                    }
+                    "hasSmsSim" -> {
+                        val telephony = getSystemService(TELEPHONY_SERVICE) as? TelephonyManager
+                        val hasSim = if (
+                            !packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TELEPHONY_SUBSCRIPTION) ||
+                            telephony == null
+                        ) {
+                            false
+                        } else {
+                            val states = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                (0 until telephony.phoneCount).map(telephony::getSimState)
+                            } else {
+                                listOf(telephony.simState)
+                            }
+                            states.any {
+                                it != TelephonyManager.SIM_STATE_ABSENT && it != TelephonyManager.SIM_STATE_UNKNOWN
+                            }
+                        }
+                        result.success(hasSim)
                     }
                     else -> result.notImplemented()
                 }

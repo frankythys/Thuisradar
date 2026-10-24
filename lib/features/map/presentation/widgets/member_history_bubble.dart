@@ -18,10 +18,16 @@ import '../../../location/presentation/trip_text.dart';
 /// Afbeeldingen in de ballon. Precies deze sleutels worden vooraf geladen
 /// (`GoogleBaseMap`): een andere sleutel (bv. zonder `width`) laadt niet
 /// dezelfde cache, en dan tekent Google de eerste ballon zonder afbeelding.
-const bubbleCarImage = ResizeImage(AssetImage('assets/icon/Rijdende auto.png'), width: 152);
+const bubbleCarImage = ResizeImage(
+  AssetImage('assets/icon/Rijdende auto.png'),
+  width: 152,
+);
 
 /// Blauwe mountainbike in zijaanzicht, zoals de auto: rijdt naar rechts.
-const bubbleBikeImage = ResizeImage(AssetImage('assets/markers/fiets_profiel.png'), width: 152);
+const bubbleBikeImage = ResizeImage(
+  AssetImage('assets/markers/fiets_profiel.png'),
+  width: 152,
+);
 const bubbleHomeImage = AssetImage('assets/markers/huis.png');
 
 /// Achtergrond van de ballon; ook het vlak onder de sneakers boven de
@@ -85,17 +91,28 @@ class MemberHistoryBubble extends StatelessWidget {
   /// Het vak van de sneakers in het vak van [kBubbleWidth] breed. De ballon is
   /// zo breed als zijn inhoud en staat tegen de kant van de avatar: met de
   /// staart rechts schuift het vak dus mee naar rechts.
-  static Rect walkerSlotFor(BuildContext context, MemberOnMap entry, DateTime now, {required bool tailLeft}) {
+  static Rect walkerSlotFor(
+    BuildContext context,
+    MemberOnMap entry,
+    DateTime now, {
+    required bool tailLeft,
+  }) {
     if (tailLeft) return walkerSlot;
     final speed = TripStatus.at(entry.location, now).speedKmh;
     if (speed == null) return walkerSlot;
     final painter = TextPainter(
-      text: TextSpan(text: context.l10n.speedKmh(speed), style: _titleStyle(context)),
+      text: TextSpan(
+        text: context.l10n.speedKmh(speed),
+        style: _titleStyle(context),
+      ),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
       maxLines: 1,
     )..layout();
-    final width = math.min(kBubbleWidth, 2 * _paddingX + _walkerWidth + _iconGap + painter.width);
+    final width = math.min(
+      kBubbleWidth,
+      2 * _paddingX + _walkerWidth + _iconGap + painter.width,
+    );
     painter.dispose();
     return walkerSlot.shift(Offset(kBubbleWidth - width, 0));
   }
@@ -103,21 +120,28 @@ class MemberHistoryBubble extends StatelessWidget {
   /// Is dit de wandelballon (dus met animatie)?
   static bool isWalking(MemberOnMap entry, DateTime now) {
     final status = TripStatus.at(entry.location, now);
-    return status.state == TripState.moving && status.speedKmh != null && status.walking;
+    return status.state == TripState.moving &&
+        status.speedKmh != null &&
+        status.walking;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final status = TripStatus.at(entry.location, now);
-    final isMoving = status.state == TripState.moving && status.speedKmh != null;
+    final isMoving =
+        status.state == TripState.moving && status.speedKmh != null;
     final placeSince = placeStatus?.since;
     final atPlace =
-        placeSince != null && !placeSince.isAfter(now) && status.state != TripState.stale && !isMoving;
+        placeSince != null &&
+        !placeSince.isAfter(now) &&
+        status.state != TripState.stale &&
+        !isMoving;
     // Buiten een opgeslagen plek: toon hoelang het lid hier al stilstaat.
     final stopped =
         !isMoving &&
-        (status.state == TripState.stationary || status.state == TripState.unknown) &&
+        (status.state == TripState.stationary ||
+            status.state == TripState.unknown) &&
         stationarySince != null &&
         !stationarySince!.isAfter(now);
     final sinceTime = atPlace ? placeSince : (stopped ? stationarySince : null);
@@ -145,7 +169,9 @@ class MemberHistoryBubble extends StatelessWidget {
     // Zo breed als de inhoud plus vaste opvulling, tegen de kant van de
     // avatar (waar de staart wijst); de rest van het vak blijft leeg.
     return Row(
-      mainAxisAlignment: tailLeft ? MainAxisAlignment.start : MainAxisAlignment.end,
+      mainAxisAlignment: tailLeft
+          ? MainAxisAlignment.start
+          : MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Flexible(
@@ -155,7 +181,10 @@ class MemberHistoryBubble extends StatelessWidget {
             // Zelfde schaduw als de rondjes, plus een lichte rand die de ballon
             // laat loskomen van een lichte kaart.
             child: DecoratedBox(
-              decoration: BoxDecoration(borderRadius: radius, boxShadow: context.tokens.shadowBubble),
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                boxShadow: context.tokens.shadowBubble,
+              ),
               child: Material(
                 color: kBubbleColor,
                 shape: RoundedRectangleBorder(
@@ -166,22 +195,38 @@ class MemberHistoryBubble extends StatelessWidget {
                 child: InkWell(
                   onTap: onTap,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _paddingX, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: _paddingX,
+                      vertical: 5,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (isMoving && status.walking)
-                          Semantics(label: status.mode!.label(l10n), child: _walkerImage())
+                          Semantics(
+                            label: status.mode!.label(l10n),
+                            child: _walkerImage(),
+                          )
                         else if (isMoving)
                           Image(
-                            image: status.cycling ? bubbleBikeImage : bubbleCarImage,
+                            image: status.cycling
+                                ? bubbleBikeImage
+                                : bubbleCarImage,
                             semanticLabel: status.mode!.label(l10n),
                             width: 38,
                             height: 32,
                             fit: BoxFit.contain,
                           )
-                        else if ((atPlace ? placeBubbleImage(placeStatus!.icon) : null) case final photo?)
-                          Image(image: photo, width: 38, height: 32, fit: BoxFit.contain)
+                        else if ((atPlace
+                                ? placeBubbleImage(placeStatus!.icon)
+                                : null)
+                            case final photo?)
+                          Image(
+                            image: photo,
+                            width: 38,
+                            height: 32,
+                            fit: BoxFit.contain,
+                          )
                         else
                           Icon(icon, color: AppColors.primary, size: 23),
                         const SizedBox(width: _iconGap),
@@ -202,7 +247,11 @@ class MemberHistoryBubble extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(fontSize: 12, height: 1.15, color: AppColors.muted),
+                                      ?.copyWith(
+                                        fontSize: 12,
+                                        height: 1.15,
+                                        color: AppColors.muted,
+                                      ),
                                 ),
                             ],
                           ),
@@ -221,11 +270,16 @@ class MemberHistoryBubble extends StatelessWidget {
 
   /// De wandelende sneakers in hun vak ([walkerSlot]).
   Widget _walkerImage() => switch (walker) {
-    WalkerDisplay.gif => const WalkingSneakers(width: _walkerWidth, height: _walkerHeight),
+    WalkerDisplay.gif => const WalkingSneakers(
+      width: _walkerWidth,
+      height: _walkerHeight,
+    ),
     WalkerDisplay.slot => SizedBox(
       width: _walkerWidth,
       height: _walkerHeight,
-      child: walkerStill == null ? null : RawImage(image: walkerStill, fit: BoxFit.contain),
+      child: walkerStill == null
+          ? null
+          : RawImage(image: walkerStill, fit: BoxFit.contain),
     ),
   };
 }
@@ -236,17 +290,34 @@ const _walkerHeight = 32.0;
 const _paddingX = 8.0;
 const _iconGap = 5.0;
 
-TextStyle? _titleStyle(BuildContext context) =>
-    Theme.of(context).textTheme.bodyMedium
-        ?.copyWith(fontSize: 12, height: 1.2, fontWeight: FontWeight.w600, color: AppColors.ink);
+TextStyle? _titleStyle(BuildContext context) => Theme.of(context)
+    .textTheme
+    .bodyMedium
+    ?.copyWith(
+      fontSize: 12,
+      height: 1.2,
+      fontWeight: FontWeight.w600,
+      color: AppColors.ink,
+    );
 
-String _formatStay(AppLocalizations l10n, Duration duration) => duration.inHours > 0
-    ? l10n.mapStayHoursMinutes(duration.inHours, duration.inMinutes.remainder(60))
+String _formatStay(AppLocalizations l10n, Duration duration) =>
+    duration.inHours > 0
+    ? l10n.mapStayHoursMinutes(
+        duration.inHours,
+        duration.inMinutes.remainder(60),
+      )
     : l10n.durationMinutes(duration.inMinutes);
 
 /// Terugval als er geen verblijfsduur is (bv. verouderde meting): hoelang
 /// geleden de laatste positie binnenkwam, i.p.v. een nietszeggende tekst.
-String _formatUpdated(AppLocalizations l10n, DateTime? updatedAt, DateTime now) {
+String _formatUpdated(
+  AppLocalizations l10n,
+  DateTime? updatedAt,
+  DateTime now,
+) {
   if (updatedAt == null) return '';
-  return updatedAgo(l10n, now.difference(updatedAt).inSeconds.clamp(0, 99999999));
+  return updatedAgo(
+    l10n,
+    now.difference(updatedAt).inSeconds.clamp(0, 99999999),
+  );
 }

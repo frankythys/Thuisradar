@@ -100,7 +100,9 @@ class GoogleMemberMarkers {
 
   void _scheduleRender() {
     if (_disposed || _rendering || _settleTimer != null) return;
-    final sinceLast = _renderClock.isRunning ? _renderClock.elapsed : _renderInterval;
+    final sinceLast = _renderClock.isRunning
+        ? _renderClock.elapsed
+        : _renderInterval;
     final wait = _renderInterval - sinceLast;
     _settleTimer = Timer(wait > _settle ? wait : _settle, () {
       _settleTimer = null;
@@ -112,7 +114,9 @@ class GoogleMemberMarkers {
   /// stand komt er altijd door.
   void _moveSoon() {
     if (_moveTimer != null) return;
-    final wait = _moveClock.isRunning ? _moveInterval - _moveClock.elapsed : Duration.zero;
+    final wait = _moveClock.isRunning
+        ? _moveInterval - _moveClock.elapsed
+        : Duration.zero;
     if (wait <= Duration.zero) {
       _move();
     } else {
@@ -131,7 +135,9 @@ class GoogleMemberMarkers {
   }
 
   /// Alle markers voor de laatste berekening, met de best passende afbeelding.
-  Set<gm.Marker> _build() => {for (final (index, spec) in _pending.indexed) ?_markerFor(spec, index)};
+  Set<gm.Marker> _build() => {
+    for (final (index, spec) in _pending.indexed) ?_markerFor(spec, index),
+  };
 
   gm.Marker? _markerFor(MapMarkerSpec spec, int index) {
     final frame = _frameOf(spec);
@@ -154,7 +160,10 @@ class GoogleMemberMarkers {
       final drawn = match ?? _drawn[spec.id]?.first;
       look = drawn == null
           ? null
-          : (icon: drawn.icon, anchor: match != null ? frame.anchor : drawn.frame.anchor);
+          : (
+              icon: drawn.icon,
+              anchor: match != null ? frame.anchor : drawn.frame.anchor,
+            );
     }
     if (look == null) return null; // nog nooit getekend
     return gm.Marker(
@@ -209,7 +218,9 @@ class GoogleMemberMarkers {
       if (drawn.pixelRatio == _pixelRatio &&
           drawn.frame.canvas == frame.canvas &&
           drawn.frame.child == frame.child &&
-          (spec.imageKey == null ? identical(_drawnSpec[spec.id], spec) : drawn.imageKey == spec.imageKey)) {
+          (spec.imageKey == null
+              ? identical(_drawnSpec[spec.id], spec)
+              : drawn.imageKey == spec.imageKey)) {
         return drawn;
       }
     }
@@ -230,10 +241,16 @@ class GoogleMemberMarkers {
 
   bool _needsDrawing(MapMarkerSpec spec) {
     final frame = _frameOf(spec);
-    return spec.frames.isNotEmpty ? _animationFor(spec, frame) == null : _drawnFor(spec, frame) == null;
+    return spec.frames.isNotEmpty
+        ? _animationFor(spec, frame) == null
+        : _drawnFor(spec, frame) == null;
   }
 
-  Future<void> _render(Widget Function(Widget) wrap, double pixelRatio, Future<void> ready) async {
+  Future<void> _render(
+    Widget Function(Widget) wrap,
+    double pixelRatio,
+    Future<void> ready,
+  ) async {
     _rendering = true;
     _renderClock
       ..reset()
@@ -274,35 +291,49 @@ class GoogleMemberMarkers {
       final ids = {for (final spec in specs) spec.id};
       _drawn.removeWhere((id, _) => !ids.contains(id));
       _drawnSpec.removeWhere((id, _) => !ids.contains(id));
-      _animations.removeWhere((id, _) => !specs.any((s) => s.id == id && s.frames.isNotEmpty));
+      _animations.removeWhere(
+        (id, _) => !specs.any((s) => s.id == id && s.frames.isNotEmpty),
+      );
       _move(); // Altijd met de nieuwste plaats, niet die van bij het begin.
     } on Object catch (error) {
       debugPrint('Markers tekenen voor Google mislukt: $error');
     } finally {
       _rendering = false;
-      if (!_disposed && _pending.any((spec) => _needsDrawing(spec))) _scheduleRender();
+      if (!_disposed && _pending.any((spec) => _needsDrawing(spec))) {
+        _scheduleRender();
+      }
     }
   }
 
-  Future<Uint8List> _png(Widget child, NativeMarkerFrame frame, Widget Function(Widget) wrap, double ratio) =>
-      renderWidgetToPng(
-        wrap(
-          Stack(
-            clipBehavior: Clip.none,
-            children: [Positioned.fromRect(rect: frame.child, child: child)],
-          ),
-        ),
-        size: frame.canvas,
-        pixelRatio: ratio,
-      );
+  Future<Uint8List> _png(
+    Widget child,
+    NativeMarkerFrame frame,
+    Widget Function(Widget) wrap,
+    double ratio,
+  ) => renderWidgetToPng(
+    wrap(
+      Stack(
+        clipBehavior: Clip.none,
+        children: [Positioned.fromRect(rect: frame.child, child: child)],
+      ),
+    ),
+    size: frame.canvas,
+    pixelRatio: ratio,
+  );
 
   /// Eén afbeelding. Is ze identiek aan een eerdere, dan blijft die afbeelding
   /// (geen onnodige update naar Google).
-  Future<void> _draw(MapMarkerSpec spec, Widget Function(Widget) wrap, double pixelRatio) async {
+  Future<void> _draw(
+    MapMarkerSpec spec,
+    Widget Function(Widget) wrap,
+    double pixelRatio,
+  ) async {
     final frame = _frameOf(spec);
     final png = await _png(spec.child, frame, wrap, pixelRatio);
     final list = _drawn.putIfAbsent(spec.id, () => []);
-    final same = list.where((d) => d.pixelRatio == pixelRatio && d.frame.canvas == frame.canvas);
+    final same = list.where(
+      (d) => d.pixelRatio == pixelRatio && d.frame.canvas == frame.canvas,
+    );
     final reuse = same.where((d) => listEquals(d.png, png)).firstOrNull;
     list
       ..removeWhere((d) => identical(d, reuse))
@@ -319,11 +350,21 @@ class GoogleMemberMarkers {
 
   /// Elk beeld van een animatie één keer getekend (opnieuw enkel voor een
   /// nieuwe uitlijning of schermdichtheid).
-  Future<void> _drawAnimation(MapMarkerSpec spec, Widget Function(Widget) wrap, double pixelRatio) async {
+  Future<void> _drawAnimation(
+    MapMarkerSpec spec,
+    Widget Function(Widget) wrap,
+    double pixelRatio,
+  ) async {
     final frame = _frameOf(spec);
     final icons = <gm.BitmapDescriptor>[];
     for (final image in spec.frames) {
-      icons.add(_bitmap(await _png(image.child, frame, wrap, pixelRatio), frame, pixelRatio));
+      icons.add(
+        _bitmap(
+          await _png(image.child, frame, wrap, pixelRatio),
+          frame,
+          pixelRatio,
+        ),
+      );
     }
     final list = _animations.putIfAbsent(spec.id, () => [])
       ..insert(0, (
@@ -332,13 +373,22 @@ class GoogleMemberMarkers {
         icons: icons,
         durations: [for (final image in spec.frames) image.duration],
       ));
-    if (list.length > _keepAnimations) list.removeRange(_keepAnimations, list.length);
+    if (list.length > _keepAnimations) {
+      list.removeRange(_keepAnimations, list.length);
+    }
   }
 
-  gm.BitmapDescriptor _bitmap(Uint8List png, NativeMarkerFrame frame, double pixelRatio) {
+  gm.BitmapDescriptor _bitmap(
+    Uint8List png,
+    NativeMarkerFrame frame,
+    double pixelRatio,
+  ) {
     // Android krijgt al fysieke schermpixels: voorkom een tweede schaalbewerking.
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return gm.BitmapDescriptor.bytes(png, bitmapScaling: gm.MapBitmapScaling.none);
+      return gm.BitmapDescriptor.bytes(
+        png,
+        bitmapScaling: gm.MapBitmapScaling.none,
+      );
     }
     return gm.BitmapDescriptor.bytes(
       png,

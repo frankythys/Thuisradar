@@ -6,7 +6,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:thuisradar/core/theme/app_theme.dart';
 import 'package:thuisradar/features/family/domain/family_member.dart';
 import 'package:thuisradar/features/location/domain/member_location.dart';
-import 'package:thuisradar/features/map/domain/map_view.dart';
 import 'package:thuisradar/features/map/domain/member_on_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/family_map.dart';
 import 'package:thuisradar/features/map/presentation/widgets/google_map_stack.dart';
@@ -30,19 +29,30 @@ void main() {
     nonRotatedSize: const Size(800, 600),
   );
 
-  MemberOnMap liam(LatLng at, {required int second, double speedMps = 15}) => MemberOnMap(
-    member: const FamilyMember(userId: 'liam', displayName: 'Liam', isOwner: false, colorIndex: 1),
-    location: MemberLocation(
-      userId: 'liam',
-      familyId: 'f',
-      latitude: at.latitude,
-      longitude: at.longitude,
-      updatedAt: start.add(Duration(seconds: second)),
-      speedMps: speedMps,
-    ),
-  );
+  MemberOnMap liam(LatLng at, {required int second, double speedMps = 15}) =>
+      MemberOnMap(
+        member: const FamilyMember(
+          userId: 'liam',
+          displayName: 'Liam',
+          isOwner: false,
+          colorIndex: 1,
+        ),
+        location: MemberLocation(
+          userId: 'liam',
+          familyId: 'f',
+          latitude: at.latitude,
+          longitude: at.longitude,
+          updatedAt: start.add(Duration(seconds: second)),
+          speedMps: speedMps,
+        ),
+      );
 
-  Future<void> show(WidgetTester tester, MapController controller, MemberOnMap member, int second) async {
+  Future<void> show(
+    WidgetTester tester,
+    MapController controller,
+    MemberOnMap member,
+    int second,
+  ) async {
     final stack = FamilyMap(
       controller: controller,
       useGoogleMaps: true,
@@ -50,17 +60,25 @@ void main() {
       now: start.add(Duration(seconds: second)),
       onMemberTap: (_) {},
       onGroupTap: (_) {},
-      savedView: MapView(latitude: center.latitude, longitude: center.longitude, zoom: zoom),
     ).build(_Context()) as GoogleMapStack;
-    await tester.pumpWidget(MaterialApp(theme: AppTheme.light(), home: stack.overlay((_) {})));
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.light(), home: stack.overlay((_) {})),
+    );
+    await tester.pump();
+    controller.move(center, zoom);
     await tester.pump();
   }
 
   bool hasBlock(WidgetTester tester) => tester.any(
-    find.descendant(of: find.byType(OffscreenMembersLayer), matching: find.byType(MemberAvatar)),
+    find.descendant(
+      of: find.byType(OffscreenMembersLayer),
+      matching: find.byType(MemberAvatar),
+    ),
   );
 
-  testWidgets('vertrekken: geen blokje zolang de pin nog naar de rand rijdt', (tester) async {
+  testWidgets('vertrekken: geen blokje zolang de pin nog naar de rand rijdt', (
+    tester,
+  ) async {
     final controller = MapController();
     addTearDown(controller.dispose);
     await show(tester, controller, liam(center, second: 0), 0);
@@ -75,16 +93,29 @@ void main() {
     expect(hasBlock(tester), isTrue, reason: 'nu is de pin echt weg');
   });
 
-  testWidgets('rijdend lid net onder de rand: blokje zodra de pin helemaal weg is', (tester) async {
-    final controller = MapController();
-    addTearDown(controller.dispose);
-    // Een rijdende pin staat met zijn midden op het punt (64 breed): 20 px
-    // onder de rand is hij nog half zichtbaar, 60 px eronder helemaal weg.
-    await show(tester, controller, liam(camera.screenOffsetToLatLng(const Offset(400, 620)), second: 0), 0);
-    expect(hasBlock(tester), isFalse, reason: 'pin nog half in beeld');
+  testWidgets(
+    'rijdend lid net onder de rand: blokje zodra de pin helemaal weg is',
+    (tester) async {
+      final controller = MapController();
+      addTearDown(controller.dispose);
+      // Een rijdende pin staat met zijn midden op het punt (64 breed): 20 px
+      // onder de rand is hij nog half zichtbaar, 60 px eronder helemaal weg.
+      await show(
+        tester,
+        controller,
+        liam(camera.screenOffsetToLatLng(const Offset(400, 620)), second: 0),
+        0,
+      );
+      expect(hasBlock(tester), isFalse, reason: 'pin nog half in beeld');
 
-    await show(tester, controller, liam(camera.screenOffsetToLatLng(const Offset(400, 660)), second: 0), 0);
-    await tester.pump(const Duration(seconds: 2));
-    expect(hasBlock(tester), isTrue, reason: 'pin weg, dus een blokje');
-  });
+      await show(
+        tester,
+        controller,
+        liam(camera.screenOffsetToLatLng(const Offset(400, 660)), second: 0),
+        0,
+      );
+      await tester.pump(const Duration(seconds: 2));
+      expect(hasBlock(tester), isTrue, reason: 'pin weg, dus een blokje');
+    },
+  );
 }

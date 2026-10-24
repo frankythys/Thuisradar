@@ -3,13 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/startup_diagnostics.dart';
 import '../../../places/domain/place.dart';
 import '../../../places/presentation/place_icons.dart';
 import '../../../places/presentation/place_images.dart';
@@ -19,7 +17,8 @@ import '../../domain/map_style.dart';
 import 'google_member_markers.dart';
 import 'google_place_overlays.dart';
 import 'map_marker_spec.dart';
-import 'member_history_bubble.dart' show bubbleBikeImage, bubbleCarImage, bubbleHomeImage;
+import 'member_history_bubble.dart'
+    show bubbleBikeImage, bubbleCarImage, bubbleHomeImage;
 import 'widget_bitmap.dart';
 
 /// Google Maps als achtergrond onder de bestaande kaart.
@@ -71,18 +70,6 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   StreamSubscription<MapEvent>? _events;
   ({double latitude, double longitude, double zoom, double bearing})? _wanted;
 
-  /// Eerste camerastand van deze Google-kaart (zie [initState]).
-  late final ({double latitude, double longitude, double zoom, double bearing}) _start;
-
-  /// De stand van de kaart erboven, of null als die nog nooit getekend werd.
-  MapCamera? _overlayCamera() {
-    try {
-      return widget.controller.camera;
-    } on Exception {
-      return null;
-    }
-  }
-
   ({double latitude, double longitude, double zoom, double bearing})? _shown;
   bool _moving = false;
   double _zoom = 0;
@@ -118,18 +105,13 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   void initState() {
     super.initState();
-    // Een nieuwe Google-kaart terwijl de kaart erboven al bestaat (scherm
-    // terug na wegvegen): start op diens stand, niet op de beginplek. Anders
-    // staan de cirkels elders tot je de kaart aanraakt.
-    final camera = _overlayCamera();
-    _zoom = camera?.zoom ?? widget.initialZoom;
+    _zoom = widget.initialZoom;
     _wanted = (
-      latitude: camera?.center.latitude ?? widget.initialCenter.latitude,
-      longitude: camera?.center.longitude ?? widget.initialCenter.longitude,
-      zoom: _zoom,
-      bearing: camera == null ? 0.0 : (-camera.rotation + 360) % 360,
+      latitude: widget.initialCenter.latitude,
+      longitude: widget.initialCenter.longitude,
+      zoom: widget.initialZoom,
+      bearing: 0.0,
     );
-    _start = _wanted!;
     widget.markers?.addListener(_onMarkers);
     _events = widget.controller.mapEventStream.listen((event) {
       final camera = event.camera;
@@ -153,7 +135,6 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _measure('Google-kaart gevraagd');
     _loadIcons();
     // Afbeeldingen in de markers moeten klaar zijn vóór we ze tekenen.
     _assetsReady = Future.wait([
@@ -190,8 +171,17 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       if (_icons.containsKey(key)) continue;
       final photo = placeMapAsset(key);
       final bitmap = photo != null
-          ? placeImageBitmap(photo, width: kPlaceMapImageWidth, pixelRatio: pixelRatio)
-          : placeIconBitmap(placeIcon(key), color: AppColors.primary, size: 20, pixelRatio: pixelRatio);
+          ? placeImageBitmap(
+              photo,
+              width: kPlaceMapImageWidth,
+              pixelRatio: pixelRatio,
+            )
+          : placeIconBitmap(
+              placeIcon(key),
+              color: AppColors.primary,
+              size: 20,
+              pixelRatio: pixelRatio,
+            );
       unawaited(
         bitmap.then((icon) {
           if (!mounted || _iconPixelRatio != pixelRatio) return;
@@ -236,8 +226,16 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       final shown = _shown;
       if (shown != null &&
           !googleCameraChanged(
-            (latitude: shown.latitude, longitude: shown.longitude, zoom: shown.zoom),
-            (latitude: wanted.latitude, longitude: wanted.longitude, zoom: wanted.zoom),
+            (
+              latitude: shown.latitude,
+              longitude: shown.longitude,
+              zoom: shown.zoom,
+            ),
+            (
+              latitude: wanted.latitude,
+              longitude: wanted.longitude,
+              zoom: wanted.zoom,
+            ),
           ) &&
           (shown.bearing - wanted.bearing).abs() < .001) {
         return;
@@ -284,6 +282,21 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     if (_memberMarkers.isNotEmpty) _scheduleRedraw();
   }
 
+  /// De Flutter-kaart blijft bestaan wanneer alleen de native Google-kaart
+  /// wordt vernieuwd. Neem daarom haar actuele camera over; de widgetdefaults
+  /// zijn alleen juist bij de eerste appstart en zouden een hervatte kaart
+  /// terugzetten naar de standaardzoom.
+  void _followCurrentOverlayCamera() {
+    final camera = widget.controller.camera;
+    _zoom = camera.zoom;
+    _wanted = (
+      latitude: camera.center.latitude,
+      longitude: camera.center.longitude,
+      zoom: camera.zoom,
+      bearing: (-camera.rotation + 360) % 360,
+    );
+  }
+
   /// Google (de nieuwe tekenmotor in een textuur) zet nieuwe markers pas op
   /// het scherm na een camerabeweging. Bij het opstarten staat de camera stil
   /// (de kaart opent op de bewaarde plek), dus bleven de personen weg tot je
@@ -304,7 +317,9 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       if (_redrawTries++ < _redrawTriesMax) {
         _scheduleRedraw();
       } else {
-        debugPrint('Kaart: eerste markers niet hertekend (kaart bleef te lang bezet)');
+        debugPrint(
+          'Kaart: eerste markers niet hertekend (kaart bleef te lang bezet)',
+        );
       }
       return;
     }
@@ -334,32 +349,25 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
     if (!mounted) return;
     _shown = null; // terug naar exact de stand van de kaart erboven
     // De eerste keer dat Google zijn eigen beeld met de personen tekent.
-    _measure('Google-kaart eerste markers');
     unawaited(_sync());
-  }
-
-  /// Meetpunt in de opstartmeting (enkel debug/profile, eenmalig per stap).
-  /// Zonder ProviderScope (sommige tests) is er niets te meten.
-  void _measure(String stage) {
-    if (!mounted || context.findAncestorWidgetOfExactType<UncontrolledProviderScope>() == null) return;
-    ProviderScope.containerOf(context, listen: false).read(startupDiagnosticsProvider)?.checkpointOnce(stage);
   }
 
   @override
   Widget build(BuildContext context) {
     final target = googleCameraTarget(
-      latitude: _start.latitude,
-      longitude: _start.longitude,
-      zoom: _start.zoom,
+      latitude: widget.initialCenter.latitude,
+      longitude: widget.initialCenter.longitude,
+      zoom: widget.initialZoom,
       bottomPadding: widget.bottomPadding,
     );
     return gm.GoogleMap(
       initialCameraPosition: gm.CameraPosition(
         target: gm.LatLng(target.latitude, target.longitude),
-        zoom: _start.zoom,
-        bearing: _start.bearing,
+        zoom: widget.initialZoom,
       ),
-      mapType: showsSatellite(choice: widget.satellite, zoom: _zoom) ? gm.MapType.hybrid : gm.MapType.normal,
+      mapType: showsSatellite(choice: widget.satellite, zoom: _zoom)
+          ? gm.MapType.hybrid
+          : gm.MapType.normal,
       // De straal pas ver ingezoomd; uitgezoomd enkel het icoon.
       circles: showsPlaceRadius(_zoom)
           ? placeCircles(
@@ -382,7 +390,7 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
       indoorViewEnabled: false,
       onMapCreated: (controller) {
         _google = controller;
-        _measure('Google-kaart aangemaakt');
+        _followCurrentOverlayCamera();
         _mapReadyFallback = Timer(_mapReadyFallbackDelay, () {
           if (!_mapReady.isCompleted) {
             debugPrint('Kaart: geen camerastilte gemeld, markers toch tekenen');
@@ -395,7 +403,6 @@ class _GoogleBaseMapState extends State<GoogleBaseMap> {
         // Een aangemaakte controller betekent nog geen afgewerkte kaart.
         // Teken de eerste ballonnen pas na de eerste camerabeweging, ook
         // wanneer de gebruiker de kaart nog niet heeft aangeraakt.
-        _measure('Google-kaart eerste beeld');
         _completeMapReady();
       },
     );

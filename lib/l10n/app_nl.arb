@@ -2691,6 +2691,7 @@
     }
   },
   "emergencyAlertFailed": "De noodcontacten verwittigen is niet gelukt.",
+  "emergencySmsUnavailable": "Geen simkaart gevonden. Sms'en is op dit toestel niet beschikbaar.",
   "@emergencyAlertFailed": {
     "description": "Na SOS: noodcontacten verwittigen mislukt."
   },

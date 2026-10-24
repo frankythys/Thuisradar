@@ -37,8 +37,15 @@ class MemberMarker extends StatelessWidget {
     bool driving = false,
   }) {
     final size = selected ? 2 * selectedRadius : avatarSize;
-    if (driving) return Rect.fromCenter(center: point, width: size, height: size);
-    return Rect.fromLTWH(point.dx + shift.dx - size / 2, point.dy + shift.dy - height, size, size);
+    if (driving) {
+      return Rect.fromCenter(center: point, width: size, height: size);
+    }
+    return Rect.fromLTWH(
+      point.dx + shift.dx - size / 2,
+      point.dy + shift.dy - height,
+      size,
+      size,
+    );
   }
 
   final MemberOnMap entry;
@@ -61,9 +68,15 @@ class MemberMarker extends StatelessWidget {
     // Stilstaand: het rondje hangt boven de locatie, met een puntje dat naar
     // een stip op de exacte plek wijst (onderaan midden van dit vak).
     final memberColor = context.tokens.memberColor(entry.member.colorIndex);
-    final avatarHeight = selected ? 2 * MemberMarker.selectedRadius : MemberMarker.avatarSize;
+    final avatarHeight = selected
+        ? 2 * MemberMarker.selectedRadius
+        : MemberMarker.avatarSize;
     // Van onder het rondje tot in de halo rond de stip.
-    final tailHeight = MemberMarker.height - avatarHeight - LocationDot.haloSize / 2 + MarkerTail.overlap;
+    final tailHeight =
+        MemberMarker.height -
+        avatarHeight -
+        LocationDot.haloSize / 2 +
+        MarkerTail.overlap;
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.topCenter,
@@ -108,7 +121,11 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avatar = MemberAvatar(member: entry.member, size: MemberMarker.avatarSize, ring: !selected);
+    final avatar = MemberAvatar(
+      member: entry.member,
+      size: MemberMarker.avatarSize,
+      ring: !selected,
+    );
     if (!selected) return avatar;
 
     // Selectie: volle, dikke ring in de app-kleur met gloed.
@@ -117,7 +134,10 @@ class _Avatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.mapSelection,
-        boxShadow: [...context.tokens.glowSelection, ...context.tokens.shadowMarker],
+        boxShadow: [
+          ...context.tokens.glowSelection,
+          ...context.tokens.shadowMarker,
+        ],
       ),
       child: avatar,
     );

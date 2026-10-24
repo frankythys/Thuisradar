@@ -17,7 +17,12 @@ import 'package:thuisradar/features/places/domain/place_status.dart';
 void main() {
   final now = DateTime(2026, 10, 4, 12);
   MemberOnMap member(String id) => MemberOnMap(
-    member: FamilyMember(userId: id, displayName: id, isOwner: false, colorIndex: 0),
+    member: FamilyMember(
+      userId: id,
+      displayName: id,
+      isOwner: false,
+      colorIndex: 0,
+    ),
     location: MemberLocation(
       userId: id,
       familyId: 'fam',
@@ -29,7 +34,12 @@ void main() {
   );
 
   MemberOnMap movingMember(String id, {double speedMps = 12.5}) => MemberOnMap(
-    member: FamilyMember(userId: id, displayName: id, isOwner: false, colorIndex: 0),
+    member: FamilyMember(
+      userId: id,
+      displayName: id,
+      isOwner: false,
+      colorIndex: 0,
+    ),
     location: MemberLocation(
       userId: id,
       familyId: 'fam',
@@ -40,75 +50,87 @@ void main() {
     ),
   );
 
-  testWidgets('geselecteerd groepslid heeft een aanklikbare geschiedenisballon', (tester) async {
-    String? opened;
-    final controller = MapController();
-    addTearDown(controller.dispose);
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        home: Scaffold(
-          body: FlutterMap(
-            mapController: controller,
-            options: const MapOptions(initialCenter: LatLng(51, 3), initialZoom: 16),
-            children: [
-              ClusteredMarkerLayer(
-                members: [member('Liam'), member('Franky')],
-                now: now,
-                selectedUserId: 'Franky',
-                onMemberTap: (_) {},
-                onGroupTap: (_) {},
-                onHistory: (entry) => opened = entry.member.userId,
-                placeByUser: {
-                  'Franky': PlaceStatus(
-                    name: 'Thuis',
-                    icon: 'home',
-                    since: now.subtract(const Duration(hours: 2, minutes: 15)),
-                  ),
-                },
+  testWidgets(
+    'geselecteerd groepslid heeft een aanklikbare geschiedenisballon',
+    (tester) async {
+      String? opened;
+      final controller = MapController();
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: FlutterMap(
+              mapController: controller,
+              options: const MapOptions(
+                initialCenter: LatLng(51, 3),
+                initialZoom: 16,
               ),
-            ],
+              children: [
+                ClusteredMarkerLayer(
+                  members: [member('Liam'), member('Franky')],
+                  now: now,
+                  selectedUserId: 'Franky',
+                  onMemberTap: (_) {},
+                  onGroupTap: (_) {},
+                  onHistory: (entry) => opened = entry.member.userId,
+                  placeByUser: {
+                    'Franky': PlaceStatus(
+                      name: 'Thuis',
+                      icon: 'home',
+                      since: now.subtract(
+                        const Duration(hours: 2, minutes: 15),
+                      ),
+                    ),
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Thuis'), findsOneWidget);
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Image &&
-            widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName == 'assets/places/home_ballon.webp',
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('sinds 2 uur, 15 min'), findsOneWidget);
-    final avatar = find.byWidgetPredicate(
-      (widget) => widget is MemberAvatar && widget.member.userId == 'Franky',
-    );
-    Offset checkPosition() {
-      final avatarRect = tester.getRect(avatar);
-      final bubbleRect = tester.getRect(find.byType(MemberHistoryBubble));
-      expect(bubbleRect.top, lessThan(avatarRect.top));
-      // De ballon overlapt de bovenrand van de avatar, zoals de referentie.
-      expect(bubbleRect.left, inInclusiveRange(avatarRect.left, avatarRect.right));
-      expect(bubbleRect.bottom, greaterThan(avatarRect.top));
-      return bubbleRect.topLeft - avatarRect.topLeft;
-    }
-
-    final offset = checkPosition();
-    for (final center in [const LatLng(51, 3.001), const LatLng(51, 2.999)]) {
-      controller.move(center, 17);
+      );
       await tester.pumpAndSettle();
-      final movedOffset = checkPosition();
-      expect(movedOffset.dx, closeTo(offset.dx, 0.01));
-      expect(movedOffset.dy, closeTo(offset.dy, 0.01));
-    }
-    await tester.tap(find.text('sinds 2 uur, 15 min'));
-    expect(opened, 'Franky');
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('Thuis'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Image &&
+              widget.image is AssetImage &&
+              (widget.image as AssetImage).assetName ==
+                  'assets/places/home_ballon.webp',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('sinds 2 uur, 15 min'), findsOneWidget);
+      final avatar = find.byWidgetPredicate(
+        (widget) => widget is MemberAvatar && widget.member.userId == 'Franky',
+      );
+      Offset checkPosition() {
+        final avatarRect = tester.getRect(avatar);
+        final bubbleRect = tester.getRect(find.byType(MemberHistoryBubble));
+        expect(bubbleRect.top, lessThan(avatarRect.top));
+        // De ballon overlapt de bovenrand van de avatar, zoals de referentie.
+        expect(
+          bubbleRect.left,
+          inInclusiveRange(avatarRect.left, avatarRect.right),
+        );
+        expect(bubbleRect.bottom, greaterThan(avatarRect.top));
+        return bubbleRect.topLeft - avatarRect.topLeft;
+      }
+
+      final offset = checkPosition();
+      for (final center in [const LatLng(51, 3.001), const LatLng(51, 2.999)]) {
+        controller.move(center, 17);
+        await tester.pumpAndSettle();
+        final movedOffset = checkPosition();
+        expect(movedOffset.dx, closeTo(offset.dx, 0.01));
+        expect(movedOffset.dy, closeTo(offset.dy, 0.01));
+      }
+      await tester.tap(find.text('sinds 2 uur, 15 min'));
+      expect(opened, 'Franky');
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('zonder verblijfstijd wordt geen duur verzonnen', (tester) async {
     await tester.pumpWidget(
@@ -119,7 +141,11 @@ void main() {
             child: SizedBox(
               width: 142,
               height: 48,
-              child: MemberHistoryBubble(entry: member('Liam'), now: now, onTap: () {}),
+              child: MemberHistoryBubble(
+                entry: member('Liam'),
+                now: now,
+                onTap: () {},
+              ),
             ),
           ),
         ),
@@ -130,7 +156,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('stilstaand buiten een plek toont hoelang je hier bent', (tester) async {
+  testWidgets('stilstaand buiten een plek toont hoelang je hier bent', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -155,7 +183,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('rijdend lid toont auto en snelheid in de geschiedenisballon', (tester) async {
+  testWidgets('rijdend lid toont auto en snelheid in de geschiedenisballon', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -189,11 +219,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('wandelend lid toont een wandelaar i.p.v. de auto', (tester) async {
+  testWidgets('wandelend lid toont een wandelaar i.p.v. de auto', (
+    tester,
+  ) async {
     // De beelden vooraf tekenen (gebeurt in de app op de achtergrond). Start de
     // widget het tekenen zelf, dan loopt het in de nep-klok van de test en raakt
     // het nooit klaar.
-    expect(await tester.runAsync(walkingGifFrames), hasLength(kWalkingLoopFrames));
+    expect(
+      await tester.runAsync(walkingGifFrames),
+      hasLength(kWalkingLoopFrames),
+    );
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -202,7 +237,11 @@ void main() {
             child: SizedBox(
               width: 142,
               height: 48,
-              child: MemberHistoryBubble(entry: movingMember('Liam', speedMps: 1.3), now: now, onTap: () {}),
+              child: MemberHistoryBubble(
+                entry: movingMember('Liam', speedMps: 1.3),
+                now: now,
+                onTap: () {},
+              ),
             ),
           ),
         ),
@@ -218,8 +257,15 @@ void main() {
     expect(find.byIcon(Icons.directions_walk), findsNothing);
     await tester.pump(const Duration(milliseconds: 100));
     // Een volgend beeld van de cyclus.
-    expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNot(same(first)));
-    expect(find.text('Wandelen'), findsNothing, reason: 'het icoon zegt het al');
+    expect(
+      tester.widget<RawImage>(find.byType(RawImage)).image,
+      isNot(same(first)),
+    );
+    expect(
+      find.text('Wandelen'),
+      findsNothing,
+      reason: 'het icoon zegt het al',
+    );
     expect(find.text('5 km/u'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -233,7 +279,11 @@ void main() {
             child: SizedBox(
               width: 142,
               height: 48,
-              child: MemberHistoryBubble(entry: movingMember('Liam', speedMps: 5), now: now, onTap: () {}),
+              child: MemberHistoryBubble(
+                entry: movingMember('Liam', speedMps: 5),
+                now: now,
+                onTap: () {},
+              ),
             ),
           ),
         ),
@@ -248,41 +298,50 @@ void main() {
   });
 
   for (final tailLeft in [true, false]) {
-    testWidgets('ballon is zo breed als zijn inhoud, tegen de avatar (staart links: $tailLeft)', (
-      tester,
-    ) async {
-      // Het testlettertype heeft brede, vierkante letters: kleiner zetten zodat
-      // de inhoud het vak niet vult.
-      tester.platformDispatcher.textScaleFactorTestValue = 0.5;
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                key: const Key('vak'),
-                width: 142,
-                height: 48,
-                child: MemberHistoryBubble(
-                  entry: movingMember('Liam', speedMps: 5),
-                  now: now,
-                  onTap: () {},
-                  tailLeft: tailLeft,
+    testWidgets(
+      'ballon is zo breed als zijn inhoud, tegen de avatar (staart links: $tailLeft)',
+      (tester) async {
+        // Het testlettertype heeft brede, vierkante letters: kleiner zetten zodat
+        // de inhoud het vak niet vult.
+        tester.platformDispatcher.textScaleFactorTestValue = 0.5;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  key: const Key('vak'),
+                  width: 142,
+                  height: 48,
+                  child: MemberHistoryBubble(
+                    entry: movingMember('Liam', speedMps: 5),
+                    now: now,
+                    onTap: () {},
+                    tailLeft: tailLeft,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      );
-      final box = tester.getRect(find.byKey(const Key('vak')));
-      final bubble = tester.getRect(
-        find.descendant(of: find.byType(MemberHistoryBubble), matching: find.byType(Material)).first,
-      );
-      expect(bubble.width, lessThan(box.width));
-      expect(bubble.height, box.height);
-      expect(tailLeft ? bubble.left : bubble.right, tailLeft ? box.left : box.right);
-      expect(tester.takeException(), isNull);
-    });
+        );
+        final box = tester.getRect(find.byKey(const Key('vak')));
+        final bubble = tester.getRect(
+          find
+              .descendant(
+                of: find.byType(MemberHistoryBubble),
+                matching: find.byType(Material),
+              )
+              .first,
+        );
+        expect(bubble.width, lessThan(box.width));
+        expect(bubble.height, box.height);
+        expect(
+          tailLeft ? bubble.left : bubble.right,
+          tailLeft ? box.left : box.right,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 }

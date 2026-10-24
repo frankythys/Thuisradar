@@ -11,7 +11,6 @@ import '../../../places/presentation/place_icons.dart';
 import '../../../places/presentation/place_images.dart';
 import '../../../parked_car/domain/parked_car.dart';
 import '../../domain/map_focus.dart';
-import '../../domain/map_view.dart';
 import '../../domain/member_on_map.dart';
 import 'clustered_marker_layer.dart';
 import 'place_radius_layer.dart';
@@ -48,7 +47,6 @@ class FamilyMap extends StatelessWidget {
     this.bottomInset = 0,
     this.cover,
     this.coverChanges,
-    this.savedView,
   });
 
   static const fallbackCenter = LatLng(50.85, 4.35); // België
@@ -94,19 +92,16 @@ class FamilyMap extends StatelessWidget {
   final MapCover Function()? cover;
   final Listenable? coverChanges;
 
-  /// Waar de kaart de vorige keer stond; dan opent ze meteen daar (zie
-  /// [startView]).
-  final MapView? savedView;
-
   @override
   Widget build(BuildContext context) {
-    final ownLocation = members.where((entry) => entry.member.userId == myUserId).firstOrNull?.location;
-    final view = startView(
-      saved: savedView,
-      own: ownLocation == null ? null : (latitude: ownLocation.latitude, longitude: ownLocation.longitude),
-    );
-    final center = LatLng(view.latitude, view.longitude);
-    final zoom = view.zoom;
+    final ownLocation = members
+        .where((entry) => entry.member.userId == myUserId)
+        .firstOrNull
+        ?.location;
+    final center = ownLocation == null
+        ? fallbackCenter
+        : LatLng(ownLocation.latitude, ownLocation.longitude);
+    final zoom = ownLocation == null ? 8.0 : 12.0;
     if (!useGoogleMaps) return _map(center, zoom, null);
     return GoogleMapStack(
       base: (markers) => GoogleBaseMap(
@@ -123,9 +118,14 @@ class FamilyMap extends StatelessWidget {
   }
 
   /// [onNativeMarkers] gezet = Google tekent de markers (zie ClusteredMarkerLayer).
-  Widget _map(LatLng center, double zoom, ValueChanged<List<MapMarkerSpec>>? onNativeMarkers) {
+  Widget _map(
+    LatLng center,
+    double zoom,
+    ValueChanged<List<MapMarkerSpec>>? onNativeMarkers,
+  ) {
     return TwistToRotate(
-      builder: (context, rotate) => _flutterMap(center, zoom, onNativeMarkers, rotate: rotate),
+      builder: (context, rotate) =>
+          _flutterMap(center, zoom, onNativeMarkers, rotate: rotate),
     );
   }
 
@@ -141,7 +141,9 @@ class FamilyMap extends StatelessWidget {
         initialCenter: center,
         initialZoom: zoom,
         // Met Google Maps eronder: doorzichtig, zodat die ondergrond zichtbaar is.
-        backgroundColor: useGoogleMaps ? Colors.transparent : const MapOptions().backgroundColor,
+        backgroundColor: useGoogleMaps
+            ? Colors.transparent
+            : const MapOptions().backgroundColor,
         minZoom: 3,
         maxZoom: maxZoomFor(google: useGoogleMaps),
         // Horizontaal doorlopen; alleen de boven- en onderrand begrenzen.
@@ -173,7 +175,11 @@ class FamilyMap extends StatelessWidget {
                     point: LatLng(place.latitude, place.longitude),
                     width: 32,
                     height: 32,
-                    child: Icon(placeIcon(place.icon), size: 20, color: AppColors.primary),
+                    child: Icon(
+                      placeIcon(place.icon),
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
                   ),
             ],
           ),
@@ -185,7 +191,10 @@ class FamilyMap extends StatelessWidget {
           ],
           parkedCars: parkedCars,
           onParkedCarTap: onParkedCarTap,
-          memberNames: {for (final member in members) member.member.userId: member.member.displayName},
+          memberNames: {
+            for (final member in members)
+              member.member.userId: member.member.displayName,
+          },
           members: membersToShow(members, selectedUserId),
           now: now,
           placeByUser: placeByUser,
@@ -200,13 +209,24 @@ class FamilyMap extends StatelessWidget {
           overlay: (pins) => OffscreenMembersLayer(
             pins: pins,
             placeByUser: placeByUser,
-            cover: cover ?? () => (sheet: bottomInset, buttonsWidth: 0, buttonsBottom: 0, buttonsTop: 0),
+            cover:
+                cover ??
+                () => (
+                  sheet: bottomInset,
+                  buttonsWidth: 0,
+                  buttonsBottom: 0,
+                  buttonsTop: 0,
+                ),
             coverChanges: coverChanges,
             onTap: onMemberTap,
           ),
         ),
         if (!useGoogleMaps)
-          Builder(builder: (context) => SimpleAttributionWidget(source: Text(context.l10n.osmContributors))),
+          Builder(
+            builder: (context) => SimpleAttributionWidget(
+              source: Text(context.l10n.osmContributors),
+            ),
+          ),
       ],
     );
   }

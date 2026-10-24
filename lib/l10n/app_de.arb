@@ -550,6 +550,7 @@
   "emergencySomeone": "Jemand aus deiner Familie",
   "emergencyTapToSend": "Tippe auf Senden, um {name} eine SMS zu schicken.",
   "emergencyAlertFailed": "Die Notfallkontakte konnten nicht benachrichtigt werden.",
+  "emergencySmsUnavailable": "Keine SIM-Karte gefunden. SMS sind auf diesem Gerät nicht verfügbar.",
   "sosOnMyWayMessage": "Ich bin unterwegs, um {name} zu helfen.",
   "sosFamilyKnows": "Deine Familie weiß, dass du unterwegs bist.",
   "sosMessageFailed": "Nachricht nicht gesendet. Bitte erneut versuchen.",

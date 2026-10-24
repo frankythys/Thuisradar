@@ -12,11 +12,15 @@ import 'package:thuisradar/features/map/presentation/widgets/walking_gif_frames.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('de wandelcyclus wordt één keer naar beelden getekend', (tester) async {
+  testWidgets('de wandelcyclus wordt één keer naar beelden getekend', (
+    tester,
+  ) async {
     final frames = (await tester.runAsync(walkingGifFrames))!;
     // Eén volledige, naadloze cyclus op een vast tempo.
     expect(frames, hasLength(kWalkingLoopFrames));
-    expect({for (final frame in frames) frame.image}, hasLength(kWalkingLoopFrames));
+    expect({
+      for (final frame in frames) frame.image,
+    }, hasLength(kWalkingLoopFrames));
     expect(frames.every((f) => f.duration == kWalkFrameDuration), isTrue);
     expect(frames.first.image.width, kWalkingFrameWidth);
     expect(frames.first.image.height, kWalkingFrameHeight);
@@ -28,70 +32,90 @@ void main() {
     expect(walkingSneakerAsset, 'assets/markers/sneaker.webp');
   });
 
-  testWidgets('Google: de ballon heeft een vak, precies waar de sneakers erboven komen', (tester) async {
-    final now = DateTime(2026, 10, 12, 15);
-    final walking = MemberOnMap(
-      member: const FamilyMember(userId: 'p', displayName: 'Papa', isOwner: true, colorIndex: 0),
-      location: MemberLocation(
-        userId: 'p',
-        familyId: 'f',
-        latitude: 51,
-        longitude: 4,
-        updatedAt: now,
-        speedMps: 1.3,
-      ),
-    );
-    expect(MemberHistoryBubble.isWalking(walking, now), isTrue);
-    // Kleinere tekst (het testlettertype is breed), zodat de ballon smaller is
-    // dan zijn vak en het vak met de staart rechts echt verschuift.
-    tester.platformDispatcher.textScaleFactorTestValue = 0.5;
-    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    for (final tailLeft in [true, false]) {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          home: Center(
-            child: SizedBox(
-              key: const Key('ballon'),
-              width: kBubbleWidth,
-              height: kBubbleHeight,
-              child: MemberHistoryBubble(
-                entry: walking,
-                now: now,
-                onTap: () {},
-                tailLeft: tailLeft,
-                walker: WalkerDisplay.slot,
+  testWidgets(
+    'Google: de ballon heeft een vak, precies waar de sneakers erboven komen',
+    (tester) async {
+      final now = DateTime(2026, 10, 12, 15);
+      final walking = MemberOnMap(
+        member: const FamilyMember(
+          userId: 'p',
+          displayName: 'Papa',
+          isOwner: true,
+          colorIndex: 0,
+        ),
+        location: MemberLocation(
+          userId: 'p',
+          familyId: 'f',
+          latitude: 51,
+          longitude: 4,
+          updatedAt: now,
+          speedMps: 1.3,
+        ),
+      );
+      expect(MemberHistoryBubble.isWalking(walking, now), isTrue);
+      // Kleinere tekst (het testlettertype is breed), zodat de ballon smaller is
+      // dan zijn vak en het vak met de staart rechts echt verschuift.
+      tester.platformDispatcher.textScaleFactorTestValue = 0.5;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      for (final tailLeft in [true, false]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            home: Center(
+              child: SizedBox(
+                key: const Key('ballon'),
+                width: kBubbleWidth,
+                height: kBubbleHeight,
+                child: MemberHistoryBubble(
+                  entry: walking,
+                  now: now,
+                  onTap: () {},
+                  tailLeft: tailLeft,
+                  walker: WalkerDisplay.slot,
+                ),
               ),
             ),
           ),
-        ),
-      );
-      // Vaste ballon: tekst zichtbaar; zonder stilstaand beeld blijft het vak leeg.
-      expect(find.byType(RawImage), findsNothing);
-      expect(find.text('5 km/u'), findsOneWidget);
-      final slot = find.byWidgetPredicate(
-        (widget) =>
-            widget is SizedBox &&
-            widget.width == MemberHistoryBubble.walkerSlot.width &&
-            widget.height == MemberHistoryBubble.walkerSlot.height,
-      );
-      final origin = tester.getTopLeft(find.byKey(const Key('ballon')));
-      final expected = MemberHistoryBubble.walkerSlotFor(
-        tester.element(find.byKey(const Key('ballon'))),
-        walking,
-        now,
-        tailLeft: tailLeft,
-      );
-      expect(tester.getRect(slot).shift(-origin), expected);
-      if (!tailLeft) expect(expected.left, greaterThan(MemberHistoryBubble.walkerSlot.left));
-    }
-  });
+        );
+        // Vaste ballon: tekst zichtbaar; zonder stilstaand beeld blijft het vak leeg.
+        expect(find.byType(RawImage), findsNothing);
+        expect(find.text('5 km/u'), findsOneWidget);
+        final slot = find.byWidgetPredicate(
+          (widget) =>
+              widget is SizedBox &&
+              widget.width == MemberHistoryBubble.walkerSlot.width &&
+              widget.height == MemberHistoryBubble.walkerSlot.height,
+        );
+        final origin = tester.getTopLeft(find.byKey(const Key('ballon')));
+        final expected = MemberHistoryBubble.walkerSlotFor(
+          tester.element(find.byKey(const Key('ballon'))),
+          walking,
+          now,
+          tailLeft: tailLeft,
+        );
+        expect(tester.getRect(slot).shift(-origin), expected);
+        if (!tailLeft) {
+          expect(
+            expected.left,
+            greaterThan(MemberHistoryBubble.walkerSlot.left),
+          );
+        }
+      }
+    },
+  );
 
-  testWidgets('Google: met een stilstaand beeld staan de schoenen in het vak', (tester) async {
+  testWidgets('Google: met een stilstaand beeld staan de schoenen in het vak', (
+    tester,
+  ) async {
     final frames = (await tester.runAsync(walkingGifFrames))!;
     final now = DateTime(2026, 10, 12, 15);
     final walking = MemberOnMap(
-      member: const FamilyMember(userId: 'p', displayName: 'Papa', isOwner: true, colorIndex: 0),
+      member: const FamilyMember(
+        userId: 'p',
+        displayName: 'Papa',
+        isOwner: true,
+        colorIndex: 0,
+      ),
       location: MemberLocation(
         userId: 'p',
         familyId: 'f',
@@ -124,6 +148,9 @@ void main() {
     expect(still, findsOneWidget);
     expect(tester.widget<RawImage>(still).image, same(frames.first.image));
     final origin = tester.getTopLeft(find.byKey(const Key('ballon')));
-    expect(tester.getRect(still).shift(-origin), MemberHistoryBubble.walkerSlot);
+    expect(
+      tester.getRect(still).shift(-origin),
+      MemberHistoryBubble.walkerSlot,
+    );
   });
 }

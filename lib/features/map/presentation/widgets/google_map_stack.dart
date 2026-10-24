@@ -19,16 +19,31 @@ class _GoogleMapStackState extends State<GoogleMapStack> {
   final _markers = ValueNotifier<List<MapMarkerSpec>>(const []);
 
   /// De Flutter-engine overleeft het Android-scherm (zie MainActivity), de
-  /// native Google-kaart niet: die hoort bij het gesloten scherm. Na elke
-  /// ontkoppeling bouwen we daarom een nieuwe kaart (nieuwe sleutel), ook als
-  /// er tussendoor geen enkel beeld getekend werd.
+  /// native Google-kaart niet. Bouw de kaart opnieuw zodra Android het scherm
+  /// weer heeft gekoppeld en zichtbaar maakt. Tijdens `detached` is er nog
+  /// geen platformoppervlak; daar alvast een kaart maken kan markers kwijt.
   late final AppLifecycleListener _lifecycle;
   int _screen = 0;
+  bool _detached = false;
+  bool _rebuildScheduled = false;
 
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(onDetach: () => setState(() => _screen++));
+    _lifecycle = AppLifecycleListener(
+      onDetach: () => _detached = true,
+      onResume: _rebuildAfterDetach,
+    );
+  }
+
+  void _rebuildAfterDetach() {
+    if (!_detached || _rebuildScheduled) return;
+    _detached = false;
+    _rebuildScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _rebuildScheduled = false;
+      if (mounted) setState(() => _screen++);
+    });
   }
 
   @override
@@ -43,7 +58,10 @@ class _GoogleMapStackState extends State<GoogleMapStack> {
     return Stack(
       children: [
         Positioned.fill(
-          child: KeyedSubtree(key: ValueKey(_screen), child: widget.base(_markers)),
+          child: KeyedSubtree(
+            key: ValueKey(_screen),
+            child: widget.base(_markers),
+          ),
         ),
         widget.overlay((markers) => _markers.value = markers),
       ],

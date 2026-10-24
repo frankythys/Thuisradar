@@ -4,7 +4,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/time_format.dart';
 import '../../../../shared/widgets/member_avatar.dart';
-import '../../../driving/presentation/travel_mode_filter.dart' show travelModeIcon;
+import '../../../driving/presentation/travel_mode_filter.dart'
+    show travelModeIcon;
 import '../../../location/domain/travel_mode.dart';
 import '../../../location/domain/trip_status.dart';
 import '../../../places/domain/place_status.dart';
@@ -74,19 +75,26 @@ class GroupPin extends StatelessWidget {
     final widest = rows.last;
     return [
       for (final (row, size) in rows.indexed)
-        for (var i = 0; i < size; i++) Offset(((widest - size) / 2 + i) * _step, row * _rowStep),
+        for (var i = 0; i < size; i++)
+          Offset(((widest - size) / 2 + i) * _step, row * _rowStep),
     ];
   }
 
   /// Breedte van de piramide cirkels voor [count] leden.
-  static double clusterWidth(int count) => (_rows(count).last - 1) * _step + _avatar;
+  static double clusterWidth(int count) =>
+      (_rows(count).last - 1) * _step + _avatar;
 
   /// Hoogte van de piramide cirkels met het puntje eronder.
-  static double clusterHeight(int count) => (_rows(count).length - 1) * _rowStep + _avatar + _tip;
+  static double clusterHeight(int count) =>
+      (_rows(count).length - 1) * _rowStep + _avatar + _tip;
 
   /// Waar de cirkels (met het puntje) op het scherm staan voor een pin op
   /// [point], verschoven met [shift]: het puntje wijst naar het punt.
-  static Rect circlesAt(Offset point, int count, {Offset shift = Offset.zero}) => Rect.fromLTWH(
+  static Rect circlesAt(
+    Offset point,
+    int count, {
+    Offset shift = Offset.zero,
+  }) => Rect.fromLTWH(
     point.dx + shift.dx - clusterWidth(count) / 2,
     point.dy + shift.dy - clusterHeight(count),
     clusterWidth(count),
@@ -94,11 +102,13 @@ class GroupPin extends StatelessWidget {
   );
 
   /// Hoogte van de hele pin: elke extra rij cirkels maakt hem hoger.
-  static double heightFor(int count) => height + (_rows(count).length - 1) * _rowStep;
+  static double heightFor(int count) =>
+      height + (_rows(count).length - 1) * _rowStep;
 
   /// Zichtbare leden: allemaal tot 6, daarna 5 en een "+N".
-  List<MemberOnMap> get _shown =>
-      members.length <= _maxSlots ? members : members.take(_maxSlots - 1).toList();
+  List<MemberOnMap> get _shown => members.length <= _maxSlots
+      ? members
+      : members.take(_maxSlots - 1).toList();
 
   /// Alles wat het getekende beeld bepaalt, als vergelijkbare sleutel: Google
   /// tekent de groepspin enkel opnieuw als die verandert.
@@ -167,7 +177,10 @@ class GroupPin extends StatelessWidget {
     const inner = _avatar - 2 * _inset;
     // Binnen de witte vorm: een dun wit lijntje scheidt overlappende cirkels;
     // de gekozen persoon krijgt een volle rand in de app-kleur met gloed.
-    final avatar = MemberAvatar(member: member.member, size: inner - (isSelected ? 10 : 4));
+    final avatar = MemberAvatar(
+      member: member.member,
+      size: inner - (isSelected ? 10 : 4),
+    );
     final child = Container(
       width: inner,
       height: inner,
@@ -198,7 +211,11 @@ class GroupPin extends StatelessWidget {
       ),
       child: Text(
         '+$extra',
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 14,
+        ),
       ),
     );
   }
@@ -209,12 +226,17 @@ class GroupPin extends StatelessWidget {
     for (final member in members) {
       final location = member.location;
       if (location == null) continue;
-      if (latest == null || location.updatedAt.isAfter(latest.location!.updatedAt)) {
+      if (latest == null ||
+          location.updatedAt.isAfter(latest.location!.updatedAt)) {
         latest = member;
       }
     }
     if (latest == null) {
-      return (icon: Icons.group, title: l10n.mapGroupMembers(members.length), at: null);
+      return (
+        icon: Icons.group,
+        title: l10n.mapGroupMembers(members.length),
+        at: null,
+      );
     }
 
     final name = latest.member.displayName;
@@ -234,7 +256,11 @@ class GroupPin extends StatelessWidget {
         at: latest.location!.updatedAt,
       );
     }
-    return (icon: Icons.location_on_outlined, title: name, at: latest.location!.updatedAt);
+    return (
+      icon: Icons.location_on_outlined,
+      title: name,
+      at: latest.location!.updatedAt,
+    );
   }
 }
 
@@ -261,7 +287,12 @@ class _Bubble extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (info.icon == Icons.home_rounded)
-            Image.asset('assets/markers/huis.png', width: 28, height: 28, fit: BoxFit.contain)
+            Image.asset(
+              'assets/markers/huis.png',
+              width: 28,
+              height: 28,
+              fit: BoxFit.contain,
+            )
           else
             Icon(info.icon, size: 18, color: AppColors.primary),
           const SizedBox(width: 8),
@@ -274,7 +305,10 @@ class _Bubble extends StatelessWidget {
                   info.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: text.labelLarge?.copyWith(color: AppColors.ink, fontSize: text.labelSmall?.fontSize),
+                  style: text.labelLarge?.copyWith(
+                    color: AppColors.ink,
+                    fontSize: text.labelSmall?.fontSize,
+                  ),
                 ),
                 if (info.at != null)
                   Text(

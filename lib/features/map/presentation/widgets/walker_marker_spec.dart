@@ -24,7 +24,10 @@ MapMarkerSpec walkerOverlaySpec({
     alignment.x * kBubbleWidth / 2 + offset.dx,
     alignment.y * kBubbleHeight / 2 + offset.dy,
   );
-  final slotCenter = bubbleCenter - const Offset(kBubbleWidth / 2, kBubbleHeight / 2) + slot.center;
+  final slotCenter =
+      bubbleCenter -
+      const Offset(kBubbleWidth / 2, kBubbleHeight / 2) +
+      slot.center;
   const bleed = GoogleWalkerOverlay.bleed;
   return MapMarkerSpec(
     id: id,

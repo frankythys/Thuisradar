@@ -550,6 +550,7 @@
   "emergencySomeone": "Ailenden biri",
   "emergencyTapToSend": "{name} kişisine SMS göndermek için gönder’e dokun.",
   "emergencyAlertFailed": "Acil durum kişileri uyarılamadı.",
+  "emergencySmsUnavailable": "SIM kartı bulunamadı. Bu cihazda SMS kullanılamıyor.",
   "sosOnMyWayMessage": "{name} kişisine yardım etmek için yoldayım.",
   "sosFamilyKnows": "Ailen yolda olduğunu biliyor.",
   "sosMessageFailed": "Mesaj gönderilmedi. Tekrar dene.",

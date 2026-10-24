@@ -4,15 +4,20 @@ import '../domain/emergency_contact.dart';
 
 /// Wat er met de noodcontacten gebeurde, voor de melding na een SOS.
 class EmergencyOutcome {
-  const EmergencyOutcome({this.manual});
+  const EmergencyOutcome({this.manual, this.smsUnavailable = false});
 
   static const none = EmergencyOutcome();
 
   /// Voor wie de berichten-app openging, met de sms klaar.
   final EmergencyContact? manual;
+  final bool smsUnavailable;
 
   /// Korte uitleg voor de melding, of null zonder noodcontacten.
-  String? summary(AppLocalizations l10n) => manual == null ? null : l10n.emergencyTapToSend(manual!.name);
+  String? summary(AppLocalizations l10n) => smsUnavailable
+      ? l10n.emergencySmsUnavailable
+      : manual == null
+      ? null
+      : l10n.emergencyTapToSend(manual!.name);
 }
 
 /// De sms die de noodcontacten krijgen, met een kaartlink naar de locatie, in
@@ -45,7 +50,11 @@ class EmergencyAlerter {
     final first = planFor(contacts).callTo;
     if (first == null) return EmergencyOutcome.none;
     final text = sosSmsText(l10n, senderName: senderName, latitude: latitude, longitude: longitude);
-    await _phone.openSms(dialablePhone(first.phone), text);
+    try {
+      await _phone.openSms(dialablePhone(first.phone), text);
+    } on SmsUnavailableException {
+      return const EmergencyOutcome(smsUnavailable: true);
+    }
     return EmergencyOutcome(manual: first);
   }
 }
